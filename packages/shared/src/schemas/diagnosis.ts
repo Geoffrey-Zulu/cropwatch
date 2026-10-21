@@ -84,6 +84,9 @@ export const DiagnosisInternalSchema = z.object({
   model_confidence: ModelConfidenceSchema.nullable(),
   severity_pct: SeverityPctSchema.nullable(),
   reasoning_summary: z.string().nullable(),
+  // What the model read from the photo, for accuracy scoring against the farmer's report.
+  model_crop: CropSchema.nullable(),
+  model_growth_stage: z.string().nullable(),
   // Raw text of the last unusable output, kept for prompt tuning.
   invalid_output: z.string().max(20000).nullable(),
   attempts: z.number().int().min(1),

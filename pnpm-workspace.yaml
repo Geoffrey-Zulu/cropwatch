@@ -14,6 +14,13 @@ packages:
 # packages listed here may run install scripts. Keep this list minimal.
 allowBuilds:
   esbuild: true
+  # Explicitly declined (false = skip without failing the install); none is needed.
+  # @firebase/util (via firebase-admin): bakes in App Hosting auto-init config from
+  # FIREBASE_WEBAPP_CONFIG; we pass explicit config. @google/genai: preinstall is a literal
+  # no-op echo. protobufjs: only prints a version-scheme warning.
+  '@firebase/util': false
+  '@google/genai': false
+  protobufjs: false
 
 # Accepted advisories. Everything listed here is a deliberate, documented risk
 # acceptance, not a way to quiet the auditor. See UPGRADE-NOTES.md.

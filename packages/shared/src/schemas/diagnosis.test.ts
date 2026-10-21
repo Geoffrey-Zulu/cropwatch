@@ -106,6 +106,8 @@ describe('DiagnosisInternalSchema', () => {
       model_confidence: null,
       severity_pct: null,
       reasoning_summary: null,
+      model_crop: null,
+      model_growth_stage: null,
       invalid_output: '{"crop": "maize", "suspected_issue": "locusts"',
       attempts: 2,
       model_id: 'gemini-test',

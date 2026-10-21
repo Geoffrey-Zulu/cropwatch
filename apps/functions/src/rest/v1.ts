@@ -1,15 +1,101 @@
-import { Hono, type Context } from 'hono'
+import { Hono, type Context, type MiddlewareHandler } from 'hono'
+import type { ZodError } from 'zod'
+import {
+  CreateObservationRequestSchema,
+  ObservationIdSchema,
+  parsePhotoPath,
+  type ErrorResponse,
+} from '@repo/shared'
+import { bearerToken, type VerifyIdToken } from '../auth'
+import { errorFields, log } from '../lib/log'
+import type { Diagnose } from '../services/firestoreDiagnoser'
+import type { ObservationStore } from '../services/firestoreObservations'
+import { canReadObservation, type Caller } from '../services/observationModel'
 
-// /api/v1: REST adapter for the Flutter app and Eventarc webhooks (buildplan.md §2). Request
-// and response shapes come from @repo/shared and freeze on D2. Until each route is built it
-// answers 501, so the mobile client can wire paths against a live server.
+export interface RestServices {
+  version: string
+  verifyIdToken: VerifyIdToken
+  observations: ObservationStore
+  diagnose: Diagnose
+  now?: () => Date
+}
+
+type Env = { Variables: { caller: Caller } }
+
+const fail = (c: Context, status: 400 | 401 | 403 | 404 | 501, body: ErrorResponse) =>
+  c.json(body, status)
+
+const validationFailed = (c: Context, error: ZodError) =>
+  fail(c, 400, {
+    error: 'validation_failed',
+    issues: error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message })),
+  })
+
 const notImplemented = (c: Context) =>
-  c.json({ error: 'not_implemented', route: `${c.req.method} ${c.req.routePath}` }, 501)
+  fail(c, 501, { error: 'not_implemented', message: `${c.req.method} ${c.req.routePath}` })
 
-export const restV1 = new Hono()
-  .post('/observations', notImplemented)
-  .get('/observations/:id', notImplemented)
-  .post('/observations/:id/verify', notImplemented)
-  .post('/observations/:id/intervention', notImplemented)
-  .post('/observations/:id/outcome', notImplemented)
-  .get('/alerts', notImplemented)
+// /api/v1: the frozen mobile contract (packages/shared/src/contracts/openapi.json).
+export function restV1(services: RestServices) {
+  const now = services.now ?? (() => new Date())
+  const app = new Hono<Env>()
+
+  app.get('/health', c => c.json({ status: 'ok' as const, version: services.version }))
+
+  const requireCaller: MiddlewareHandler<Env> = async (c, next) => {
+    const token = bearerToken(c.req.header('authorization'))
+    if (!token) return fail(c, 401, { error: 'unauthorized', message: 'Bearer token required' })
+    try {
+      c.set('caller', await services.verifyIdToken(token))
+    } catch {
+      return fail(c, 401, { error: 'unauthorized', message: 'Invalid or expired ID token' })
+    }
+    await next()
+  }
+
+  // Diagnosis runs in the background (Cloud Run keeps CPU allocated; see infra/deploy.sh). It
+  // is idempotent, so retries and the Storage event may trigger it too.
+  const startDiagnosis = (obsId: string) =>
+    services
+      .diagnose(obsId)
+      .catch(error => log('ERROR', 'diagnosis failed', { obs_id: obsId, ...errorFields(error) }))
+
+  app.post('/observations', requireCaller, async c => {
+    const caller = c.get('caller')
+    const parsed = CreateObservationRequestSchema.safeParse(await c.req.json().catch(() => null))
+    if (!parsed.success) return validationFailed(c, parsed.error)
+    const request = parsed.data
+
+    if (!request.photo_paths.every(path => parsePhotoPath(path)?.uid === caller.uid)) {
+      return fail(c, 403, {
+        error: 'forbidden',
+        message: 'Photos must be under observations/{your uid}/',
+      })
+    }
+
+    const result = await services.observations.create(caller, request, now().toISOString())
+    if (result.kind === 'forbidden') {
+      return fail(c, 403, { error: 'forbidden', message: 'obs_id belongs to another user' })
+    }
+    if (result.status === 'diagnosing') void startDiagnosis(request.obs_id)
+    return c.json(
+      { obs_id: request.obs_id, status: result.status },
+      result.kind === 'created' ? 201 : 200
+    )
+  })
+
+  app.get('/observations/:id', requireCaller, async c => {
+    const id = ObservationIdSchema.safeParse(c.req.param('id'))
+    const record = id.success ? await services.observations.get(id.data) : null
+    if (!record) return fail(c, 404, { error: 'not_found' })
+    if (!canReadObservation(c.get('caller'), record)) return fail(c, 403, { error: 'forbidden' })
+    return c.json(record.view)
+  })
+
+  // Frozen in the contract; built on later days (verify D7, intervention/outcome D7, alerts D6).
+  app.post('/observations/:id/verify', requireCaller, notImplemented)
+  app.post('/observations/:id/intervention', requireCaller, notImplemented)
+  app.post('/observations/:id/outcome', requireCaller, notImplemented)
+  app.get('/alerts', requireCaller, notImplemented)
+
+  return app
+}
