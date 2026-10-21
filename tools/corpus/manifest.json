@@ -1,0 +1,592 @@
+[
+  {
+    "id": "cimmyt-faw-ipm-guide-2018",
+    "title": "Fall Armyworm in Africa, a guide for integrated pest management (CIMMYT, USAID)",
+    "file": "research/cimmyt-faw-ipm-guide-2018.pdf",
+    "format": "pdf",
+    "source_url": "https://repository.cimmyt.org/server/api/core/bitstreams/5f933e59-ad3a-4643-a91e-377f9d913370/content",
+    "fetched_url": "http://resilience-exchange.s3.amazonaws.com/attachments/uploads/4906/original/Fall_Armyworm_in_Africa__A_Guide_for_Integrated_Pest_Management.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:50:09.643Z",
+    "sha256": "f4b35aa14cd5fa155fb3f2fd1350ca5f02ffc978d451fa3eb68974a4c70ea181",
+    "bytes": 3809546,
+    "tier": 6,
+    "source": "CIMMYT",
+    "country": "INT",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2018,
+    "licence": "© 2018 USAID and CIMMYT, all rights reserved; fair use encouraged (stated in the PDF)",
+    "pages": 120,
+    "text_chars": 304844,
+    "needs_ocr": false,
+    "redistribute": false
+  },
+  {
+    "id": "fao-cabi-faw-tot-manual-2019",
+    "title": "Community-based fall armyworm monitoring, early warning and management, training of trainers manual (FAO, CABI)",
+    "file": "international/fao/fao-cabi-faw-tot-manual-2019.pdf",
+    "format": "pdf",
+    "source_url": "https://www.cabi.org/wp-content/uploads/ToT-manual.pdf",
+    "fetched_url": "https://www.cabi.org/wp-content/uploads/ToT-manual.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:42.811Z",
+    "sha256": "438fd3d60a3ed70e495e4b3eeef48ba90895d9a30037f3eda10789704aa25a28",
+    "bytes": 6081255,
+    "tier": 4,
+    "source": "FAO and CABI",
+    "country": "INT",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2019,
+    "licence": "CC BY-NC-SA 3.0 IGO (stated in the PDF)",
+    "pages": 112,
+    "text_chars": 165737,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "fao-faw-ffs-guide-2018",
+    "title": "Integrated management of the Fall Armyworm on maize, a guide for Farmer Field Schools in Africa",
+    "file": "international/fao/fao-faw-ffs-guide-2018.pdf",
+    "format": "pdf",
+    "source_url": "https://www.fao.org/3/i8665en/I8665EN.PDF",
+    "fetched_url": "https://www.fao.org/3/i8665en/I8665EN.PDF",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:30.604Z",
+    "sha256": "e41d7c2bf6a5c3a46d872c167e7654909bf20ccb1a6cd6fb00d6fc5542a56fed",
+    "bytes": 5709040,
+    "tier": 4,
+    "source": "FAO",
+    "country": "INT",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2018,
+    "licence": "© FAO 2018; may be copied and used in non-commercial products with acknowledgement of FAO (stated in the PDF)",
+    "pages": 139,
+    "text_chars": 235154,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "fao-faw-scouting-guidance-note-2018",
+    "title": "FAO Fall Armyworm guidance note 2, scouting",
+    "file": "international/fao/fao-faw-scouting-guidance-note-2018.pdf",
+    "format": "pdf",
+    "source_url": "https://www.fao.org/fileadmin/templates/fcc/Fall_Armyworm/web_guidance-note-2.pdf",
+    "fetched_url": "https://www.fao.org/fileadmin/templates/fcc/Fall_Armyworm/web_guidance-note-2.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:36.440Z",
+    "sha256": "71601906767aeaa8224152e919737ee2fab55fdaba685c0799acdd76f9fda419",
+    "bytes": 1272423,
+    "tier": 4,
+    "source": "FAO",
+    "country": "INT",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2018,
+    "licence": "CC BY-NC-SA 3.0 IGO (unconfirmed)",
+    "pages": 2,
+    "text_chars": 3609,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "fao-faw-trapping-guidance-note-2018",
+    "title": "FAO Fall Armyworm guidance note 3, pheromone trapping",
+    "file": "international/fao/fao-faw-trapping-guidance-note-2018.pdf",
+    "format": "pdf",
+    "source_url": "https://www.fao.org/fileadmin/templates/fcc/Fall_Armyworm/web_guidance-note-3.pdf",
+    "fetched_url": "https://www.fao.org/fileadmin/templates/fcc/Fall_Armyworm/web_guidance-note-3.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:37.881Z",
+    "sha256": "9b58988a2d74af80c5c5c70d211ee198aba59226ce2ee17f5e752df954afbdfc",
+    "bytes": 1237820,
+    "tier": 4,
+    "source": "FAO",
+    "country": "INT",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2018,
+    "licence": "CC BY-NC-SA 3.0 IGO (unconfirmed)",
+    "pages": 2,
+    "text_chars": 3530,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "icipe-tuta-absoluta-manual-2020",
+    "title": "Tuta absoluta management manual (icipe)",
+    "file": "research/icipe-tuta-absoluta-manual-2020.pdf",
+    "format": "pdf",
+    "source_url": "https://technologytransfer.icipe.org/wp-content/uploads/2021/06/Tuta-absoluta-Manual2020-Jan2021.pdf",
+    "fetched_url": "https://web.archive.org/web/20250325141459id_/http://technologytransfer.icipe.org/wp-content/uploads/2021/06/Tuta-absoluta-Manual2020-Jan2021.pdf",
+    "archive_url": "https://web.archive.org/web/20250325141459/http://technologytransfer.icipe.org/wp-content/uploads/2021/06/Tuta-absoluta-Manual2020-Jan2021.pdf",
+    "retrieved_at": "2026-10-21T15:50:41.935Z",
+    "sha256": "31d1783399a07fbfeaf033dce84b539b938766980e5b6f268571b2b3253a4b24",
+    "bytes": 3504801,
+    "tier": 6,
+    "source": "icipe",
+    "country": "INT",
+    "crop": [
+      "tomato"
+    ],
+    "issue": [
+      "tuta_absoluta"
+    ],
+    "year": 2020,
+    "licence": "No licence statement in the PDF (ISBN 978-9966-063-52-6)",
+    "pages": 44,
+    "text_chars": 49889,
+    "needs_ocr": false,
+    "redistribute": false
+  },
+  {
+    "id": "moa-cbsd-cmd-chienge-kaputa-2025",
+    "title": "GOVERNMENT INTENSIFIES FIGHT AGAINST CBSD and CMD in CHIENGE and KAPUTA. – Ministry of Agriculture",
+    "file": "zambia/moa/moa-cbsd-cmd-chienge-kaputa-2025.md",
+    "format": "md",
+    "source_url": "https://www.agriculture.gov.zm/2025/02/government-intensifies-fight-against-cbsd-and-cmd-in-chienge-and-kaputa/",
+    "fetched_url": "https://web.archive.org/web/20260712115922id_/https://www.agriculture.gov.zm/2025/02/government-intensifies-fight-against-cbsd-and-cmd-in-chienge-and-kaputa/",
+    "archive_url": "https://web.archive.org/web/20260712115922/https://www.agriculture.gov.zm/2025/02/government-intensifies-fight-against-cbsd-and-cmd-in-chienge-and-kaputa/",
+    "retrieved_at": "2026-10-21T15:47:43.714Z",
+    "sha256": "c4e44762bc8bbcdcd761622fb7489f96825d4c3fc79c8c675add6ade53a988d4",
+    "bytes": 4259,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "cassava"
+    ],
+    "issue": [
+      "cassava_mosaic",
+      "cassava_brown_streak"
+    ],
+    "year": 2025,
+    "licence": null,
+    "pages": null,
+    "text_chars": 3187,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "moa-eextension-vegetables-2015",
+    "title": "Vegetables – E-Extension Portal",
+    "file": "zambia/moa/moa-eextension-vegetables-2015.md",
+    "format": "md",
+    "source_url": "https://www.agriculture.gov.zm/integratedportal/?page_id=7743",
+    "fetched_url": "https://web.archive.org/web/20260612012434id_/https://www.agriculture.gov.zm/integratedportal/?page_id=7743",
+    "archive_url": "https://web.archive.org/web/20260612012434/https://www.agriculture.gov.zm/integratedportal/?page_id=7743",
+    "retrieved_at": "2026-10-21T15:47:52.515Z",
+    "sha256": "70f91d8e8fdbee5bace4f5733a2bc36be61fe47da54ce450a97fcca820bb144d",
+    "bytes": 362,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "tomato",
+      "cabbage"
+    ],
+    "issue": [],
+    "year": 2015,
+    "licence": null,
+    "pages": null,
+    "text_chars": 69,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "moa-faw-biological-control-2023",
+    "title": "Biological Control a sustainable Approach to Combat Fall Armyworm – Ministry of Agriculture",
+    "file": "zambia/moa/moa-faw-biological-control-2023.md",
+    "format": "md",
+    "source_url": "https://www.agriculture.gov.zm/2023/11/biological-control-a-sustainable-approach-to-combat-fall-armyworm/",
+    "fetched_url": "https://web.archive.org/web/20260712125137id_/https://www.agriculture.gov.zm/2023/11/biological-control-a-sustainable-approach-to-combat-fall-armyworm/",
+    "archive_url": "https://web.archive.org/web/20260712125137/https://www.agriculture.gov.zm/2023/11/biological-control-a-sustainable-approach-to-combat-fall-armyworm/",
+    "retrieved_at": "2026-10-21T15:47:29.448Z",
+    "sha256": "6c23acdc7c82118f5360e5c3f4662714b8841ddfc45c87a6a94d3e5c152243ce",
+    "bytes": 4823,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2023,
+    "licence": null,
+    "pages": null,
+    "text_chars": 3697,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "moa-faw-maize-legume-intercropping-2022",
+    "title": "Maize-legume intercropping in Fall Armyworm fight yielding results – Ministry of Agriculture",
+    "file": "zambia/moa/moa-faw-maize-legume-intercropping-2022.md",
+    "format": "md",
+    "source_url": "https://www.agriculture.gov.zm/2022/05/maize-legume-intercropping-in-fall-armyworm-fight-yielding-results/",
+    "fetched_url": "https://web.archive.org/web/20260612011332id_/https://www.agriculture.gov.zm/2022/05/maize-legume-intercropping-in-fall-armyworm-fight-yielding-results/",
+    "archive_url": "https://web.archive.org/web/20260612011332/https://www.agriculture.gov.zm/2022/05/maize-legume-intercropping-in-fall-armyworm-fight-yielding-results/",
+    "retrieved_at": "2026-10-21T15:47:33.888Z",
+    "sha256": "fd21d8a6650f8f11b67552eea413152e186d9e9bf924e085a7e41371a8deb604",
+    "bytes": 7069,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2022,
+    "licence": null,
+    "pages": null,
+    "text_chars": 5529,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "moa-faw-manual-launch-2025",
+    "title": "INTEGRATED FALL ARMYWORM MANAGEMENT MANUAL LAUNCHED IN ZAMBIA – Ministry of Agriculture",
+    "file": "zambia/moa/moa-faw-manual-launch-2025.md",
+    "format": "md",
+    "source_url": "https://www.agriculture.gov.zm/2025/01/integrated-fall-armyworm-management-manual-launched-in-zambia/",
+    "fetched_url": "https://web.archive.org/web/20260712111712id_/https://www.agriculture.gov.zm/2025/01/integrated-fall-armyworm-management-manual-launched-in-zambia/",
+    "archive_url": "https://web.archive.org/web/20260712111712/https://www.agriculture.gov.zm/2025/01/integrated-fall-armyworm-management-manual-launched-in-zambia/",
+    "retrieved_at": "2026-10-21T15:47:25.175Z",
+    "sha256": "64e947d97b91636135b8d463b1844423aa8387db219762c61ce0180ebf7b83f1",
+    "bytes": 3569,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2025,
+    "licence": null,
+    "pages": null,
+    "text_chars": 2663,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "moa-faw-pheromone-traps-press-release-2022",
+    "title": "Country-wide distribution of fall armyworm pheromone traps and lures commences",
+    "file": "zambia/moa/moa-faw-pheromone-traps-press-release-2022.pdf",
+    "format": "pdf",
+    "source_url": "https://www.agriculture.gov.zm/wp-content/uploads/2022/12/Press-Release_Country-wide-Distribution-of-Fall-Armyworm-PheromoneTraps_1st-December2022.pdf",
+    "fetched_url": "https://web.archive.org/web/20240619235227id_/https://www.agriculture.gov.zm/wp-content/uploads/2022/12/Press-Release_Country-wide-Distribution-of-Fall-Armyworm-PheromoneTraps_1st-December2022.pdf",
+    "archive_url": "https://web.archive.org/web/20240619235227/https://www.agriculture.gov.zm/wp-content/uploads/2022/12/Press-Release_Country-wide-Distribution-of-Fall-Armyworm-PheromoneTraps_1st-December2022.pdf",
+    "retrieved_at": "2026-10-21T15:47:39.707Z",
+    "sha256": "68abdeaed531c92c52cd4e0586b858a6326c0d96558fb86bcb450e8837a17c99",
+    "bytes": 513985,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "maize"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2022,
+    "licence": null,
+    "pages": 1,
+    "text_chars": 3172,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "moa-iec-materials-index-2023",
+    "title": "Information Education Communication Material – Ministry of Agriculture",
+    "file": "zambia/moa/moa-iec-materials-index-2023.md",
+    "format": "md",
+    "source_url": "https://www.agriculture.gov.zm/information-education-communication-materials/",
+    "fetched_url": "https://web.archive.org/web/20260712113526id_/https://www.agriculture.gov.zm/information-education-communication-materials/",
+    "archive_url": "https://web.archive.org/web/20260712113526/https://www.agriculture.gov.zm/information-education-communication-materials/",
+    "retrieved_at": "2026-10-21T15:47:47.934Z",
+    "sha256": "ddc6c27c7c1e7663635ac0ebe041bdd67fe78d24c292379dd217cd12ce1be436",
+    "bytes": 1114,
+    "tier": 1,
+    "source": "Zambia Ministry of Agriculture",
+    "country": "ZM",
+    "crop": [
+      "maize"
+    ],
+    "issue": [],
+    "year": 2023,
+    "licence": null,
+    "pages": null,
+    "text_chars": 637,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-cbsd-cmd-expansion-review-2022",
+    "title": "Expansion and impact of cassava brown streak and cassava mosaic diseases in Africa, a review (Chikoti and Tembo, Front. Sustain. Food Syst.)",
+    "file": "research/zari-cbsd-cmd-expansion-review-2022.pdf",
+    "format": "pdf",
+    "source_url": "https://www.zari.gov.zm/download/80/pathology/4429/expansion_and_impact_of_cassava_brown_streak_and_c.pdf",
+    "fetched_url": "https://www.zari.gov.zm/download/80/pathology/4429/expansion_and_impact_of_cassava_brown_streak_and_c.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:06:00.664Z",
+    "sha256": "137946b445044784d00ac59bbfaafe86bad2601aaa4fed4ed4fdd79531a56c3e",
+    "bytes": 915115,
+    "tier": 6,
+    "source": "ZARI repository (journal reprint)",
+    "country": "ZM",
+    "crop": [
+      "cassava"
+    ],
+    "issue": [
+      "cassava_brown_streak",
+      "cassava_mosaic"
+    ],
+    "year": 2022,
+    "licence": "CC BY (stated in the PDF)",
+    "redistribute": true,
+    "pages": 12,
+    "text_chars": 61168,
+    "needs_ocr": false
+  },
+  {
+    "id": "zari-cmd-review-zambia-2019",
+    "title": "Cassava mosaic disease, a review of a threat to cassava production in Zambia (Chikoti et al., J. Plant Pathol.)",
+    "file": "research/zari-cmd-review-zambia-2019.pdf",
+    "format": "pdf",
+    "source_url": "https://www.zari.gov.zm/download/80/pathology/4430/cassavamosaicdiseaseareview.pdf",
+    "fetched_url": "https://www.zari.gov.zm/download/80/pathology/4430/cassavamosaicdiseaseareview.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:05:58.611Z",
+    "sha256": "589781c1214bda09594bd04166dffce9e084277be90035e91b1454b0886e5397",
+    "bytes": 1962415,
+    "tier": 6,
+    "source": "ZARI repository (journal reprint)",
+    "country": "ZM",
+    "crop": [
+      "cassava"
+    ],
+    "issue": [
+      "cassava_mosaic"
+    ],
+    "year": 2019,
+    "licence": "CC BY 4.0 (stated in the PDF)",
+    "redistribute": true,
+    "pages": 12,
+    "text_chars": 43402,
+    "needs_ocr": false
+  },
+  {
+    "id": "zari-cmd-whitefly-status-zambia-2015",
+    "title": "Status of cassava mosaic disease and whitefly population in Zambia (Chikoti et al., Afr. J. Biotechnol.)",
+    "file": "research/zari-cmd-whitefly-status-zambia-2015.pdf",
+    "format": "pdf",
+    "source_url": "https://www.zari.gov.zm/download/80/pathology/4437/status_of_cassava_mosaic_disease_and_whitefly_popu.pdf",
+    "fetched_url": "https://www.zari.gov.zm/download/80/pathology/4437/status_of_cassava_mosaic_disease_and_whitefly_popu.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:50:49.269Z",
+    "sha256": "15ac2cf0c44189dd8d2e1fc8dfe6775f7e509c79fe0af5ae56ab35db6ee6d5b5",
+    "bytes": 571975,
+    "tier": 6,
+    "source": "ZARI repository (journal reprint)",
+    "country": "ZM",
+    "crop": [
+      "cassava"
+    ],
+    "issue": [
+      "cassava_mosaic"
+    ],
+    "year": 2015,
+    "licence": "Open access; authors retain copyright (African Journal of Biotechnology, stated in the PDF)",
+    "pages": 9,
+    "text_chars": 22980,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-crop-guide-cabbage-2025",
+    "title": "ZARI crop production guide, cabbage",
+    "file": "zambia/zari/zari-crop-guide-cabbage-2025.pdf",
+    "format": "pdf",
+    "source_url": "https://www.zari.gov.zm/download/83/crop-production-guides/4493/cabbage-edited.pdf",
+    "fetched_url": "https://www.zari.gov.zm/download/83/crop-production-guides/4493/cabbage-edited.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:18.115Z",
+    "sha256": "736f23b5d6f3344ea1fa41a0c1e8ff601fdc85a702f76bb27b425166d2aab3ea",
+    "bytes": 1674614,
+    "tier": 2,
+    "source": "ZARI",
+    "country": "ZM",
+    "crop": [
+      "cabbage"
+    ],
+    "issue": [
+      "diamondback_moth"
+    ],
+    "year": 2025,
+    "licence": null,
+    "pages": 16,
+    "text_chars": 10750,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-crop-guide-cassava-2025",
+    "title": "ZARI crop production guide, cassava",
+    "file": "zambia/zari/zari-crop-guide-cassava-2025.pdf",
+    "format": "pdf",
+    "source_url": "https://www.zari.gov.zm/download/83/crop-production-guides/4500/cassava-edited.pdf",
+    "fetched_url": "https://www.zari.gov.zm/download/83/crop-production-guides/4500/cassava-edited.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:20.640Z",
+    "sha256": "271cd755ae9de21a9fc188ca1e620314c8f7eb2efc83ccb949021802fd124e87",
+    "bytes": 2394532,
+    "tier": 2,
+    "source": "ZARI",
+    "country": "ZM",
+    "crop": [
+      "cassava"
+    ],
+    "issue": [
+      "cassava_mosaic",
+      "cassava_brown_streak"
+    ],
+    "year": 2025,
+    "licence": null,
+    "pages": 20,
+    "text_chars": 17602,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-crop-guide-maize-2025",
+    "title": "ZARI crop production guide, maize",
+    "file": "zambia/zari/zari-crop-guide-maize-2025.pdf",
+    "format": "pdf",
+    "source_url": "https://www.zari.gov.zm/download/83/crop-production-guides/4506/maize-edited.pdf",
+    "fetched_url": "https://www.zari.gov.zm/download/83/crop-production-guides/4506/maize-edited.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:15.905Z",
+    "sha256": "6b2f266eedda793cbfa50641af75f259ee487ff9c5487c2178f5544851acd2e7",
+    "bytes": 1881031,
+    "tier": 2,
+    "source": "ZARI",
+    "country": "ZM",
+    "crop": [
+      "maize"
+    ],
+    "issue": [],
+    "year": 2025,
+    "licence": null,
+    "pages": 24,
+    "text_chars": 22068,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-entomology-2025",
+    "title": "Entomology – Zambia Agriculture Research Institute (ZARI)",
+    "file": "zambia/zari/zari-entomology-2025.md",
+    "format": "md",
+    "source_url": "https://www.zari.gov.zm/entomology/",
+    "fetched_url": "https://www.zari.gov.zm/entomology/",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:12.359Z",
+    "sha256": "0725461c7c7d260bd2d6918d54f0c9d81e4010ebecd13aedb54436144df1b8b9",
+    "bytes": 4488,
+    "tier": 2,
+    "source": "ZARI",
+    "country": "ZM",
+    "crop": [
+      "maize",
+      "cassava"
+    ],
+    "issue": [
+      "fall_armyworm"
+    ],
+    "year": 2025,
+    "licence": null,
+    "pages": null,
+    "text_chars": 3664,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-plant-pathology-2025",
+    "title": "Plant Pathology – Zambia Agriculture Research Institute (ZARI)",
+    "file": "zambia/zari/zari-plant-pathology-2025.md",
+    "format": "md",
+    "source_url": "https://www.zari.gov.zm/plant-pathology-2/",
+    "fetched_url": "https://www.zari.gov.zm/plant-pathology-2/",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:10.686Z",
+    "sha256": "f1b1664477b4440af9b50b95bf2a1f287760726536986a97182a058db1c9ab62",
+    "bytes": 2684,
+    "tier": 2,
+    "source": "ZARI",
+    "country": "ZM",
+    "crop": [
+      "cassava",
+      "maize"
+    ],
+    "issue": [
+      "cassava_brown_streak"
+    ],
+    "year": 2025,
+    "licence": null,
+    "pages": null,
+    "text_chars": 2155,
+    "needs_ocr": false,
+    "redistribute": true
+  },
+  {
+    "id": "zari-plant-protection-2026",
+    "title": "Plant Protection – Zambia Agriculture Research Institute (ZARI)",
+    "file": "zambia/zari/zari-plant-protection-2026.md",
+    "format": "md",
+    "source_url": "https://www.zari.gov.zm/plant-protection-3/",
+    "fetched_url": "https://www.zari.gov.zm/plant-protection-3/",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T15:48:05.374Z",
+    "sha256": "94ba9fe19ed98792ed174b80511042f77c7d0381f1d4662f7fbfbf065a31d66b",
+    "bytes": 952,
+    "tier": 2,
+    "source": "ZARI",
+    "country": "ZM",
+    "crop": [],
+    "issue": [],
+    "year": 2026,
+    "licence": null,
+    "pages": null,
+    "text_chars": 668,
+    "needs_ocr": false,
+    "redistribute": true
+  }
+]
