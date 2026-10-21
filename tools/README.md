@@ -10,4 +10,8 @@ Workspace packages (`tools/*`) for operating CropWatch. They authenticate as the
 - **`seed/`** (`@repo/seed`)
   - `pnpm --filter @repo/seed seed [--commit] [--live-demo --demo-issue <issue> --demo-center <lat,lng> --demo-district <name>]` writes deterministic `sim: true` demo data (technicaldoc §12) to Firestore and BigQuery. See `docs/demo-ops.md` for demo morning.
 - **`gcp/`** (`@repo/tools-gcp`): the shared Firestore and BigQuery REST client the tools use.
-- **`corpus/`** (D4): RAG corpus manifest and ingestion. See technicaldoc §7.
+- **`corpus/`** (`@repo/corpus`): the RAG knowledge corpus (technicaldoc §7).
+  - `pnpm --filter @repo/corpus fetch-corpus [--force] [--only <id,id>]` fetches the curated targets in `corpus/fetch/sources.yaml` (live with an honest User-Agent, robots.txt and 1 request per 2 s per host; then the Wayback Machine; then mirrors) into the tier folders, and writes `manifest.json` (metadata, source, sha256, `needs_ocr`) and `fetch-report.md` (what failed and why). Not a crawler: add a document to `sources.yaml` first.
+  - `pnpm --filter @repo/corpus fetch-corpus --import <id> <file>` records a document downloaded by hand, for publishers that refuse automated clients.
+  - `pnpm --filter @repo/corpus ingest [--dry-run]` uploads new or changed documents to `gs://crop-watch01-knowledge` and imports them into the RAG Engine corpus (provision it once with `bash infra/rag.sh`). Re-run after any fetch: it replaces changed documents and removes deleted ones. `pnpm --filter @repo/corpus probe <crop> <issue>` shows what retrieval returns.
+  - Documents whose licence does not allow redistribution (`redistribute: false`) are fetched and ingested but kept out of git (`corpus/.gitignore`, generated).

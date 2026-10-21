@@ -22,3 +22,11 @@ coverage
 
 # Generated (packages/shared/src/contracts/generate.ts)
 packages/shared/src/contracts/openapi.json
+
+# Fetched corpus and its generated manifest/report (tools/corpus/fetch/fetch.ts)
+tools/corpus/manifest.json
+tools/corpus/fetch-report.md
+tools/corpus/zambia
+tools/corpus/international
+tools/corpus/research
+tools/regulatory/faw-annex-candidate.csv

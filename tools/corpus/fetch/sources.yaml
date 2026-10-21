@@ -1,0 +1,544 @@
+# Curated corpus targets for the CropWatch knowledge layer (technicaldoc §7).
+#
+# The fetcher requests only these URLs (plus robots.txt and Wayback snapshots); it is not a
+# crawler. Add a document here, then run: pnpm --filter @repo/corpus fetch-corpus --only <id>
+#
+# tier: 1 MoA · 2 ZARI · 3 ZMD · 4 FAO · 5 CABI · 6 research. Lower wins on conflict.
+# priority: true marks the eight documents the D4 gate counts.
+# licence: as stated by the publisher; "(unconfirmed)" where we could not read it ourselves.
+# Doses in any document are context only: recommendations take doses from registered_products.
+
+sources:
+  # ---------------- Tier 1: Zambia Ministry of Agriculture ----------------
+  # agriculture.gov.zm refused or timed out on every connection on 2026-10-21; these rely on the
+  # Wayback Machine.
+  - id: moa-faw-manual-2nd-ed-2026
+    title: Integrated Fall Armyworm Management Manual, 2nd edition (MoA, ZARI, GIZ, FAW Task Force)
+    url: https://www.agriculture.gov.zm/2026/06/ministry-of-agriculture-launches-second-edition-of-integrated-fall-armyworm-management-manual/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2026
+    expect: pdf
+    priority: true
+    notes: >-
+      No public PDF link found in any index or archive; the launch page is the only public
+      pointer. Hand-fetch from MoA (Nicholas.Mwambazi@agriculture.gov.zm, the MoA contact on the
+      Sprout Open Content dataset) or ZARI (info@zari.gov.zm, +260 211 278130).
+
+  - id: moa-faw-manual-2nd-ed-launch-2026
+    title: Ministry of Agriculture launches second edition of Integrated Fall Armyworm Management Manual
+    url: https://www.agriculture.gov.zm/2026/06/ministry-of-agriculture-launches-second-edition-of-integrated-fall-armyworm-management-manual/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2026
+    expect: html
+
+  - id: moa-faw-manual-launch-2025
+    title: Integrated Fall Armyworm Management Manual launched in Zambia
+    url: https://www.agriculture.gov.zm/2025/01/integrated-fall-armyworm-management-manual-launched-in-zambia/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2025
+    expect: html
+
+  - id: moa-faw-biological-control-2023
+    title: Biological control, a sustainable approach to combat fall armyworm
+    url: https://www.agriculture.gov.zm/2023/11/biological-control-a-sustainable-approach-to-combat-fall-armyworm/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2023
+    expect: html
+
+  - id: moa-faw-maize-legume-intercropping-2022
+    title: Maize-legume intercropping in fall armyworm fight yielding results
+    url: https://www.agriculture.gov.zm/2022/05/maize-legume-intercropping-in-fall-armyworm-fight-yielding-results/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2022
+    expect: html
+
+  - id: moa-faw-pheromone-traps-press-release-2022
+    title: Country-wide distribution of fall armyworm pheromone traps and lures commences
+    url: https://www.agriculture.gov.zm/wp-content/uploads/2022/12/Press-Release_Country-wide-Distribution-of-Fall-Armyworm-PheromoneTraps_1st-December2022.pdf
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2022
+    expect: pdf
+    notes: Monitoring context (traps in 116 districts); no dosing.
+
+  - id: moa-cbsd-cmd-chienge-kaputa-2025
+    title: Government intensifies fight against CBSD and CMD in Chienge and Kaputa
+    url: https://www.agriculture.gov.zm/2025/02/government-intensifies-fight-against-cbsd-and-cmd-in-chienge-and-kaputa/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_mosaic, cassava_brown_streak]
+    year: 2025
+    expect: html
+
+  - id: moa-iec-materials-index-2023
+    title: Information Education Communication Material (MoA publications index)
+    url: https://www.agriculture.gov.zm/information-education-communication-materials/
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [maize]
+    issue: []
+    year: 2023
+    expect: html
+    notes: Publications index (bean, soybean, maize IEC materials); year estimated.
+
+  - id: moa-eextension-vegetables-2015
+    title: E-extension portal, vegetables (tomato, cabbage)
+    url: https://www.agriculture.gov.zm/integratedportal/?page_id=7743
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [tomato, cabbage]
+    issue: []
+    year: 2015
+    expect: html
+    notes: Year estimated.
+
+  - id: moa-eextension-dbm-neem-cabbage-2012
+    title: Use of neem extract against diamondback moth on cabbage (Katongo trial report)
+    url: https://www.agriculture.gov.zm/integratedportal/?wpfb_dl=312
+    tier: 1
+    source: Zambia Ministry of Agriculture
+    country: ZM
+    crop: [cabbage]
+    issue: [diamondback_moth]
+    year: 2012
+    expect: pdf
+    notes: The only Wayback capture is cut off at 1 MiB and does not parse.
+
+  # ---------------- Tier 2: ZARI ----------------
+  - id: zari-plant-protection-2026
+    title: ZARI Plant Protection division
+    url: https://www.zari.gov.zm/plant-protection-3/
+    tier: 2
+    source: ZARI
+    country: ZM
+    crop: []
+    issue: []
+    year: 2026
+    expect: html
+
+  - id: zari-plant-pathology-2025
+    title: ZARI Plant Pathology (diagnostic services)
+    url: https://www.zari.gov.zm/plant-pathology-2/
+    tier: 2
+    source: ZARI
+    country: ZM
+    crop: [cassava, maize]
+    issue: [cassava_brown_streak]
+    year: 2025
+    expect: html
+
+  - id: zari-entomology-2025
+    title: ZARI Entomology (fall armyworm, botanicals, biocontrol)
+    url: https://www.zari.gov.zm/entomology/
+    tier: 2
+    source: ZARI
+    country: ZM
+    crop: [maize, cassava]
+    issue: [fall_armyworm]
+    year: 2025
+    expect: html
+
+  - id: zari-crop-guide-maize-2025
+    title: ZARI crop production guide, maize
+    url: https://www.zari.gov.zm/download/83/crop-production-guides/4506/maize-edited.pdf
+    tier: 2
+    source: ZARI
+    country: ZM
+    crop: [maize]
+    issue: []
+    year: 2025
+    expect: pdf
+    notes: >-
+      APPSA maize production guide. Year is the upload year. No fall armyworm content (checked
+      2026-10-21); agronomy context only.
+
+  - id: zari-crop-guide-cabbage-2025
+    title: ZARI crop production guide, cabbage
+    url: https://www.zari.gov.zm/download/83/crop-production-guides/4493/cabbage-edited.pdf
+    tier: 2
+    source: ZARI
+    country: ZM
+    crop: [cabbage]
+    issue: [diamondback_moth]
+    year: 2025
+    expect: pdf
+    notes: Year is the upload year. Covers diamondback moth (checked 2026-10-21).
+
+  - id: zari-crop-guide-cassava-2025
+    title: ZARI crop production guide, cassava
+    url: https://www.zari.gov.zm/download/83/crop-production-guides/4500/cassava-edited.pdf
+    tier: 2
+    source: ZARI
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_mosaic, cassava_brown_streak]
+    year: 2025
+    expect: pdf
+    notes: Year is the upload year. Covers CMD and CBSD (checked 2026-10-21).
+
+  # ---------------- Tier 4: FAO ----------------
+  - id: fao-faw-ffs-guide-2018
+    title: Integrated management of the Fall Armyworm on maize, a guide for Farmer Field Schools in Africa
+    url: https://www.fao.org/3/i8665en/I8665EN.PDF
+    mirrors:
+      - https://www.grainsa.co.za/upload/FAO---FAW-Guide.pdf
+    tier: 4
+    source: FAO
+    country: INT
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2018
+    expect: pdf
+    priority: true
+    licence: © FAO 2018; may be copied and used in non-commercial products with acknowledgement of FAO (stated in the PDF)
+    notes: fao.org redirects to openknowledge.fao.org, which refuses automated clients; Grain SA hosts the same PDF.
+
+  - id: fao-faw-scouting-guidance-note-2018
+    title: FAO Fall Armyworm guidance note 2, scouting
+    url: https://www.fao.org/fileadmin/templates/fcc/Fall_Armyworm/web_guidance-note-2.pdf
+    tier: 4
+    source: FAO
+    country: INT
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2018
+    expect: pdf
+    licence: CC BY-NC-SA 3.0 IGO (unconfirmed)
+
+  - id: fao-faw-trapping-guidance-note-2018
+    title: FAO Fall Armyworm guidance note 3, pheromone trapping
+    url: https://www.fao.org/fileadmin/templates/fcc/Fall_Armyworm/web_guidance-note-3.pdf
+    tier: 4
+    source: FAO
+    country: INT
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2018
+    expect: pdf
+    licence: CC BY-NC-SA 3.0 IGO (unconfirmed)
+
+  - id: fao-cabi-faw-tot-manual-2019
+    title: Community-based fall armyworm monitoring, early warning and management, training of trainers manual (FAO, CABI)
+    url: https://www.cabi.org/wp-content/uploads/ToT-manual.pdf
+    tier: 4
+    source: FAO and CABI
+    country: INT
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2019
+    expect: pdf
+    licence: CC BY-NC-SA 3.0 IGO (stated in the PDF)
+
+  # ---------------- Tier 5: CABI PlantwisePlus ----------------
+  # PMDG = Pest Management Decision Guide (green and yellow lists). robots.txt allows /doi/pdf/,
+  # but Cloudflare refuses automated clients (HTTP 403 to the fetcher on 2026-10-21, whatever
+  # the User-Agent), some PMDGs redirect to sign-in, and the Wayback Machine holds no copies.
+  # Download them in a browser and record them with fetch-corpus --import <id> <file>.
+  - id: pw-pmdg-tuta-absoluta-zambia-2017
+    title: Tomato leaf miner, Zambia (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20177801301
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [tomato]
+    issue: [tuta_absoluta]
+    year: 2017
+    expect: pdf
+    priority: true
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-late-blight-tomato-zambia-2021
+    title: Late blight on tomato, Zambia (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20237800264
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [tomato]
+    issue: [late_blight]
+    year: 2021
+    expect: pdf
+    priority: true
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-early-blight-tomato-zambia-2014
+    title: Early blight fungal disease in tomato, Zambia (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801175
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [tomato]
+    issue: [early_blight]
+    year: 2014
+    expect: pdf
+    priority: true
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-diamondback-moth-zambia-2014
+    title: Diamondback moth on cabbage, Zambia (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801373
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [cabbage]
+    issue: [diamondback_moth]
+    year: 2014
+    expect: pdf
+    priority: true
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-cassava-mosaic-zambia-2024
+    title: Cassava mosaic disease in cassava, Zambia (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20257800018
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_mosaic]
+    year: 2024
+    expect: pdf
+    priority: true
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-fall-armyworm-zambia-2018
+    title: Fall armyworm on maize in Zambia (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20177801276
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2018
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-factsheet-fall-armyworm-identification-zambia-2017
+    title: Identification of fall armyworm caterpillars (factsheet, ZARI)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20177801254
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2017
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-factsheet-tuta-absoluta-ethiopia-2014
+    title: Disposing of fruit to manage Tuta absoluta on tomato (factsheet, Ethiopia)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20157800394
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ET
+    crop: [tomato]
+    issue: [tuta_absoluta]
+    year: 2014
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    notes: No Zambian Tuta factsheet exists.
+
+  - id: pw-factsheet-diamondback-moth-neem-zambia-2013
+    title: Neem against diamondback moth in cabbage (factsheet, ZARI)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801344
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [cabbage]
+    issue: [diamondback_moth]
+    year: 2013
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-late-blight-tomato-zambia-2013
+    title: Late blight fungal disease in tomato, Zambia (PMDG, earlier edition)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801177
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [tomato]
+    issue: [late_blight]
+    year: 2013
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    notes: Superseded by the 2021 edition; kept for the cultural-control content.
+
+  - id: pw-factsheet-late-blight-tomato-kenya-2012
+    title: Late blight or barafu in tomatoes (factsheet, Kenya)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20137804183
+    tier: 5
+    source: CABI PlantwisePlus
+    country: KE
+    crop: [tomato]
+    issue: [late_blight]
+    year: 2012
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-factsheet-early-blight-neem-zambia-2013
+    title: Neem against early blight in tomato (factsheet, ZARI)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801409
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [tomato]
+    issue: [early_blight]
+    year: 2013
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-factsheet-cassava-mosaic-planting-material-zambia-2013
+    title: Planting material free of cassava mosaic virus (factsheet, ZARI)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801410
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_mosaic]
+    year: 2013
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-factsheet-cassava-mosaic-uprooting-tanzania-2014
+    title: Control of cassava mosaic disease by uprooting (factsheet, Tanzania)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20157800492
+    tier: 5
+    source: CABI PlantwisePlus
+    country: TZ
+    crop: [cassava]
+    issue: [cassava_mosaic]
+    year: 2014
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-pmdg-cassava-brown-streak-zambia-2021
+    title: Cassava brown streak virus, Zambia
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20227800024
+    tier: 5
+    source: CABI PlantwisePlus
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_brown_streak]
+    year: 2021
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    notes: Document type (PMDG) inferred from the 2021 Zambia batch; check before relying on it.
+
+  - id: pw-pmdg-cassava-brown-streak-malawi-2022
+    title: Cassava brown streak disease, Malawi (PMDG)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20177800429
+    tier: 5
+    source: CABI PlantwisePlus
+    country: MW
+    crop: [cassava]
+    issue: [cassava_brown_streak]
+    year: 2022
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+
+  - id: pw-factsheet-cassava-brown-streak-rwanda-2012
+    title: Cassava brown streak disease (factsheet, Rwanda)
+    url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20127801772
+    tier: 5
+    source: CABI PlantwisePlus
+    country: RW
+    crop: [cassava]
+    issue: [cassava_brown_streak]
+    year: 2012
+    expect: pdf
+    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    notes: No Zambian CBSD factsheet exists.
+
+  # ---------------- Tier 6: research and NGO guides ----------------
+  - id: cimmyt-faw-ipm-guide-2018
+    title: Fall Armyworm in Africa, a guide for integrated pest management (CIMMYT, USAID)
+    url: https://repository.cimmyt.org/server/api/core/bitstreams/5f933e59-ad3a-4643-a91e-377f9d913370/content
+    mirrors:
+      - http://resilience-exchange.s3.amazonaws.com/attachments/uploads/4906/original/Fall_Armyworm_in_Africa__A_Guide_for_Integrated_Pest_Management.pdf
+      - https://www.grainsa.co.za/upload/FallArmyworm_IPM_Guide_forAfrica.pdf
+    tier: 6
+    source: CIMMYT
+    country: INT
+    crop: [maize]
+    issue: [fall_armyworm]
+    year: 2018
+    expect: pdf
+    priority: true
+    licence: © 2018 USAID and CIMMYT, all rights reserved; fair use encouraged (stated in the PDF)
+    redistribute: false
+    notes: repository.cimmyt.org refuses automated clients; the USAID Resilience Exchange and Grain SA host the same PDF.
+
+  - id: icipe-tuta-absoluta-manual-2020
+    title: Tuta absoluta management manual (icipe)
+    url: https://technologytransfer.icipe.org/wp-content/uploads/2021/06/Tuta-absoluta-Manual2020-Jan2021.pdf
+    tier: 6
+    source: icipe
+    country: INT
+    crop: [tomato]
+    issue: [tuta_absoluta]
+    year: 2020
+    expect: pdf
+    licence: No licence statement in the PDF (ISBN 978-9966-063-52-6)
+    redistribute: false
+    notes: technologytransfer.icipe.org timed out; fetched from the Wayback Machine.
+
+  - id: zari-cmd-whitefly-status-zambia-2015
+    title: Status of cassava mosaic disease and whitefly population in Zambia (Chikoti et al., Afr. J. Biotechnol.)
+    url: https://www.zari.gov.zm/download/80/pathology/4437/status_of_cassava_mosaic_disease_and_whitefly_popu.pdf
+    tier: 6
+    source: ZARI repository (journal reprint)
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_mosaic]
+    year: 2015
+    expect: pdf
+    licence: Open access; authors retain copyright (African Journal of Biotechnology, stated in the PDF)
+
+  - id: zari-cmd-review-zambia-2019
+    title: Cassava mosaic disease, a review of a threat to cassava production in Zambia (Chikoti et al., J. Plant Pathol.)
+    url: https://www.zari.gov.zm/download/80/pathology/4430/cassavamosaicdiseaseareview.pdf
+    tier: 6
+    source: ZARI repository (journal reprint)
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_mosaic]
+    year: 2019
+    expect: pdf
+    licence: CC BY 4.0 (stated in the PDF)
+
+  - id: zari-cbsd-cmd-expansion-review-2022
+    title: Expansion and impact of cassava brown streak and cassava mosaic diseases in Africa, a review (Chikoti and Tembo, Front. Sustain. Food Syst.)
+    url: https://www.zari.gov.zm/download/80/pathology/4429/expansion_and_impact_of_cassava_brown_streak_and_c.pdf
+    tier: 6
+    source: ZARI repository (journal reprint)
+    country: ZM
+    crop: [cassava]
+    issue: [cassava_brown_streak, cassava_mosaic]
+    year: 2022
+    expect: pdf
+    licence: CC BY (stated in the PDF)
