@@ -1,0 +1,80 @@
+rules_version = '2';
+
+// CropWatch Firestore rules. Deny by default: anything not matched below is refused.
+//
+// Every write to observations, recommendations, alerts, orgs and registered_products goes
+// through the API (Admin SDK on Cloud Run, which bypasses these rules). Clients only read,
+// plus a signed-in farmer may keep their own users/{uid} profile.
+//
+// Roles come from the `role` custom claim; strings match packages/shared/src/constants/roles.ts.
+// Anonymous demo farmers carry no claim.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Command Center roles see raw observations, including precise location. field_officer
+    // (outgrower staff) is deliberately absent: commercial views get camp/district aggregates
+    // through the API only (CLAUDE.md invariant 6).
+    function isCommandCenter() {
+      return signedIn()
+        && request.auth.token.get('role', '') in ['extension_officer', 'agronomist', 'admin'];
+    }
+
+    function validFarmerProfile(d) {
+      return d.keys().hasOnly(['role', 'org_id', 'district', 'province', 'channel', 'sim'])
+        && d.keys().hasAll(['role', 'org_id', 'district', 'province', 'channel', 'sim'])
+        && d.district is string && d.district.size() > 0
+        && d.province is string && d.province.size() > 0
+        && d.channel in ['app', 'whatsapp', 'sms', 'ussd'];
+    }
+
+    match /observations/{obsId} {
+      allow read: if isCommandCenter() || isOwner(resource.data.reporter_id);
+    }
+
+    match /recommendations/{recId} {
+      allow list: if isCommandCenter();
+      allow get: if isCommandCenter()
+        || isOwner(get(/databases/$(database)/documents/observations/$(resource.data.obs_id)).data.reporter_id);
+    }
+
+    // District-level cluster alerts; no farm locations.
+    match /alerts/{alertId} {
+      allow read: if signedIn();
+    }
+
+    // Public regulatory information.
+    match /registered_products/{registrationNo} {
+      allow read: if signedIn();
+    }
+
+    match /orgs/{orgId} {
+      allow read: if isCommandCenter()
+        || (signedIn() && request.auth.token.get('org_id', '') == orgId);
+    }
+
+    // A farmer may create and edit their own profile, but can never grant themselves a role,
+    // an org, or the sim flag. Officer profiles are written by the API only.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isCommandCenter();
+      allow create: if isOwner(userId)
+        && validFarmerProfile(request.resource.data)
+        && request.resource.data.role == 'farmer'
+        && request.resource.data.org_id == null
+        && request.resource.data.sim == false;
+      allow update: if isOwner(userId)
+        && validFarmerProfile(request.resource.data)
+        && resource.data.role == 'farmer'
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.org_id == resource.data.org_id
+        && request.resource.data.sim == resource.data.sim;
+    }
+  }
+}

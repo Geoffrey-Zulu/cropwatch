@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// CropWatch Storage rules. Deny by default: anything not matched below is refused.
+// The API (Admin SDK on Cloud Run) bypasses these rules to read photos for diagnosis.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Same Command Center roles as infra/firestore.rules.
+    function isCommandCenter() {
+      return signedIn()
+        && request.auth.token.get('role', '') in ['extension_officer', 'agronomist', 'admin'];
+    }
+
+    // Observation photos at observations/{obsId}/{n}.jpg (buildplan.md §2), uploaded straight
+    // from the app. The uploader stamps custom metadata reporter_id = their uid, which ties the
+    // photo to them before the observation document exists. Create-only: photos are evidence,
+    // so no client update or delete. Storage treats an overwrite as a create, hence the
+    // resource == null check.
+    match /observations/{obsId}/{fileName} {
+      allow create: if signedIn()
+        && resource == null
+        && obsId.matches('^[A-Za-z0-9_-]{1,128}$')
+        && fileName.matches('^[0-9]{1,2}[.]jpg$')
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.metadata.reporter_id == request.auth.uid;
+      allow read: if isCommandCenter()
+        || (signedIn() && resource.metadata.reporter_id == request.auth.uid);
+    }
+  }
+}
