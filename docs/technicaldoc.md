@@ -229,7 +229,7 @@ Response composition: IPM ladder first (scout → cultural → biological → ch
 
 **Dependency [NEEDS VALIDATION]:** machine-readable ZEMA register unconfirmed. Build the table from available sources in priority order: (1) ZEMA registration data if obtainable, (2) official product labels, (3) MoA FAW manual recommended-products annex. Demo scope only needs the products relevant to demo crops/issues (~20–40 rows).
 
-Schema (`registered_products`):
+Schema (`registered_products/{registeredProductDocId(registration_no)}`; the document ID is the percent-encoded number, since ZEMA numbers may contain `/`). Loaded from a CSV with `tools/regulatory/load-products.ts`, which validates every row against `@repo/shared` and treats the CSV as the whole register:
 
 ```json
 {
@@ -242,12 +242,13 @@ Schema (`registered_products`):
   "label_dose": "string, verbatim from label",
   "phi_days": 7,
   "who_class": "II",
+  "source": "zema | label | moa_faw_manual | placeholder",
   "source_doc": "uri",
-  "expiry": "date|null"
+  "expiry": "date|null (valid through this date)"
 }
 ```
 
-Filter logic (deterministic, in `/recommend`): every chemical candidate from RAG/Gemini must match a row on `approved_crops` AND `approved_issues`, unexpired. No match → dropped and logged in `regulatory_check.rejected_products`. Doses rendered ONLY from `label_dose`. If zero chemicals survive, the recommendation ships IPM-only with "consult an extension officer for chemical options".
+Filter logic (deterministic, in `/recommend`; `apps/functions/src/services/recommend/regulatoryFilter.ts`): every chemical candidate from RAG/Gemini must match a row (by exact registration number, or by trade name or active ingredient ignoring case and spacing) on `approved_crops` AND `approved_issues`, unexpired on the Lusaka calendar date. Rows with `source: placeholder` exist only so the filter is testable before the real register lands; they are excluded unless a caller explicitly allows them, so they never reach a farmer as advice. The chemical rung of the IPM ladder is always written by CropWatch, never taken from retrieved text. No match → dropped and logged in `regulatory_check.rejected_products`. Doses rendered ONLY from `label_dose`. If zero chemicals survive, the recommendation ships IPM-only with "consult an extension officer for chemical options".
 
 Commercial firewall: "where to buy" renders after the recommendation, lists ALL registered options for the issue, never filtered by sponsor.
 
@@ -291,7 +292,7 @@ Screens:
 
 ## 12. Seed-data generator
 
-Script `tools/seed.py`: generates ~500 synthetic observations over realistic Zambian geography (district centroids + jitter; Eastern Province FAW storyline, Lusaka/Chongwe Tuta storyline), timestamps spread over 21 days with an accelerating cluster in the demo district, all rows `sim: true`, mixed verification states, plausible severity distributions. Also seeds DEMO OUTGROWER CO. with simulated enrolled-farmer counts. Deterministic seed for rehearsals (same sequence every run). One flag `--live-demo` pre-arms the exact rehearsed sequence: the presenter's real report becomes the 5th report completing the cluster.
+Script `tools/seed` (`pnpm --filter @repo/seed seed`, dry run by default; `--commit` replaces the sim data in Firestore and BigQuery): generates ~500 synthetic observations over realistic Zambian geography (district centroids + jitter; Eastern Province FAW storyline, Lusaka/Chongwe Tuta storyline), timestamps spread over 21 days with an accelerating cluster in the demo district, all rows `sim: true`, mixed verification states, plausible severity distributions. Also seeds DEMO OUTGROWER CO. with simulated enrolled-farmer counts. Deterministic seed for rehearsals (same sequence every run). One flag `--live-demo` (with `--demo-issue`, `--demo-center`, `--demo-district`) pre-arms the exact rehearsed sequence: the presenter's real report becomes the 5th report completing the cluster. Demo-issue reports near the venue are aged out of the window, four qualifying reports are placed within 4 km, and the run refuses to write unless the §9 rule confirms the venue is exactly one report short. Morning-of procedure: `docs/demo-ops.md`.
 
 ## 13. Demo runbook (deterministic)
 

@@ -235,3 +235,63 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 - **D4:** `/recommend` moves `status` to `complete`; the D7 verify flow re-triggers it when the issue is corrected.
 - **D6:** the BigQuery stream must include `internal/diagnosis` (frozen condition 4).
 - **Rehearsals:** use `pnpm --filter @repo/admin-tools smoke-e2e --image <photo>`.
+
+### D3 · Tue 21 Oct (pulled forward) — regulatory DB, filter, seed, demo ops
+
+**Status:** accepted and merged to `main`. Live data: `registered_products` (7 placeholder rows), and 500 sim observations plus 332 sim users and DEMO OUTGROWER CO. in Firestore and in BigQuery `cropwatch.observations`.
+
+**Landed**
+
+- **Regulatory Product Database.** `registered_products` is loaded by `tools/regulatory/load-products.ts`. Every CSV row is validated against `@repo/shared`; the parser never trims, so `label_dose` stays byte-identical; the load is all-or-nothing; and the CSV is the whole register, so a dry-run plans and `--commit` syncs. Rows carry a required `source` (`zema` | `label` | `moa_faw_manual` | `placeholder`). The document ID is the percent-encoded registration number, because ZEMA numbers may contain `/`.
+- **Placeholder register (`placeholder-products.csv`, 7 rows):**
+  - covers maize/FAW, tomato/Tuta, tomato late and early blight, and cabbage/DBM;
+  - includes one expired row and one registration number with a slash;
+  - cassava and maize lethal necrosis deliberately have no products (viral diseases, IPM only).
+  - The filter **excludes placeholders unless a caller explicitly allows them**, so they never reach a farmer as advice.
+- **Regulatory filter and IPM ladder** (`apps/functions/src/services/recommend/`):
+  - Candidates match a register row by exact registration number, or by trade name or active ingredient ignoring case and spacing. A match is accepted only if it's approved for this crop and issue and unexpired on the Lusaka calendar date. Every rejection is logged with a reason.
+  - The ladder keeps only cited steps, ordered scout → cultural → biological → chemical. The chemical line is always written by CropWatch, so doses come only from `label_dose`. If no chemical survives, the output is IPM-only plus the officer referral; with no cited evidence there is no recommendation at all.
+  - The knowledge layer is an interface whose stub refuses until D4. Nothing is wired into the live pipeline yet.
+- **Seed (`tools/seed`):**
+  - Deterministic: a seeded PRNG plus an anchor time; the same anchor gives byte-identical data.
+  - 500 sim observations over 21 days: an accelerating Eastern FAW storyline (180), the Lusaka/Chongwe Tuta storyline (120), and a sparse national background (200).
+  - Every row has a `district_slug`; all four verification states appear; 332 sim users, including DEMO OUTGROWER CO. members and 6 field officers.
+  - Diagnoses are stamped `sim-seed` (no Gemini calls), with internal numbers so BigQuery calibration queries have data.
+  - `--live-demo` ages demo-issue reports near the venue out of the 72 h window and pre-arms 4 qualifying reports within 4 km. It refuses to write unless the §9 rule confirms the venue is exactly one report short, and it prints when the arming expires.
+- **Supporting pieces:**
+  - `packages/shared`: `geo.ts` (geohash, distance), approximate district centres, and the BigQuery row schema with `toObservationRow` (includes the internal numbers, per frozen condition 4; no `reporter_id`).
+  - `tools/gcp`: the shared REST client for Firestore and BigQuery (load jobs, so sim rows can always be deleted).
+  - `apps/web`: the `DemoBadge` component.
+  - `infra/scale.sh`: sets the warm-instance floor without a rebuild.
+  - `docs/demo-ops.md`: the morning-of checklist.
+
+**Acceptance**
+
+| Check                                                                                               | Result                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §4.3: only registered, crop- and issue-matched, unexpired chemicals; dose byte-identical to the row | A unit test per branch (registration no., trade name, ingredient, not registered, wrong crop, wrong issue, unknown issue, expired, expiring today, placeholder) plus a 300-trial property test |
+| §4.3: zero chemicals → IPM-only + officer referral                                                  | Tested through to the contract view (`officer_referral: true`)                                                                                                                                 |
+| §4.3: ≥ 1 citation on every response                                                                | Enforced by the schema; uncited evidence → no recommendation                                                                                                                                   |
+| §4.4: deterministic across runs                                                                     | Same anchor → byte-identical; another anchor shifts only timestamps                                                                                                                            |
+| §4.4: every row `sim: true`                                                                         | Tested; the seed refuses to write otherwise and only ever touches `sim-` ids                                                                                                                   |
+| §4.4: DEMO badge whenever a sim row is displayed                                                    | `DemoBadge` tested (any sim row → shown, none → hidden); the D5 map mounts it                                                                                                                  |
+| Live writes                                                                                         | Loader re-run shows 7 unchanged (exact round trip); seed re-commit replaces rather than duplicates (BigQuery: 500 rows, 500 distinct)                                                          |
+| Seeded docs match the frozen contract                                                               | 3 sim observations read through the live API as an agronomist: valid views, nothing leaked; an anonymous farmer gets 403                                                                       |
+| Live demo                                                                                           | Venue exactly one report short for Lusaka/Tuta and for Chipata/FAW (inside an outbreak); the presenter's report completes it                                                                   |
+| `pnpm` gate                                                                                         | install, audit, lint, format, typecheck, build, test (251 tests across 8 packages), syncpack: all green                                                                                        |
+
+**Found and fixed on the way**
+
+- The seed CLI's `--demo-center=…` form was silently ignored, which would have dropped the venue coordinates. Arguments are now strict: both forms work, unknown flags and coordinates outside Zambia are errors.
+- `pnpm --filter` runs scripts in the package directory, so the loader and `smoke-e2e` couldn't open repo-relative paths. Paths now resolve from `INIT_CWD`.
+
+**Needs Geoffrey**
+
+- Real register rows (MoA FAW-manual annex / ZEMA) as a CSV in the `placeholder-products.csv` format. Loading them removes the placeholders.
+- Demo issue and venue coordinates for `--live-demo` (see `docs/demo-ops.md`).
+
+**Carry-forward**
+
+- **D4:** wire `recommend()` with RAG Engine as the knowledge layer and a Firestore products reader; set `status: complete` and `recommendation_id`. Decide whether to backfill recommendations for the seeded rows, which currently sit at `recommending` or `awaiting_expert_review`.
+- **D5:** mount `DemoBadge` on every view of observations and alerts; officers sign in through `set-role`.
+- **D6:** the §9 cluster rule in BigQuery. The JS reference (`tools/seed/cluster.ts`) and the coarse-grid SQL agree on the storylines; refine with `ST_DWITHIN` as technicaldoc says.
