@@ -2,7 +2,10 @@
 // photo upload to Storage → POST /observations → wait for the diagnosis. Then checks the
 // contract invariants and the security rules on the live project, and deletes what it made.
 //
-//   pnpm --filter @repo/admin-tools smoke-e2e --image <photo.jpg> [--crop maize] [--keep]
+//   pnpm --filter @repo/admin-tools smoke-e2e --image <photo.jpg> [--crop maize] [--post-first] [--keep]
+//
+// --post-first reports before uploading the photo, so the API's own diagnosis attempt finds no
+// photo and only the Eventarc Storage-finalize event can trigger it: proves Eventarc works.
 import { execSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -20,9 +23,11 @@ const flag = (name: string) => {
   return i >= 0 ? (argv[i + 1] ?? '') : null
 }
 const imagePath = flag('image')
-if (!imagePath) throw new Error('usage: smoke-e2e --image <photo.jpg> [--crop maize] [--keep]')
+if (!imagePath)
+  throw new Error('usage: smoke-e2e --image <photo.jpg> [--crop maize] [--post-first] [--keep]')
 const crop = flag('crop') ?? 'maize'
 const keep = argv.includes('--keep')
+const postFirst = argv.includes('--post-first')
 
 let failures = 0
 function check(ok: boolean, label: string, detail = '') {
@@ -75,8 +80,11 @@ try {
   console.log('\nStorage rules (live)')
   const foreign = await upload(other.idToken, photoPath, photo)
   check(foreign.status === 403, 'upload under another uid is refused', `HTTP ${foreign.status}`)
-  const uploaded = await upload(farmer.idToken, photoPath, photo)
-  check(uploaded.ok, 'upload under own uid succeeds', `HTTP ${uploaded.status}`)
+  const uploadOwn = async () => {
+    const uploaded = await upload(farmer.idToken, photoPath, photo)
+    check(uploaded.ok, 'upload under own uid succeeds', `HTTP ${uploaded.status}`)
+  }
+  if (!postFirst) await uploadOwn()
 
   console.log('\nREST v1')
   const health = await fetch(`${API}/health`)
@@ -91,7 +99,7 @@ try {
     photo_paths: [photoPath],
     farmer_description: 'smoke test',
   }
-  const started = Date.now()
+  let started = Date.now()
   const created = await api(farmer.idToken, '/observations', {
     method: 'POST',
     body: JSON.stringify(report),
@@ -112,6 +120,17 @@ try {
     }),
   })
   check(hijack.status === 403, 'same obs_id from another uid → 403 (first writer wins)')
+
+  if (postFirst) {
+    console.log('\nEventarc: photo uploaded only now, so the Storage event must trigger diagnosis')
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    const early = (await (await api(farmer.idToken, `/observations/${obsId}`)).json()) as {
+      status?: string
+    }
+    check(early.status === 'diagnosing', 'no diagnosis without a photo', `status=${early.status}`)
+    started = Date.now()
+    await uploadOwn()
+  }
 
   let view: Record<string, unknown> = {}
   while (Date.now() - started < 90_000) {
