@@ -180,3 +180,58 @@ A deployed system where: a photo from a phone becomes a diagnosed, regulatory-fi
 - **D5:** the `firebase` web SDK pulls `@grpc/grpc-js@1.9.16` (pinned by `@firebase/firestore`), which fails `pnpm audit --audit-level high` on GHSA-m9gg-hp2v-232j. That advisory is server-side and grpc-js is not in the browser bundle, but it needs an explicit risk-acceptance decision. The SDK also needs `'@firebase/util': false` and `protobufjs: false` under `allowBuilds`.
 - **Any package:** adding `@types/node` splits vitest into two peer variants and breaks jest-dom matcher types. `web` and `ui` both carry `@types/node` so they share one vitest. Keep it that way.
 - **D3:** ZEMA registration numbers may contain `/`, which is invalid in a Firestore document ID. Normalise the ID for `registered_products/{id}`.
+
+### D2 · Tue 21 Oct (pulled forward) — contract freeze, /diagnose, first deploy
+
+**Status:** accepted and merged to `main`. Live API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1` (revision `cropwatch-api-00002-5fn`, image `7560890`).
+
+**Landed**
+
+- **Contract frozen:** REST v1 1.0.0, with the four pre-freeze conditions (see §2). The Android app `zm.cropwatch.app` is registered, and `apps/mobile/README.md` is the mobile hand-off.
+- **/diagnose:**
+  - Model: `gemini-2.5-flash` on Vertex AI `europe-west1` via `@google/genai`. Its `responseJsonSchema` is built from the controlled vocabularies, the prompt is `prompts/diagnose-v1.md`, and `model_id` + `prompt_version` are stamped on every diagnosis.
+  - Invalid output gets one retry, then routes to experts as `unknown` / `invalid_model_output`, never a crash. Quota and server errors (429/5xx) get their own backoff and don't use up that retry.
+  - Routing is decided by the server, not the model. The observation gets bands only; the numbers go to `internal/diagnosis`.
+- **Triggers:** `POST /observations` starts diagnosis in the background (Cloud Run keeps CPU allocated). Eventarc on Storage finalize posts to `/internal/events/storage`, which verifies the caller's Google-signed token. A lease stops the two triggers from double-running.
+- **REST:** `POST /observations`, `GET /observations/{id}` and `/health` are live. `verify`, `intervention`, `outcome` and `alerts` answer 501 until D6/D7.
+- **Deploy:** `infra/deploy.sh` (with `lib.sh` and `cloudbuild.yaml`) creates or reuses the Artifact Registry repo, a dedicated build service account with an in-region staging bucket, then runs Cloud Build in `europe-west1`, deploys Cloud Run, wires Eventarc and smoke-tests the health endpoint.
+- **Tools (`tools/admin`):** `set-role` (pulled forward from D5) sets officer claims; `smoke-e2e` plays the mobile app against the live API.
+- **UI lint rule:** `model_confidence`, `severity_pct` and probability/percent identifiers are banned in UI code (`web`, `ui`).
+
+**Acceptance (buildplan §4.2)**
+
+| Check                                    | Result                                                                                  |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| Real model, 12 labelled test images      | 12/12 schema-valid on the first attempt; 10/12 match the expected issue; slowest 12.5 s |
+| First reply of each corrupted (retry)    | 12/12 recovered on the retry                                                            |
+| Every reply corrupted                    | 12/12 routed to experts (`invalid_model_output`), no crash                              |
+| Live round trip, upload then POST        | 7.7 s; all 15 checks (contract, live Storage/Firestore rules, internal numbers, stamps) |
+| Live round trip, Eventarc as the trigger | 8.0 s warm (27 s on the very first delivery after the trigger was created)              |
+| No numbers in UI-bound data              | Contract test + Firestore-document test + UI lint rule                                  |
+| `pnpm` gate                              | install, audit, lint, format, typecheck, build, test (176 tests), syncpack: all green   |
+
+The test images are public Wikimedia Commons photos, held outside the repo. The eval (`pnpm --filter @repo/functions eval:diagnose <dir>`) is reusable for D6 scoring of the 100 field photos.
+
+**Found and fixed on the way**
+
+- **Vertex quota:** Vertex returned 429 under a burst of requests, which routed good photos to experts. Fixed with a transient backoff that's separate from the invalid-output retry.
+- **vitest split again:** the vitest peer split came back via firebase-admin's `@opentelemetry/api`. jest-dom's types are now declared in each consuming package, which supersedes the D1 `@types/node` workaround.
+- **Cloud Build quota:** new projects have no Cloud Build quota for `E2_HIGHCPU_8` in `europe-west1`, so builds use the default worker.
+- **Git Bash path rewriting:** Git Bash rewrote the Eventarc path `/internal/events/storage`. A scoped `MSYS2_ARG_CONV_EXCL` fixes it; the global `MSYS_NO_PATHCONV` breaks gcloud itself.
+- **pnpm supply-chain check:** `pnpm deploy --offline` fails pnpm 12's supply-chain check, so the image's dependency step runs online.
+- **Identity Toolkit quota project:** user credentials need a quota project (`GOOGLE_CLOUD_QUOTA_PROJECT`).
+- **Token in error output:** a firebase-admin error dump printed a short-lived access token into local session output. `set-role` now prints only the error code and message.
+
+**For D6 prompt tuning (not D2 gates):** one late-blight photo was called early blight with medium/high confidence, a confident miss. The mustard-leaf diamondback-moth photo came back `unknown` in one run and `diamondback_moth` in another.
+
+**Needs Geoffrey**
+
+- Before demo day, run `MIN_INSTANCES=1 bash infra/deploy.sh` to keep one instance warm (about US$2/day); revert to 0 afterwards.
+- GitHub Actions is still blocked by the billing lock.
+
+**Carry-forward**
+
+- **D3 seed:** write the full frozen document shape: `district_slug`, `status`, bands, `sim: true`, and `internal/diagnosis` for simulated diagnoses.
+- **D4:** `/recommend` moves `status` to `complete`; the D7 verify flow re-triggers it when the issue is corrected.
+- **D6:** the BigQuery stream must include `internal/diagnosis` (frozen condition 4).
+- **Rehearsals:** use `pnpm --filter @repo/admin-tools smoke-e2e --image <photo>`.
