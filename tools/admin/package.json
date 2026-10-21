@@ -1,0 +1,26 @@
+{
+  "name": "@repo/admin-tools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "set-role": "tsx set-role.ts",
+    "smoke-e2e": "tsx smoke-e2e.ts",
+    "lint": "eslint \"*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+    "firebase-admin": "^14.5.0"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "eslint": "^10.12.0",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.3"
+  }
+}
