@@ -87,6 +87,15 @@ describe('districts', () => {
     for (const d of DISTRICTS) expect(PROVINCES).toContain(d.province)
   })
 
+  it('sit inside Zambia (approximate district towns)', () => {
+    for (const d of DISTRICTS) {
+      expect(d.center.latitude, d.name).toBeGreaterThan(-18.1)
+      expect(d.center.latitude, d.name).toBeLessThan(-8.2)
+      expect(d.center.longitude, d.name).toBeGreaterThan(21.9)
+      expect(d.center.longitude, d.name).toBeLessThan(33.75)
+    }
+  })
+
   it('include both demo storylines', () => {
     expect(findDistrict('Chipata')?.province).toBe('Eastern')
     expect(findDistrict('Chongwe')?.province).toBe('Lusaka')

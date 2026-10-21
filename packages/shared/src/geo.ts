@@ -29,3 +29,19 @@ export function geohash(latitude: number, longitude: number, precision = 9) {
   }
   return hash
 }
+
+const EARTH_RADIUS_KM = 6371
+
+// Great-circle distance (haversine), for the cluster rule's "within 10 km" (technicaldoc §9).
+export function distanceKm(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number }
+) {
+  const rad = (degrees: number) => (degrees * Math.PI) / 180
+  const dLat = rad(b.latitude - a.latitude)
+  const dLng = rad(b.longitude - a.longitude)
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.latitude)) * Math.cos(rad(b.latitude)) * Math.sin(dLng / 2) ** 2
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h))
+}

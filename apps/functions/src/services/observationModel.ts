@@ -1,6 +1,7 @@
 import {
   districtSlug,
   findDistrict,
+  geohash,
   ISSUE_LABELS,
   ObservationSchema,
   ObservationViewSchema,
@@ -12,7 +13,6 @@ import {
   type RecommendationView,
   type Role,
 } from '@repo/shared'
-import { geohash } from '../lib/geohash'
 
 export interface Caller {
   uid: string

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { RecommendationSchema } from './recommendation'
-import { RegisteredProductSchema } from './registeredProduct'
+import { RegisteredProductSchema, registeredProductDocId } from './registeredProduct'
 
 const product = {
   registration_no: 'TEST-0001',
@@ -12,6 +12,7 @@ const product = {
   label_dose: '  20 ml / 15 L knapsack — spray into whorl ',
   phi_days: 14,
   who_class: 'II',
+  source: 'label',
   source_doc: 'gs://example/labels/example-5ec.pdf',
   expiry: null,
 }
@@ -77,5 +78,27 @@ describe('RecommendationSchema', () => {
       rag_sources: [{ ...recommendation.rag_sources[0], tier: 7 }],
     })
     expect(result.success).toBe(false)
+  })
+})
+
+describe('registeredProductDocId', () => {
+  it('encodes registration numbers that contain slashes, reversibly', () => {
+    const id = registeredProductDocId('ZEMA/PCS/2024/0012')
+    expect(id).not.toContain('/')
+    expect(decodeURIComponent(id)).toBe('ZEMA/PCS/2024/0012')
+    expect(registeredProductDocId('A/B')).not.toBe(registeredProductDocId('A_B'))
+  })
+})
+
+describe('product source', () => {
+  it('is required and from the known list', () => {
+    const withoutSource = Object.fromEntries(
+      Object.entries(product).filter(([k]) => k !== 'source')
+    )
+    expect(RegisteredProductSchema.safeParse(withoutSource).success).toBe(false)
+    expect(RegisteredProductSchema.safeParse({ ...product, source: 'rumour' }).success).toBe(false)
+    expect(RegisteredProductSchema.safeParse({ ...product, source: 'placeholder' }).success).toBe(
+      true
+    )
   })
 })
