@@ -54,37 +54,45 @@ Language rules for UI/pitch: "prototype risk signal", "CropWatch Risk Model v0",
 
 ### 4.1 Firestore collections
 
+> **Revised 2026-10-21 with the REST v1 contract freeze.** Source of truth: the Zod schemas in `packages/shared/src/schemas/`. The app may listen to `observations/{obsId}` directly, so that document is UI-bound: it carries qualitative bands only. Raw model numbers live in the client-unreadable sub-document `observations/{obsId}/internal/diagnosis`. Every collection that can hold synthetic rows carries a required `sim`.
+
 ```
 users/{userId}
   role: "farmer" | "field_officer" | "extension_officer" | "agronomist" | "admin"
   org_id: string | null            // outgrower/NGO the reporter belongs to
-  district, province: string
+  district: string, province: Province   // Province = one of Zambia's 10
   channel: "app" | "whatsapp" | "sms" | "ussd"
+  sim: boolean
 
 orgs/{orgId}                        // e.g. DEMO OUTGROWER CO.
   name, type: "outgrower" | "ngo" | "gov" | "input_company"
   enrolled_farmer_count: number
+  sim: boolean
 
 observations/{obsId}                // the core entity
   reporter_id, reporter_role, org_id
   created_at: timestamp
   location: geopoint                // precise; NEVER exposed to commercial views
   geohash: string                   // for cheap proximity queries
-  district, province, camp: string  // aggregation keys
+  district: string                 // as submitted
+  district_slug: string            // normalised; THE aggregation key (clusters, alerts, FCM topics)
+  province: Province
+  camp: string | null              // rarely known at capture
   crop: "maize" | "tomato" | "cabbage" | "cassava" | "soybean" | ...
   planting_date: date | null
   growth_stage: string | null       // e.g. "V6", "vegetative", "flowering"
-  photo_paths: string[]             // Cloud Storage
+  photo_paths: string[]             // observations/{uid}/{obsId}/{n}.jpg (uid = uploader)
   farmer_description: string | null
-  diagnosis: {                      // written by /diagnose
+  status: "diagnosing" | "awaiting_expert_review" | "recommending" | "complete"
+  diagnosis: {                      // written by /diagnose; bands only (UI-bound)
     suspected_issue: string         // canonical issue slug, e.g. "fall_armyworm"
-    model_confidence: number        // 0–1, INTERNAL; UI maps to bands
-    confidence_band: "low" | "medium" | "high"
-    severity_pct: number            // 0–100 visual estimate
+    confidence_band: "low" | "medium" | "high"   // low ⇔ model_confidence < 0.6
+    severity_band: "none" | "low" | "moderate" | "severe" | null   // null if output unusable
     visible_symptoms: string[]
     needs_expert_review: boolean
-    model_id: string, prompt_version: string
-  }
+    expert_review_reason: "low_confidence" | "unknown_issue" | "invalid_model_output" | null
+    model_id: string, prompt_version: string, diagnosed_at: timestamp
+  } | null
   verification_state: "UNVERIFIED" | "AI_ASSESSED" | "FIELD_VERIFIED" | "EXPERT_CONFIRMED"
   verified_by: userId | null
   verified_issue: string | null     // may differ from AI diagnosis
@@ -95,9 +103,16 @@ observations/{obsId}                // the core entity
     notes: string
   } | null
   outcome: {
-    followup_at, severity_pct: number, resolved: boolean, notes: string
+    followup_at, severity_band: "none" | "low" | "moderate" | "severe", resolved: boolean, notes: string
   } | null
   sim: boolean                      // TRUE for all seeded demo data — drives the badge
+
+observations/{obsId}/internal/diagnosis   // INTERNAL: no client can read it (firestore.rules)
+  model_confidence: number | null   // 0–1; null when the output was unusable
+  severity_pct: number | null       // 0–100 visual estimate
+  reasoning_summary: string | null
+  invalid_output: string | null     // raw text of the last unusable output, for prompt tuning
+  attempts: number, model_id, prompt_version, created_at
 
 recommendations/{recId}
   obs_id, created_at
@@ -106,13 +121,16 @@ recommendations/{recId}
                        label_dose, phi_days, source_doc }]   // ONLY from regulatory DB
   rag_sources: [{ title, tier, uri, chunk_ids }]
   regulatory_check: { passed: boolean, rejected_products: string[] }
+  sim: boolean
 
 alerts/{alertId}
   type: "cluster" | "risk_change" | "org_priority"
-  issue, district, geo_center, radius_km
+  issue, district, district_slug, geo_center, radius_km
   level: "LOW" | "ELEVATED" | "HIGH"
+  contributing_factors: string[]   // ≥ 1; a level is never shown bare
   observation_ids: string[]
   channels_sent: ["fcm","sms"], created_at
+  sim: boolean                     // true if built from any simulated observation
 
 registered_products/{registrationNo}   // Regulatory Product Database — see §8
 ```
@@ -120,7 +138,10 @@ registered_products/{registrationNo}   // Regulatory Product Database — see §
 ### 4.2 BigQuery tables (streamed from Firestore via extension or explicit writes)
 
 ```
-cropwatch.observations      -- flattened observation rows, GEOGRAPHY point column
+cropwatch.observations      -- flattened observation rows, GEOGRAPHY point column, keyed on
+                            -- district_slug; INCLUDES observations/{id}/internal/diagnosis
+                            -- (model_confidence, severity_pct, reasoning_summary, attempts) for
+                            -- accuracy and calibration work. BigQuery is never UI-bound.
 cropwatch.weather_daily     -- district-level daily weather pulls
 cropwatch.satellite_metrics -- optional (Earth Engine ST_REGIONSTATS outputs)
 cropwatch.risk_scores       -- per district/camp per day: level + contributing factors
@@ -174,7 +195,7 @@ Enforce structured output with a response schema equivalent to:
 }
 ```
 
-Routing: `model_confidence < 0.6` or `suspected_issue == "unknown"` → `needs_expert_review = true`, state stays `UNVERIFIED`→`AI_ASSESSED` is NOT set; observation appears in officer review queue. Controlled vocabulary of issues lives in one config file (start: fall_armyworm, tuta_absoluta, late_blight, early_blight, diamondback_moth, cassava_mosaic, cassava_brown_streak, maize_lethal_necrosis, unknown).
+Routing: `model_confidence < 0.6` or `suspected_issue == "unknown"` → `needs_expert_review = true` with an `expert_review_reason`, state stays `UNVERIFIED` (`AI_ASSESSED` is NOT set), `status = awaiting_expert_review`; observation appears in officer review queue. Output that fails schema validation gets one retry; a second failure is stored as `unknown` with reason `invalid_model_output`, never a crash. The model's numbers are stored only in `observations/{obsId}/internal/diagnosis`; the observation document gets bands (§4.1). Controlled vocabulary of issues lives in one config file (start: fall_armyworm, tuta_absoluta, late_blight, early_blight, diamondback_moth, cassava_mosaic, cassava_brown_streak, maize_lethal_necrosis, unknown).
 
 Prompt versioning: store `prompt_version` on every diagnosis. Keep prompts in repo under `prompts/`.
 

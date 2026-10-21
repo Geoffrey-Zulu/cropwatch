@@ -9,22 +9,25 @@ const observation = {
   location: { latitude: -15.4167, longitude: 28.2833 },
   geohash: 'kv2mqs',
   district: 'Chongwe',
+  district_slug: 'chongwe',
   province: 'Lusaka',
-  camp: 'Chongwe Central',
+  camp: null,
   crop: 'tomato',
   planting_date: '2026-08-15',
   growth_stage: 'flowering',
-  photo_paths: ['observations/abc123/0.jpg'],
+  photo_paths: ['observations/Vn1rKk5yQhWcXz0pB2sLqT4uEa83/k3J9xQ2mW8pL5vR1tY7u/0.jpg'],
   farmer_description: null,
+  status: 'awaiting_expert_review',
   diagnosis: {
     suspected_issue: 'tuta_absoluta',
-    model_confidence: 0.45,
     confidence_band: 'low',
-    severity_pct: 20,
+    severity_band: 'low',
     visible_symptoms: ['leaf mines'],
     needs_expert_review: true,
+    expert_review_reason: 'low_confidence',
     model_id: 'gemini-test',
-    prompt_version: 'diagnose-v0',
+    prompt_version: 'diagnose-v1',
+    diagnosed_at: '2026-10-21T09:30:08Z',
   },
   verification_state: 'UNVERIFIED',
   verified_by: null,
@@ -41,7 +44,12 @@ describe('ObservationSchema', () => {
   })
 
   it('accepts an observation before diagnosis lands', () => {
-    expect(ObservationSchema.safeParse({ ...observation, diagnosis: null }).success).toBe(true)
+    const result = ObservationSchema.safeParse({
+      ...observation,
+      status: 'diagnosing',
+      diagnosis: null,
+    })
+    expect(result.success).toBe(true)
   })
 
   it('never marks an expert-review observation AI_ASSESSED', () => {
@@ -55,6 +63,7 @@ describe('ObservationSchema', () => {
   it('lets an officer verify an expert-review observation', () => {
     const result = ObservationSchema.safeParse({
       ...observation,
+      status: 'recommending',
       verification_state: 'FIELD_VERIFIED',
       verified_by: 'officer-1',
       verified_issue: 'tuta_absoluta',
@@ -84,18 +93,36 @@ describe('ObservationSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('records outcome severity as a band', () => {
+    const outcome = { followup_at: '2026-10-29T08:00:00Z', resolved: true, notes: '' }
+    expect(
+      ObservationSchema.safeParse({
+        ...observation,
+        outcome: { ...outcome, severity_band: 'none' },
+      }).success
+    ).toBe(true)
+    expect(
+      ObservationSchema.safeParse({ ...observation, outcome: { ...outcome, severity_pct: 0 } })
+        .success
+    ).toBe(false)
+  })
 })
 
 describe('PhotoPathSchema', () => {
   it('accepts the Storage upload path from the contract', () => {
-    expect(PhotoPathSchema.safeParse('observations/Xy-9_z/12.jpg').success).toBe(true)
+    expect(PhotoPathSchema.safeParse('observations/uid-1/Xy-9_zAbCdEfGhIjK/12.jpg').success).toBe(
+      true
+    )
   })
 
   it.each([
-    'gs://bucket/observations/abc/0.jpg',
-    'observations/abc/0.png',
-    'observations/abc/../x/0.jpg',
-    'observations/abc/100.jpg',
+    'gs://bucket/observations/uid-1/k3J9xQ2mW8pL5vR1tY7u/0.jpg',
+    'observations/uid-1/k3J9xQ2mW8pL5vR1tY7u/0.png',
+    'observations/uid-1/k3J9xQ2mW8pL5vR1tY7u/../x/0.jpg',
+    'observations/uid-1/k3J9xQ2mW8pL5vR1tY7u/100.jpg',
+    'observations/uid-1/tooShort/0.jpg',
+    'observations/k3J9xQ2mW8pL5vR1tY7u/0.jpg',
   ])('rejects %s', path => {
     expect(PhotoPathSchema.safeParse(path).success).toBe(false)
   })

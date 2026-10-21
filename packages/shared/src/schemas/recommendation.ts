@@ -1,10 +1,12 @@
-import { z } from 'zod'
+import { z } from '../zod'
 import { TimestampSchema } from './common'
 import { RegisteredProductSchema } from './registeredProduct'
 
 // Source authority ranking, 1 (MoA) → 6 (research). Local authoritative sources override
 // generic ones on conflict (technicaldoc.md §7).
-export const AuthorityTierSchema = z.number().int().min(1).max(6)
+export const AuthorityTierSchema = z.number().int().min(1).max(6).openapi({
+  description: '1 MoA, 2 ZARI, 3 ZMD, 4 FAO, 5 CABI, 6 research. Lower wins on conflict.',
+})
 
 export const RagSourceSchema = z.object({
   title: z.string().min(1),
@@ -23,6 +25,9 @@ export const ChemicalOptionSchema = RegisteredProductSchema.pick({
   label_dose: true,
   phi_days: true,
   source_doc: true,
+}).openapi('ChemicalOption', {
+  description:
+    'A registered product that passed the regulatory filter for this crop and issue. Render label_dose exactly as given (verbatim label text). phi_days is the pre-harvest interval.',
 })
 export type ChemicalOption = z.infer<typeof ChemicalOptionSchema>
 

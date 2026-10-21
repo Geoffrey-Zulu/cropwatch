@@ -1,4 +1,5 @@
-import { z } from 'zod'
+import { z } from '../zod'
+import { describeLabels } from './describeLabels'
 
 // Controlled vocabulary for crop-health issues (technicaldoc.md §6). Never free-string an
 // issue name anywhere: reference these slugs. Extend by appending only.
@@ -20,13 +21,7 @@ export const UNKNOWN_ISSUE = 'unknown' as const
 
 export const ISSUES = [...KNOWN_ISSUES, UNKNOWN_ISSUE] as const
 
-export const KnownIssueSchema = z.enum(KNOWN_ISSUES)
-export type KnownIssue = z.infer<typeof KnownIssueSchema>
-
-export const IssueSchema = z.enum(ISSUES)
-export type Issue = z.infer<typeof IssueSchema>
-
-export const ISSUE_LABELS: Record<Issue, string> = {
+export const ISSUE_LABELS: Record<(typeof ISSUES)[number], string> = {
   fall_armyworm: 'Fall armyworm',
   tuta_absoluta: 'Tuta absoluta (tomato leafminer)',
   late_blight: 'Late blight',
@@ -37,3 +32,13 @@ export const ISSUE_LABELS: Record<Issue, string> = {
   maize_lethal_necrosis: 'Maize lethal necrosis',
   unknown: 'Unknown — needs expert review',
 }
+
+export const KnownIssueSchema = z.enum(KNOWN_ISSUES).openapi('KnownIssue', {
+  description: 'An issue slug other than unknown.',
+})
+export type KnownIssue = z.infer<typeof KnownIssueSchema>
+
+export const IssueSchema = z.enum(ISSUES).openapi('Issue', {
+  description: `Controlled vocabulary, append-only; "unknown" always routes to expert review. Clients MUST treat an unrecognised value as "unknown", never as an error. Labels: ${describeLabels(ISSUE_LABELS)}.`,
+})
+export type Issue = z.infer<typeof IssueSchema>

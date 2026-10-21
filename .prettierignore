@@ -19,3 +19,6 @@ pnpm-lock.yaml
 
 # Coverage
 coverage
+
+# Generated (packages/shared/src/contracts/generate.ts)
+packages/shared/src/contracts/openapi.json

@@ -35,6 +35,8 @@ service cloud.firestore {
         && d.channel in ['app', 'whatsapp', 'sms', 'ussd'];
     }
 
+    // observations/{obsId}/internal/* (raw model numbers) has no match, so it is denied to
+    // every client: that is what keeps model_confidence out of UI-bound data.
     match /observations/{obsId} {
       allow read: if isCommandCenter() || isOwner(resource.data.reporter_id);
     }

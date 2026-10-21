@@ -15,21 +15,20 @@ service firebase.storage {
         && request.auth.token.get('role', '') in ['extension_officer', 'agronomist', 'admin'];
     }
 
-    // Observation photos at observations/{obsId}/{n}.jpg (buildplan.md §2), uploaded straight
-    // from the app. The uploader stamps custom metadata reporter_id = their uid, which ties the
-    // photo to them before the observation document exists. Create-only: photos are evidence,
-    // so no client update or delete. Storage treats an overwrite as a create, hence the
-    // resource == null check.
-    match /observations/{obsId}/{fileName} {
+    // Observation photos at observations/{uid}/{obsId}/{n}.jpg (frozen REST v1 contract),
+    // uploaded straight from the app. The uploader's uid is in the path, so every photo is bound
+    // to its owner before the observation document exists. Create-only: photos are evidence, so
+    // no client update or delete. Storage treats an overwrite as a create, hence the
+    // resource == null check. obsId matches ObservationIdSchema in packages/shared.
+    match /observations/{uid}/{obsId}/{fileName} {
       allow create: if signedIn()
+        && request.auth.uid == uid
         && resource == null
-        && obsId.matches('^[A-Za-z0-9_-]{1,128}$')
+        && obsId.matches('^[A-Za-z0-9_-]{16,64}$')
         && fileName.matches('^[0-9]{1,2}[.]jpg$')
         && request.resource.contentType == 'image/jpeg'
-        && request.resource.size < 10 * 1024 * 1024
-        && request.resource.metadata.reporter_id == request.auth.uid;
-      allow read: if isCommandCenter()
-        || (signedIn() && resource.metadata.reporter_id == request.auth.uid);
+        && request.resource.size < 10 * 1024 * 1024;
+      allow read: if isCommandCenter() || (signedIn() && request.auth.uid == uid);
     }
   }
 }

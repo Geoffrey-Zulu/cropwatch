@@ -1,4 +1,7 @@
 export * from './crops'
+export * from './districts'
 export * from './issues'
+export * from './provinces'
 export * from './roles'
+export * from './severity'
 export * from './verification'

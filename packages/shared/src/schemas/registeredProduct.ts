@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../zod'
 import { CropSchema } from '../constants/crops'
 import { KnownIssueSchema } from '../constants/issues'
 import { DateSchema } from './common'
@@ -6,7 +6,9 @@ import { DateSchema } from './common'
 export const WHO_CLASSES = ['Ia', 'Ib', 'II', 'III', 'U'] as const
 export const WhoClassSchema = z.enum(WHO_CLASSES)
 
-export const RegistrationNoSchema = z.string().min(1)
+export const RegistrationNoSchema = z.string().min(1).openapi('RegistrationNo', {
+  description: 'Product registration number from the Regulatory Product Database.',
+})
 
 // Regulatory Product Database row, registered_products/{registrationNo} (technicaldoc.md §8).
 // The chemical firewall: every chemical recommendation must match a row here on crop AND

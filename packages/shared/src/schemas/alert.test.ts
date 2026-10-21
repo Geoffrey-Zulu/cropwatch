@@ -6,6 +6,7 @@ const alert = {
   type: 'cluster',
   issue: 'fall_armyworm',
   district: 'Chipata',
+  district_slug: 'chipata',
   geo_center: { latitude: -13.64, longitude: 32.65 },
   radius_km: 10,
   level: 'ELEVATED',

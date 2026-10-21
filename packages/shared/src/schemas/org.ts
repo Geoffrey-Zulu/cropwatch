@@ -1,4 +1,5 @@
-import { z } from 'zod'
+import { z } from '../zod'
+import { ProvinceSchema } from '../constants/provinces'
 import { RoleSchema } from '../constants/roles'
 
 export const OrgTypeSchema = z.enum(['outgrower', 'ngo', 'gov', 'input_company'])
@@ -20,7 +21,7 @@ export const UserProfileSchema = z.object({
   role: RoleSchema,
   org_id: z.string().min(1).nullable(),
   district: z.string().min(1),
-  province: z.string().min(1),
+  province: ProvinceSchema,
   channel: ReportingChannelSchema,
   sim: z.boolean(),
 })
