@@ -1,0 +1,29 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# ---------------------------------------------------------------------------
+# pnpm settings
+# ---------------------------------------------------------------------------
+# From pnpm 11, pnpm no longer reads the `pnpm` field in package.json and no
+# longer reads pnpm settings from .npmrc (.npmrc is registry/auth only). All
+# pnpm settings live here. See https://pnpm.io/settings
+# ---------------------------------------------------------------------------
+
+# Dependency lifecycle scripts are blocked by default from pnpm 10. Only the
+# packages listed here may run install scripts. Keep this list minimal.
+allowBuilds:
+  esbuild: true
+
+# Accepted advisories. Everything listed here is a deliberate, documented risk
+# acceptance, not a way to quiet the auditor. See UPGRADE-NOTES.md.
+auditConfig:
+  ignoreGhsas:
+    # braces: stack-exhaustion DoS through deeply nested glob patterns.
+    # No patched release exists - the latest braces (3.0.3) is itself the
+    # vulnerable version. Reached only as a build-time devDependency, through
+    # tailwindcss 3.x's glob stack (micromatch / fast-glob / chokidar), and is
+    # not part of the production bundle.
+    # REMOVE this ignore when Tailwind moves to 4.x, which drops the
+    # micromatch/chokidar dependency chain.
+    - GHSA-vfj7-8cjw-p6xm

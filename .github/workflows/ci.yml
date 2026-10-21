@@ -1,0 +1,127 @@
+# ============================================================================
+# ci.yml - Continuous Integration Workflow
+# ============================================================================
+# This workflow runs on every pull request to ensure code quality.
+# Uses Workload Identity Federation for secure authentication.
+# ============================================================================
+
+name: CI
+
+# ============================================================================
+# TRIGGERS
+# ============================================================================
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+      - stage
+      - 'release/**'
+  push:
+    branches:
+      - main
+      - dev
+
+# ============================================================================
+# CONCURRENCY
+# ============================================================================
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# ============================================================================
+# JOBS
+# ============================================================================
+jobs:
+  ci:
+    name: Lint, Type Check, Build, Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # ======================================================================
+      # STEP 1: Checkout Code
+      # ======================================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # ======================================================================
+      # STEP 2: Setup pnpm
+      # ======================================================================
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 12
+
+      # ======================================================================
+      # STEP 3: Setup Node.js
+      # ======================================================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      # ======================================================================
+      # STEP 4: Install Dependencies
+      # ======================================================================
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ======================================================================
+      # STEP 5: Audit Dependencies
+      # ======================================================================
+      # Fails the build on high and critical advisories only. Moderate and low
+      # advisories are reported by `pnpm audit` locally but do not block CI.
+      # Replaces the former dependency-review workflow, which needed GitHub
+      # Advanced Security and so could never run on this private repo.
+      - name: Audit dependencies
+        run: pnpm audit --audit-level high
+
+      # ======================================================================
+      # STEP 6: Turborepo Cache
+      # ======================================================================
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      # ======================================================================
+      # STEP 7: Lint
+      # ======================================================================
+      - name: Lint
+        run: pnpm lint
+
+      # ======================================================================
+      # STEP 8: Format Check
+      # ======================================================================
+      - name: Check formatting
+        run: pnpm format:check
+
+      # ======================================================================
+      # STEP 9: Type Check
+      # ======================================================================
+      - name: Type check
+        run: pnpm typecheck
+
+      # ======================================================================
+      # STEP 10: Build
+      # ======================================================================
+      - name: Build
+        run: pnpm build
+
+      # ======================================================================
+      # STEP 11: Test
+      # ======================================================================
+      - name: Test
+        run: pnpm test
+
+      # ======================================================================
+      # STEP 12: Dependency Consistency Check
+      # ======================================================================
+      - name: Check dependency consistency
+        run: pnpm sync:lint
