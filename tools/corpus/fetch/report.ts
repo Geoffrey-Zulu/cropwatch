@@ -3,7 +3,7 @@ import type { Source } from './sources'
 
 export interface Outcome {
   source: Source
-  status: 'fetched' | 'archived' | 'mirror' | 'manual' | 'cached' | 'failed'
+  status: 'fetched' | 'archived' | 'mirror' | 'manual' | 'cached' | 'pending' | 'failed'
   entry?: ManifestEntry
   // What failed before the saved copy was found.
   failures?: string[]
@@ -42,13 +42,15 @@ const describe = (o: Outcome) => {
       return o.entry!.fetched_url === o.entry!.source_url
         ? 'unchanged'
         : `unchanged (copy from <${o.entry!.fetched_url}>)`
+    case 'pending':
+      return `pending: ${o.source.pending}`
     case 'failed':
       return `**FAILED**: ${o.reason}`
   }
 }
 
 export function renderReport(outcomes: Outcome[], annexCsv: string | null, at: string) {
-  const landed = (o: Outcome) => o.status !== 'failed'
+  const landed = (o: Outcome) => o.entry !== undefined
   const priority = outcomes.filter(o => o.source.priority)
   const priorityLanded = priority.filter(landed)
   const gate = priorityLanded.length >= PRIORITY_GATE
@@ -59,7 +61,7 @@ export function renderReport(outcomes: Outcome[], annexCsv: string | null, at: s
   const count = (status: Outcome['status']) => outcomes.filter(o => o.status === status).length
 
   const summary = [
-    `${outcomes.length} sources: ${count('fetched')} fetched, ${count('archived')} via archive, ${count('mirror')} from a mirror, ${count('manual')} by hand, ${count('cached')} unchanged, ${failed.length} FAILED.`,
+    `${outcomes.length} sources: ${count('fetched')} fetched, ${count('archived')} via archive, ${count('mirror')} from a mirror, ${count('manual')} by hand, ${count('cached')} unchanged, ${count('pending')} pending, ${failed.length} FAILED.`,
     `Priority documents landed: ${priorityLanded.length}/${priority.length} (gate: ≥ ${PRIORITY_GATE}) → ${gate ? 'PASS' : 'FAIL'}.`,
     ocr.length
       ? `Needs OCR (not ingested): ${ocr.map(o => o.source.id).join(', ')}.`

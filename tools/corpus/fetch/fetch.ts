@@ -262,6 +262,11 @@ for (const source of sources) {
     continue
   }
 
+  if (source.pending && !manualImport && !existing) {
+    outcomes.push({ source, status: 'pending' })
+    continue
+  }
+
   process.stdout.write(`${source.id} … `)
   try {
     const got = manualImport ? await fromFile(source, manualImport.file) : await obtain(source)

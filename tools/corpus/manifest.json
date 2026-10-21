@@ -349,6 +349,141 @@
     "redistribute": true
   },
   {
+    "id": "pw-pmdg-cassava-mosaic-zambia-2024",
+    "title": "Cassava mosaic disease in cassava, Zambia (PMDG)",
+    "file": "international/cabi/pw-pmdg-cassava-mosaic-zambia-2024.pdf",
+    "format": "pdf",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20257800018",
+    "fetched_url": "manual:goma-2024-cassava-mosaic-disease-in-cassava-zambia.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:27:17.699Z",
+    "sha256": "266b87cc044f53c5342227cf549b8249be207703dd0144af5c21574d249e0ea9",
+    "bytes": 238914,
+    "tier": 5,
+    "source": "CABI PlantwisePlus",
+    "country": "ZM",
+    "crop": [
+      "cassava"
+    ],
+    "issue": [
+      "cassava_mosaic"
+    ],
+    "year": 2024,
+    "licence": "©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)",
+    "redistribute": true,
+    "pages": 1,
+    "text_chars": 2965,
+    "needs_ocr": false
+  },
+  {
+    "id": "pw-pmdg-diamondback-moth-zambia-2014",
+    "title": "Diamondback moth on cabbage, Zambia (PMDG)",
+    "file": "international/cabi/pw-pmdg-diamondback-moth-zambia-2014.pdf",
+    "format": "pdf",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801373",
+    "fetched_url": "manual:tembo-2014-diamondback-moth-on-cabbage-zambia.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:27:14.299Z",
+    "sha256": "61d2cfc5b16e22c1bd9438e11e42a041d0b59e457106dddb69cf1ab72b935274",
+    "bytes": 219803,
+    "tier": 5,
+    "source": "CABI PlantwisePlus",
+    "country": "ZM",
+    "crop": [
+      "cabbage"
+    ],
+    "issue": [
+      "diamondback_moth"
+    ],
+    "year": 2014,
+    "licence": "©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)",
+    "redistribute": true,
+    "pages": 1,
+    "text_chars": 3178,
+    "needs_ocr": false
+  },
+  {
+    "id": "pw-pmdg-early-blight-tomato-zambia-2014",
+    "title": "Early blight fungal disease in tomato, Zambia (PMDG)",
+    "file": "international/cabi/pw-pmdg-early-blight-tomato-zambia-2014.pdf",
+    "format": "pdf",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20147801175",
+    "fetched_url": "manual:mwanda-et-al-2014-early-blight-fungal-disease-in-tomato-zambia.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:27:10.774Z",
+    "sha256": "8b9a23c6946118d9d24399ab5deafba8ab4caad2226e3728dd8aceabd3e7fbd9",
+    "bytes": 218246,
+    "tier": 5,
+    "source": "CABI PlantwisePlus",
+    "country": "ZM",
+    "crop": [
+      "tomato"
+    ],
+    "issue": [
+      "early_blight"
+    ],
+    "year": 2014,
+    "licence": "©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)",
+    "redistribute": true,
+    "pages": 1,
+    "text_chars": 3414,
+    "needs_ocr": false
+  },
+  {
+    "id": "pw-pmdg-late-blight-tomato-zambia-2021",
+    "title": "Late blight on tomato, Zambia (PMDG)",
+    "file": "international/cabi/pw-pmdg-late-blight-tomato-zambia-2021.pdf",
+    "format": "pdf",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20237800264",
+    "fetched_url": "manual:mulomba-2021-late-blight-on-tomato-zambia.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:27:06.965Z",
+    "sha256": "926dcf085b4d84214542709b616aa931645480e7d020fc5a4784ccf4f23b80a1",
+    "bytes": 184617,
+    "tier": 5,
+    "source": "CABI PlantwisePlus",
+    "country": "ZM",
+    "crop": [
+      "tomato"
+    ],
+    "issue": [
+      "late_blight"
+    ],
+    "year": 2021,
+    "licence": "©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)",
+    "redistribute": true,
+    "pages": 1,
+    "text_chars": 2812,
+    "needs_ocr": false
+  },
+  {
+    "id": "pw-pmdg-tuta-absoluta-zambia-2022",
+    "title": "Tomato leafminer in tomato, Zambia (PMDG, T. Mfune, MoA, updated June 2022)",
+    "file": "international/cabi/pw-pmdg-tuta-absoluta-zambia-2022.pdf",
+    "format": "pdf",
+    "source_url": "https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20177801301",
+    "fetched_url": "manual:2017-tomato-leaf-miner-zambia.pdf",
+    "archive_url": null,
+    "retrieved_at": "2026-10-21T16:27:02.933Z",
+    "sha256": "01445a629d790dfe0e4971e33da19702cea46c02659bfde8e466718a37fd44d0",
+    "bytes": 220647,
+    "tier": 5,
+    "source": "CABI PlantwisePlus",
+    "country": "ZM",
+    "crop": [
+      "tomato"
+    ],
+    "issue": [
+      "tuta_absoluta"
+    ],
+    "year": 2022,
+    "licence": "©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)",
+    "redistribute": true,
+    "pages": 1,
+    "text_chars": 3631,
+    "needs_ocr": false
+  },
+  {
     "id": "zari-cbsd-cmd-expansion-review-2022",
     "title": "Expansion and impact of cassava brown streak and cassava mosaic diseases in Africa, a review (Chikoti and Tembo, Front. Sustain. Food Syst.)",
     "file": "research/zari-cbsd-cmd-expansion-review-2022.pdf",

@@ -23,10 +23,11 @@ sources:
     year: 2026
     expect: pdf
     priority: true
-    notes: >-
-      No public PDF link found in any index or archive; the launch page is the only public
-      pointer. Hand-fetch from MoA (Nicholas.Mwambazi@agriculture.gov.zm, the MoA contact on the
-      Sprout Open Content dataset) or ZARI (info@zari.gov.zm, +260 211 278130).
+    pending: >-
+      By email: requested from MoA (Nicholas.Mwambazi@agriculture.gov.zm) and ZARI
+      (info@zari.gov.zm) on 2026-10-21. No public PDF exists in any index or archive; the URL is
+      the launch page. When it arrives: fetch-corpus --import moa-faw-manual-2nd-ed-2026 <file>,
+      then ingest.
 
   - id: moa-faw-manual-2nd-ed-launch-2026
     title: Ministry of Agriculture launches second edition of Integrated Fall Armyworm Management Manual
@@ -261,18 +262,18 @@ sources:
   # but Cloudflare refuses automated clients (HTTP 403 to the fetcher on 2026-10-21, whatever
   # the User-Agent), some PMDGs redirect to sign-in, and the Wayback Machine holds no copies.
   # Download them in a browser and record them with fetch-corpus --import <id> <file>.
-  - id: pw-pmdg-tuta-absoluta-zambia-2017
-    title: Tomato leaf miner, Zambia (PMDG)
+  - id: pw-pmdg-tuta-absoluta-zambia-2022
+    title: Tomato leafminer in tomato, Zambia (PMDG, T. Mfune, MoA, updated June 2022)
     url: https://plantwiseplusknowledgebank.org/doi/pdf/10.1079/pwkb.20177801301
     tier: 5
     source: CABI PlantwisePlus
     country: ZM
     crop: [tomato]
     issue: [tuta_absoluta]
-    year: 2017
+    year: 2022
     expect: pdf
     priority: true
-    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    licence: ©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)
 
   - id: pw-pmdg-late-blight-tomato-zambia-2021
     title: Late blight on tomato, Zambia (PMDG)
@@ -285,7 +286,7 @@ sources:
     year: 2021
     expect: pdf
     priority: true
-    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    licence: ©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)
 
   - id: pw-pmdg-early-blight-tomato-zambia-2014
     title: Early blight fungal disease in tomato, Zambia (PMDG)
@@ -298,7 +299,7 @@ sources:
     year: 2014
     expect: pdf
     priority: true
-    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    licence: ©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)
 
   - id: pw-pmdg-diamondback-moth-zambia-2014
     title: Diamondback moth on cabbage, Zambia (PMDG)
@@ -311,7 +312,7 @@ sources:
     year: 2014
     expect: pdf
     priority: true
-    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    licence: ©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)
 
   - id: pw-pmdg-cassava-mosaic-zambia-2024
     title: Cassava mosaic disease in cassava, Zambia (PMDG)
@@ -324,7 +325,7 @@ sources:
     year: 2024
     expect: pdf
     priority: true
-    licence: CABI Plantwise, non-commercial reuse with attribution (unconfirmed)
+    licence: ©CAB International, CC BY-NC-SA 4.0 (stated in the PDF)
 
   - id: pw-pmdg-fall-armyworm-zambia-2018
     title: Fall armyworm on maize in Zambia (PMDG)

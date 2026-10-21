@@ -297,6 +297,21 @@ describe('manifest and report', () => {
     expect(
       renderReport([...six, outcome(7, 'failed'), outcome(8, 'failed')], null, 'now').gate
     ).toBe(true)
+    const pending: Outcome = {
+      source: {
+        id: 'manual-2026',
+        priority: true,
+        tier: 1,
+        title: 't',
+        url: 'https://x',
+        pending: 'By email',
+      } as Source,
+      status: 'pending',
+    }
+    const withPending = renderReport([...six.slice(1), pending], null, 'now')
+    expect(withPending.gate).toBe(false)
+    expect(withPending.summary).toContain('1 pending, 0 FAILED')
+    expect(withPending.markdown).toContain('pending: By email')
     const five = renderReport(
       [...six.slice(1), outcome(7, 'failed'), outcome(8, 'failed'), outcome(9, 'failed')],
       null,

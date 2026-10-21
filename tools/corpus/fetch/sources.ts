@@ -33,6 +33,9 @@ export const SourceSchema = z.object({
   // false keeps the file out of git (the repository is public): set it when the licence does
   // not allow redistribution. The document is still fetched and ingested.
   redistribute: z.boolean().default(true),
+  // Not fetchable: how the document will arrive (e.g. requested by email). The fetcher skips it
+  // until it is recorded with --import; ingest picks it up from then on.
+  pending: z.string().optional(),
   notes: z.string().optional(),
 })
 export type Source = z.infer<typeof SourceSchema>
