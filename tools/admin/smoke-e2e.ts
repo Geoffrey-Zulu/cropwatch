@@ -9,6 +9,7 @@
 import { execSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 const PROJECT_ID = 'crop-watch01'
 const ACCOUNT = 'zulugeoffrey034@gmail.com'
@@ -73,7 +74,8 @@ const farmer = await signInAnonymously()
 const other = await signInAnonymously()
 const obsId = newObsId()
 const photoPath = `observations/${farmer.uid}/${obsId}/0.jpg`
-const photo = readFileSync(imagePath)
+// pnpm --filter runs scripts in the package directory; resolve paths from where it was invoked.
+const photo = readFileSync(resolve(process.env.INIT_CWD ?? process.cwd(), imagePath))
 console.log(`farmer ${farmer.uid}, observation ${obsId}`)
 
 try {

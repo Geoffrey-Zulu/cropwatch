@@ -479,6 +479,89 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.3.3(@types/node@24.19.2)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.15)(yaml@2.9.1))
 
+  tools/gcp:
+    devDependencies:
+      '@repo/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      eslint:
+        specifier: ^10.12.0
+        version: 10.12.0(jiti@1.21.7)(supports-color@7.2.0)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.3.3(@types/node@24.19.2)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.15)(yaml@2.9.1))
+
+  tools/regulatory:
+    dependencies:
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@repo/tools-gcp':
+        specifier: workspace:*
+        version: link:../gcp
+    devDependencies:
+      '@repo/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      eslint:
+        specifier: ^10.12.0
+        version: 10.12.0(jiti@1.21.7)(supports-color@7.2.0)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.3.3(@types/node@24.19.2)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.15)(yaml@2.9.1))
+
+  tools/seed:
+    dependencies:
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@repo/tools-gcp':
+        specifier: workspace:*
+        version: link:../gcp
+    devDependencies:
+      '@repo/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      eslint:
+        specifier: ^10.12.0
+        version: 10.12.0(jiti@1.21.7)(supports-color@7.2.0)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/coverage-v8@5.0.3)(jsdom@30.1.2)(vite@8.3.3(@types/node@24.19.2)(esbuild@0.28.2)(jiti@1.21.7)(tsx@4.23.15)(yaml@2.9.1))
+
 packages:
 
   '@adobe/css-tools@4.5.0':
