@@ -28,6 +28,7 @@
     "@repo/eslint-config": "workspace:*",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.19.2",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitest/coverage-v8": "^5.0.3",
