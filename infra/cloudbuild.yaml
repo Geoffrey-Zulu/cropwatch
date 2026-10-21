@@ -1,0 +1,11 @@
+# Builds the API image (apps/functions/Dockerfile) from the repo root. Run by infra/deploy.sh:
+#   gcloud builds submit --config infra/cloudbuild.yaml --substitutions _IMAGE=<image> .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-f', 'apps/functions/Dockerfile', '-t', '${_IMAGE}', '.']
+images: ['${_IMAGE}']
+options:
+  # Required with a user-specified build service account.
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+timeout: 1200s

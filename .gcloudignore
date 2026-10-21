@@ -1,0 +1,11 @@
+# What `gcloud builds submit` uploads (infra/deploy.sh). Mirrors .dockerignore.
+#!include:.gitignore
+.git
+.github
+.husky
+.vscode
+.claude
+apps/mobile
+apps/web
+docs
+tools
