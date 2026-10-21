@@ -102,7 +102,10 @@ retry gcloud run services add-iam-policy-binding "$SERVICE" --region="$REGION" \
 if gcloud eventarc triggers describe "$TRIGGER" --location="$REGION" --format=none 2>/dev/null; then
   ok "trigger exists"
 else
-  RETRIES=12 retry gcloud eventarc triggers create "$TRIGGER" \
+  # Git Bash rewrites "/internal/..." into a Windows path when gcloud hands its arguments to
+  # python.exe; exempt just this flag (MSYS_NO_PATHCONV would also break gcloud's own
+  # wrapper). No effect outside Git Bash.
+  MSYS2_ARG_CONV_EXCL='--destination-run-path=' RETRIES=12 retry gcloud eventarc triggers create "$TRIGGER" \
     --location="$REGION" \
     --destination-run-service="$SERVICE" \
     --destination-run-region="$REGION" \

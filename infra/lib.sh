@@ -15,10 +15,6 @@ RUN_SA="${RUN_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 export CLOUDSDK_CORE_ACCOUNT="$ACCOUNT"
 export CLOUDSDK_CORE_PROJECT="$PROJECT_ID"
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
-# Git Bash on Windows rewrites arguments that start with "/" into Windows paths (it turned
-# --destination-run-path=/internal/events/storage into C:/Program Files/Git/...). These
-# scripts pass URLs and gs:// paths, never POSIX paths that need translating. No-op elsewhere.
-export MSYS_NO_PATHCONV=1
 
 # Repo root, where firebase.json lives.
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
