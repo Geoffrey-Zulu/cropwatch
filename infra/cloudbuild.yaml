@@ -7,5 +7,5 @@ images: ['${_IMAGE}']
 options:
   # Required with a user-specified build service account.
   logging: CLOUD_LOGGING_ONLY
-  machineType: E2_HIGHCPU_8
+  # Default worker: new projects have no quota for larger machine types in europe-west1.
 timeout: 1200s
