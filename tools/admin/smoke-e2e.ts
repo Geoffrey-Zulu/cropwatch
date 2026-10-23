@@ -188,7 +188,40 @@ try {
     console.log(`\n--keep: left observation ${obsId} and user ${farmer.uid}`)
   } else {
     const headers = adminHeaders()
-    for (const doc of ['internal/diagnosis', 'internal/diagnosis_lock', '']) {
+    // The pipeline goes on to recommend: remove its recommendation too.
+    const recs = (await (
+      await fetch(`${FIRESTORE}:runQuery`, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          structuredQuery: {
+            from: [{ collectionId: 'recommendations' }],
+            where: {
+              fieldFilter: {
+                field: { fieldPath: 'obs_id' },
+                op: 'EQUAL',
+                value: { stringValue: obsId },
+              },
+            },
+          },
+        }),
+      })
+    ).json()) as { document?: { name: string } }[]
+    for (const { document } of recs) {
+      if (document) {
+        await fetch(`https://firestore.googleapis.com/v1/${document.name}`, {
+          method: 'DELETE',
+          headers,
+        })
+      }
+    }
+    for (const doc of [
+      'internal/diagnosis',
+      'internal/diagnosis_lock',
+      'internal/recommendation',
+      'internal/recommendation_lock',
+      '',
+    ]) {
       await fetch(`${FIRESTORE}/observations/${obsId}${doc ? `/${doc}` : ''}`, {
         method: 'DELETE',
         headers,
@@ -204,7 +237,7 @@ try {
         body: JSON.stringify({ idToken: user.idToken }),
       })
     }
-    console.log('\ncleaned up: observation, internal docs, photo, both test users')
+    console.log('\ncleaned up: observation, internal docs, recommendation, photo, both test users')
   }
 }
 

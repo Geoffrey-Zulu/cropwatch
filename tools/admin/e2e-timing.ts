@@ -151,7 +151,7 @@ const percentile = (values: number[], p: number) => {
   return sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)]
 }
 
-const created: { obsId: string; uid: string; photoPath: string }[] = []
+const created: { obsId: string; idToken: string; photoPath: string }[] = []
 const doses = await registeredDoses()
 const rows: {
   file: string
@@ -166,7 +166,7 @@ for (const label of labels) {
   const farmer = await signInAnonymously()
   const obsId = randomBytes(15).toString('base64url')
   const photoPath = `observations/${farmer.uid}/${obsId}/0.jpg`
-  created.push({ obsId, uid: farmer.uid, photoPath })
+  created.push({ obsId, idToken: farmer.idToken, photoPath })
   const photo = readFileSync(join(dir, label.file))
 
   // The clock starts when the farmer sends: photo upload, then the report.
@@ -294,7 +294,7 @@ if (doVerify) {
 
 if (!keep) {
   const headers = adminHeaders()
-  for (const { obsId, photoPath } of created) {
+  for (const { obsId, idToken, photoPath } of created) {
     const recs = (await (
       await fetch(`${FIRESTORE}:runQuery`, {
         method: 'POST',
@@ -337,8 +337,14 @@ if (!keep) {
       `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o/${encodeURIComponent(photoPath)}`,
       { method: 'DELETE', headers }
     )
+    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${WEB_API_KEY}`, {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    })
   }
-  console.log(`\nCleaned up ${created.length} observations, their recommendations and photos.`)
+  console.log(
+    `\nCleaned up ${created.length} observations, their recommendations, photos and test users.`
+  )
 }
 
 console.log(failures ? `\n${failures} check(s) FAILED` : '\nAll checks passed.')
