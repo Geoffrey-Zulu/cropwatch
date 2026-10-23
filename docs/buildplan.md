@@ -295,3 +295,71 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 - **D4:** wire `recommend()` with RAG Engine as the knowledge layer and a Firestore products reader; set `status: complete` and `recommendation_id`. Decide whether to backfill recommendations for the seeded rows, which currently sit at `recommending` or `awaiting_expert_review`.
 - **D5:** mount `DemoBadge` on every view of observations and alerts; officers sign in through `set-role`.
 - **D6:** the §9 cluster rule in BigQuery. The JS reference (`tools/seed/cluster.ts`) and the coarse-grid SQL agree on the storylines; refine with `ST_DWITHIN` as technicaldoc says.
+
+### D4 · Thu 23 Oct — corpus, RAG Engine, live /recommend, deploy
+
+**Status:** accepted against the deployed service (revision `cropwatch-api-00004-tc8`) and merged to `main`.
+
+**Landed**
+
+- **Corpus fetcher (`tools/corpus/fetch`).** A curated `sources.yaml` (42 targets with tier, crop, issue, year and licence); not a crawler.
+  - Live first, with an honest User-Agent, robots.txt and 1 request per 2 s per host; then the newest good Wayback snapshot; then mirrors.
+  - PDFs that do not parse are rejected and the next copy tried. HTML becomes markdown with frontmatter.
+  - `manifest.json` records the source, the copy fetched, sha256 and `needs_ocr`; `fetch-report.md` lists every failure and extraction concern.
+  - `--import <id> <file>` records a document downloaded by hand. `pending:` marks one that will arrive by email (the MoA FAW manual, requested 2026-10-21).
+  - The repository is public, so documents whose licence forbids redistribution (the CIMMYT guide, "all rights reserved"; the icipe manual, no licence) are fetched and ingested but kept out of git.
+- **Corpus: 27 documents, 7 of the 8 priority ones.** The FAO FFS guide and guidance notes, the FAO/CABI ToT manual, the CIMMYT guide (from a mirror), ZARI crop guides and division pages, MoA pages (Wayback), and the five Zambian Plantwise PMDGs (Tuta, late and early blight, DBM, CMD), downloaded by Geoffrey because Plantwise refuses automated clients. No scanned PDFs. The MoA manual is pending by email.
+- **RAG Engine (`infra/rag.sh`, `tools/corpus ingest`).**
+  - RagManagedDb is allowlist-only in europe-west1 for new projects, so the corpus lives in **europe-west4** (an approved exception). europe-west1 RAG is set to Unprovisioned, and `infra/rag-teardown.sh` removes the corpus after the hackathon.
+  - All 26 documents with content are in the corpus. Ingest imports one file at a time, paced below the embedding quota (about 7 requests a minute in europe-west4); re-ingesting is the same command.
+- **Live /recommend (`apps/functions/src/services/recommend/`).**
+  - Retrieval is context-shaped (crop, issue, stage, severity band, district). It keeps on-topic excerpts, at most 3 per document, ordered by authority tier.
+  - Gemini writes IPM steps from those excerpts (`prompts/recommend-v1.md`). Each step is checked in code: it must cite an excerpt it was shown, and it is dropped if it carries a dose or interval or names a pesticide.
+  - Chemicals the model names go to the regulatory filter as candidates; placeholders stay gated. No citations → no recommendation, and the observation goes to the officer queue.
+- **Pipeline.** Any trigger (report, photo event, verify, retry) runs diagnose then recommend; each step is idempotent and holds a lease. Status goes `recommending → complete`. `POST /observations/{id}/verify` is live per the frozen contract: a correction re-runs the recommendation, and a run that a verify supersedes is discarded and repeated.
+- **Gemini model change.** Gemini 2.5 retired on Vertex on **2026-10-20**, and europe-west1 serves no current Gemini model. Calls now go to **`gemini-3.5-flash-lite` on the EU multi-region endpoint** (`GEMINI_LOCATION=eu`), using `thinkingLevel` (Gemini 3.x rejects `thinkingBudget`). Chosen on the 12 test photos:
+
+  | Model (EU endpoint)     | Schema-valid | Correct | Slowest | Note                                          |
+  | ----------------------- | ------------ | ------- | ------- | --------------------------------------------- |
+  | `gemini-3.5-flash-lite` | 12/12        | 11/12   | 6.4 s   | chosen; supported until at least July 2027    |
+  | `gemini-3.5-flash`      | 9/12         | 11/12   | 184 s   | intermittent 45 s timeouts and 504s           |
+  | `gemini-3.8-flash`      | 5/5 run      | 4/5     | 144 s   | 429s: a new model with little capacity for us |
+  | `gemini-2.5-flash` (D2) | 12/12        | 10/12   | 12.5 s  | retired                                       |
+
+- **Seed (decision a).**
+  - Complete rows get a deterministic canned recommendation per issue. Its steps paraphrase the cited corpus documents (a test checks the citations against the manifest), carry no doses, end with the officer referral, and are `sim: true`.
+  - 449 rows are complete and 43 await review, across both storylines. Rows whose issue the corpus cannot cite (maize lethal necrosis, unknown) wait for an officer too, as live reports do.
+  - crop-watch01 is re-seeded: 492 observations, 449 recommendations.
+- **Tools.** `eval:recommend` runs the real path for each issue. `e2e-timing` plays the app over a photo set against the deployed API and checks §4.3 on every live recommendation.
+
+**Acceptance (deployed service)**
+
+| Check                                                                        | Result                                                                                                                                                           |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §4.3: every chemical is a registered crop + issue match, dose byte-identical | Checked on every live recommendation against `registered_products`. None were shown (placeholders gated); model-named candidates were rejected as not registered |
+| §4.3: zero chemicals → IPM-only + officer referral                           | 9/9 live recommendations end with the referral, `officer_referral: true`                                                                                         |
+| §4.3: ≥ 1 citation on every response                                         | 9/9 (1–3 sources each); uncited → officer queue                                                                                                                  |
+| Photo → diagnosis → recommendation → complete, 12 test photos                | **p50 5.4 s, p95 8.4 s** (max 8.4 s) to the final status. 9 complete (p50 6.2 s); 3 unknown reached the officer queue in ≤ 3.7 s                                 |
+| A verify that corrects the issue re-triggers                                 | An agronomist's correction (FAW → late blight) went `recommending` → `complete` for the new issue in 3.6 s                                                       |
+| Contract and rules (smoke-e2e, report path and Eventarc path)                | All checks pass; `model_id` is stamped `gemini-3.5-flash-lite`                                                                                                   |
+| `pnpm` gate                                                                  | typecheck, lint, build, test (307 tests across 9 packages): all green                                                                                            |
+
+**Found and fixed on the way**
+
+- `pnpm fetch` is a pnpm built-in, so the fetcher's script is `fetch-corpus`.
+- RAG Engine fails a file on the first embedding 429 instead of waiting, so multi-file imports silently lost 17 of 25 files. Imports now go one at a time, paced below the quota, with retries; retrieval retries 429s with backoff.
+- A Wayback capture cut off at 1 MiB was saved before it failed to parse. PDFs are now validated before anything is written.
+- The smoke test left recommendations behind once the pipeline went on to recommend; its cleanup now covers them.
+
+**Needs Geoffrey**
+
+- **Embedding quota:** request an increase for `textembedding-gecko` online prediction requests per minute in **europe-west4** (Cloud console → Quotas). At about 7 a minute, a burst of more than about 6 reports a minute queues retrievals.
+- **The MoA FAW manual,** when it arrives: `pnpm --filter @repo/corpus fetch-corpus --import moa-faw-manual-2nd-ed-2026 <file>`, then `pnpm --filter @repo/corpus ingest`. The API picks it up within 10 minutes, and its products annex is extracted for review.
+- **Real register rows** (still placeholders), as before.
+- **Billing:** RagManagedDb (Spanner, europe-west4) costs about US$2–3 a day until `bash infra/rag-teardown.sh`.
+
+**Carry-forward**
+
+- **apps/capture (PWA)** is now the primary demo client (scope change); the Flutter app continues against the frozen contract.
+- **D6:** score Gemini on the 100 field photos, and revisit `gemini-3.8-flash` once its capacity allows (supported until at least September 2027).
+- **Retrieval quality:** the CBSD recommendation is thin (two steps) because the corpus has little CBSD guidance. Plantwise CBSD guides are in `sources.yaml` for hand download.
