@@ -368,3 +368,34 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 - **apps/capture (PWA)** is now the primary demo client (scope change); the Flutter app continues against the frozen contract.
 - **D6:** score Gemini on the 100 field photos, and revisit `gemini-3.8-flash` once its capacity allows (supported until at least September 2027).
 - **Retrieval quality:** the CBSD recommendation is thin (two steps) because the corpus has little CBSD guidance. Plantwise CBSD guides are in `sources.yaml` for hand download.
+
+### D5 (part) · Thu 23 Oct — capture PWA, the primary demo client
+
+**Status:** built and deployed at **https://crop-watch01-capture.web.app** (branch `d5-capture-pwa`). Acceptance waits on the real-hardware run: an Android phone over 4G, by Geoffrey. Merges to `main` after that run passes.
+
+**Landed**
+
+- **"Field Slip" design system** (`design-system/cropwatch/MASTER.md`, tokens in `packages/ui/theme`), shared with the dashboard. A report is a specimen slip, stamped as it moves; advice is a ladder with chemicals last. It draws on Lusaka's hand-painted shop signs, stencilled grain sacks and herbarium labels, with a miombo-woodland palette in place of agritech green. It is built for sunlight: body text ≥ 7:1 and actions ≥ 5:1 (computed), Atkinson Hyperlegible Next for reading.
+- **`apps/capture`** (Vite + React PWA in the workspace) runs on the frozen REST v1 contract plus Firestore listeners, with no new endpoints. Screens:
+  - **Diagnose:** camera through the capture input, photo resized to 1600 px before upload, GPS with a district picker as fallback.
+  - **Report confirmation.**
+  - **Result:** progressive (diagnosis, then the ladder), confidence in words only, routed reports with no advice.
+  - **Home:** my reports and area alerts, with the DEMO badge on simulated rows.
+- **Push:** FCM web push is wired in. Tokens go to `users/{uid}/push_tokens` under owner-only rules, because web clients cannot subscribe to topics.
+- **Service worker:** precaches the app shell and the Latin fonts. The upload retry queue was cut (nice-to-have); a failed send keeps the photo and offers "Try again" with the same report id.
+- **API and hosting:** the API sends CORS headers on `/api/v1` for the capture origins. A second Hosting site is deployed by `infra/deploy.sh` together with the rules it depends on.
+
+**Acceptance so far**
+
+| Check                                                                                                               | Result                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Installable PWA                                                                                                     | Manifest live (standalone, 192/512 and maskable icons, theme colour); service worker activated; `sw.js`, `index.html` and the manifest served no-cache |
+| Full flow on the deployed PWA, in real headless Chrome as a 390 px Android phone with GPS at Chongwe                | Photo → upload → report accepted **2.9 s** · diagnosis on screen **6.9 s** · advice ready **7.7 s**; no console errors; test data removed afterwards   |
+| CORS                                                                                                                | Capture origin allowed (preflight 204 with `authorization`); other origins get nothing                                                                 |
+| `pnpm` gate                                                                                                         | typecheck, lint, build, test (13 capture tests, 101 API tests): all green                                                                              |
+| **Real Android phone over 4G: install → photo → report → diagnosis + recommendation; the same report in Firestore** | **Pending: Geoffrey**                                                                                                                                  |
+
+**Needs Geoffrey**
+
+- **The phone run** (above). Send the 4-character report number so it can be checked in Firestore and the timing logged here.
+- **A web-push key:** Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair. Send the public key; it is safe to share. Until then, alert push stays off in the PWA and everything else works.
