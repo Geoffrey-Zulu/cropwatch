@@ -1,4 +1,5 @@
 import {
+  OFFICER_REFERRAL,
   RecommendationSchema,
   type Issue,
   type Observation,
@@ -12,8 +13,7 @@ import { filterChemicalCandidates, type FilterResult, type Rejection } from './r
 // document ever supplies a dose: doses appear only as label_dose on the listed products.
 export const CHEMICAL_LAST_RESORT =
   'Chemical control, as a last resort: use one of the registered products listed below at its label dose, and keep to its pre-harvest interval.'
-// The contract's officer-referral line (Recommendation.officer_referral).
-export const OFFICER_REFERRAL = 'Consult an extension officer for chemical options.'
+export { OFFICER_REFERRAL }
 
 export type RecommendationOutcome =
   | { kind: 'recommendation'; recommendation: Recommendation; rejected: Rejection[] }

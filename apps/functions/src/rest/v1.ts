@@ -4,19 +4,20 @@ import {
   CreateObservationRequestSchema,
   ObservationIdSchema,
   parsePhotoPath,
+  VerifyRequestSchema,
   type ErrorResponse,
 } from '@repo/shared'
 import { bearerToken, type VerifyIdToken } from '../auth'
 import { errorFields, log } from '../lib/log'
-import type { Diagnose } from '../services/firestoreDiagnoser'
 import type { ObservationStore } from '../services/firestoreObservations'
+import type { ProcessObservation } from '../services/pipeline'
 import { canReadObservation, type Caller } from '../services/observationModel'
 
 export interface RestServices {
   version: string
   verifyIdToken: VerifyIdToken
   observations: ObservationStore
-  diagnose: Diagnose
+  process: ProcessObservation
   now?: () => Date
 }
 
@@ -52,12 +53,12 @@ export function restV1(services: RestServices) {
     await next()
   }
 
-  // Diagnosis runs in the background (Cloud Run keeps CPU allocated; see infra/deploy.sh). It
-  // is idempotent, so retries and the Storage event may trigger it too.
-  const startDiagnosis = (obsId: string) =>
+  // Diagnosis and recommendation run in the background (Cloud Run keeps CPU allocated; see
+  // infra/deploy.sh). Both are idempotent, so retries and the Storage event may trigger them too.
+  const startProcessing = (obsId: string) =>
     services
-      .diagnose(obsId)
-      .catch(error => log('ERROR', 'diagnosis failed', { obs_id: obsId, ...errorFields(error) }))
+      .process(obsId)
+      .catch(error => log('ERROR', 'processing failed', { obs_id: obsId, ...errorFields(error) }))
 
   app.post('/observations', requireCaller, async c => {
     const caller = c.get('caller')
@@ -76,7 +77,9 @@ export function restV1(services: RestServices) {
     if (result.kind === 'forbidden') {
       return fail(c, 403, { error: 'forbidden', message: 'obs_id belongs to another user' })
     }
-    if (result.status === 'diagnosing') void startDiagnosis(request.obs_id)
+    if (result.status === 'diagnosing' || result.status === 'recommending') {
+      void startProcessing(request.obs_id)
+    }
     return c.json(
       { obs_id: request.obs_id, status: result.status },
       result.kind === 'created' ? 201 : 200
@@ -91,8 +94,31 @@ export function restV1(services: RestServices) {
     return c.json(record.view)
   })
 
-  // Frozen in the contract; built on later days (verify D7, intervention/outcome D7, alerts D6).
-  app.post('/observations/:id/verify', requireCaller, notImplemented)
+  app.post('/observations/:id/verify', requireCaller, async c => {
+    const caller = c.get('caller')
+    const id = ObservationIdSchema.safeParse(c.req.param('id'))
+    if (!id.success) return fail(c, 404, { error: 'not_found' })
+    const parsed = VerifyRequestSchema.safeParse(await c.req.json().catch(() => null))
+    if (!parsed.success) return validationFailed(c, parsed.error)
+    if (caller.role === 'farmer') {
+      return fail(c, 403, { error: 'forbidden', message: 'Officers only' })
+    }
+    const result = await services.observations.verify(
+      caller,
+      id.data,
+      parsed.data,
+      now().toISOString()
+    )
+    if (result.kind !== 'verified') {
+      return result.kind === 'not_found'
+        ? fail(c, 404, { error: 'not_found' })
+        : fail(c, 403, { error: 'forbidden' })
+    }
+    if (result.recommend) void startProcessing(id.data)
+    return c.json(result.record.view)
+  })
+
+  // Frozen in the contract; built on later days (intervention/outcome D7, alerts D6).
   app.post('/observations/:id/intervention', requireCaller, notImplemented)
   app.post('/observations/:id/outcome', requireCaller, notImplemented)
   app.get('/alerts', requireCaller, notImplemented)

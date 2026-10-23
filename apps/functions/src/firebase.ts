@@ -9,5 +9,6 @@ import type { Env } from './env'
 export function firebase(env: Pick<Env, 'projectId' | 'storageBucket'>) {
   const app =
     getApps()[0] ?? initializeApp({ projectId: env.projectId, storageBucket: env.storageBucket })
-  return { auth: getAuth(app), db: getFirestore(app), bucket: getStorage(app).bucket() }
+  const storage = getStorage(app)
+  return { auth: getAuth(app), db: getFirestore(app), bucket: storage.bucket(), storage }
 }

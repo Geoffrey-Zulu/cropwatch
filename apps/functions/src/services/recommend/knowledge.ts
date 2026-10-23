@@ -41,15 +41,17 @@ export interface KnowledgeResult {
   steps: KnowledgeStep[]
   chemical_candidates: ChemicalCandidate[]
   sources: KnowledgeSource[]
+  // How the result was reached (query, excerpts, dropped steps, model), for the internal record.
+  trace?: Record<string, unknown>
 }
 
 export interface KnowledgeLayer {
   retrieve(query: KnowledgeQuery): Promise<KnowledgeResult>
 }
 
-// RAG Engine retrieval arrives on D4. Until then this refuses rather than inventing advice.
+// For tests and local runs without a corpus: refuses rather than inventing advice.
 export const knowledgeNotReady: KnowledgeLayer = {
   async retrieve() {
-    throw new Error('Knowledge layer (RAG Engine) is built on D4')
+    throw new Error('No knowledge layer configured')
   },
 }

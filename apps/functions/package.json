@@ -15,7 +15,8 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eval:diagnose": "tsx src/eval/diagnoseEval.ts"
+    "eval:diagnose": "tsx src/eval/diagnoseEval.ts",
+    "eval:recommend": "tsx src/eval/recommendEval.ts"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",

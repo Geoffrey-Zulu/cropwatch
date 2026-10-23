@@ -182,13 +182,13 @@ describe('recommend', () => {
     expect(layer.retrieve).not.toHaveBeenCalled()
   })
 
-  it('refuses until the D4 knowledge layer exists', async () => {
+  it('refuses without a knowledge layer rather than inventing advice', async () => {
     await expect(
       recommend(
         { knowledge: knowledgeNotReady, products: [] },
         { obsId: 'o', observation, now: NOW }
       )
-    ).rejects.toThrow('D4')
+    ).rejects.toThrow('No knowledge layer configured')
   })
 })
 

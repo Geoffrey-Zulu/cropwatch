@@ -31,6 +31,10 @@ export const ChemicalOptionSchema = RegisteredProductSchema.pick({
 })
 export type ChemicalOption = z.infer<typeof ChemicalOptionSchema>
 
+// The last IPM step when no registered product passed the filter (the contract's
+// Recommendation.officer_referral).
+export const OFFICER_REFERRAL = 'Consult an extension officer for chemical options.'
+
 export const RegulatoryCheckSchema = z.object({
   passed: z.boolean(),
   rejected_products: z.array(z.string()),

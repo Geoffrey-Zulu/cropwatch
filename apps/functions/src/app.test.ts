@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Observation } from '@repo/shared'
+import { CreateObservationRequestSchema, type Issue, type Observation } from '@repo/shared'
 import { createApp, type AppServices } from './app'
 import type { Caller } from './services/observationModel'
-import { newObservation, toObservationView } from './services/observationModel'
+import {
+  applyVerification,
+  canVerifyObservation,
+  newObservation,
+  toObservationView,
+} from './services/observationModel'
 import type { ObservationStore } from './services/firestoreObservations'
 
 const FARMER: Caller = { uid: 'farmerUid0001', role: 'farmer', orgId: 'org1' }
@@ -51,6 +56,22 @@ function memoryStore(): ObservationStore & { docs: Map<string, Observation> } {
         orgId: observation.org_id,
       }
     },
+    async verify(caller, obsId, request) {
+      const observation = docs.get(obsId)
+      if (!observation) return { kind: 'not_found' }
+      if (!canVerifyObservation(caller, { orgId: observation.org_id })) return { kind: 'forbidden' }
+      const verified = applyVerification(caller, observation, request)
+      docs.set(obsId, verified.observation)
+      return {
+        kind: 'verified',
+        record: {
+          view: toObservationView(obsId, verified.observation, null),
+          reporterId: verified.observation.reporter_id,
+          orgId: verified.observation.org_id,
+        },
+        recommend: verified.recommend,
+      }
+    },
   }
 }
 
@@ -69,7 +90,10 @@ beforeEach(() => {
     },
     verifyEventarcToken: async token => token === 'eventarc-ok',
     observations: store,
-    diagnose: vi.fn(async () => 'diagnosed' as const),
+    process: vi.fn(async () => ({
+      diagnosis: 'diagnosed' as const,
+      recommendation: 'complete' as const,
+    })),
     now: () => new Date('2026-10-22T09:30:00.000Z'),
   }
   app = createApp({ corsOrigins: ['http://localhost:5173'], services })
@@ -126,7 +150,7 @@ describe('POST /api/v1/observations', () => {
     const res = await post('/api/v1/observations', FARMER, createBody())
     expect(res.status).toBe(201)
     expect(await res.json()).toEqual({ obs_id: OBS_ID, status: 'diagnosing' })
-    expect(services.diagnose).toHaveBeenCalledWith(OBS_ID)
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
 
     const stored = store.docs.get(OBS_ID)!
     expect(stored).toMatchObject({
@@ -166,12 +190,20 @@ describe('POST /api/v1/observations', () => {
     expect(store.docs.get(OBS_ID)!.reporter_id).toBe(FARMER.uid)
   })
 
-  it('does not restart diagnosis once it is done', async () => {
+  it('does not restart processing once it is done', async () => {
+    await post('/api/v1/observations', FARMER, createBody())
+    store.docs.get(OBS_ID)!.status = 'complete'
+    vi.mocked(services.process).mockClear()
+    await post('/api/v1/observations', FARMER, createBody())
+    expect(services.process).not.toHaveBeenCalled()
+  })
+
+  it('a retry while recommending resumes the pipeline (each step is idempotent)', async () => {
     await post('/api/v1/observations', FARMER, createBody())
     store.docs.get(OBS_ID)!.status = 'recommending'
-    vi.mocked(services.diagnose).mockClear()
+    vi.mocked(services.process).mockClear()
     await post('/api/v1/observations', FARMER, createBody())
-    expect(services.diagnose).not.toHaveBeenCalled()
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 })
 
@@ -205,9 +237,105 @@ describe('GET /api/v1/observations/{id}', () => {
   })
 })
 
+describe('POST /api/v1/observations/{id}/verify', () => {
+  const diagnosed = (
+    status: Observation['status'],
+    issue: Issue,
+    extra: Partial<Observation> = {}
+  ): Observation => ({
+    ...newObservation(
+      FARMER,
+      CreateObservationRequestSchema.parse(createBody()),
+      '2026-10-22T09:00:00.000Z'
+    ),
+    status,
+    verification_state: status === 'awaiting_expert_review' ? 'UNVERIFIED' : 'AI_ASSESSED',
+    diagnosis: {
+      suspected_issue: issue,
+      confidence_band: status === 'awaiting_expert_review' ? 'low' : 'high',
+      severity_band: 'moderate',
+      visible_symptoms: ['holes in whorl leaves'],
+      needs_expert_review: status === 'awaiting_expert_review',
+      expert_review_reason: status === 'awaiting_expert_review' ? 'low_confidence' : null,
+      model_id: 'gemini-2.5-flash',
+      prompt_version: 'diagnose-v1',
+      diagnosed_at: '2026-10-22T09:00:08.000Z',
+    },
+    ...extra,
+  })
+  const verify = (caller: Caller | null, body: unknown, id = OBS_ID) =>
+    post(`/api/v1/observations/${id}/verify`, caller, body)
+
+  it('is for officers: farmers and other orgs are refused', async () => {
+    store.docs.set(OBS_ID, diagnosed('complete', 'fall_armyworm', { recommendation_id: 'rec1' }))
+    expect((await verify(null, { verified_issue: 'fall_armyworm' })).status).toBe(401)
+    expect((await verify(FARMER, { verified_issue: 'fall_armyworm' })).status).toBe(403)
+    expect((await verify(OFFICER_OTHER_ORG, { verified_issue: 'fall_armyworm' })).status).toBe(403)
+    expect((await verify(OFFICER_SAME_ORG, { verified_issue: 'locusts' })).status).toBe(400)
+    expect(
+      (await verify(AGRONOMIST, { verified_issue: 'fall_armyworm' }, 'doesNotExist00000000')).status
+    ).toBe(404)
+  })
+
+  it('confirming the same issue keeps the recommendation and moves up the ladder', async () => {
+    store.docs.set(OBS_ID, diagnosed('complete', 'fall_armyworm', { recommendation_id: 'rec1' }))
+    const res = await verify(OFFICER_SAME_ORG, {
+      verified_issue: 'fall_armyworm',
+      notes: 'seen in field',
+    })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({
+      status: 'complete',
+      verification_state: 'FIELD_VERIFIED',
+      verified_issue: 'fall_armyworm',
+    })
+    expect(store.docs.get(OBS_ID)!.recommendation_id).toBe('rec1')
+    expect(services.process).not.toHaveBeenCalled()
+  })
+
+  it('a correction re-triggers the recommendation (complete → recommending)', async () => {
+    store.docs.set(OBS_ID, diagnosed('complete', 'tuta_absoluta', { recommendation_id: 'rec1' }))
+    const res = await verify(AGRONOMIST, { verified_issue: 'early_blight' })
+    expect(await res.json()).toMatchObject({
+      status: 'recommending',
+      verification_state: 'EXPERT_CONFIRMED',
+      verified_issue: 'early_blight',
+      recommendation: null,
+    })
+    expect(store.docs.get(OBS_ID)!.recommendation_id).toBeNull()
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
+  })
+
+  it('releases an observation awaiting review for a recommendation', async () => {
+    store.docs.set(OBS_ID, diagnosed('awaiting_expert_review', 'unknown'))
+    const res = await verify(AGRONOMIST, { verified_issue: 'fall_armyworm' })
+    expect(await res.json()).toMatchObject({ status: 'recommending' })
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
+  })
+
+  it('confirming "unknown" withdraws advice and returns it to the queue', async () => {
+    store.docs.set(OBS_ID, diagnosed('complete', 'late_blight', { recommendation_id: 'rec1' }))
+    const res = await verify(AGRONOMIST, { verified_issue: 'unknown' })
+    expect(await res.json()).toMatchObject({ status: 'awaiting_expert_review' })
+    expect(store.docs.get(OBS_ID)!.recommendation_id).toBeNull()
+    expect(services.process).not.toHaveBeenCalled()
+  })
+
+  it('never moves down the ladder', async () => {
+    store.docs.set(
+      OBS_ID,
+      diagnosed('complete', 'fall_armyworm', {
+        recommendation_id: 'rec1',
+        verification_state: 'EXPERT_CONFIRMED',
+      })
+    )
+    const res = await verify(OFFICER_SAME_ORG, { verified_issue: 'fall_armyworm' })
+    expect((await res.json()).verification_state).toBe('EXPERT_CONFIRMED')
+  })
+})
+
 describe('frozen routes built on later days', () => {
   it.each([
-    ['POST', `/api/v1/observations/${OBS_ID}/verify`],
     ['POST', `/api/v1/observations/${OBS_ID}/intervention`],
     ['POST', `/api/v1/observations/${OBS_ID}/outcome`],
     ['GET', '/api/v1/alerts?district=Chongwe'],
@@ -229,18 +357,22 @@ describe('POST /internal/events/storage (Eventarc)', () => {
 
   it('rejects anything not signed by the trigger account', async () => {
     expect((await event(`observations/u/${OBS_ID}/0.jpg`, 'forged')).status).toBe(401)
-    expect(services.diagnose).not.toHaveBeenCalled()
+    expect(services.process).not.toHaveBeenCalled()
   })
 
-  it('diagnoses on a photo upload', async () => {
+  it('diagnoses and recommends on a photo upload', async () => {
     const res = await event(`observations/${FARMER.uid}/${OBS_ID}/0.jpg`)
-    expect(await res.json()).toEqual({ obs_id: OBS_ID, outcome: 'diagnosed' })
-    expect(services.diagnose).toHaveBeenCalledWith(OBS_ID)
+    expect(await res.json()).toEqual({
+      obs_id: OBS_ID,
+      diagnosis: 'diagnosed',
+      recommendation: 'complete',
+    })
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 
   it('ignores other objects', async () => {
     expect(await (await event('exports/report.csv')).json()).toEqual({ ignored: true })
-    expect(services.diagnose).not.toHaveBeenCalled()
+    expect(services.process).not.toHaveBeenCalled()
   })
 })
 
