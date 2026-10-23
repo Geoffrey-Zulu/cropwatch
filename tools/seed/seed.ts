@@ -16,6 +16,7 @@ import {
   OBSERVATION_ROW_BIGQUERY_SCHEMA,
   toObservationRow,
   type Observation,
+  type Recommendation,
 } from '@repo/shared'
 import {
   commit,
@@ -140,6 +141,27 @@ function check(seed: SeedData) {
   ]
   if (!all.every(Boolean)) problems.push('a row is not sim: true')
   if (!seed.observations.every(o => o.id.startsWith('sim-'))) problems.push('an id lacks sim-')
+
+  // D4 decision a: everything complete has a canned, cited recommendation; a 30–45 row
+  // officer-queue backlog remains, in both storylines.
+  for (const { id, observation, recommendation } of seed.observations) {
+    if ((observation.status === 'complete') !== (recommendation !== null)) {
+      problems.push(`${id}: status and recommendation disagree`)
+    }
+    if (recommendation && !recommendation.id.startsWith('sim-')) {
+      problems.push(`${id}: recommendation id lacks sim-`)
+    }
+    if (recommendation && (!recommendation.data.sim || !recommendation.data.rag_sources.length)) {
+      problems.push(`${id}: recommendation is not sim or has no citation`)
+    }
+  }
+  const backlog = seed.observations.filter(o => o.observation.status === 'awaiting_expert_review')
+  if (backlog.length < 30 || backlog.length > 45) {
+    problems.push(`officer-queue backlog is ${backlog.length}, not 30–45`)
+  }
+  for (const storyline of ['faw-eastern', 'tuta-lusaka'] as const) {
+    if (!backlog.some(o => o.storyline === storyline)) problems.push(`no backlog in ${storyline}`)
+  }
   const demo = seed.liveDemo
   if (demo) {
     const points = clusterPoints(seed)
@@ -186,17 +208,24 @@ async function writeFirestore(seed: SeedData) {
     keep.add(`users/${id}`)
     writes.push({ set: `users/${id}`, data: profile })
   }
-  for (const { id, observation, internal } of seed.observations) {
+  for (const { id, observation, internal, recommendation } of seed.observations) {
     keep.add(`observations/${id}`)
     writes.push({ set: `observations/${id}`, data: observationDocument(observation) })
     writes.push({
       set: `observations/${id}/internal/diagnosis`,
       data: { ...internal, created_at: new FsTimestamp(internal.created_at) },
     })
+    if (recommendation) {
+      keep.add(`recommendations/${recommendation.id}`)
+      writes.push({
+        set: `recommendations/${recommendation.id}`,
+        data: recommendationDocument(recommendation.data),
+      })
+    }
   }
 
   let stale = 0
-  for (const collection of ['observations', 'users']) {
+  for (const collection of ['observations', 'users', 'recommendations']) {
     for (const path of await queryPaths(collection, 'sim', true)) {
       if (!path.startsWith(`${collection}/sim-`)) {
         throw new Error(`Refusing to touch ${path}: sim == true but not a sim- id`)
@@ -207,14 +236,21 @@ async function writeFirestore(seed: SeedData) {
       if (collection === 'observations') {
         writes.push({ delete: `${path}/internal/diagnosis` })
         writes.push({ delete: `${path}/internal/diagnosis_lock` })
+        writes.push({ delete: `${path}/internal/recommendation` })
+        writes.push({ delete: `${path}/internal/recommendation_lock` })
       }
     }
   }
 
   await commit(writes)
+  const recommendations = seed.observations.filter(o => o.recommendation).length
   console.log(
-    `\nFirestore: wrote ${seed.observations.length} observations (+ internal diagnoses), ${seed.users.length} users, 1 org; removed ${stale} stale sim document(s).`
+    `\nFirestore: wrote ${seed.observations.length} observations (+ internal diagnoses), ${recommendations} recommendations, ${seed.users.length} users, 1 org; removed ${stale} stale sim document(s).`
   )
+}
+
+function recommendationDocument(recommendation: Recommendation): { [key: string]: FsValue } {
+  return { ...recommendation, created_at: new FsTimestamp(recommendation.created_at) }
 }
 
 async function writeBigQuery(seed: SeedData) {

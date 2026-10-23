@@ -18,11 +18,13 @@ import {
   type KnownIssue,
   type Observation,
   type Org,
+  type Recommendation,
   type UserProfile,
   type VerificationState,
 } from '@repo/shared'
 import type { ClusterPoint } from './cluster'
 import { createRandom, offset, type Random } from './random'
+import { cannedRecommendation } from './recommendations'
 
 // Simulated demo data (technicaldoc §12). Every row is sim: true (CLAUDE.md invariant 5),
 // diagnoses are stamped sim-seed (no model was called), and nothing here is a real farm.
@@ -49,6 +51,8 @@ export interface SeedObservation {
   storyline: Storyline
   observation: Observation
   internal: DiagnosisInternal
+  // Canned (D4 decision a); null while the row waits for an officer.
+  recommendation: { id: string; data: Recommendation } | null
 }
 
 export interface SeedData {
@@ -357,7 +361,7 @@ export function generateSeed({
     ['cassava_brown_streak', ['Nchelenge', 'Mwense', 'Luwingu'], 14],
     ['fall_armyworm', ['Mumbwa', 'Chibombo', 'Choma', 'Mpika', 'Kasempa', 'Kaoma'], 50],
     ['maize_lethal_necrosis', ['Mpika', 'Mazabuka'], 4],
-    ['unknown', ['Mkushi', 'Mpongwe', 'Chisamba'], 12],
+    ['unknown', ['Mkushi', 'Mpongwe', 'Chisamba'], 4],
   ]
   let backgroundIndex = 0
   for (const [issue, names, count] of background) {
@@ -462,6 +466,16 @@ function materialize(plan: Plan, anchorMs: number): SeedObservation {
   const verifier = state === 'EXPERT_CONFIRMED' ? 'sim-agronomist-01' : 'sim-officer-01'
 
   const diagnosedMs = createdMs + r.int(6, 15) * 1000
+  // Routed rows wait for an officer. The rest are complete with a canned recommendation for the
+  // issue as it stands (the officer's, else the AI's), unless the corpus has nothing to cite for
+  // it (unknown, maize lethal necrosis), when they wait for an officer too, as live reports do.
+  const issue = verified ? plan.issue : suspected
+  const routed = reason !== null && !verified
+  const recommendationId = `${plan.id}-rec`
+  const recommendation =
+    routed || issue === 'unknown'
+      ? null
+      : cannedRecommendation(plan.id, issue, iso(diagnosedMs + 4000))
   const observation = ObservationSchema.parse({
     reporter_id: plan.reporterId,
     reporter_role: plan.reporterRole,
@@ -479,7 +493,7 @@ function materialize(plan: Plan, anchorMs: number): SeedObservation {
     // Simulated rows have no photos, like SMS and USSD reports.
     photo_paths: [],
     farmer_description: r.chance(0.6) ? r.pick(spec.descriptions) : null,
-    status: reason && !verified ? 'awaiting_expert_review' : 'recommending',
+    status: recommendation ? 'complete' : 'awaiting_expert_review',
     diagnosis: {
       suspected_issue: suspected,
       confidence_band: confidenceBand(confidence),
@@ -494,7 +508,7 @@ function materialize(plan: Plan, anchorMs: number): SeedObservation {
     verified_by: verified ? verifier : null,
     // An officer records the real issue, correcting the AI where it was wrong.
     verified_issue: verified ? plan.issue : null,
-    recommendation_id: null,
+    recommendation_id: recommendation ? recommendationId : null,
     intervention: null,
     outcome: null,
     sim: true,
@@ -510,7 +524,13 @@ function materialize(plan: Plan, anchorMs: number): SeedObservation {
     ...SIM_STAMP,
     created_at: iso(diagnosedMs),
   })
-  return { id: plan.id, storyline: plan.storyline, observation, internal }
+  return {
+    id: plan.id,
+    storyline: plan.storyline,
+    observation,
+    internal,
+    recommendation: recommendation && { id: recommendationId, data: recommendation },
+  }
 }
 
 export function clusterPoints(data: Pick<SeedData, 'observations'>): ClusterPoint[] {

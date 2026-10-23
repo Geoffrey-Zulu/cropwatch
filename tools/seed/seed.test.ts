@@ -43,10 +43,10 @@ describe('simulated data', () => {
 
   it('has about 500 observations across the storylines', () => {
     const by = (storyline: string) => seed.observations.filter(o => o.storyline === storyline)
-    expect(seed.observations).toHaveLength(500)
+    expect(seed.observations).toHaveLength(492)
     expect(by('faw-eastern')).toHaveLength(180)
     expect(by('tuta-lusaka')).toHaveLength(120)
-    expect(by('background')).toHaveLength(200)
+    expect(by('background')).toHaveLength(192)
   })
 
   it('spans 21 days ending at the anchor', () => {
@@ -67,13 +67,19 @@ describe('simulated data', () => {
     expect(provinces('tuta-lusaka')).toEqual(new Set(['Lusaka']))
   })
 
-  it('mixes all four verification states and both early statuses', () => {
+  it('mixes all four verification states; rows are complete or wait for an officer', () => {
     const states = new Set(seed.observations.map(o => o.observation.verification_state))
     expect(states).toEqual(
       new Set(['UNVERIFIED', 'AI_ASSESSED', 'FIELD_VERIFIED', 'EXPERT_CONFIRMED'])
     )
     const statuses = new Set(seed.observations.map(o => o.observation.status))
-    expect(statuses).toEqual(new Set(['awaiting_expert_review', 'recommending']))
+    expect(statuses).toEqual(new Set(['awaiting_expert_review', 'complete']))
+    // D4 decision a: canned, cited recommendations for complete rows; a 30–45 row backlog.
+    const complete = seed.observations.filter(o => o.observation.status === 'complete')
+    expect(complete.every(o => o.recommendation?.id === o.observation.recommendation_id)).toBe(true)
+    const backlog = seed.observations.length - complete.length
+    expect(backlog).toBeGreaterThanOrEqual(30)
+    expect(backlog).toBeLessThanOrEqual(45)
   })
 
   it('accelerates: the storylines report more in their last week than their first', () => {
@@ -184,7 +190,7 @@ describe('--live-demo', () => {
 
   it('keeps the rest of the national picture', () => {
     const live = arm('tuta_absoluta', VENUE, 'Lusaka')
-    expect(live.observations).toHaveLength(504)
+    expect(live.observations).toHaveLength(496)
     expect(clusters(clusterPoints(live), ANCHOR).some(c => c.issue === 'fall_armyworm')).toBe(true)
   })
 })
