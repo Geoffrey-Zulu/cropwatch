@@ -1,0 +1,25 @@
+/* "Field Slip" design tokens (design-system/cropwatch/MASTER.md). Light theme only: the apps
+   are built for sunlight. Every text pairing here is at least 7:1, every action at least 5:1;
+   use these tokens, never ad-hoc colours. */
+:root {
+  --paper: #f5f0e6;
+  --slip: #fffcf5;
+  --ink: #17130f;
+  --ink-2: #4a4238;
+  --rule: #d9cfbd;
+  --signboard: #17130f;
+  --copper: #a63d12;
+  --copper-bright: #e2672a;
+  --maize: #f2b90c;
+  --leaf: #24521a;
+  --laterite: #8e1b10;
+
+  /* The sign-painter's hard drop shadow: no blur, ever. */
+  --shadow-sign: 3px 3px 0 var(--ink);
+  --shadow-sign-sm: 2px 2px 0 var(--ink);
+
+  /* Paper grain at 4%: an inline SVG, so no image is downloaded. */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.09 0 0 0 0 0.075 0 0 0 0 0.06 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
+
+  color-scheme: light;
+}

@@ -7,7 +7,9 @@
     "./Counter": "./components/Counter.tsx",
     "./Button": "./components/ui/button.tsx",
     "./Card": "./components/ui/card.tsx",
-    "./utils": "./lib/utils.ts"
+    "./utils": "./lib/utils.ts",
+    "./theme/fieldslip.css": "./theme/fieldslip.css",
+    "./theme/tailwind-preset": "./theme/tailwind-preset.js"
   },
   "scripts": {
     "lint": "eslint \"components/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"index.ts\" \"test/**/*.{ts,tsx}\"",
