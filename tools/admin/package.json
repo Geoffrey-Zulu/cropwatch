@@ -8,7 +8,8 @@
     "smoke-e2e": "tsx smoke-e2e.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e-timing": "tsx e2e-timing.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
