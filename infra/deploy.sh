@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Builds and deploys the CropWatch API (apps/functions) to Cloud Run, and wires Eventarc on
-# Storage finalize. Idempotent: re-run to ship a new revision. Run infra/setup.sh first.
+# Builds and deploys the CropWatch API (apps/functions) to Cloud Run and wires Eventarc on
+# Storage finalize, then deploys the security rules and the capture PWA (apps/capture) to its
+# own Firebase Hosting site. Idempotent: re-run to ship a new revision. Run infra/setup.sh first.
 #
 #   bash infra/deploy.sh
 #
 # MIN_INSTANCES=1 bash infra/deploy.sh keeps one warm instance (demo days; ~US$2/day).
+# VITE_FCM_VAPID_KEY=<public web-push key> enables alert push in the PWA (Firebase console →
+# Project settings → Cloud Messaging → Web Push certificates); without it, push stays off.
 # Account and project pinning, and the helpers, live in infra/lib.sh.
 set -euo pipefail
 # shellcheck source=infra/lib.sh
@@ -22,8 +25,9 @@ GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
 # in the EU (apps/functions/src/env.ts).
 GEMINI_LOCATION="${GEMINI_LOCATION:-eu}"
 MIN_INSTANCES="${MIN_INSTANCES:-0}"
-# The dashboard's origins (Firebase Hosting) plus local Vite.
-CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,http://localhost:5173"
+CAPTURE_SITE="${PROJECT_ID}-capture"
+# Browser origins: the dashboard and the capture PWA (Firebase Hosting), plus local Vite for each.
+CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,https://${CAPTURE_SITE}.web.app,https://${CAPTURE_SITE}.firebaseapp.com,http://localhost:5173,http://localhost:5174"
 
 # -----------------------------------------------------------------------------
 step "Preflight"
@@ -125,10 +129,33 @@ step "Smoke test"
 health="$(curl -sS --fail-with-body "${URL}/api/v1/health")" || die "health check failed: ${health}"
 ok "${URL}/api/v1/health → ${health}"
 
+# -----------------------------------------------------------------------------
+step "Capture PWA → Firebase Hosting site ${CAPTURE_SITE}"
+if firebase hosting:sites:get "$CAPTURE_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+  --non-interactive >/dev/null 2>&1; then
+  ok "site exists"
+else
+  firebase hosting:sites:create "$CAPTURE_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+    --non-interactive >/dev/null
+  ok "site created"
+fi
+[[ -n "${VITE_FCM_VAPID_KEY:-}" ]] || warn "VITE_FCM_VAPID_KEY not set: alert push stays off in the PWA"
+VITE_API_URL="${URL}/api/v1" VITE_FCM_VAPID_KEY="${VITE_FCM_VAPID_KEY:-}" \
+  pnpm --filter capture build >/dev/null || die "capture build failed (run: pnpm --filter capture build)"
+ok "built apps/capture"
+# The rules ship with the client that depends on them (the PWA writes users/{uid}/push_tokens).
+firebase deploy --only firestore:rules,storage,hosting:capture \
+  --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
+CAPTURE_URL="https://${CAPTURE_SITE}.web.app"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "${CAPTURE_URL}/manifest.webmanifest")"
+[[ "$code" == "200" ]] || die "capture manifest answered HTTP ${code}"
+ok "${CAPTURE_URL} (manifest 200)"
+
 cat <<EOF
 
 Deployed ${SERVICE} (${TAG}) to ${REGION}:
   API        ${URL}/api/v1
   tRPC       ${URL}/trpc
   Eventarc   ${TRIGGER} → /internal/events/storage
+  Capture    ${CAPTURE_URL}
 EOF

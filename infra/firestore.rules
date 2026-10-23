@@ -77,6 +77,20 @@ service cloud.firestore {
         && request.resource.data.role == resource.data.role
         && request.resource.data.org_id == resource.data.org_id
         && request.resource.data.sim == resource.data.sim;
+
+      // FCM web push tokens from the capture PWA (web clients cannot subscribe themselves to
+      // topics; the alert dispatcher reads these with the Admin SDK). Owner only.
+      match /push_tokens/{tokenId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && request.resource.data.keys().hasOnly(['token', 'district_slug', 'platform', 'updated_at'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0 && request.resource.data.token.size() < 4096
+          && (request.resource.data.district_slug == null
+            || (request.resource.data.district_slug is string && request.resource.data.district_slug.size() < 64))
+          && request.resource.data.platform == 'web'
+          && request.resource.data.updated_at == request.time;
+      }
     }
   }
 }

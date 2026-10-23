@@ -135,6 +135,27 @@ describe('tRPC', () => {
   })
 })
 
+describe('CORS on /api/v1 (capture PWA)', () => {
+  it('answers the browser preflight for an allowed origin with the auth header allowed', async () => {
+    const res = await app.request('/api/v1/observations', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type',
+      },
+    })
+    expect(res.status).toBe(204)
+    expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:5173')
+    expect(res.headers.get('access-control-allow-headers')).toMatch(/authorization/i)
+  })
+
+  it('gives other origins nothing', async () => {
+    const res = await app.request('/api/v1/health', { headers: { Origin: 'https://evil.example' } })
+    expect(res.headers.get('access-control-allow-origin')).toBeNull()
+  })
+})
+
 describe('POST /api/v1/observations', () => {
   it('requires a valid Firebase ID token', async () => {
     expect((await post('/api/v1/observations', null, createBody())).status).toBe(401)

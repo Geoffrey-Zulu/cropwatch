@@ -10,7 +10,8 @@ import { errorFields, log } from './lib/log'
 export type AppServices = RestServices & EventServices
 
 export interface AppOptions {
-  // Browser origins allowed to call /trpc (the dashboard). Mobile and Eventarc are not browsers.
+  // Browser origins: the dashboard (/trpc) and the capture PWA (/api/v1). Mobile and Eventarc
+  // are not browsers and need none.
   corsOrigins: string[]
   services: AppServices
   logRequests?: boolean
@@ -25,6 +26,16 @@ export function createApp({ corsOrigins, services, logRequests = false }: AppOpt
   app.get('/health', c => c.json({ status: 'ok' }))
 
   app.use('/trpc/*', cors({ origin: corsOrigins }))
+  // The capture PWA is a browser client of the same REST contract as the mobile app.
+  app.use(
+    '/api/v1/*',
+    cors({
+      origin: corsOrigins,
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['authorization', 'content-type'],
+      maxAge: 600,
+    })
+  )
   app.all('/trpc/*', c =>
     fetchRequestHandler({
       endpoint: '/trpc',

@@ -1,0 +1,47 @@
+@import '@repo/ui/theme/fieldslip.css';
+@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
+@import '@fontsource-variable/atkinson-hyperlegible-mono/wght.css';
+@import '@fontsource-variable/big-shoulders/wght.css';
+@import '@fontsource-variable/big-shoulders-stencil/wght.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-paper font-body text-body text-ink antialiased;
+    background-image: var(--paper-grain);
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 3px solid var(--copper);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* The sign-painter's button: a hard shadow that the board swallows when pressed. */
+  .btn-sign {
+    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-slip border-2 border-ink bg-copper px-5 font-body text-title font-extrabold text-slip shadow-sign transition-transform duration-150 ease-snap active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:border-ink-2 disabled:bg-ink-2 disabled:shadow-none;
+  }
+  .btn-quiet {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-slip border-2 border-ink bg-slip px-4 font-body text-label font-semibold text-ink shadow-sign-sm transition-transform duration-150 ease-snap active:translate-x-[2px] active:translate-y-[2px] active:shadow-none;
+  }
+  .eyebrow {
+    @apply font-mono text-eyebrow font-semibold uppercase text-ink-2;
+  }
+}

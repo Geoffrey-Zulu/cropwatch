@@ -36,8 +36,9 @@ CropWatch: early-warning and crop-health intelligence platform for Zambia. Green
 
 ## Conventions
 
-- Hytel Way monorepo: pnpm + Turborepo. Reusable UI → `packages/ui`; app-specific → `apps/web/src/components`; pages `*Page.tsx`; sections `*Section.tsx`; hooks `use*`; tRPC routers in `apps/functions/src/trpc/routers/`; every schema/type shared by FE+BE lives in `packages/shared` as Zod + `z.infer`; import scope is `@repo/*` (matches this repo), e.g. `import { ObservationSchema } from '@repo/shared'`.
-- `apps/mobile` (Flutter) is in the repo but OUTSIDE the pnpm workspace. Never import from it; it consumes only `packages/shared/src/contracts/openapi.json`.
+- Hytel Way monorepo: pnpm + Turborepo. Reusable UI → `packages/ui`; app-specific → `apps/<app>/src/components`; pages `*Page.tsx`; sections `*Section.tsx`; hooks `use*`; tRPC routers in `apps/functions/src/trpc/routers/`; every schema/type shared by FE+BE lives in `packages/shared` as Zod + `z.infer`; import scope is `@repo/*` (matches this repo), e.g. `import { ObservationSchema } from '@repo/shared'`.
+- `apps/capture` (Vite + React PWA) is the **primary demo client** and is IN the pnpm workspace. It consumes the frozen `/api/v1` contract and Firestore listeners exactly as the mobile app would (no new endpoints, no contract changes) and follows the "Field Slip" design system (`design-system/cropwatch/MASTER.md`, tokens in `packages/ui/theme`), which the dashboard adopts too. Deployed to its own Hosting site by `infra/deploy.sh`.
+- `apps/mobile` (Flutter) is unchanged: in the repo but OUTSIDE the pnpm workspace, no longer schedule-critical. Never import from it; it consumes only `packages/shared/src/contracts/openapi.json`.
 - **Contract freeze:** after Day 2, `packages/shared/src/contracts/openapi.json` and the `/api/v1` REST surface only gain optional fields — no renames, no removals, no type changes. Regenerate the file from Zod on any additive change and commit it.
 - Controlled vocabulary for crops/issues lives in `packages/shared/src/constants/` — the Gemini response schema, the regulatory DB and the dashboard all reference it; never free-string an issue name.
 - Versioned prompts in `prompts/`; stamp `prompt_version` and `model_id` on every diagnosis written.

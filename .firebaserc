@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "crop-watch01"
+  },
+  "targets": {
+    "crop-watch01": {
+      "hosting": {
+        "dashboard": ["crop-watch01"],
+        "capture": ["crop-watch01-capture"]
+      }
+    }
   }
 }
