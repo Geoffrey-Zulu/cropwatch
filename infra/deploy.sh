@@ -17,7 +17,10 @@ BUILD_SA="${BUILD_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 # Source staging in-region; gcloud's default staging bucket is US multi-region.
 STAGING_BUCKET="${PROJECT_ID}-cloudbuild"
 TRIGGER="cropwatch-photo-finalized"
-GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
+GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+# Gemini is not served regionally in europe-west1 any more; the EU multi-region keeps processing
+# in the EU (apps/functions/src/env.ts).
+GEMINI_LOCATION="${GEMINI_LOCATION:-eu}"
 MIN_INSTANCES="${MIN_INSTANCES:-0}"
 # The dashboard's origins (Firebase Hosting) plus local Vite.
 CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,http://localhost:5173"
@@ -91,7 +94,7 @@ gcloud run deploy "$SERVICE" \
   --cpu=1 --memory=1Gi \
   --concurrency=40 --timeout=120 \
   --min-instances="$MIN_INSTANCES" --max-instances=3 \
-  --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};STORAGE_BUCKET=${BUCKET};EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS}" \
+  --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS}" \
   --format=none
 ok "deployed ${URL}"
 

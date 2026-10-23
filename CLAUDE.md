@@ -18,7 +18,9 @@ CropWatch: early-warning and crop-health intelligence platform for Zambia. Green
 - **GCP / Firebase project:** `crop-watch01` · **Authorized account:** `zulugeoffrey034@gmail.com` — use this account for ALL gcloud/firebase commands, not any other logged-in account.
   - `gcloud auth login zulugeoffrey034@gmail.com && gcloud config set project crop-watch01`
   - `firebase login` (same account) · `firebase use crop-watch01`
-- **Default region:** `europe-west1` for Cloud Run, Firestore, Storage and Gemini/Vertex calls (good latency from Zambia, full product coverage). Set once in `infra/setup.sh`; never mix regions.
+- **Default region:** `europe-west1` for Cloud Run, Firestore, Storage, BigQuery and everything else (good latency from Zambia). Set once in `infra/lib.sh`; don't add regions beyond these two sanctioned exceptions, both EU:
+  - **Gemini → `eu` multi-region endpoint** (`GEMINI_LOCATION`). europe-west1 serves no current Gemini model (2.5 retired on Vertex 2026-10-20; 3.x is global/multi-region only). Model: `gemini-3.5-flash-lite` (GA until at least 2027-07), configurable via `GEMINI_MODEL`. Gemini 3.x takes `thinkingLevel`, not `thinkingBudget`.
+  - **RAG Engine corpus → `europe-west4`** (`RAG_REGION`). RagManagedDb is allowlist-only in europe-west1. Only public documents and query text (crop, issue, stage, district) go there. Unprovision after the hackathon with `infra/rag-teardown.sh`.
 - **Firebase web app config** (public client config — safe to commit) lives at `apps/web/src/lib/firebase.ts`:
   - apiKey `AIzaSyB6brxOl9sgWsf7X059B1rZvLiWXCPDTqU` · authDomain `crop-watch01.firebaseapp.com` · projectId `crop-watch01` · storageBucket `crop-watch01.firebasestorage.app` · messagingSenderId `24960589333` · appId `1:24960589333:web:cbe577be90032352c4f81c`
   - Drop `measurementId`/Analytics — not needed; do NOT init `getAnalytics` (breaks in non-browser contexts and adds nothing to the demo).
