@@ -14,7 +14,7 @@ source "$(dirname "$0")/lib.sh"
 
 KNOWLEDGE_BUCKET="${PROJECT_ID}-knowledge"
 CORPUS_NAME="cropwatch-knowledge"
-AIP="https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}"
+AIP="https://${RAG_REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${RAG_REGION}"
 
 step "Preflight"
 require_gcloud_account
@@ -25,14 +25,14 @@ if [[ -z "$corpora" ]]; then
   ok "none"
 else
   for corpus in $corpora; do
-    api -X DELETE "https://${REGION}-aiplatform.googleapis.com/v1/${corpus}?force=true" >/dev/null
+    api -X DELETE "https://${RAG_REGION}-aiplatform.googleapis.com/v1/${corpus}?force=true" >/dev/null
     ok "deleted ${corpus}"
   done
 fi
 
-step "RAG Engine tier → Unprovisioned (deletes the Spanner instance)"
+step "RAG Engine tier in ${RAG_REGION} → Unprovisioned (deletes the Spanner instance)"
 op="$(api -X PATCH "${AIP}/ragEngineConfig" \
-  -d "{\"name\":\"projects/${PROJECT_ID}/locations/${REGION}/ragEngineConfig\",\"ragManagedDbConfig\":{\"unprovisioned\":{}}}" |
+  -d "{\"name\":\"projects/${PROJECT_ID}/locations/${RAG_REGION}/ragEngineConfig\",\"ragManagedDbConfig\":{\"unprovisioned\":{}}}" |
   json 'j.name')"
 [[ -n "$op" ]] || die "could not change the RAG Engine tier"
 ok "requested (${op}); takes a few minutes"

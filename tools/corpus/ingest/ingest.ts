@@ -18,6 +18,7 @@ import {
   gcsUri,
   knowledgeDocument,
   objectName,
+  MIN_TEXT_CHARS,
   planIngest,
 } from './plan'
 import {
@@ -31,8 +32,9 @@ import {
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dryRun = process.argv.includes('--dry-run')
-// RAG Engine accepts up to 25 URIs per import request.
-const IMPORT_BATCH = 25
+const IMPORT_BATCH = 1
+const IMPORT_ROUNDS = 4
+const RETRY_PAUSE_MS = 60_000
 
 const manifest = readManifest(join(ROOT, 'manifest.json'))
 if (manifest.length === 0) throw new Error('manifest.json is empty: run fetch-corpus first')
@@ -48,9 +50,12 @@ const plan = planIngest(
 
 console.log(`Corpus ${corpus}`)
 console.log(
-  `${plan.upload.length} to upload, ${plan.import.length} to import, ${plan.remove.length} RagFiles to remove, ${plan.unchanged.length} unchanged, ${plan.needsOcr.length} waiting for OCR`
+  `${plan.upload.length} to upload, ${plan.import.length} to import, ${plan.remove.length} RagFiles to remove, ${plan.unchanged.length} unchanged, ${plan.needsOcr.length} waiting for OCR, ${plan.empty.length} without content`
 )
 for (const entry of plan.needsOcr) console.log(`  NEEDS OCR (not ingested): ${entry.file}`)
+for (const entry of plan.empty) {
+  console.log(`  NO CONTENT (not ingested, < ${MIN_TEXT_CHARS} characters): ${entry.file}`)
+}
 if (dryRun) {
   for (const entry of plan.import) console.log(`  import ${gcsUri(entry)}`)
   for (const file of plan.remove) console.log(`  remove ${file.gcsUri}`)
@@ -72,22 +77,30 @@ for (const file of plan.remove) {
   console.log(`  removed ${file.gcsUri}`)
 }
 
-let failed = 0
-for (let i = 0; i < plan.import.length; i += IMPORT_BATCH) {
-  const uris = plan.import.slice(i, i + IMPORT_BATCH).map(gcsUri)
-  const result = await importRagFiles(corpus, uris)
-  failed += Number(result.failedRagFilesCount ?? 0)
-  console.log(
-    `  imported ${result.importedRagFilesCount ?? 0} of ${uris.length} (skipped ${result.skippedRagFilesCount ?? 0}, failed ${result.failedRagFilesCount ?? 0})`
-  )
+// RAG Engine fails a file outright on an embedding 429 instead of waiting, so import one file
+// at a time, paced below the quota (rag.ts), and retry whatever is still missing after a pause.
+let pending = plan.import.map(gcsUri)
+for (let round = 1; pending.length > 0 && round <= IMPORT_ROUNDS; round++) {
+  if (round > 1) {
+    console.log(`  ${pending.length} not imported yet; retrying in ${RETRY_PAUSE_MS / 1000} s`)
+    await new Promise(resolve => setTimeout(resolve, RETRY_PAUSE_MS))
+  }
+  for (let i = 0; i < pending.length; i += IMPORT_BATCH) {
+    const uris = pending.slice(i, i + IMPORT_BATCH)
+    const result = await importRagFiles(corpus, uris)
+    console.log(
+      `  imported ${result.importedRagFilesCount ?? 0} of ${uris.length} (failed ${result.failedRagFilesCount ?? 0})`
+    )
+  }
+  const present = new Set((await listRagFiles(corpus)).map(file => file.gcsUri))
+  pending = pending.filter(uri => !present.has(uri))
 }
 
 // The index lists what is actually in the corpus now.
 const inCorpus = new Set((await listRagFiles(corpus)).map(file => file.gcsUri))
-const documents = manifest
-  .filter(entry => !entry.needs_ocr && inCorpus.has(gcsUri(entry)))
-  .map(knowledgeDocument)
-const missing = manifest.filter(entry => !entry.needs_ocr && !inCorpus.has(gcsUri(entry)))
+const wanted = manifest.filter(entry => !entry.needs_ocr && entry.text_chars >= MIN_TEXT_CHARS)
+const documents = wanted.filter(entry => inCorpus.has(gcsUri(entry))).map(knowledgeDocument)
+const missing = wanted.filter(entry => !inCorpus.has(gcsUri(entry)))
 for (const entry of missing) console.log(`  NOT IN CORPUS after import: ${entry.file}`)
 
 const index = KnowledgeIndexSchema.parse({
@@ -102,4 +115,4 @@ await uploadObject(
   'application/json'
 )
 console.log(`\nindex.json: ${documents.length} documents in ${corpus}`)
-if (failed > 0 || missing.length > 0) process.exitCode = 1
+if (missing.length > 0) process.exitCode = 1

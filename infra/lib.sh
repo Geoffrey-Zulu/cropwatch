@@ -6,6 +6,10 @@
 
 PROJECT_ID="crop-watch01"
 REGION="europe-west1"
+# The one exception to a single region (approved 2026-10-21): RAG Engine refuses RagManagedDb
+# in europe-west1 for new projects (allowlist only), so the corpus lives in europe-west4. Only
+# public documents and query text (crop, issue, stage, district; never coordinates) go there.
+RAG_REGION="europe-west4"
 ACCOUNT="zulugeoffrey034@gmail.com"
 
 BUCKET="${PROJECT_ID}.firebasestorage.app"

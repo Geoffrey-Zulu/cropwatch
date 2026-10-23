@@ -2,6 +2,8 @@ import { execSync } from 'node:child_process'
 
 export const PROJECT_ID = 'crop-watch01'
 export const REGION = 'europe-west1'
+// RAG Engine only (infra/lib.sh explains the exception).
+export const RAG_REGION = 'europe-west4'
 // CLAUDE.md: every operator action runs as this account, never via whatever ADC holds.
 export const ACCOUNT = 'zulugeoffrey034@gmail.com'
 

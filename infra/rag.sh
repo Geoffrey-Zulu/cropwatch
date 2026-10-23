@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Provisions the knowledge layer: RAG Engine (RagManagedDb) in europe-west1, the corpus, and the
-# Cloud Storage bucket its documents are imported from. Idempotent. Then load the documents:
+# Provisions the knowledge layer: RAG Engine (RagManagedDb) in RAG_REGION (europe-west4; see
+# infra/lib.sh for why), the corpus, and the Cloud Storage bucket in europe-west1 its documents
+# are imported from. Idempotent. Then load the documents:
 #
 #   bash infra/rag.sh
 #   pnpm --filter @repo/corpus ingest
@@ -14,13 +15,14 @@ source "$(dirname "$0")/lib.sh"
 KNOWLEDGE_BUCKET="${PROJECT_ID}-knowledge"
 CORPUS_NAME="cropwatch-knowledge"
 EMBEDDING_MODEL="text-embedding-005"
-AIP="https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}"
+AIP="https://${RAG_REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${RAG_REGION}"
+AIP_HOME="https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}"
 
 # Polls a long-running operation until it is done; prints its response, or fails with its error.
 wait_operation() {
   local op="$1" body
   for _ in $(seq 1 60); do
-    body="$(api "https://${REGION}-aiplatform.googleapis.com/v1/${op}")"
+    body="$(api "https://${RAG_REGION}-aiplatform.googleapis.com/v1/${op}")"
     if [[ "$(json 'j.done' <<<"$body")" == "true" ]]; then
       [[ -z "$(json 'j.error && j.error.message' <<<"$body")" ]] ||
         die "operation failed: $(json 'j.error.message' <<<"$body")"
@@ -40,7 +42,7 @@ find_corpus() {
 step "Preflight"
 require_gcloud_account
 RAG_AGENT="service-${PROJECT_NUMBER}@gcp-sa-vertex-rag.iam.gserviceaccount.com"
-ok "project ${PROJECT_ID} (${PROJECT_NUMBER}), region ${REGION}"
+ok "project ${PROJECT_ID} (${PROJECT_NUMBER}), RAG in ${RAG_REGION}, everything else in ${REGION}"
 
 # -----------------------------------------------------------------------------
 step "Knowledge bucket gs://${KNOWLEDGE_BUCKET} (${REGION})"
@@ -57,14 +59,14 @@ retry gcloud storage buckets add-iam-policy-binding "gs://${KNOWLEDGE_BUCKET}" \
 ok "${RUN_SA} can read it"
 
 # -----------------------------------------------------------------------------
-step "RAG Engine: RagManagedDb, Basic tier (${REGION})"
+step "RAG Engine: RagManagedDb, Basic tier (${RAG_REGION})"
 config="$(api "${AIP}/ragEngineConfig")"
 tier="$(json 'Object.keys(j.ragManagedDbConfig || {})[0]' <<<"$config")"
 if [[ "$tier" == "basic" ]]; then
   ok "already Basic"
 else
   op="$(api -X PATCH "${AIP}/ragEngineConfig" \
-    -d "{\"name\":\"projects/${PROJECT_ID}/locations/${REGION}/ragEngineConfig\",\"ragManagedDbConfig\":{\"basic\":{}}}" |
+    -d "{\"name\":\"projects/${PROJECT_ID}/locations/${RAG_REGION}/ragEngineConfig\",\"ragManagedDbConfig\":{\"basic\":{}}}" |
     json 'j.name')"
   [[ -n "$op" ]] || die "could not set the RAG Engine tier (was: ${tier:-none})"
   wait_operation "$op" >/dev/null
@@ -84,17 +86,30 @@ else
       \"ragManagedDb\": {},
       \"ragEmbeddingModelConfig\": {
         \"vertexPredictionEndpoint\": {
-          \"endpoint\": \"projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${EMBEDDING_MODEL}\"
+          \"endpoint\": \"projects/${PROJECT_ID}/locations/${RAG_REGION}/publishers/google/models/${EMBEDDING_MODEL}\"
         }
       }
     }
   }")"
   op="$(json 'j.name' <<<"$response")"
-  [[ -n "$op" ]] || die "corpus creation refused in ${REGION}: $(json 'j.error && j.error.message' <<<"$response")"
+  [[ -n "$op" ]] || die "corpus creation refused in ${RAG_REGION}: $(json 'j.error && j.error.message' <<<"$response")"
   wait_operation "$op" >/dev/null
   corpus="$(find_corpus)"
   [[ -n "$corpus" ]] || die "corpus created but not listed yet; re-run in a minute"
   ok "created: ${corpus}"
+fi
+
+# -----------------------------------------------------------------------------
+step "RAG Engine in ${REGION}: Unprovisioned (refused there; nothing may bill)"
+home_tier="$(api "${AIP_HOME}/ragEngineConfig" | json 'Object.keys(j.ragManagedDbConfig || {})[0]')"
+if [[ "$home_tier" == "unprovisioned" ]]; then
+  ok "already Unprovisioned"
+elif api -X PATCH "${AIP_HOME}/ragEngineConfig" \
+  -d "{\"name\":\"projects/${PROJECT_ID}/locations/${REGION}/ragEngineConfig\",\"ragManagedDbConfig\":{\"unprovisioned\":{}}}" |
+  json 'j.name' | grep -q .; then
+  ok "set to Unprovisioned (was: ${home_tier:-none})"
+else
+  warn "could not unprovision RAG Engine in ${REGION} (was: ${home_tier:-none})"
 fi
 
 # -----------------------------------------------------------------------------

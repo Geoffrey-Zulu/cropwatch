@@ -1,9 +1,9 @@
-import { gcpFetch, PROJECT_ID, REGION } from '@repo/tools-gcp'
+import { gcpFetch, PROJECT_ID, RAG_REGION } from '@repo/tools-gcp'
 import type { RagFile } from './plan'
 
 // RAG Engine and Cloud Storage over REST, as the authorized account (tools/gcp).
-const AIP = `https://${REGION}-aiplatform.googleapis.com/v1`
-const LOCATION = `projects/${PROJECT_ID}/locations/${REGION}`
+const AIP = `https://${RAG_REGION}-aiplatform.googleapis.com/v1`
+const LOCATION = `projects/${PROJECT_ID}/locations/${RAG_REGION}`
 const STORAGE = 'https://storage.googleapis.com/storage/v1'
 const UPLOAD = 'https://storage.googleapis.com/upload/storage/v1'
 
@@ -74,7 +74,10 @@ export async function importRagFiles(corpus: string, uris: string[]) {
           ragFileTransformationConfig: {
             ragFileChunkingConfig: { fixedLengthChunking: { chunkSize: 512, chunkOverlap: 100 } },
           },
-          maxEmbeddingRequestsPerMin: 600,
+          // Below this project's text-embedding quota in the RAG region (about 7 requests a
+          // minute for a new project): RAG Engine fails a file on the first 429 instead of
+          // waiting. Raise both together if the quota is increased.
+          maxEmbeddingRequestsPerMin: 5,
         },
       }),
     })
