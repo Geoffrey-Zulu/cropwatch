@@ -35,8 +35,14 @@ export interface FilterResult {
   rejected: Rejection[]
 }
 
-// For matching names only; never applied to anything shown.
-const normalise = (text: string) => text.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim()
+// For matching names only; never applied to anything shown. Hyphens and dashes count as spaces:
+// labels write "lambda-cyhalothrin" where guides write "Lambda Cyhalothrin".
+const normalise = (text: string) =>
+  text
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s\-‐–—]+/g, ' ')
+    .trim()
 
 const nameOf = (candidate: ChemicalCandidate) =>
   candidate.registration_no ?? candidate.trade_name ?? candidate.active_ingredient ?? '(unnamed)'

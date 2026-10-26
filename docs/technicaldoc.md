@@ -227,7 +227,7 @@ Response composition: IPM ladder first (scout → cultural → biological → ch
 
 ## 8. Regulatory Product Database (the chemical firewall)
 
-**Dependency [NEEDS VALIDATION]:** machine-readable ZEMA register unconfirmed. Build the table from available sources in priority order: (1) ZEMA registration data if obtainable, (2) official product labels, (3) MoA FAW manual recommended-products annex. Demo scope only needs the products relevant to demo crops/issues (~20–40 rows).
+**Dependency [NEEDS VALIDATION]:** machine-readable ZEMA register unconfirmed. Build the table from available sources in priority order: (1) ZEMA registration data if obtainable, (2) product labels photographed at agro-dealers, checked against the products the Zambian Plantwise PMDGs name (worksheet: `tools/regulatory/products-from-pmdg.md`), (3) the MoA FAW manual's products annex, only if the manual ever arrives (requested by email 2026-10-21, no reply; nothing waits on it). Demo scope only needs the products relevant to demo crops/issues (~20–40 rows).
 
 Schema (`registered_products/{registeredProductDocId(registration_no)}`; the document ID is the percent-encoded number, since ZEMA numbers may contain `/`). Loaded from a CSV with `tools/regulatory/load-products.ts`, which validates every row against `@repo/shared` and treats the CSV as the whole register:
 

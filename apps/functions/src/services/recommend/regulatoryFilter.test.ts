@@ -78,6 +78,11 @@ describe('filterChemicalCandidates', () => {
     expect(options.map(o => o.registration_no)).toEqual(['ZM-001'])
   })
 
+  it('treats hyphens and spaces alike in names (labels write "lambda-cyhalothrin", guides "Lambda Cyhalothrin")', () => {
+    const { options } = run([{ active_ingredient: 'emamectin-benzoate', source_ids: [] }])
+    expect(options.map(o => o.trade_name)).toEqual(['Alpha 5 EC', 'Beta 19 SC'])
+  })
+
   it('lists every registered brand of an active ingredient', () => {
     const { options } = run([{ active_ingredient: 'Emamectin Benzoate', source_ids: [] }])
     expect(options.map(o => o.trade_name)).toEqual(['Alpha 5 EC', 'Beta 19 SC'])
