@@ -1,14 +1,15 @@
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { useCallback, useEffect, useState } from 'react'
 import { app, db } from '../lib/firebase'
+import { webPushPublicKey } from '../lib/firebaseConfig'
 
 // Messaging loads only where push can work, so other browsers never download it.
 const messagingModule = () => import('firebase/messaging')
 
-// FCM web push for area alerts (Android Chrome). Anywhere it is unavailable (no VAPID key
-// configured, iOS outside a home-screen app, a browser without push) it reports
-// "unsupported" and the UI simply leaves it out.
-const VAPID_KEY: string | undefined = import.meta.env.VITE_FCM_VAPID_KEY
+// FCM web push for area alerts (Android Chrome). Anywhere it is unavailable (iOS outside a
+// home-screen app, a browser without push) it reports "unsupported" and the UI simply leaves
+// it out. VITE_FCM_VAPID_KEY overrides the key (another project); empty turns push off.
+const VAPID_KEY: string | undefined = import.meta.env.VITE_FCM_VAPID_KEY ?? webPushPublicKey
 
 export type PushState = 'checking' | 'unsupported' | 'off' | 'on' | 'blocked' | 'error'
 

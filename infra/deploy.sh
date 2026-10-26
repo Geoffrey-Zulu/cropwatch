@@ -6,8 +6,7 @@
 #   bash infra/deploy.sh
 #
 # MIN_INSTANCES=1 bash infra/deploy.sh keeps one warm instance (demo days; ~US$2/day).
-# VITE_FCM_VAPID_KEY=<public web-push key> enables alert push in the PWA (Firebase console →
-# Project settings → Cloud Messaging → Web Push certificates); without it, push stays off.
+# The PWA's web-push (VAPID) public key lives in apps/capture/src/lib/firebaseConfig.ts.
 # Account and project pinning, and the helpers, live in infra/lib.sh.
 set -euo pipefail
 # shellcheck source=infra/lib.sh
@@ -139,9 +138,8 @@ else
     --non-interactive >/dev/null
   ok "site created"
 fi
-[[ -n "${VITE_FCM_VAPID_KEY:-}" ]] || warn "VITE_FCM_VAPID_KEY not set: alert push stays off in the PWA"
-VITE_API_URL="${URL}/api/v1" VITE_FCM_VAPID_KEY="${VITE_FCM_VAPID_KEY:-}" \
-  pnpm --filter capture build >/dev/null || die "capture build failed (run: pnpm --filter capture build)"
+VITE_API_URL="${URL}/api/v1" pnpm --filter capture build >/dev/null ||
+  die "capture build failed (run: pnpm --filter capture build)"
 ok "built apps/capture"
 # The rules ship with the client that depends on them (the PWA writes users/{uid}/push_tokens).
 firebase deploy --only firestore:rules,storage,hosting:capture \
