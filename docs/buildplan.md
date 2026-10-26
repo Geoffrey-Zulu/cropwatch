@@ -398,4 +398,64 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 **Needs Geoffrey**
 
 - **The phone run** (above). Send the 4-character report number so it can be checked in Firestore and the timing logged here.
-- **A web-push key:** Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair. Send the public key; it is safe to share. Until then, alert push stays off in the PWA and everything else works.
+- ~~A web-push key~~ — received 26 Oct; it lives in `apps/capture/src/lib/firebaseConfig.ts` and is deployed. Registration was verified on the deployed PWA: the token landed in `users/{uid}/push_tokens` (test data removed). Alerts reach it through the D6 dispatcher.
+
+### D6 · Sun 26 Oct — clusters, Risk Model v0, alerts and SMS (logic only; dashboard screens wait for UI feedback)
+
+**Status:** logic built and deployed (branch `d6-clusters-alerts`). §4.5 passes on the deployed API. §4.6 is measured as far as the SMS gateway: real SMS waits on Geoffrey's Africa's Talking account. Dashboard visuals are on hold until Geoffrey's UI feedback, as instructed.
+
+**Landed**
+
+- **Risk Model v0 and the cluster rule** live in `packages/shared/src/risk.ts`, one implementation for the seed and the API.
+  - Cluster: ≥ 5 same-issue reports, weight ≥ 0.5, within 10 km, within 72 h. The spatial pass is BigQuery `ST_DWITHIN`; anchors merge in `mergeAnchors`.
+  - Risk: LOW / ELEVATED / HIGH, always with contributing factors and never a number (technicaldoc §9).
+- **Per-report tracking** runs beside the recommendation (`apps/functions/src/services/outbreaks/`) and never holds up the farmer's result:
+  - a snapshot is streamed to `observation_events`;
+  - clusters are detected over the `observations_latest` view;
+  - `clusters/{id}` is upserted in one transaction per issue, with created / grown / unchanged / closed states;
+  - `risk/{district}` and `risk_scores` are refreshed;
+  - an alert is raised for a **new** cluster, or for a district that has just turned HIGH.
+- **Dispatch** goes through Pub/Sub `cropwatch.alerts` and the push subscription `cropwatch-alerts-dispatch` to `/internal/events/alerts` (OIDC-checked):
+  - FCM topic `alerts-{district}` for the mobile app;
+  - FCM web push to the capture PWA's tokens;
+  - SMS through Africa's Talking, which only logs until the account's secrets exist.
+
+  A transactional claim means a redelivery never re-sends. Each channel fails on its own. Simulated alerts say DEMO on every channel.
+
+- **`GET /api/v1/alerts`** is live (frozen contract shape).
+- **BigQuery:** `observation_events`, `retracted_observations`, `risk_scores` and the `observations_latest` view all come from the shared schemas (`pnpm --filter @repo/seed tables`, run by `setup.sh`). `observations` gained `recorded_at`.
+- **Seed:**
+  - writes the outbreak state it implies: 6 sim clusters, risk for 33 districts, and their alerts with dispatch `skipped`;
+  - clears a previous rehearsal's state;
+  - refuses to arm the live demo unless the presenter's report would form a **new** cluster, because a grown cluster would not alert.
+- **Tools:**
+  - `outbreak-e2e`: the D6 acceptance run against the deployed API, undone afterwards;
+  - `sms-subscribe`: E.164 numbers per district or all, with consent recorded; numbers are masked in output; no client can read them;
+  - E2E cleanups now retract their test reports, so test traffic in Chongwe can never pre-empt the demo cluster.
+- **Infra:** push subscription, Firestore rules for `clusters` (Command Center only) and `risk` (signed-in), the `push_tokens` collection-group index, `roles/firebasecloudmessaging.admin` for the API's service account, and the AT secrets mounted when present.
+
+**Found by the first live run and fixed:** dispatch threw after claiming the alert, because the new `push_tokens` index was still building. Pub/Sub's retry was then acknowledged as "in progress" and the alert was never sent. Channel lookups now fail inside their channel. A delivery that finds another one mid-dispatch now answers 503, so Pub/Sub retries.
+
+**Acceptance (deployed revision `cropwatch-api-00007-t4x`, `outbreak-e2e` playing the presenter ~1 km from the venue after `seed --commit --live-demo`)**
+
+| Check                                                              | Result                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §4.5 cluster within 60 s of the qualifying report                  | **Pass, twice in a row.** New 5-report cluster and its alert written **3.6 s** and **2.3 s** after the report was sent (alert `created_at`; the cluster is written just before it). The tool sees them later (9–12 s) because each of its Firestore reads fetches a gcloud token |
+| Risk panel shows contributing factors, never a bare level          | Pass: Lusaka ELEVATED → **HIGH**, "Cluster of 5 Tuta absoluta (tomato leafminer) reports within 10 km (5 new in 24 h) · 22 reports this week (+175% on last week)"; no numbers that read as odds                                                                                 |
+| §4.6 report → dispatched (FCM topic + web push + SMS gateway call) | Pass to the gateway: **7.4 s** and **5.8 s**, report sent → dispatch finished (alert → dispatched 3.7 s / 3.5 s). FCM topic `alerts-lusaka` accepted. One Pub/Sub delivery each, HTTP 200                                                                                        |
+| §4.6 SMS on a registered phone in < 30 s                           | **Pending: Africa's Talking account.** Dispatch ran the log-only sender (0 subscribers). The remaining step is AT's own delivery time                                                                                                                                            |
+| GET /alerts, sim flag, cleanup                                     | Pass: listed in the contract shape, `sim: true` (four seeded members), DEMO on every channel; test report retracted, cluster + alert removed, demo still armed                                                                                                                   |
+| Rules (emulator)                                                   | Pass: clusters Command Center only; risk signed-in read; `sms_subscribers` and `alerts/*/internal/dispatch` closed to every client; earlier 19 rules tests still pass                                                                                                            |
+| `pnpm` gate                                                        | typecheck, lint, build, test: green (126 API, 115 shared, 25 seed tests)                                                                                                                                                                                                         |
+
+**Demo risk found:** `tuta-fruit.jpg` (a Wikimedia photo of Tuta damage on fruit) came back **early blight, high confidence**: a confident miss, so it correctly formed no cluster. The leaf photo is reliable (3/3). The presenter should photograph **leaf mines**, not fruit. Prompt tuning with the field photos is still open from D2.
+
+**Needs Geoffrey**
+
+- **Africa's Talking account** (only you can register; it needs your identity and payment):
+  1. Sign up at africastalking.com and create a live app (username of your choice).
+  2. Generate an API key (Settings → API Key) in the live app, and one in the sandbox app for testing.
+  3. Store them: `printf '%s' "<username>" | gcloud secrets create africastalking-username --data-file=- --replication-policy=user-managed --locations=europe-west1 --project=crop-watch01`, and the same for `africastalking-api-key`. Then `bash infra/deploy.sh`. To test first without real texts, store username `sandbox` with the sandbox key; messages then show in AT's simulator.
+  4. Top up a little airtime credit (Zambian SMS is billed per message).
+  5. Request an alphanumeric sender ID ("CropWatch") now for after the hackathon. It goes through ZICTA per carrier, MTN only displays pre-registered IDs, and it takes weeks, so the demo uses AT's default sender.
+- **Subscribe the demo phones** (with consent): `pnpm --filter @repo/admin-tools sms-subscribe add --phone +260… --district Lusaka --consent "…"`; use `--district all` for the presenter's phone.

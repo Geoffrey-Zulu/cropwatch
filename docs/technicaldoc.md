@@ -131,21 +131,47 @@ alerts/{alertId}
   observation_ids: string[]
   channels_sent: ["fcm","sms"], created_at
   sim: boolean                     // true if built from any simulated observation
+  cluster_id: string | null        // the cluster that raised it (type "cluster")
+
+alerts/{alertId}/internal/dispatch // INTERNAL: who was sent what; no client reads it
+  state: "pending" | "sending" | "sent" | "skipped"   // seeded/backfilled alerts: "skipped"
+  fcm: { topic, topic_ok, web_sent, web_failed, web_pruned }
+  sms: { gateway, recipients, sent, failed, error }, dispatch_ms, finished_at
+
+clusters/{clusterId}               // Command Center read only (members are report ids)
+  issue, district, district_slug   // district most members are in
+  center: GeoPoint, radius_km      // centroid of members, never a farm
+  members: string[], size, new_last_24h
+  active: boolean, first_detected_at, updated_at, closed_at?
+  alert_id: string | null, sim: boolean
+
+risk/{districtSlug}                // Risk Model v0, latest per district (§9)
+  district, district_slug, level, contributing_factors: string[], computed_at, sim
+
+sms_subscribers/{e164digits_slug}  // NO client access; tools/admin sms-subscribe
+  phone (E.164), district_slug (or "*" = every district), active, label
+  consent: { note, recorded_by, recorded_at }, created_at
 
 registered_products/{registrationNo}   // Regulatory Product Database — see §8
 ```
 
-### 4.2 BigQuery tables (streamed from Firestore via extension or explicit writes)
+### 4.2 BigQuery tables (explicit writes; schemas in `packages/shared/src/schemas/analytics.ts`)
+
+Created and extended by `pnpm --filter @repo/seed tables` (run by `infra/setup.sh` and by the seed).
 
 ```
-cropwatch.observations      -- flattened observation rows, GEOGRAPHY point column, keyed on
-                            -- district_slug; INCLUDES observations/{id}/internal/diagnosis
-                            -- (model_confidence, severity_pct, reasoning_summary, attempts) for
-                            -- accuracy and calibration work. BigQuery is never UI-bound.
-cropwatch.weather_daily     -- district-level daily weather pulls
-cropwatch.satellite_metrics -- optional (Earth Engine ST_REGIONSTATS outputs)
-cropwatch.risk_scores       -- per district/camp per day: level + contributing factors
-cropwatch.alerts
+cropwatch.observations        -- flattened observation rows, GEOGRAPHY point column, keyed on
+                              -- district_slug; INCLUDES observations/{id}/internal/diagnosis
+                              -- (model_confidence, severity_pct, attempts) for accuracy and
+                              -- calibration work. BigQuery is never UI-bound. Seed load jobs only.
+cropwatch.observation_events  -- the same row, streamed by the API each time a report changes
+                              -- (diagnosed, verified), stamped recorded_at
+cropwatch.retracted_observations -- E2E test reports deleted after the fact
+cropwatch.observations_latest -- VIEW: latest row per obs_id across both tables, minus
+                              -- retracted; the cluster rule and risk counts read this
+cropwatch.risk_scores         -- every district risk computation: level + contributing factors
+cropwatch.weather_daily       -- district-level daily weather pulls (with Earth Engine; cut line)
+cropwatch.satellite_metrics   -- optional (Earth Engine ST_REGIONSTATS outputs)
 ```
 
 ### 4.3 Verification ladder weights (v0 placeholders — agronomist to redefine)
@@ -254,31 +280,54 @@ Commercial firewall: "where to buy" renders after the recommendation, lists ALL 
 
 ## 9. Cluster & risk (Risk Model v0 — prototype)
 
-### Cluster rule (BigQuery, runs on schedule or per-insert)
+### Cluster rule (BigQuery, per report)
+
+v0, in one sentence for the stage: **five or more reports of the same issue, each AI-assessed or better (weight ≥ 0.5), within 10 km of one another's anchor, in the last 72 hours.** Constants and the merge step live in `packages/shared/src/risk.ts`, so the seed and the API run the same code.
+
+Each time a report changes (diagnosed, verified), the API (`apps/functions/src/services/outbreaks/`):
+
+1. streams its snapshot to `observation_events`;
+2. for a known issue with weight ≥ 0.5, finds every qualifying report's same-issue neighbours within 10 km:
 
 ```sql
--- v0: ≥5 same-issue observations with weight ≥ 0.5 within 10 km within 72 h
-WITH recent AS (
-  SELECT issue, geo, verification_weight, created_at
-  FROM cropwatch.observations
-  WHERE created_at > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 72 HOUR)
-    AND verification_weight >= 0.5
+WITH q AS (
+  SELECT obs_id, geo, created_at, district, district_slug, sim
+  FROM `cropwatch.observations_latest`
+  WHERE issue = @issue AND verification_weight >= 0.5
+    AND created_at > TIMESTAMP_SUB(@now, INTERVAL 72 HOUR) AND created_at <= @now
 )
-SELECT issue, ST_CENTROID_AGG(geo) AS center, COUNT(*) AS n
-FROM recent a
-GROUP BY issue, ST_SNAPTOGRID(geo, 0.1)   -- coarse grid; refine with ST_DWITHIN pass
-HAVING COUNT(*) >= 5
+SELECT a.obs_id, ARRAY_AGG(b.obs_id) AS neighbours, ...
+FROM q AS a JOIN q AS b ON ST_DWITHIN(a.geo, b.geo, 10000)
+GROUP BY a.obs_id
 ```
 
-(Implementation may use ST_CLUSTERDBSCAN instead; keep the rule explainable on stage.)
+3. anchors (≥ 5 neighbours, itself included) sharing any member merge into one cluster (`mergeAnchors`);
+4. in one Firestore transaction per issue, a detected cluster continues the stored one it shares members with (`grown` / `unchanged`), otherwise it is `created`; stored clusters no longer detected close;
+5. district risk is recomputed for every district touched, and an alert is raised for each **created** cluster, or for a district that has just risen to HIGH without one (`risk_change`). A cluster that only grows does not alert again.
 
-### Risk signal per district/camp: LOW / ELEVATED / HIGH
+Tracking runs beside the recommendation; if it fails, the farmer's result is unaffected (logged).
 
-Inputs (transparent, rule-based v0): cluster presence & growth rate; report velocity week-over-week; environmental context flag (weather within ranges cited by tier-1/4 sources — phrased as "conditions contribute to risk", never causal prediction); crop-calendar sensitivity (stage-vulnerability lookup table, agronomist-owned). Output stores contributing factors for display: "ELEVATED — 14 new reports (+31% WoW), cluster of 6 within 8 km."
+### Risk signal per district: LOW / ELEVATED / HIGH (`riskV0`)
+
+- **HIGH:** a cluster of 8 or more, two or more clusters, or a cluster still growing (new reports in 24 h) while reports surge.
+- **ELEVATED:** any cluster, or a surge: at least 5 reports this week and ≥ +50% on last week.
+- **LOW:** otherwise.
+
+Contributing factors are always stored and shown with the level, e.g. "Cluster of 6 Tuta absoluta (tomato leafminer) reports within 10 km (2 new in 24 h)", "14 reports this week (+133% on last week)", "No cluster in the last 72 hours". No numeric likelihoods anywhere (CLAUDE.md invariant 2). Weather context and crop-calendar sensitivity join the inputs when Earth Engine and the agronomist's stage table do (cut lines); until then the factors say only what the reports show.
 
 ## 10. Alerts
 
-Pub/Sub topic `cropwatch.alerts` → Cloud Function → FCM (app users in area) + Africa's Talking SMS (all channels). Alert copy templates in repo (`alerts/templates/`), English + Nyanja text. Institutional alert variant goes to org admins with the priorities link. Demo: one judge's number pre-registered for the live SMS moment.
+`alerts/{id}` is written with `internal/dispatch.state = "pending"` and its id published to Pub/Sub topic `cropwatch.alerts`. Push subscription `cropwatch-alerts-dispatch` delivers it to the API at `/internal/events/alerts` (OIDC token for the API's service account, checked like Eventarc's). The dispatcher claims the alert in a transaction, so a redelivery never sends twice, then sends:
+
+- **FCM topic** `alerts-{district_slug}` (mobile app subscribers);
+- **FCM web push** to capture-PWA tokens registered for the district (`users/{uid}/push_tokens`; dead tokens pruned);
+- **SMS** via Africa's Talking to active `sms_subscribers` for the district or `*`. Without the account's secrets in Secret Manager (`africastalking-username`, `africastalking-api-key`) the API logs what it would have sent. Username `sandbox` uses the AT sandbox (simulator only, no real phone).
+
+Copy (`apps/functions/src/services/alerts/templates.ts`, English; Nyanja is a cut line): level word (Low / Watch / Act now), issue, district, the factors, and what to do; SMS carries the leading factor only, no links. Simulated alerts say DEMO on every channel. Only live reports dispatch; seeded and backfilled alerts are stored with `state: "skipped"`.
+
+**Sender ID:** Zambian alphanumeric sender IDs are registered per carrier through ZICTA (MTN only shows pre-registered IDs); expect weeks, not days. The demo uses Africa's Talking's default sender. Demo: the judge's number is subscribed (with consent) by `pnpm --filter @repo/admin-tools sms-subscribe add ...` before the pitch.
+
+Institutional alert variant (org admins, priorities link) is not built.
 
 ## 11. Dashboard (Next.js)
 
@@ -292,14 +341,14 @@ Screens:
 
 ## 12. Seed-data generator
 
-Script `tools/seed` (`pnpm --filter @repo/seed seed`, dry run by default; `--commit` replaces the sim data in Firestore and BigQuery): generates ~500 synthetic observations over realistic Zambian geography (district centroids + jitter; Eastern Province FAW storyline, Lusaka/Chongwe Tuta storyline), timestamps spread over 21 days with an accelerating cluster in the demo district, all rows `sim: true`, mixed verification states, plausible severity distributions. Also seeds DEMO OUTGROWER CO. with simulated enrolled-farmer counts. Deterministic seed for rehearsals (same sequence every run). One flag `--live-demo` (with `--demo-issue`, `--demo-center`, `--demo-district`) pre-arms the exact rehearsed sequence: the presenter's real report becomes the 5th report completing the cluster. Demo-issue reports near the venue are aged out of the window, four qualifying reports are placed within 4 km, and the run refuses to write unless the §9 rule confirms the venue is exactly one report short. Morning-of procedure: `docs/demo-ops.md`.
+Script `tools/seed` (`pnpm --filter @repo/seed seed`, dry run by default; `--commit` replaces the sim data in Firestore and BigQuery): generates ~500 synthetic observations over realistic Zambian geography (district centroids + jitter; Eastern Province FAW storyline, Lusaka/Chongwe Tuta storyline), timestamps spread over 21 days with an accelerating cluster in the demo district, all rows `sim: true`, mixed verification states, plausible severity distributions. Also seeds DEMO OUTGROWER CO. with simulated enrolled-farmer counts. Deterministic seed for rehearsals (same sequence every run). One flag `--live-demo` (with `--demo-issue`, `--demo-center`, `--demo-district`) pre-arms the exact rehearsed sequence: the presenter's real report becomes the 5th report completing the cluster. Demo-issue reports near the venue are aged out of the window, four qualifying reports are placed within 4 km, and the run refuses to write unless the §9 rule confirms the venue is exactly one report short and that the presenter's report forms a _new_ cluster (a grown one would not alert). The seed also writes the outbreak state it implies at the anchor (sim clusters, district risk, and their alerts with dispatch `skipped`, never sent) and clears the previous rehearsal's. `pnpm --filter @repo/admin-tools outbreak-e2e --image <tuta photo>` rehearses the presenter's report against the deployed API and undoes it. Morning-of procedure: `docs/demo-ops.md`.
 
 ## 13. Demo runbook (deterministic)
 
 1. Dashboard open on national map (badge visible). App on Presenter 1's phone, logged in as demo farmer.
 2. [Stretch, kill-switch] Airplane mode → on-device triage → reconnect.
 3. Photo of real damaged leaf (demo crop per field check) → diagnosis (confidence band) → recommendation: IPM steps, one registered product + label dose, nearest agro-dealer, cited sources → REPORT.
-4. Presenter 2: report lands on map in seconds → cluster completes → risk chip flips to ELEVATED → SMS fires to judge's phone.
+4. Presenter 2: report lands on map in seconds → cluster completes → Lusaka's risk goes from ELEVATED (Watch: reports surging, no cluster) to HIGH (Act now: a new cluster while reports surge) → SMS fires to judge's phone ("CropWatch DEMO alert (Act now): …": the cluster contains simulated reports, so it says DEMO).
 5. Officer confirm → verified counter ticks up.
 6. Outgrower View → "Prioritise field officers" → per-officer visit lists.
 7. Close: "One farmer can report a problem. CropWatch lets an entire country see it coming."
