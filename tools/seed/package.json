@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "seed": "tsx seed.ts",
+    "tables": "tsx tables.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

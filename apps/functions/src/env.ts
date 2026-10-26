@@ -15,6 +15,12 @@ export interface Env {
   knowledgeIndexUri: string
   // Placeholder register rows are test data; only a deliberate demo set-up may allow them.
   allowPlaceholderProducts: boolean
+  // BigQuery dataset (europe-west1) for observation snapshots, the cluster rule and risk.
+  bigQueryDataset: string
+  // Pub/Sub topic that carries alerts to dispatch (infra/setup.sh).
+  alertsTopic: string
+  // Africa's Talking (Secret Manager → env). Unset: SMS is logged, not sent.
+  sms: { username: string; apiKey: string; senderId: string | null; sandbox: boolean } | null
   // Identity Eventarc signs its push requests with; unset locally, which disables the route.
   eventarcServiceAccount: string | null
   version: string
@@ -37,6 +43,18 @@ export function readEnv(source: Record<string, string | undefined> = process.env
     storageBucket: source.STORAGE_BUCKET ?? 'crop-watch01.firebasestorage.app',
     knowledgeIndexUri: source.KNOWLEDGE_INDEX_URI ?? 'gs://crop-watch01-knowledge/index.json',
     allowPlaceholderProducts: source.ALLOW_PLACEHOLDER_PRODUCTS === 'true',
+    bigQueryDataset: source.BQ_DATASET ?? 'cropwatch',
+    alertsTopic: source.ALERTS_TOPIC ?? 'cropwatch.alerts',
+    sms:
+      source.AT_USERNAME && source.AT_API_KEY
+        ? {
+            username: source.AT_USERNAME,
+            apiKey: source.AT_API_KEY,
+            senderId: source.AT_SENDER_ID || null,
+            // The sandbox username is always "sandbox".
+            sandbox: source.AT_USERNAME === 'sandbox',
+          }
+        : null,
     eventarcServiceAccount: source.EVENTARC_SERVICE_ACCOUNT ?? null,
     version: source.K_REVISION ?? 'dev',
   }

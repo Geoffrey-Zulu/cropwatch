@@ -25,6 +25,18 @@ GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
 GEMINI_LOCATION="${GEMINI_LOCATION:-eu}"
 MIN_INSTANCES="${MIN_INSTANCES:-0}"
 CAPTURE_SITE="${PROJECT_ID}-capture"
+BQ_DATASET="cropwatch"
+ALERTS_TOPIC="cropwatch.alerts"
+ALERTS_SUB="cropwatch-alerts-dispatch"
+# Africa's Talking (SMS alerts). The username and API key live in Secret Manager; until both
+# secrets exist the API logs what it would have sent. Username "sandbox" uses the AT sandbox.
+#   printf '%s' "<username>" | gcloud secrets create africastalking-username --data-file=- \
+#     --replication-policy=user-managed --locations=europe-west1
+#   printf '%s' "<api key>" | gcloud secrets create africastalking-api-key --data-file=- \
+#     --replication-policy=user-managed --locations=europe-west1
+# A new key: gcloud secrets versions add africastalking-api-key --data-file=-, then re-deploy.
+# AT_SENDER_ID (optional): an approved alphanumeric sender ID; empty uses AT's default sender.
+AT_SENDER_ID="${AT_SENDER_ID:-}"
 # Browser origins: the dashboard and the capture PWA (Firebase Hosting), plus local Vite for each.
 CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,https://${CAPTURE_SITE}.web.app,https://${CAPTURE_SITE}.firebaseapp.com,http://localhost:5173,http://localhost:5174"
 
@@ -37,6 +49,14 @@ IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/api:${TAG}"
 # Deterministic Cloud Run URL: https://SERVICE-PROJECT_NUMBER.REGION.run.app
 URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
 ok "image ${IMAGE}"
+SECRETS_FLAG=()
+if gcloud secrets describe africastalking-username --format=none 2>/dev/null &&
+  gcloud secrets describe africastalking-api-key --format=none 2>/dev/null; then
+  SECRETS_FLAG=(--set-secrets="AT_USERNAME=africastalking-username:latest,AT_API_KEY=africastalking-api-key:latest")
+  ok "SMS: Africa's Talking secrets found"
+else
+  ok "SMS: no Africa's Talking secrets yet; alerts will log SMS instead of sending"
+fi
 
 # -----------------------------------------------------------------------------
 step "Artifact Registry repository ${AR_REPO} (${REGION})"
@@ -97,7 +117,8 @@ gcloud run deploy "$SERVICE" \
   --cpu=1 --memory=1Gi \
   --concurrency=40 --timeout=120 \
   --min-instances="$MIN_INSTANCES" --max-instances=3 \
-  --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS}" \
+  --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS};BQ_DATASET=${BQ_DATASET};ALERTS_TOPIC=${ALERTS_TOPIC};AT_SENDER_ID=${AT_SENDER_ID}" \
+  "${SECRETS_FLAG[@]}" \
   --format=none
 ok "deployed ${URL}"
 
@@ -124,6 +145,30 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+step "Pub/Sub: ${ALERTS_SUB} (${ALERTS_TOPIC} → ${SERVICE} /internal/events/alerts)"
+# Alert dispatch (push + SMS) runs off a push subscription, so a slow SMS gateway never holds
+# up the report that raised the alert, and a failed delivery is retried. The service checks the
+# OIDC token (same account as Eventarc); dispatch is idempotent, so a retry never re-sends.
+PUSH_FLAGS=(
+  --push-endpoint="${URL}/internal/events/alerts"
+  --push-auth-service-account="$RUN_SA"
+  --push-auth-token-audience="$URL"
+  --ack-deadline=60
+  --min-retry-delay=10s --max-retry-delay=300s
+)
+if gcloud pubsub subscriptions describe "$ALERTS_SUB" --format=none 2>/dev/null; then
+  MSYS2_ARG_CONV_EXCL='--push-endpoint=' retry gcloud pubsub subscriptions update "$ALERTS_SUB" \
+    "${PUSH_FLAGS[@]}" --format=none
+  ok "exists (push config refreshed)"
+else
+  MSYS2_ARG_CONV_EXCL='--push-endpoint=' RETRIES=12 retry gcloud pubsub subscriptions create \
+    "$ALERTS_SUB" --topic="$ALERTS_TOPIC" \
+    --message-retention-duration=1d --expiration-period=never \
+    "${PUSH_FLAGS[@]}" --format=none
+  ok "created"
+fi
+
+# -----------------------------------------------------------------------------
 step "Smoke test"
 health="$(curl -sS --fail-with-body "${URL}/api/v1/health")" || die "health check failed: ${health}"
 ok "${URL}/api/v1/health → ${health}"
@@ -141,8 +186,9 @@ fi
 VITE_API_URL="${URL}/api/v1" pnpm --filter capture build >/dev/null ||
   die "capture build failed (run: pnpm --filter capture build)"
 ok "built apps/capture"
-# The rules ship with the client that depends on them (the PWA writes users/{uid}/push_tokens).
-firebase deploy --only firestore:rules,storage,hosting:capture \
+# Rules and indexes ship with the clients and API that depend on them (the PWA writes
+# users/{uid}/push_tokens; the alert dispatcher queries them across users).
+firebase deploy --only firestore,storage,hosting:capture \
   --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
 CAPTURE_URL="https://${CAPTURE_SITE}.web.app"
 code="$(curl -sS -o /dev/null -w '%{http_code}' "${CAPTURE_URL}/manifest.webmanifest")"
@@ -155,5 +201,6 @@ Deployed ${SERVICE} (${TAG}) to ${REGION}:
   API        ${URL}/api/v1
   tRPC       ${URL}/trpc
   Eventarc   ${TRIGGER} → /internal/events/storage
+  Pub/Sub    ${ALERTS_SUB} → /internal/events/alerts
   Capture    ${CAPTURE_URL}
 EOF

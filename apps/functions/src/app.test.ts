@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CreateObservationRequestSchema, type Issue, type Observation } from '@repo/shared'
+import {
+  AlertListSchema,
+  CreateObservationRequestSchema,
+  type Issue,
+  type Observation,
+} from '@repo/shared'
 import { createApp, type AppServices } from './app'
 import type { Caller } from './services/observationModel'
 import {
@@ -20,6 +25,21 @@ const CALLERS: Record<string, Caller> = Object.fromEntries(
 )
 
 const OBS_ID = 'k3J9xQ2mW8pL5vR1tY7u'
+
+const ALERT = {
+  alert_id: 'alert1',
+  type: 'cluster' as const,
+  issue: 'tuta_absoluta' as const,
+  issue_label: 'Tuta absoluta (tomato leafminer)',
+  district: 'Chongwe',
+  district_slug: 'chongwe',
+  level: 'HIGH' as const,
+  contributing_factors: ['Cluster of 5 Tuta absoluta reports within 10 km'],
+  geo_center: { latitude: -15.33, longitude: 28.68 },
+  radius_km: 10,
+  created_at: '2026-10-26T09:00:00.000Z',
+  sim: false,
+}
 
 const createBody = (uid = FARMER.uid, obsId = OBS_ID) => ({
   obs_id: obsId,
@@ -94,6 +114,8 @@ beforeEach(() => {
       diagnosis: 'diagnosed' as const,
       recommendation: 'complete' as const,
     })),
+    alerts: vi.fn(async () => [ALERT]),
+    dispatch: vi.fn(async () => 'sent' as const),
     now: () => new Date('2026-10-22T09:30:00.000Z'),
   }
   app = createApp({ corsOrigins: ['http://localhost:5173'], services })
@@ -359,12 +381,49 @@ describe('frozen routes built on later days', () => {
   it.each([
     ['POST', `/api/v1/observations/${OBS_ID}/intervention`],
     ['POST', `/api/v1/observations/${OBS_ID}/outcome`],
-    ['GET', '/api/v1/alerts?district=Chongwe'],
   ])('%s %s needs auth, then answers 501', async (method, path) => {
     expect((await app.request(path, { method })).status).toBe(401)
     const res = await app.request(path, as(FARMER, { method }))
     expect(res.status).toBe(501)
     expect((await res.json()).error).toBe('not_implemented')
+  })
+})
+
+describe('GET /api/v1/alerts', () => {
+  it('needs a signed-in caller and a district', async () => {
+    expect((await get('/api/v1/alerts?district=Chongwe', null)).status).toBe(401)
+    expect((await get('/api/v1/alerts', FARMER)).status).toBe(400)
+  })
+
+  it('returns the district alerts, looked up by slug, in the contract shape', async () => {
+    const res = await get('/api/v1/alerts?district=Kapiri%20Mposhi', FARMER)
+    expect(res.status).toBe(200)
+    expect(services.alerts).toHaveBeenCalledWith('kapiri-mposhi')
+    const body = await res.json()
+    expect(AlertListSchema.parse(body).alerts).toHaveLength(1)
+  })
+})
+
+describe('POST /internal/events/alerts (Pub/Sub push)', () => {
+  const push = (data: unknown, token = 'eventarc-ok') =>
+    app.request('/internal/events/alerts', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message: { data: Buffer.from(JSON.stringify(data)).toString('base64') },
+      }),
+    })
+
+  it('dispatches the alert named in the message', async () => {
+    const res = await push({ alert_id: 'alert1' })
+    expect(await res.json()).toEqual({ alert_id: 'alert1', outcome: 'sent' })
+    expect(services.dispatch).toHaveBeenCalledWith('alert1')
+  })
+
+  it('refuses unsigned pushes and acknowledges malformed ones', async () => {
+    expect((await push({ alert_id: 'alert1' }, 'forged')).status).toBe(401)
+    expect(await (await push({ nope: true })).json()).toEqual({ ignored: true })
+    expect(services.dispatch).not.toHaveBeenCalled()
   })
 })
 

@@ -47,10 +47,24 @@ service cloud.firestore {
         || isOwner(get(/databases/$(database)/documents/observations/$(resource.data.obs_id)).data.reporter_id);
     }
 
-    // District-level cluster alerts; no farm locations.
+    // District-level cluster alerts; no farm locations. alerts/{id}/internal/dispatch (who was
+    // sent what) has no match, so no client reads it.
     match /alerts/{alertId} {
       allow read: if signedIn();
     }
+
+    // Clusters list their member report ids: Command Center only. Outgrower views get
+    // district aggregates through the API (CLAUDE.md invariant 6).
+    match /clusters/{clusterId} {
+      allow read: if isCommandCenter();
+    }
+
+    // District risk: a qualitative level with its contributing factors.
+    match /risk/{districtSlug} {
+      allow read: if signedIn();
+    }
+
+    // sms_subscribers (phone numbers, consent records) has no match: API and operator tools only.
 
     // Public regulatory information.
     match /registered_products/{registrationNo} {

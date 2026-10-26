@@ -1,7 +1,10 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono'
 import type { ZodError } from 'zod'
 import {
+  AlertsQuerySchema,
   CreateObservationRequestSchema,
+  districtSlug,
+  findDistrict,
   ObservationIdSchema,
   parsePhotoPath,
   VerifyRequestSchema,
@@ -9,6 +12,7 @@ import {
 } from '@repo/shared'
 import { bearerToken, type VerifyIdToken } from '../auth'
 import { errorFields, log } from '../lib/log'
+import type { ListAlerts } from '../services/alerts/alertReader'
 import type { ObservationStore } from '../services/firestoreObservations'
 import type { ProcessObservation } from '../services/pipeline'
 import { canReadObservation, type Caller } from '../services/observationModel'
@@ -18,6 +22,7 @@ export interface RestServices {
   verifyIdToken: VerifyIdToken
   observations: ObservationStore
   process: ProcessObservation
+  alerts: ListAlerts
   now?: () => Date
 }
 
@@ -118,10 +123,16 @@ export function restV1(services: RestServices) {
     return c.json(result.record.view)
   })
 
-  // Frozen in the contract; built on later days (intervention/outcome D7, alerts D6).
+  // Frozen in the contract; built on D7 (intervention, outcome).
   app.post('/observations/:id/intervention', requireCaller, notImplemented)
   app.post('/observations/:id/outcome', requireCaller, notImplemented)
-  app.get('/alerts', requireCaller, notImplemented)
+  // District-level alerts, newest first. Any signed-in caller: alerts carry no farm locations.
+  app.get('/alerts', requireCaller, async c => {
+    const parsed = AlertsQuerySchema.safeParse({ district: c.req.query('district') })
+    if (!parsed.success) return validationFailed(c, parsed.error)
+    const slug = findDistrict(parsed.data.district)?.slug ?? districtSlug(parsed.data.district)
+    return c.json({ alerts: await services.alerts(slug) })
+  })
 
   return app
 }

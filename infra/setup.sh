@@ -102,6 +102,12 @@ else
   die "unexpected HTTP ${status} checking dataset ${BQ_DATASET}"
 fi
 
+step "BigQuery tables and view (schemas from packages/shared)"
+# observations (seed), observation_events (API snapshots), retracted_observations, risk_scores,
+# and the observations_latest view the cluster rule reads. Adds new nullable columns in place.
+pnpm --silent --filter @repo/seed tables || die "BigQuery tables failed"
+ok "ready"
+
 # -----------------------------------------------------------------------------
 step "Cloud Run service account ${RUN_SA}"
 if gcloud iam service-accounts describe "$RUN_SA" --format=none 2>/dev/null; then
@@ -111,8 +117,9 @@ else
     --display-name="CropWatch API (Cloud Run)" --format=none
   ok "created"
 fi
-# Least privilege for the demo path through D6. FCM/SMS roles arrive with alerts (D6).
-# Project-level BigQuery roles: this project holds only the cropwatch dataset.
+# Least privilege for the demo path. FCM sends need no extra role: Firebase Admin uses the
+# service account's own project access. Project-level BigQuery roles: this project holds only
+# the cropwatch dataset.
 for role in roles/datastore.user roles/aiplatform.user roles/bigquery.dataEditor \
   roles/bigquery.jobUser roles/secretmanager.secretAccessor roles/eventarc.eventReceiver; do
   grant_project_role "serviceAccount:${RUN_SA}" "$role"

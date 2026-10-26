@@ -14,6 +14,7 @@ import { join, resolve } from 'node:path'
 import { initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { OFFICER_REFERRAL, type Crop, type Issue } from '@repo/shared'
+import { retractTestReports } from './retract'
 
 const PROJECT_ID = 'crop-watch01'
 const ACCOUNT = 'zulugeoffrey034@gmail.com'
@@ -342,8 +343,12 @@ if (!keep) {
       body: JSON.stringify({ idToken }),
     })
   }
+  const outbreaks = await retractTestReports(created.map(c => c.obsId))
   console.log(
     `\nCleaned up ${created.length} observations, their recommendations, photos and test users.`
+  )
+  console.log(
+    `  Outbreak state: ${outbreaks.retracted} report(s) retracted in BigQuery; ${outbreaks.clustersTrimmed} cluster(s) trimmed, ${outbreaks.removed} cluster/alert(s) removed.`
   )
 }
 

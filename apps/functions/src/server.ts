@@ -12,6 +12,15 @@ import { firestoreDiagnoser } from './services/firestoreDiagnoser'
 import { firestoreObservations } from './services/firestoreObservations'
 import { firestoreRecommender, registeredProducts } from './services/firestoreRecommender'
 import { geminiDiagnosisModel, geminiJsonModel } from './services/gemini'
+import { firestoreAlerts } from './services/alerts/alertReader'
+import { fcmPush, firestoreDispatcher } from './services/alerts/dispatch'
+import { pubsubPublisher } from './services/alerts/pubsub'
+import { africasTalking, smsLogOnly } from './services/alerts/sms'
+import { bigQueryRest } from './services/analytics/bigquery'
+import { observationRecorder } from './services/analytics/observationEvents'
+import { clusterDetector } from './services/outbreaks/detect'
+import { firestoreOutbreaks } from './services/outbreaks/outbreakStore'
+import { tracker } from './services/outbreaks/track'
 import { pipeline } from './services/pipeline'
 import { loadPrompt } from './services/prompt'
 import { COMPOSITION_RESPONSE_SCHEMA, ragKnowledge } from './services/recommend/ragKnowledge'
@@ -23,7 +32,7 @@ import {
 } from './services/recommend/vertexRag'
 
 const env = readEnv()
-const { auth, db, bucket, storage } = firebase(env)
+const { auth, db, bucket, storage, messaging } = firebase(env)
 // Loaded at startup so a missing prompt fails the deploy, not the first farmer.
 const prompt = loadPrompt('diagnose-v1')
 const recommendPrompt = loadPrompt('recommend-v1')
@@ -48,6 +57,32 @@ const knowledge = ragKnowledge({
   modelId: env.geminiModel,
 })
 
+// Outbreaks (technicaldoc §9–10): BigQuery snapshots and the cluster rule, Firestore clusters,
+// risk and alerts, Pub/Sub to dispatch, FCM and Africa's Talking to deliver.
+const bigquery = bigQueryRest({
+  projectId: env.projectId,
+  location: env.location,
+  dataset: env.bigQueryDataset,
+})
+const track = tracker({
+  record: observationRecorder({ db, bigquery }),
+  detect: clusterDetector(bigquery, env.bigQueryDataset),
+  store: firestoreOutbreaks({
+    db,
+    bigquery,
+    dataset: env.bigQueryDataset,
+    publish: pubsubPublisher({ projectId: env.projectId, topic: env.alertsTopic }),
+  }),
+})
+const sms = env.sms
+  ? africasTalking({
+      username: env.sms.username,
+      apiKey: env.sms.apiKey,
+      from: env.sms.senderId ?? undefined,
+      sandbox: env.sms.sandbox,
+    })
+  : smsLogOnly
+
 const app = createApp({
   corsOrigins: env.corsOrigins,
   logRequests: true,
@@ -69,8 +104,11 @@ const app = createApp({
         knowledge,
         products: registeredProducts(db),
         allowPlaceholders: env.allowPlaceholderProducts,
-      })
+      }),
+      track
     ),
+    alerts: firestoreAlerts(db),
+    dispatch: firestoreDispatcher({ db, push: fcmPush(messaging), sms }),
   },
 })
 
@@ -82,6 +120,7 @@ const server = serve({ fetch: app.fetch, port: env.port }, info => {
     recommend_prompt: recommendPrompt.version,
     knowledge_index: env.knowledgeIndexUri,
     placeholders: env.allowPlaceholderProducts,
+    sms_gateway: sms.name,
     version: env.version,
   })
 })

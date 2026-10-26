@@ -10,6 +10,7 @@ import { execSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { retractTestReports } from './retract'
 
 const PROJECT_ID = 'crop-watch01'
 const ACCOUNT = 'zulugeoffrey034@gmail.com'
@@ -237,7 +238,11 @@ try {
         body: JSON.stringify({ idToken: user.idToken }),
       })
     }
+    const outbreaks = await retractTestReports([obsId])
     console.log('\ncleaned up: observation, internal docs, recommendation, photo, both test users')
+    console.log(
+      `  outbreak state: report retracted in BigQuery; ${outbreaks.clustersTrimmed} cluster(s) trimmed, ${outbreaks.removed} cluster/alert(s) removed`
+    )
   }
 }
 

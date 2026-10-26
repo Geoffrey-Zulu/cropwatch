@@ -9,10 +9,13 @@
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e-timing": "tsx e2e-timing.ts"
+    "e2e-timing": "tsx e2e-timing.ts",
+    "sms-subscribe": "tsx sms-subscribe.ts",
+    "outbreak-e2e": "tsx outbreak-e2e.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
+    "@repo/tools-gcp": "workspace:*",
     "firebase-admin": "^14.5.0"
   },
   "devDependencies": {

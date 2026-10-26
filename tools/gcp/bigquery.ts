@@ -15,12 +15,24 @@ export interface TableSpec {
   description?: string
 }
 
-// Creates the table if missing; returns whether it was created.
-export async function ensureTable(spec: TableSpec) {
+// Creates the table if missing, or appends columns the spec has gained (BigQuery only adds
+// NULLABLE or REPEATED columns in place). Returns what it did.
+export async function ensureTable(spec: TableSpec): Promise<'created' | 'extended' | 'exists'> {
   const url = `${API}/datasets/${spec.dataset}/tables`
   try {
-    await gcpFetch(`${url}/${spec.table}`)
-    return false
+    const table = (await (await gcpFetch(`${url}/${spec.table}`)).json()) as {
+      schema: { fields: TableSpec['fields'] }
+    }
+    const have = new Set(table.schema.fields.map(field => field.name))
+    const missing = spec.fields.filter(field => !have.has(field.name))
+    if (missing.length === 0) return 'exists'
+    if (missing.some(field => field.mode === 'REQUIRED'))
+      throw new Error(`${spec.table}: cannot add REQUIRED columns to an existing table`)
+    await gcpFetch(`${url}/${spec.table}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ schema: { fields: [...table.schema.fields, ...missing] } }),
+    })
+    return 'extended'
   } catch (error) {
     if (!String(error).includes('HTTP 404')) throw error
   }
@@ -36,7 +48,28 @@ export async function ensureTable(spec: TableSpec) {
       ...(spec.clusterFields && { clustering: { fields: spec.clusterFields } }),
     }),
   })
-  return true
+  return 'created'
+}
+
+// Creates the view, or replaces its query when it has changed.
+export async function ensureView(dataset: string, view: string, sql: string) {
+  const url = `${API}/datasets/${dataset}/tables`
+  const body = {
+    tableReference: { projectId: PROJECT_ID, datasetId: dataset, tableId: view },
+    view: { query: sql, useLegacySql: false },
+  }
+  try {
+    const current = (await (await gcpFetch(`${url}/${view}`)).json()) as {
+      view?: { query: string }
+    }
+    if (current.view?.query === sql) return 'exists'
+    await gcpFetch(`${url}/${view}`, { method: 'PUT', body: JSON.stringify(body) })
+    return 'updated'
+  } catch (error) {
+    if (!String(error).includes('HTTP 404')) throw error
+  }
+  await gcpFetch(url, { method: 'POST', body: JSON.stringify(body) })
+  return 'created'
 }
 
 interface Job {

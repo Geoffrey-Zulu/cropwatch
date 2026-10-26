@@ -13,14 +13,12 @@ import {
   distanceKm,
   findDistrict,
   KnownIssueSchema,
-  OBSERVATION_ROW_BIGQUERY_SCHEMA,
   toObservationRow,
   type Observation,
   type Recommendation,
 } from '@repo/shared'
 import {
   commit,
-  ensureTable,
   FsGeoPoint,
   FsTimestamp,
   loadRows,
@@ -32,8 +30,9 @@ import {
 } from '@repo/tools-gcp'
 import { clusters, CLUSTER_RADIUS_KM, CLUSTER_WINDOW_HOURS, qualifying } from './cluster'
 import { clusterPoints, generateSeed, type LiveDemoOptions, type SeedData } from './generate'
+import { seedOutbreaks } from './outbreaks'
+import { DATASET, ensureAnalyticsTables } from './tables'
 
-const DATASET = 'cropwatch'
 const TABLE = 'observations'
 
 // Accepts both --name value and --name=value. Unknown flags are an error: a mistyped venue must
@@ -181,6 +180,10 @@ function check(seed: SeedData) {
       c.members.includes('presenter')
     )
     if (!formed) problems.push("live demo: the presenter's report would not complete a cluster")
+    // It must form a new cluster (which alerts), not grow one already open (which does not).
+    const open = clusters(points, anchor).flatMap(c => c.members)
+    if (demo.armed.some(id => open.includes(id)))
+      problems.push('live demo: an armed report is already in a cluster; no new alert would fire')
   }
   return problems
 }
@@ -224,7 +227,72 @@ async function writeFirestore(seed: SeedData) {
     }
   }
 
+  const outbreaks = seedOutbreaks(seed)
+  for (const c of outbreaks.clusters) {
+    keep.add(`clusters/${c.id}`)
+    writes.push({
+      set: `clusters/${c.id}`,
+      data: {
+        issue: c.issue,
+        district: c.district,
+        district_slug: c.district_slug,
+        center: new FsGeoPoint(c.center.latitude, c.center.longitude),
+        radius_km: CLUSTER_RADIUS_KM,
+        members: c.members,
+        size: c.members.length,
+        new_last_24h: c.new_last_24h,
+        sim: true,
+        active: true,
+        first_detected_at: new FsTimestamp(c.first_detected_at),
+        updated_at: new FsTimestamp(seed.anchor),
+        alert_id: c.alert_id,
+      },
+    })
+  }
+  for (const r of outbreaks.risk) {
+    keep.add(`risk/${r.district_slug}`)
+    writes.push({
+      set: `risk/${r.district_slug}`,
+      data: { ...r, computed_at: new FsTimestamp(seed.anchor), sim: true },
+    })
+  }
+  for (const a of outbreaks.alerts) {
+    keep.add(`alerts/${a.id}`)
+    writes.push({
+      set: `alerts/${a.id}`,
+      data: {
+        type: 'cluster',
+        issue: a.issue,
+        district: a.district,
+        district_slug: a.district_slug,
+        geo_center: new FsGeoPoint(a.center.latitude, a.center.longitude),
+        radius_km: CLUSTER_RADIUS_KM,
+        level: a.level,
+        contributing_factors: a.contributing_factors,
+        observation_ids: a.observation_ids,
+        channels_sent: [],
+        created_at: new FsTimestamp(a.created_at),
+        sim: true,
+        cluster_id: a.cluster_id,
+      },
+    })
+    writes.push({
+      set: `alerts/${a.id}/internal/dispatch`,
+      data: { state: 'skipped', updated_at: new FsTimestamp(seed.anchor) },
+    })
+  }
+
   let stale = 0
+  // Outbreak state derived from sim reports is demo state whatever its id: the API names live
+  // clusters and alerts itself, and a rehearsal's must go when the demo is re-armed.
+  for (const collection of ['clusters', 'alerts', 'risk']) {
+    for (const path of await queryPaths(collection, 'sim', true)) {
+      if (keep.has(path)) continue
+      stale++
+      writes.push({ delete: path })
+      if (collection === 'alerts') writes.push({ delete: `${path}/internal/dispatch` })
+    }
+  }
   for (const collection of ['observations', 'users', 'recommendations']) {
     for (const path of await queryPaths(collection, 'sim', true)) {
       if (!path.startsWith(`${collection}/sim-`)) {
@@ -245,7 +313,7 @@ async function writeFirestore(seed: SeedData) {
   await commit(writes)
   const recommendations = seed.observations.filter(o => o.recommendation).length
   console.log(
-    `\nFirestore: wrote ${seed.observations.length} observations (+ internal diagnoses), ${recommendations} recommendations, ${seed.users.length} users, 1 org; removed ${stale} stale sim document(s).`
+    `\nFirestore: wrote ${seed.observations.length} observations (+ internal diagnoses), ${recommendations} recommendations, ${seed.users.length} users, 1 org, ${outbreaks.clusters.length} clusters (+ alerts, never sent), risk for ${outbreaks.risk.length} districts; removed ${stale} stale sim document(s).`
   )
 }
 
@@ -254,22 +322,22 @@ function recommendationDocument(recommendation: Recommendation): { [key: string]
 }
 
 async function writeBigQuery(seed: SeedData) {
-  const created = await ensureTable({
-    dataset: DATASET,
-    table: TABLE,
-    fields: OBSERVATION_ROW_BIGQUERY_SCHEMA,
-    partitionField: 'created_at',
-    clusterFields: ['district_slug', 'issue'],
-    description:
-      'One row per observation, including internal diagnosis numbers (contract condition 4). sim rows are seed data.',
-  })
+  const tables = await ensureAnalyticsTables()
   const removed = await query(`DELETE FROM \`${PROJECT_ID}.${DATASET}.${TABLE}\` WHERE sim`)
+  // Snapshots the API recorded for sim reports (an officer verifying one in rehearsal). Rows
+  // streamed in the last ~30 minutes cannot be deleted yet; the view prefers the newer row anyway.
+  const events = await query(
+    `DELETE FROM \`${PROJECT_ID}.${DATASET}.observation_events\` WHERE sim`
+  ).catch((error: unknown) => {
+    console.warn(`  observation_events: sim rows not removed (${String(error).slice(0, 160)})`)
+    return 0
+  })
   const loaded = await loadRows(
     DATASET,
     TABLE,
     seed.observations.map(o => toObservationRow(o.id, o.observation, o.internal))
   )
   console.log(
-    `BigQuery ${DATASET}.${TABLE}${created ? ' (created)' : ''}: removed ${removed} sim row(s), loaded ${loaded}.`
+    `BigQuery ${DATASET}: ${tables.join(', ')}.\n  ${TABLE}: removed ${removed} sim row(s), loaded ${loaded}; observation_events: removed ${events} sim row(s).`
   )
 }
