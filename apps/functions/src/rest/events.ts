@@ -29,7 +29,9 @@ export function eventRoutes(services: EventServices) {
 
   // Pub/Sub push from the alerts topic (infra/deploy.sh): {message: {data: base64 {alert_id}}}.
   // Signed by the same service account as Eventarc. A malformed message is acknowledged rather
-  // than retried forever; a dispatch error returns 500 so Pub/Sub retries it.
+  // than retried forever; a dispatch error returns 500 so Pub/Sub retries it, and so does a
+  // delivery that finds another one mid-dispatch (503): if that one dies, the retry after its
+  // claim expires sends the alert; if it finishes, the retry is acknowledged as "already".
   app.post('/alerts', async c => {
     const token = bearerToken(c.req.header('authorization'))
     if (!token || !(await services.verifyEventarcToken(token))) {
@@ -45,7 +47,8 @@ export function eventRoutes(services: EventServices) {
       alertId = null
     }
     if (typeof alertId !== 'string' || !alertId) return c.json({ ignored: true })
-    return c.json({ alert_id: alertId, outcome: await services.dispatch(alertId) })
+    const outcome = await services.dispatch(alertId)
+    return c.json({ alert_id: alertId, outcome }, outcome === 'in_progress' ? 503 : 200)
   })
 
   return app

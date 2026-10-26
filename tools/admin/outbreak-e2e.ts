@@ -161,6 +161,8 @@ try {
     console.log(
       `  sms: ${sms.gateway}, recipients ${sms.recipients}, sent ${sms.sent}, failed ${sms.failed}${sms.error ? `, error ${sms.error}` : ''}`
     )
+    check(fcm.topic_ok === true, 'FCM topic send accepted', String(fcm.topic_error ?? ''))
+    check(!fcm.web_error, 'web-push lookup and send ran', String(fcm.web_error ?? ''))
     check(
       finished - started <= 30_000,
       'report → dispatched within 30 s',

@@ -87,52 +87,64 @@ export function firestoreDispatcher({
     if (claim !== 'claimed') return claim
 
     const started = Date.now()
-    const alert = AlertSchema.parse(fromFirestore((await ref.get()).data())) as Alert
+    let alert: Alert
+    try {
+      alert = AlertSchema.parse(fromFirestore((await ref.get()).data())) as Alert
+    } catch (error) {
+      // Nothing has gone out yet: release the claim so Pub/Sub's retry can dispatch.
+      await record.set({ state: 'pending', claimed_at: null }, { merge: true })
+      throw error
+    }
     const data = pushData(alertId, alert)
     const channels = new Set<'fcm' | 'sms'>()
 
     const topic = alertTopic(alert.district_slug)
-    let topicOk = false
+    let topicError: string | null = null
     try {
       await push.toTopic(topic, data)
-      topicOk = true
       channels.add('fcm')
     } catch (error) {
-      log('WARNING', 'fcm topic send failed', { alert_id: alertId, error: String(error) })
+      topicError = String(error).slice(0, 300)
+      log('WARNING', 'fcm topic send failed', { alert_id: alertId, error: topicError })
     }
 
-    const tokenDocs = await db
-      .collectionGroup('push_tokens')
-      .where('district_slug', '==', alert.district_slug)
-      .get()
+    // Each channel fails on its own (recorded below), lookups included: a failure in one never
+    // stops the others, and never makes Pub/Sub's retry reach the same people twice.
     let web = { sent: 0, failed: 0, invalid: [] as string[] }
-    const tokens = tokenDocs.docs.map(d => d.get('token') as string).filter(Boolean)
-    if (tokens.length) {
-      try {
+    let webError: string | null = null
+    try {
+      const tokenDocs = await db
+        .collectionGroup('push_tokens')
+        .where('district_slug', '==', alert.district_slug)
+        .get()
+      const tokens = tokenDocs.docs.map(d => d.get('token') as string).filter(Boolean)
+      if (tokens.length) {
         web = await push.toTokens(tokens, data)
         if (web.sent) channels.add('fcm')
         const dead = new Set(web.invalid)
         await Promise.all(
           tokenDocs.docs.filter(d => dead.has(d.get('token'))).map(d => d.ref.delete())
         )
-      } catch (error) {
-        log('WARNING', 'fcm web send failed', { alert_id: alertId, error: String(error) })
       }
+    } catch (error) {
+      webError = String(error).slice(0, 300)
+      log('WARNING', 'fcm web send failed', { alert_id: alertId, error: webError })
     }
 
-    const subscribers = await db
-      .collection('sms_subscribers')
-      .where('district_slug', 'in', [alert.district_slug, '*'])
-      .get()
-    const numbers = [
-      ...new Set(
-        subscribers.docs.filter(d => d.get('active') === true).map(d => d.get('phone') as string)
-      ),
-    ]
+    let numbers: string[] = []
     let smsSent = 0
     let smsFailed: number
     let smsError: string | null = null
     try {
+      const subscribers = await db
+        .collection('sms_subscribers')
+        .where('district_slug', 'in', [alert.district_slug, '*'])
+        .get()
+      numbers = [
+        ...new Set(
+          subscribers.docs.filter(d => d.get('active') === true).map(d => d.get('phone') as string)
+        ),
+      ]
       const results = await sms.send(numbers, smsCopy(alert))
       smsSent = results.filter(r => r.ok).length
       smsFailed = results.length - smsSent
@@ -150,10 +162,12 @@ export function firestoreDispatcher({
       claimed_at: null,
       fcm: {
         topic,
-        topic_ok: topicOk,
+        topic_ok: topicError === null,
+        topic_error: topicError,
         web_sent: web.sent,
         web_failed: web.failed,
         web_pruned: web.invalid.length,
+        web_error: webError,
       },
       sms: {
         gateway: sms.name,

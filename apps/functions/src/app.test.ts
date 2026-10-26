@@ -425,6 +425,13 @@ describe('POST /internal/events/alerts (Pub/Sub push)', () => {
     expect(await (await push({ nope: true })).json()).toEqual({ ignored: true })
     expect(services.dispatch).not.toHaveBeenCalled()
   })
+
+  it('asks Pub/Sub to retry a delivery that finds another one mid-dispatch', async () => {
+    vi.mocked(services.dispatch).mockResolvedValueOnce('in_progress')
+    expect((await push({ alert_id: 'alert1' })).status).toBe(503)
+    vi.mocked(services.dispatch).mockResolvedValueOnce('already')
+    expect((await push({ alert_id: 'alert1' })).status).toBe(200)
+  })
 })
 
 describe('POST /internal/events/storage (Eventarc)', () => {

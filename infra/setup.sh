@@ -117,11 +117,12 @@ else
     --display-name="CropWatch API (Cloud Run)" --format=none
   ok "created"
 fi
-# Least privilege for the demo path. FCM sends need no extra role: Firebase Admin uses the
-# service account's own project access. Project-level BigQuery roles: this project holds only
-# the cropwatch dataset.
+# Least privilege for the demo path. firebasecloudmessaging.admin is the narrowest role that
+# can send FCM messages (alert push). Project-level BigQuery roles: this project holds only the
+# cropwatch dataset.
 for role in roles/datastore.user roles/aiplatform.user roles/bigquery.dataEditor \
-  roles/bigquery.jobUser roles/secretmanager.secretAccessor roles/eventarc.eventReceiver; do
+  roles/bigquery.jobUser roles/secretmanager.secretAccessor roles/eventarc.eventReceiver \
+  roles/firebasecloudmessaging.admin; do
   grant_project_role "serviceAccount:${RUN_SA}" "$role"
 done
 retry gcloud storage buckets add-iam-policy-binding "gs://${BUCKET}" \
