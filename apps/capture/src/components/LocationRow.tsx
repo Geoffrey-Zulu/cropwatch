@@ -28,14 +28,14 @@ export function LocationRow({
         District
       </label>
       <div className="flex items-center gap-2 pb-2 text-label font-semibold text-ink-2">
-        <Icon size={20} strokeWidth={2.25} aria-hidden />
+        <Icon size={20} strokeWidth={2} aria-hidden />
         <span aria-live="polite">{status}</span>
       </div>
       <select
         id="district"
         value={district}
         onChange={event => onDistrict(event.target.value)}
-        className="min-h-14 w-full appearance-none rounded-input border-2 border-ink bg-slip px-3 font-body text-body font-semibold text-ink"
+        className="min-h-14 w-full appearance-none rounded-card border-1.5 border-line-strong bg-sheet px-3 font-body text-body font-semibold text-ink"
       >
         <option value="" disabled>
           Choose a district

@@ -5,7 +5,12 @@ import { IssueSchema } from '../constants/issues'
 import { PROVINCES, ProvinceSchema } from '../constants/provinces'
 import { SeverityBandSchema } from '../constants/severity'
 import { VerificationStateSchema } from '../constants/verification'
-import { AlertTypeSchema, ContributingFactorsSchema, RiskLevelSchema } from './alert'
+import {
+  AlertClassSchema,
+  AlertTypeSchema,
+  ContributingFactorsSchema,
+  RiskLevelSchema,
+} from './alert'
 import { DateSchema, DistrictSlugSchema, GeoPointSchema, TimestampSchema } from './common'
 import { DiagnosisBaseSchema } from './diagnosis'
 import {
@@ -156,7 +161,7 @@ export const ObservationViewSchema = z
     intervention: InterventionSchema.nullable(),
     outcome: OutcomeSchema.nullable(),
     sim: z.boolean().openapi({
-      description: 'true for simulated demo data: show the DEMO DATA — SIMULATED badge.',
+      description: 'true for simulated demo data: show the DEMO DATA · SIMULATED badge.',
     }),
   })
   .openapi('Observation')
@@ -220,9 +225,15 @@ export const AlertViewSchema = z
     radius_km: z.number().positive(),
     created_at: TimestampSchema,
     sim: z.boolean(),
+    // Added after the freeze (optional): what the alert rests on, and how many of its reports
+    // an officer has verified. Show the class label and its uncertainty line with the level.
+    alert_class: AlertClassSchema.optional(),
+    reports: z.number().int().min(0).optional(),
+    verified_reports: z.number().int().min(0).optional(),
   })
   .openapi('Alert', {
-    description: 'Area alert. Always show level together with contributing_factors.',
+    description:
+      'Area alert. Always show level together with contributing_factors, and the alert_class label with its uncertainty wording when present.',
   })
 export type AlertView = z.infer<typeof AlertViewSchema>
 

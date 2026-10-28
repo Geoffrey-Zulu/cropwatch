@@ -1,8 +1,8 @@
 import type { User } from 'firebase/auth'
 import { Camera, X } from 'lucide-react'
 import { findDistrict } from '@repo/shared'
-import { SignboardHeader } from '../components/SignboardHeader'
-import { ThumbBar } from '../components/ThumbBar'
+import { AppHeader } from '../components/AppHeader'
+import { ActionBar } from '../components/ActionBar'
 import { useAreaAlerts } from '../hooks/useAreaAlerts'
 import { useMyReports } from '../hooks/useMyReports'
 import { usePush } from '../hooks/usePush'
@@ -21,11 +21,11 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
 
   return (
     <>
-      <SignboardHeader district={district} />
+      <AppHeader district={district} onBack={() => navigate({ page: 'diagnose' })} />
       <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-6">
         <div>
           <p className="eyebrow">Crop health · Zambia</p>
-          <h1 className="font-display text-display font-extrabold uppercase">
+          <h1 className="font-display text-display font-semibold text-navy">
             Photograph a sick crop. Get advice from Zambian guides.
           </h1>
         </div>
@@ -33,7 +33,7 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
         {push.alert && (
           <div
             role="alert"
-            className="flex gap-3 rounded-slip border-2 border-ink bg-maize p-3 shadow-sign"
+            className="flex gap-3 rounded-card border border-copper-deep border-l-4 bg-copper-tint p-3"
           >
             <div className="min-w-0 flex-1">
               <p className="font-mono text-eyebrow font-semibold uppercase">
@@ -48,7 +48,7 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
               aria-label="Dismiss alert"
               className="h-10 w-10 shrink-0"
             >
-              <X size={24} strokeWidth={2.25} aria-hidden />
+              <X size={24} strokeWidth={2} aria-hidden />
             </button>
           </div>
         )}
@@ -61,12 +61,16 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
         />
         <MyReportsSection reports={reports} />
       </main>
-      <ThumbBar>
-        <button type="button" className="btn-sign" onClick={() => navigate({ page: 'diagnose' })}>
-          <Camera size={22} strokeWidth={2.5} aria-hidden />
+      <ActionBar>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => navigate({ page: 'diagnose' })}
+        >
+          <Camera size={22} strokeWidth={2} aria-hidden />
           Report a sick crop
         </button>
-      </ThumbBar>
+      </ActionBar>
     </>
   )
 }

@@ -92,7 +92,7 @@ export function selectExcerpts(
     .map(({ document, text }, i) => ({ ref: `S${i + 1}`, document, chunkId: chunkId(text), text }))
 }
 
-// Gemini's reply shape (responseJsonSchema). The chemical rung is not here: CropWatch writes it.
+// Gemini's reply shape (responseJsonSchema). The chemical rung is not here: Phytos writes it.
 export const COMPOSITION_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {

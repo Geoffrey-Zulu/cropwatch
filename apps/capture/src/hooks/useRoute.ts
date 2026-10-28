@@ -7,21 +7,21 @@ export type Route =
   | { page: 'report'; obsId: string }
 
 // Hash routes, so the static host serves one page and a refresh or a notification tap lands on
-// the right screen.
+// the right screen. The app opens on the camera; my reports and area alerts are at #/home.
 export function parseRoute(hash: string): Route {
   const [, page, id] = hash.replace(/^#/, '').split('/')
-  if (page === 'new') return { page: 'diagnose' }
+  if (page === 'home') return { page: 'home' }
   if (page === 'sent' && id) return { page: 'sent', obsId: id }
   if (page === 'report' && id) return { page: 'report', obsId: id }
-  return { page: 'home' }
+  return { page: 'diagnose' }
 }
 
 export const hrefFor = (route: Route) => {
   switch (route.page) {
     case 'home':
-      return '#/'
+      return '#/home'
     case 'diagnose':
-      return '#/new'
+      return '#/'
     case 'sent':
       return `#/sent/${route.obsId}`
     case 'report':

@@ -1,6 +1,6 @@
 import { ChevronRight, ClipboardList } from 'lucide-react'
 import { CROP_LABELS, ISSUE_LABELS } from '@repo/shared'
-import { Stamp } from '../components/Stamp'
+import { StatusTag } from '../components/StatusTag'
 import { DemoBadge } from '../components/DemoBadge'
 import type { ReportSummary } from '../hooks/useMyReports'
 import { shortDate } from '../lib/copy'
@@ -10,7 +10,7 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
   return (
     <section aria-labelledby="my-reports" className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-3">
-        <h2 id="my-reports" className="font-display text-display font-extrabold uppercase">
+        <h2 id="my-reports" className="font-display text-display font-semibold text-navy">
           My reports
         </h2>
         {reports && <DemoBadge rows={reports} />}
@@ -19,8 +19,8 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
       {reports === null && <p className="text-body text-ink-2">Loading your reports…</p>}
 
       {reports?.length === 0 && (
-        <div className="flex gap-3 rounded-slip border-2 border-dashed border-ink p-4">
-          <ClipboardList size={24} strokeWidth={2.25} aria-hidden className="mt-0.5 shrink-0" />
+        <div className="flex gap-3 rounded-card border-1.5 border-dashed border-line-strong p-4">
+          <ClipboardList size={24} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
           <p className="text-body">
             No reports yet. Photograph a sick crop and your report, with advice, will be kept here.
           </p>
@@ -32,7 +32,7 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
           <li key={report.id}>
             <a
               href={`#/report/${report.id}`}
-              className="flex items-center gap-3 rounded-slip border-2 border-ink bg-slip p-3 transition-colors duration-150 active:bg-paper"
+              className="flex items-center gap-3 rounded-card border border-line bg-sheet p-3 transition-colors duration-150 active:bg-navy-tint"
             >
               <div className="min-w-0 flex-1">
                 <p className="eyebrow">
@@ -46,10 +46,10 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
                     : ''}
                 </p>
                 <div className="mt-2">
-                  <Stamp status={report.status} />
+                  <StatusTag status={report.status} />
                 </div>
               </div>
-              <ChevronRight size={24} strokeWidth={2.25} aria-hidden className="shrink-0" />
+              <ChevronRight size={24} strokeWidth={2} aria-hidden className="shrink-0 text-navy" />
             </a>
           </li>
         ))}

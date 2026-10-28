@@ -1,4 +1,4 @@
-# CropWatch — 10-Day Build Plan (21 → 30 October 2026)
+# Phytos — 10-Day Build Plan (21 → 30 October 2026)
 
 > **Who does what:** Geoffrey + Claude Code build web, API and infrastructure (Hytel Way conventions). Geoffrey's friend builds the Flutter mobile app against a frozen REST contract. Geoffrey runs the non-code track (validation, corpus, logistics). This file and `technicaldoc.md` travel together; where they conflict, this file wins (two decisions below supersede technicaldoc v1.1).
 >
@@ -148,7 +148,7 @@ A deployed system where: a photo from a phone becomes a diagnosed, regulatory-fi
 - **`packages/shared`.** Constants for crops, issues (`KNOWN_ISSUES` + `unknown`), verification states + v0 weights, confidence bands, the 0.6 review threshold, and roles. Schemas v0: observation, diagnosis (stored) + diagnosis model output (§6 contract), recommendation, registeredProduct, alert, org + user profile, plus shared wire primitives.
 - **`apps/functions`.** Hono server (`src/server.ts`) serving tRPC at `/trpc` and the `/api/v1` REST stub (all six buildplan §2 routes answer 501), with `/health`, CORS for the dashboard origin, and JSON 404/500. esbuild bundles it to `dist/server.js`; `Dockerfile` (build from repo root) → `node:24-slim`, non-root, port 8080. `pnpm dev` now runs the API (tsx watch) next to Vite.
 - **`apps/web`.** Created `src/pages/` and `src/sections/`. The tRPC client defaults to `http://localhost:3001/trpc`.
-- **`.env.example`** replaced with CropWatch variables (names only, no secrets).
+- **`.env.example`** replaced with Phytos variables (names only, no secrets).
 
 **Decisions and deviations from technicaldoc.md (flag any you disagree with)**
 
@@ -255,7 +255,7 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
   - The filter **excludes placeholders unless a caller explicitly allows them**, so they never reach a farmer as advice.
 - **Regulatory filter and IPM ladder** (`apps/functions/src/services/recommend/`):
   - Candidates match a register row by exact registration number, or by trade name or active ingredient ignoring case and spacing. A match is accepted only if it's approved for this crop and issue and unexpired on the Lusaka calendar date. Every rejection is logged with a reason.
-  - The ladder keeps only cited steps, ordered scout → cultural → biological → chemical. The chemical line is always written by CropWatch, so doses come only from `label_dose`. If no chemical survives, the output is IPM-only plus the officer referral; with no cited evidence there is no recommendation at all.
+  - The ladder keeps only cited steps, ordered scout → cultural → biological → chemical. The chemical line is always written by Phytos, so doses come only from `label_dose`. If no chemical survives, the output is IPM-only plus the officer referral; with no cited evidence there is no recommendation at all.
   - The knowledge layer is an interface whose stub refuses until D4. Nothing is wired into the live pipeline yet.
 - **Seed (`tools/seed`):**
   - Deterministic: a seeded PRNG plus an anchor time; the same anchor gives byte-identical data.
@@ -375,7 +375,7 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 
 **Landed**
 
-- **"Field Slip" design system** (`design-system/cropwatch/MASTER.md`, tokens in `packages/ui/theme`), shared with the dashboard. A report is a specimen slip, stamped as it moves; advice is a ladder with chemicals last. It draws on Lusaka's hand-painted shop signs, stencilled grain sacks and herbarium labels, with a miombo-woodland palette in place of agritech green. It is built for sunlight: body text ≥ 7:1 and actions ≥ 5:1 (computed), Atkinson Hyperlegible Next for reading.
+- **"Field Slip" design system** (was `design-system/cropwatch/MASTER.md`; replaced on 28 Oct by the Phytos "Field Brief" system in `design-system/phytos/MASTER.md`), shared with the dashboard. A report is a specimen slip, stamped as it moves; advice is a ladder with chemicals last. It draws on Lusaka's hand-painted shop signs, stencilled grain sacks and herbarium labels, with a miombo-woodland palette in place of agritech green. It is built for sunlight: body text ≥ 7:1 and actions ≥ 5:1 (computed), Atkinson Hyperlegible Next for reading.
 - **`apps/capture`** (Vite + React PWA in the workspace) runs on the frozen REST v1 contract plus Firestore listeners, with no new endpoints. Screens:
   - **Diagnose:** camera through the capture input, photo resized to 1600 px before upload, GPS with a district picker as fallback.
   - **Report confirmation.**
@@ -457,5 +457,5 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
   2. Generate an API key (Settings → API Key) in the live app, and one in the sandbox app for testing.
   3. Store them: `printf '%s' "<username>" | gcloud secrets create africastalking-username --data-file=- --replication-policy=user-managed --locations=europe-west1 --project=crop-watch01`, and the same for `africastalking-api-key`. Then `bash infra/deploy.sh`. To test first without real texts, store username `sandbox` with the sandbox key; messages then show in AT's simulator.
   4. Top up a little airtime credit (Zambian SMS is billed per message).
-  5. Request an alphanumeric sender ID ("CropWatch") now for after the hackathon. It goes through ZICTA per carrier, MTN only displays pre-registered IDs, and it takes weeks, so the demo uses AT's default sender.
+  5. Request an alphanumeric sender ID ("Phytos") now for after the hackathon. It goes through ZICTA per carrier, MTN only displays pre-registered IDs, and it takes weeks, so the demo uses AT's default sender.
 - **Subscribe the demo phones** (with consent): `pnpm --filter @repo/admin-tools sms-subscribe add --phone +260… --district Lusaka --consent "…"`; use `--district all` for the presenter's phone.

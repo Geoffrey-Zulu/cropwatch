@@ -1,6 +1,6 @@
 # Demo-day operations
 
-The morning-of checklist for a live CropWatch demo. Start **at least two hours before** the pitch, from a laptop with the repo, pnpm 12.9.1 and `gcloud` logged in as `zulugeoffrey034@gmail.com`. Every command runs from the repo root. Each step says what "good" looks like; if a step fails, fix it before moving on.
+The morning-of checklist for a live Phytos demo. Start **at least two hours before** the pitch, from a laptop with the repo, pnpm 12.9.1 and `gcloud` logged in as `zulugeoffrey034@gmail.com`. Every command runs from the repo root. Each step says what "good" looks like; if a step fails, fix it before moving on.
 
 Live API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
 
@@ -67,7 +67,7 @@ To be filled in when SMS alerts land (D6):
 ### 6. Devices
 
 - **Presenter's phone:**
-  - the CropWatch app is installed and signed in;
+  - the Phytos app is installed and signed in;
   - location is on, and it's on mobile data, not only Wi-Fi;
   - battery is above 80%.
 - **Dashboard laptop:** signed in as an agronomist (`pnpm --filter @repo/admin-tools set-role --email <email> --role agronomist`, then sign out and in). The map shows the **DEMO DATA — SIMULATED** badge.

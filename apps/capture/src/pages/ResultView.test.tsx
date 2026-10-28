@@ -118,7 +118,7 @@ describe('ResultView (progressive)', () => {
           diagnosis: {
             ...diagnosis,
             suspected_issue: 'unknown',
-            suspected_issue_label: 'Unknown — needs expert review',
+            suspected_issue_label: 'Unknown: needs expert review',
             confidence_band: 'low',
             needs_expert_review: true,
             expert_review_reason: 'unknown_issue',
@@ -133,6 +133,6 @@ describe('ResultView (progressive)', () => {
 
   it('carries the DEMO badge on simulated rows (invariant 5)', () => {
     render(<ResultView view={{ ...base, sim: true }} />)
-    expect(screen.getByText(/demo data — simulated/i)).toBeInTheDocument()
+    expect(screen.getByText(/demo data · simulated/i)).toBeInTheDocument()
   })
 })

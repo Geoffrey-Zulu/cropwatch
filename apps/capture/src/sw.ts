@@ -28,13 +28,15 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
 const messaging = getMessaging(initializeApp(firebaseConfig))
 onBackgroundMessage(messaging, payload => {
   const data = payload.data ?? {}
-  const demo = data.sim === 'true' ? 'DEMO · ' : ''
-  void self.registration.showNotification(`${demo}${data.title ?? 'Crop alert'}`, {
+  const title = data.title ?? 'Crop alert'
+  // The API's title already says DEMO for simulated alerts; add it only if a sender did not.
+  const shown = data.sim === 'true' && !title.startsWith('DEMO') ? `DEMO · ${title}` : title
+  void self.registration.showNotification(shown, {
     body: data.body ?? '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: data.alert_id ?? 'cropwatch-alert',
-    data: { url: '/#/' },
+    tag: data.alert_id ?? 'phytos-alert',
+    data: { url: '/#/home' },
   })
 })
 
@@ -43,7 +45,11 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
       const open = windows.find(w => new URL(w.url).origin === self.location.origin)
-      return open ? open.focus() : self.clients.openWindow('/#/')
+      if (open) {
+        void open.navigate('/#/home').catch(() => undefined)
+        return open.focus()
+      }
+      return self.clients.openWindow('/#/home')
     })
   )
 })

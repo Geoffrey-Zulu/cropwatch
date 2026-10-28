@@ -6,7 +6,7 @@ import {
   ObservationIdSchema,
 } from '@repo/shared'
 import { parseRoute, hrefFor } from '../hooks/useRoute'
-import { confidenceText, stampFor, waitingText } from './copy'
+import { confidenceText, statusTagFor, waitingText } from './copy'
 import { nearestDistrict } from './location'
 import { buildReport, newObsId, photoPath, reportNumber } from './report'
 
@@ -70,15 +70,15 @@ describe('wording (CLAUDE.md invariants 2–3)', () => {
     }
   })
 
-  it('has a stamp for every status, and treats unknown ones as in progress', () => {
-    for (const status of OBSERVATION_STATUSES) expect(stampFor(status).word).toBeTruthy()
-    expect(stampFor('complete')).toMatchObject({
+  it('has a status tag for every status, and treats unknown ones as in progress', () => {
+    for (const status of OBSERVATION_STATUSES) expect(statusTagFor(status).word).toBeTruthy()
+    expect(statusTagFor('complete')).toMatchObject({
       word: 'Advice ready',
-      tone: 'leaf',
+      tone: 'guidance',
       waiting: false,
     })
-    expect(stampFor('awaiting_expert_review').tone).toBe('maize')
-    expect(stampFor('something_new')).toMatchObject({ word: 'In progress', waiting: true })
+    expect(statusTagFor('awaiting_expert_review').tone).toBe('attention')
+    expect(statusTagFor('something_new')).toMatchObject({ word: 'In progress', waiting: true })
     expect(waitingText('recommending')).toContain('guides')
   })
 })
@@ -93,6 +93,9 @@ describe('routes', () => {
     ] as const) {
       expect(parseRoute(hrefFor(route))).toEqual(route)
     }
-    expect(parseRoute('#/nonsense')).toEqual({ page: 'home' })
+    // The app opens on the camera.
+    expect(parseRoute('')).toEqual({ page: 'diagnose' })
+    expect(parseRoute('#/nonsense')).toEqual({ page: 'diagnose' })
+    expect(parseRoute('#/home')).toEqual({ page: 'home' })
   })
 })

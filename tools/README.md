@@ -1,6 +1,6 @@
 # tools
 
-Workspace packages (`tools/*`) for operating CropWatch. They authenticate as the authorized account through gcloud (`gcloud auth login zulugeoffrey034@gmail.com`), never through ADC. Paths you pass are relative to where you run `pnpm`.
+Workspace packages (`tools/*`) for operating Phytos. They authenticate as the authorized account through gcloud (`gcloud auth login zulugeoffrey034@gmail.com`), never through ADC. Paths you pass are relative to where you run `pnpm`.
 
 - **`admin/`** (`@repo/admin-tools`)
   - `pnpm --filter @repo/admin-tools set-role --email <email> --role <field_officer|extension_officer|agronomist|admin> [--org <orgId>]` sets an officer's `role` claim. Field officers need `--org`; `--clear` makes the user a farmer again.

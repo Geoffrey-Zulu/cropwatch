@@ -34,8 +34,25 @@ describe('alert copy', () => {
   it('labels simulated alerts as demo on every channel', () => {
     const sim = { ...alert, sim: true }
     expect(pushCopy(sim).title).toMatch(/^DEMO · /)
-    expect(smsCopy(sim)).toMatch(/^CropWatch DEMO alert/)
+    expect(smsCopy(sim)).toMatch(/^Phytos DEMO alert/)
     expect(pushData('x', sim).sim).toBe('true')
+  })
+
+  it('says what the alert rests on and how sure it is, with no em dashes', () => {
+    const unverified = pushCopy(alert)
+    expect(unverified.body).toMatch(/^Model risk signal\./)
+    expect(unverified.body).toContain('Not yet verified by an officer')
+    expect(smsCopy(alert)).toContain('Not yet verified by an officer.')
+
+    const verified = { ...alert, alert_class: 'verified_cluster' as const, verified_reports: 2 }
+    expect(pushCopy(verified).body).toContain('2 of 5 reports verified by an officer')
+    expect(smsCopy(verified)).toContain('Verified by an officer.')
+
+    for (const a of [alert, verified]) {
+      for (const text of [pushCopy(a).title, pushCopy(a).body, smsCopy(a)]) {
+        expect(text).not.toContain('—')
+      }
+    }
   })
 
   it('keeps the SMS short: the leading factor only, no links', () => {

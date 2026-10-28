@@ -1,0 +1,37 @@
+/* Phytos "Field Brief" design tokens (design-system/phytos/MASTER.md). Light theme only: the
+   capture app is built for sunlight and the dashboard for projectors. Text pairings meet the
+   ratios in MASTER.md §3; use these tokens, never ad-hoc colours. */
+:root {
+  --paper: #faf6ef;
+  --sheet: #fffdf9;
+
+  --navy: #13293d;
+  --navy-2: #2c4a66;
+  --navy-tint: #e6ebf0;
+
+  --copper: #b4642a;
+  --copper-deep: #8f4519;
+  --copper-light: #e0a06a;
+  --copper-tint: #f4e6d8;
+
+  --green: #4f6f52;
+  --green-deep: #3e5a41;
+  --green-tint: #e6ece3;
+
+  --ink: #2b3036;
+  --ink-2: #4a5058;
+  --line: #d8d2c4;
+  --line-strong: #8a8478;
+
+  /* The one elevation: only for things floating above the page (tooltips, menus). */
+  --raise: 0 6px 18px rgb(19 41 61 / 0.14), 0 1px 3px rgb(19 41 61 / 0.1);
+
+  /* Simulated data: a diagonal hatch (DEMO badge, sim markers). */
+  --hatch: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgb(143 69 25 / 0.12) 5px 7px
+  );
+
+  color-scheme: light;
+}

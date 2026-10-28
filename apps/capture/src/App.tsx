@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Notice } from './components/Notice'
-import { SignboardHeader } from './components/SignboardHeader'
+import { AppHeader } from './components/AppHeader'
 import { useAuth } from './hooks/useAuth'
 import { useRoute } from './hooks/useRoute'
 import { HomePage } from './pages/HomePage'
@@ -20,7 +20,7 @@ export function App() {
   if (!user) {
     return (
       <>
-        <SignboardHeader />
+        <AppHeader />
         <main className="mx-auto max-w-md px-4 pt-8">
           {error ? (
             <Notice
@@ -34,10 +34,10 @@ export function App() {
                 </button>
               }
             >
-              CropWatch could not start ({error}). Check your connection.
+              Phytos could not start ({error}). Check your connection.
             </Notice>
           ) : (
-            <p className="text-body font-semibold text-ink-2">Starting CropWatch…</p>
+            <p className="text-body font-semibold text-ink-2">Starting Phytos…</p>
           )}
         </main>
       </>
@@ -47,7 +47,7 @@ export function App() {
   switch (route.page) {
     case 'diagnose':
       return (
-        <Suspense fallback={<SignboardHeader />}>
+        <Suspense fallback={<AppHeader />}>
           <DiagnosePage user={user} navigate={navigate} />
         </Suspense>
       )

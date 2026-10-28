@@ -1,4 +1,4 @@
-# CropWatch — Technical Reference (v1.1)
+# Phytos — Technical Reference (v1.1)
 
 > **Purpose of this file:** implementation reference for Claude Code (and human devs) during the GreenCode Hackathon build, 30 Oct – 1 Nov 2026, Lusaka. It encodes the final agreed strategy (v1.1, post red-team by two AI reviewers). The companion PDF is the team/pitcher strategy document; this file is the build spec.
 >
@@ -17,7 +17,7 @@
 
 ## 1. Concept (one paragraph)
 
-CropWatch is an **early-warning and crop-health intelligence platform**. Free farmer/field-officer reporting (app + WhatsApp/USSD/SMS) produces geotagged, AI-assessed, human-verifiable crop-health observations. Aggregation turns them into surveillance (clusters, spread) and operational decisions ("which farms should field officers visit this week") for organisations managing farmer networks — outgrowers first. Detection is the data-collection mechanism, not the product. We claim **detection** and **surveillance** at MVP; **prediction** is a prototype risk signal only.
+Phytos is an **early-warning and crop-health intelligence prototype**. Free farmer/field-officer reporting (app + WhatsApp/USSD/SMS) produces geotagged, AI-assessed, human-verifiable crop-health observations. Aggregation turns them into surveillance (clusters, spread) and operational decisions ("which farms should field officers visit this week") for organisations managing farmer networks — outgrowers first. Detection is the data-collection mechanism, not the product. We claim **detection** and **surveillance** at MVP; **prediction** is a prototype risk signal only.
 
 Positioning: we connect and operationalise existing systems (MoA/ZARI PlantVillage, FAO FAMEWS, e-extension) — we do not replace them.
 
@@ -29,7 +29,7 @@ Positioning: we connect and operationalise existing systems (MoA/ZARI PlantVilla
 | Surveillance ("something appears to be spreading") | Claimed at MVP | BigQuery GIS cluster rule, live map                                |
 | Prediction ("likely to happen next")               | Prototype only | Risk Model v0, qualitative signal, explicitly unvalidated          |
 
-Language rules for UI/pitch: "prototype risk signal", "CropWatch Risk Model v0", "simulated historical observations", "AI assessment: high confidence". Banned: "94% chance", "predicts outbreaks", "5× more targeted", "free forever".
+Language rules for UI/pitch: "prototype risk signal", "Phytos Risk Model v0", "simulated historical observations", "AI assessment: high confidence". Banned: "94% chance", "predicts outbreaks", "5× more targeted", "free forever".
 
 ## 3. Stack
 
@@ -274,7 +274,7 @@ Schema (`registered_products/{registeredProductDocId(registration_no)}`; the doc
 }
 ```
 
-Filter logic (deterministic, in `/recommend`; `apps/functions/src/services/recommend/regulatoryFilter.ts`): every chemical candidate from RAG/Gemini must match a row (by exact registration number, or by trade name or active ingredient ignoring case and spacing) on `approved_crops` AND `approved_issues`, unexpired on the Lusaka calendar date. Rows with `source: placeholder` exist only so the filter is testable before the real register lands; they are excluded unless a caller explicitly allows them, so they never reach a farmer as advice. The chemical rung of the IPM ladder is always written by CropWatch, never taken from retrieved text. No match → dropped and logged in `regulatory_check.rejected_products`. Doses rendered ONLY from `label_dose`. If zero chemicals survive, the recommendation ships IPM-only with "consult an extension officer for chemical options".
+Filter logic (deterministic, in `/recommend`; `apps/functions/src/services/recommend/regulatoryFilter.ts`): every chemical candidate from RAG/Gemini must match a row (by exact registration number, or by trade name or active ingredient ignoring case and spacing) on `approved_crops` AND `approved_issues`, unexpired on the Lusaka calendar date. Rows with `source: placeholder` exist only so the filter is testable before the real register lands; they are excluded unless a caller explicitly allows them, so they never reach a farmer as advice. The chemical rung of the IPM ladder is always written by Phytos, never taken from retrieved text. No match → dropped and logged in `regulatory_check.rejected_products`. Doses rendered ONLY from `label_dose`. If zero chemicals survive, the recommendation ships IPM-only with "consult an extension officer for chemical options".
 
 Commercial firewall: "where to buy" renders after the recommendation, lists ALL registered options for the issue, never filtered by sponsor.
 
@@ -348,10 +348,10 @@ Script `tools/seed` (`pnpm --filter @repo/seed seed`, dry run by default; `--com
 1. Dashboard open on national map (badge visible). App on Presenter 1's phone, logged in as demo farmer.
 2. [Stretch, kill-switch] Airplane mode → on-device triage → reconnect.
 3. Photo of real damaged leaf (demo crop per field check) → diagnosis (confidence band) → recommendation: IPM steps, one registered product + label dose, nearest agro-dealer, cited sources → REPORT.
-4. Presenter 2: report lands on map in seconds → cluster completes → Lusaka's risk goes from ELEVATED (Watch: reports surging, no cluster) to HIGH (Act now: a new cluster while reports surge) → SMS fires to judge's phone ("CropWatch DEMO alert (Act now): …": the cluster contains simulated reports, so it says DEMO).
+4. Presenter 2: report lands on map in seconds → cluster completes → Lusaka's risk goes from ELEVATED (Watch: reports surging, no cluster) to HIGH (Act now: a new cluster while reports surge) → SMS fires to judge's phone ("Phytos DEMO alert (Act now): …": the cluster contains simulated reports, so it says DEMO).
 5. Officer confirm → verified counter ticks up.
 6. Outgrower View → "Prioritise field officers" → per-officer visit lists.
-7. Close: "One farmer can report a problem. CropWatch lets an entire country see it coming."
+7. Close: "One farmer can report a problem. Phytos lets an entire country see it coming."
 
 Backup screen-recording exists for every step; wifi failure = play recording, keep talking.
 

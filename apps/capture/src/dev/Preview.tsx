@@ -2,8 +2,8 @@
 // fixtures, for design review and screenshots without Firebase. #/preview/<state>.
 import type { User } from 'firebase/auth'
 import { OFFICER_REFERRAL, type ObservationView } from '@repo/shared'
-import { SignboardHeader } from '../components/SignboardHeader'
-import { ThumbBar } from '../components/ThumbBar'
+import { AppHeader } from '../components/AppHeader'
+import { ActionBar } from '../components/ActionBar'
 import { DiagnosePage } from '../pages/DiagnosePage'
 import { ReportSentPage } from '../pages/ReportSentPage'
 import { ResultView } from '../pages/ResultPage'
@@ -67,14 +67,52 @@ const alerts: AreaAlert[] = [
     radius_km: 10,
     level: 'HIGH',
     contributing_factors: [
-      '8 reports within 10 km in 3 days',
-      'Hot, dry week: the moth breeds fast',
-      'Two reports confirmed by officers',
+      'Cluster of 8 Tuta absoluta (tomato leafminer) reports within 10 km (3 new in 24 h)',
+      '22 reports this week (+175% on last week)',
     ],
-    observation_ids: [],
-    channels_sent: ['fcm'],
+    observation_ids: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+    channels_sent: ['fcm', 'sms'],
     created_at: '2026-10-22T15:00:00.000Z',
     sim: true,
+    alert_class: 'verified_cluster',
+    verified_reports: 2,
+  },
+  {
+    id: 'a2',
+    type: 'cluster',
+    issue: 'tuta_absoluta',
+    district: 'Chongwe',
+    district_slug: 'chongwe',
+    geo_center: { latitude: -15.4, longitude: 28.5 },
+    radius_km: 10,
+    level: 'ELEVATED',
+    contributing_factors: [
+      'Cluster of 5 Tuta absoluta (tomato leafminer) reports within 10 km (5 new in 24 h)',
+    ],
+    observation_ids: ['a', 'b', 'c', 'd', 'e'],
+    channels_sent: ['fcm', 'sms'],
+    created_at: '2026-10-22T09:00:00.000Z',
+    sim: true,
+    alert_class: 'model_risk_signal',
+    verified_reports: 0,
+  },
+  {
+    id: 'a3',
+    type: 'risk_change',
+    issue: 'tuta_absoluta',
+    district: 'Chongwe',
+    district_slug: 'chongwe',
+    geo_center: { latitude: -15.33, longitude: 28.68 },
+    radius_km: 25,
+    level: 'ELEVATED',
+    contributing_factors: [
+      'Weather (Open-Meteo): 1 mm of rain in the last 14 days, late dry season. icipe advises against growing tomato then.',
+    ],
+    observation_ids: [],
+    channels_sent: [],
+    created_at: '2026-10-21T06:00:00.000Z',
+    sim: true,
+    alert_class: 'weather_advisory',
   },
 ]
 
@@ -154,22 +192,22 @@ export function Preview({ state }: { state: string }) {
     default:
       return (
         <>
-          <SignboardHeader district="Chongwe" />
+          <AppHeader district="Chongwe" />
           <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-6">
             <div>
               <p className="eyebrow">Crop health · Zambia</p>
-              <h1 className="font-display text-display font-extrabold uppercase">
+              <h1 className="font-display text-display font-semibold text-navy">
                 Photograph a sick crop. Get advice from Zambian guides.
               </h1>
             </div>
             <AlertBoardsSection district="Chongwe" alerts={alerts} push="off" onEnablePush={noop} />
             <MyReportsSection reports={reports} />
           </main>
-          <ThumbBar>
-            <button type="button" className="btn-sign">
+          <ActionBar>
+            <button type="button" className="btn-primary">
               Report a sick crop
             </button>
-          </ThumbBar>
+          </ActionBar>
         </>
       )
   }
@@ -178,13 +216,13 @@ export function Preview({ state }: { state: string }) {
 function Frame({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <SignboardHeader district="Chongwe" onBack={noop} />
+      <AppHeader district="Chongwe" onBack={noop} />
       <main className="mx-auto flex max-w-md flex-col gap-5 px-4 pt-5">{children}</main>
-      <ThumbBar>
-        <button type="button" className="btn-sign">
+      <ActionBar>
+        <button type="button" className="btn-primary">
           Report another crop
         </button>
-      </ThumbBar>
+      </ActionBar>
     </>
   )
 }

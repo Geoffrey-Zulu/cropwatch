@@ -3,10 +3,9 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Field Slip signboard colour (design-system/cropwatch/MASTER.md): the browser chrome matches
-// the header board.
-const SIGNBOARD = '#17130F'
-const PAPER = '#F5F0E6'
+// Phytos navy and paper (design-system/phytos/MASTER.md): the browser chrome matches the header.
+const NAVY = '#13293D'
+const PAPER = '#FAF6EF'
 
 export default defineConfig({
   server: { port: 5174 },
@@ -26,16 +25,17 @@ export default defineConfig({
       },
       manifest: {
         id: '/',
-        name: 'CropWatch',
-        short_name: 'CropWatch',
-        description: 'Photograph a sick crop, get a diagnosis and advice from Zambian guides.',
+        name: 'Phytos',
+        short_name: 'Phytos',
+        description:
+          'Phytos (prototype): photograph a sick crop, get an AI assessment and advice from Zambian guides.',
         lang: 'en',
         start_url: '/',
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
         background_color: PAPER,
-        theme_color: SIGNBOARD,
+        theme_color: NAVY,
         categories: ['agriculture', 'utilities'],
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

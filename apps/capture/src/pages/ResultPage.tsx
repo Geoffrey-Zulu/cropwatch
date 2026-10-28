@@ -3,10 +3,10 @@ import { Camera } from 'lucide-react'
 import { CROP_LABELS, type ObservationView } from '@repo/shared'
 import { DemoBadge } from '../components/DemoBadge'
 import { Notice } from '../components/Notice'
-import { SignboardHeader } from '../components/SignboardHeader'
-import { Slip, SlipField } from '../components/Slip'
-import { Stamp } from '../components/Stamp'
-import { ThumbBar } from '../components/ThumbBar'
+import { AppHeader } from '../components/AppHeader'
+import { CaseCard, CaseField } from '../components/CaseCard'
+import { StatusTag } from '../components/StatusTag'
+import { ActionBar } from '../components/ActionBar'
 import { useObservation } from '../hooks/useObservation'
 import type { Route } from '../hooks/useRoute'
 import { shortDate, waitingText } from '../lib/copy'
@@ -28,7 +28,7 @@ export function ResultPage({
 
   return (
     <>
-      <SignboardHeader district={view?.district} onBack={() => navigate({ page: 'home' })} />
+      <AppHeader district={view?.district} onBack={() => navigate({ page: 'home' })} />
       <main className="mx-auto flex max-w-md flex-col gap-5 px-4 pt-5">
         {error && !view && (
           <Notice
@@ -50,12 +50,16 @@ export function ResultPage({
         )}
         {view && <ResultView view={view} liveStatus={status} />}
       </main>
-      <ThumbBar>
-        <button type="button" className="btn-sign" onClick={() => navigate({ page: 'diagnose' })}>
-          <Camera size={22} strokeWidth={2.5} aria-hidden />
+      <ActionBar>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => navigate({ page: 'diagnose' })}
+        >
+          <Camera size={22} strokeWidth={2} aria-hidden />
           Report another crop
         </button>
-      </ThumbBar>
+      </ActionBar>
     </>
   )
 }
@@ -74,39 +78,39 @@ export function ResultView({
   return (
     <>
       <DemoBadge rows={[view]} />
-      <Slip
-        raised
+      <CaseCard
+        emphasis
         eyebrow={`Report ${reportNumber(view.obs_id)}`}
-        stamp={<Stamp status={status} />}
+        tag={<StatusTag status={status} />}
       >
         <dl>
-          <SlipField label="Crop">{CROP_LABELS[view.crop]}</SlipField>
-          <SlipField label="Sent">{shortDate(view.created_at)}</SlipField>
-          <SlipField label="Place">{view.district}</SlipField>
+          <CaseField label="Crop">{CROP_LABELS[view.crop]}</CaseField>
+          <CaseField label="Sent">{shortDate(view.created_at)}</CaseField>
+          <CaseField label="Place">{view.district}</CaseField>
           {view.planting_date && (
-            <SlipField label="Planted">{shortDate(view.planting_date)}</SlipField>
+            <CaseField label="Planted">{shortDate(view.planting_date)}</CaseField>
           )}
         </dl>
-      </Slip>
+      </CaseCard>
 
-      <Slip>
+      <CaseCard>
         <DiagnosisSection view={view} />
-      </Slip>
+      </CaseCard>
 
       {view.recommendation ? (
         <>
-          <Slip eyebrow="What to do">
+          <CaseCard eyebrow="What to do">
             <AdviceLadderSection recommendation={view.recommendation} />
-          </Slip>
-          <Slip>
+          </CaseCard>
+          <CaseCard>
             <SourcesSection sources={view.recommendation.sources} />
-          </Slip>
+          </CaseCard>
         </>
       ) : (
         (status === 'diagnosing' || status === 'recommending') && (
-          <Slip eyebrow="What to do">
+          <CaseCard eyebrow="What to do">
             <AdvicePending text={waitingText(status)} />
-          </Slip>
+          </CaseCard>
         )
       )}
     </>

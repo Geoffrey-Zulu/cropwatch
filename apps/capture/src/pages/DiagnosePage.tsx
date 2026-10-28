@@ -3,12 +3,12 @@ import { getStorage, ref, uploadBytes } from 'firebase/storage'
 import { Send } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { findDistrict, type Crop } from '@repo/shared'
-import { CaptureTile } from '../components/CaptureTile'
+import { CameraCapture } from '../components/CameraCapture'
 import { CropChips } from '../components/CropChips'
 import { LocationRow, type GpsState } from '../components/LocationRow'
 import { Notice } from '../components/Notice'
-import { SignboardHeader } from '../components/SignboardHeader'
-import { ThumbBar } from '../components/ThumbBar'
+import { AppHeader } from '../components/AppHeader'
+import { ActionBar } from '../components/ActionBar'
 import type { Route } from '../hooks/useRoute'
 import { createObservation } from '../lib/api'
 import { app } from '../lib/firebase'
@@ -102,17 +102,22 @@ export function DiagnosePage({
 
   return (
     <>
-      <SignboardHeader district={district || null} onBack={() => navigate({ page: 'home' })} />
+      <AppHeader district={district || null} onReports={() => navigate({ page: 'home' })} />
       <main className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-5">
         <div>
           <p className="eyebrow">New report</p>
-          <h1 className="font-display text-display-xl font-extrabold uppercase">
+          <h1 className="font-display text-display-xl font-semibold text-navy">
             What is wrong with your crop?
           </h1>
         </div>
 
-        <CaptureTile
+        <CameraCapture
           photo={photo}
+          onRetake={() => {
+            setError(null)
+            attempt.current = null
+            setPhoto(null)
+          }}
           onPhoto={file => {
             setError(null)
             attempt.current = null
@@ -143,7 +148,7 @@ export function DiagnosePage({
             max={today()}
             value={plantingDate}
             onChange={event => setPlantingDate(event.target.value)}
-            className="min-h-14 w-full rounded-input border-2 border-ink bg-slip px-3 font-mono text-data text-ink"
+            className="min-h-14 w-full rounded-card border-1.5 border-line-strong bg-sheet px-3 font-mono text-data text-ink"
           />
         </div>
 
@@ -158,7 +163,7 @@ export function DiagnosePage({
             value={description}
             onChange={event => setDescription(event.target.value)}
             placeholder="Holes in the leaves, worms inside…"
-            className="w-full rounded-input border-2 border-ink bg-slip p-3 font-body text-body text-ink placeholder:text-ink-2"
+            className="w-full rounded-card border-1.5 border-line-strong bg-sheet p-3 font-body text-body text-ink placeholder:text-ink-2"
           />
         </div>
 
@@ -175,9 +180,9 @@ export function DiagnosePage({
         )}
       </main>
 
-      <ThumbBar>
-        <button type="button" className="btn-sign" disabled={!ready} onClick={send}>
-          <Send size={22} strokeWidth={2.5} aria-hidden />
+      <ActionBar>
+        <button type="button" className="btn-primary" disabled={!ready} onClick={send}>
+          <Send size={22} strokeWidth={2} aria-hidden />
           {sending === 'photo'
             ? 'Sending photo…'
             : sending === 'report'
@@ -185,7 +190,7 @@ export function DiagnosePage({
               : 'Send report'}
         </button>
         {!ready && sending === 'idle' && (
-          <p className="mt-2 text-center text-label font-semibold text-paper">
+          <p className="mt-2 text-center text-label font-semibold text-ink-2">
             {!photo
               ? 'Take a photo first'
               : !crop
@@ -195,7 +200,7 @@ export function DiagnosePage({
                   : ''}
           </p>
         )}
-      </ThumbBar>
+      </ActionBar>
     </>
   )
 }

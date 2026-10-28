@@ -1,6 +1,6 @@
-# CLAUDE.md — CropWatch repo instructions
+# CLAUDE.md — Phytos repo instructions
 
-CropWatch: early-warning and crop-health intelligence platform for Zambia. GreenCode Hackathon (Lusaka, 30 Oct – 1 Nov 2026). Read `docs/buildplan.md` (schedule, work packages, acceptance criteria) and `docs/technicaldoc.md` (data model, contracts, corpus, demo runbook) before building anything. Where they conflict, buildplan.md wins.
+Phytos (Team Phytos; formerly CropWatch): early-warning and crop-health intelligence prototype for Zambia. GreenCode Hackathon (Lusaka, 30 Oct – 1 Nov 2026). Read `docs/buildplan.md` (schedule, work packages, acceptance criteria) and `docs/technicaldoc.md` (data model, contracts, corpus, demo runbook) before building anything. Where they conflict, buildplan.md wins.
 
 ## Invariants — never violate, even under time pressure
 
@@ -8,10 +8,12 @@ CropWatch: early-warning and crop-health intelligence platform for Zambia. Green
 2. No numeric outbreak probabilities anywhere. Risk is a qualitative prototype signal (LOW / ELEVATED / HIGH) with contributing factors always displayed.
 3. `model_confidence` is internal. UI shows qualitative bands ("AI assessment: high confidence"), never percentages, never the word "probability".
 4. Low confidence (< 0.6) or `suspected_issue == "unknown"` → `needs_expert_review: true` and the officer queue. Never guess.
-5. Every synthetic row carries `sim: true`; any view displaying a sim row renders the `DemoBadge` ("DEMO DATA — SIMULATED").
+5. Every synthetic row carries `sim: true`; any view displaying a sim row renders the `DemoBadge` ("DEMO DATA · SIMULATED").
 6. Farmer-level data: consented, access-controlled; precise locations never appear in Outgrower/commercial views — aggregates and camp/district level only.
 7. Use the Google Gen AI SDK (`google-genai`). Never `vertexai.generative_models` (deprecated).
 8. "Where to buy" lists ALL registered options for the issue, renders only after the recommendation, never sponsor-filtered.
+9. Never imply auto-learning. Officer-verified observations are evaluation data: "every correction becomes a test case". Never claim the model learns or improves from corrections.
+10. Every alert shows its class (weather advisory / verified cluster alert / model risk signal) with its uncertainty wording (`alertUncertainty` in `packages/shared`). "Verified" means at least one report in it was verified by an officer, nothing less.
 
 ## Environment
 
@@ -30,14 +32,22 @@ CropWatch: early-warning and crop-health intelligence platform for Zambia. Green
 ## This repo's template (identified 2026-10-21 — do not re-derive)
 
 - This is the **React/Vite + Firebase Hytel template** (`hytel-react-boilerplate`): Vite + React 18 in `apps/web`, tRPC 11 library in `apps/functions`, imports scoped `@repo/*`, pnpm 12, Node ≥ 24, Tailwind 3, Vitest. Judge structure against THIS template only.
-- **Known template gaps — resolve as Day 1 work, they are not breakage:** no `firebase.json`, no Firestore/Storage rules, `apps/web/src` has no `pages/` or `sections/` yet (create them), `.env.example` carries placeholder entries (replace with CropWatch vars), and `apps/functions` has no server/deploy entrypoint.
+- **Known template gaps — resolve as Day 1 work, they are not breakage:** no `firebase.json`, no Firestore/Storage rules, `apps/web/src` has no `pages/` or `sections/` yet (create them), `.env.example` carries placeholder entries (replace with Phytos vars), and `apps/functions` has no server/deploy entrypoint.
 - **Backend deploy decision:** `apps/functions` stays a tRPC router library; add a server entrypoint (Hono) that serves tRPC at `/trpc` and the mobile REST adapter at `/api/v1`, containerize it, deploy to **Cloud Run** via an idempotent `infra/deploy.sh`. Do NOT use the template's Firebase-Functions bundling path, and ignore the `deploy-dev/stage/main` WIF workflows for the hackathon (leave the files; keep `ci.yml` running lint/typecheck/build/test).
 - buildplan.md D1's "scaffold repo from Hytel template" is DONE (this repo). D1 now means: the gap-resolution above + `infra/setup.sh` + schemas v0.
+
+## Brand and copy (rebrand 28 Oct 2026)
+
+- The product is **Phytos** (Team Phytos), formerly CropWatch. Every user-facing surface says Phytos: apps, manifests, page titles, push and SMS templates ("Phytos DEMO alert"), docs.
+- **Infrastructure keeps its names**: GCP project `crop-watch01`, Cloud Run `cropwatch-api`, topic `cropwatch.alerts`, BigQuery dataset `cropwatch`, buckets, secrets, the repo. Never rename infrastructure for the brand.
+- Versioned prompts (`prompts/*-v1.md`) still say CropWatch: they are model-facing and stamped by version; rename only in a new prompt version.
+- **No em dashes in any UI copy** (rendered strings, notifications, SMS). Use a colon, a full stop or a middle dot. Model-written text goes through `withoutEmDash` for display (never a label dose).
+- **Grounded language**: a prototype, not a platform. Signals are "prototype signals"; models "assess", officers "verify". No "predicts", "revolutionary", "AI-powered platform".
 
 ## Conventions
 
 - Hytel Way monorepo: pnpm + Turborepo. Reusable UI → `packages/ui`; app-specific → `apps/<app>/src/components`; pages `*Page.tsx`; sections `*Section.tsx`; hooks `use*`; tRPC routers in `apps/functions/src/trpc/routers/`; every schema/type shared by FE+BE lives in `packages/shared` as Zod + `z.infer`; import scope is `@repo/*` (matches this repo), e.g. `import { ObservationSchema } from '@repo/shared'`.
-- `apps/capture` (Vite + React PWA) is the **primary demo client** and is IN the pnpm workspace. It consumes the frozen `/api/v1` contract and Firestore listeners exactly as the mobile app would (no new endpoints, no contract changes) and follows the "Field Slip" design system (`design-system/cropwatch/MASTER.md`, tokens in `packages/ui/theme`), which the dashboard adopts too. Deployed to its own Hosting site by `infra/deploy.sh`.
+- `apps/capture` (Vite + React PWA) is the **primary demo client** and is IN the pnpm workspace. It consumes the frozen `/api/v1` contract and Firestore listeners exactly as the mobile app would (no new endpoints, no contract changes) and follows the Phytos "Field Brief" design system (`design-system/phytos/MASTER.md`, tokens in `packages/ui/theme/phytos.css`), which the dashboard and landing page use too. The app opens straight to the camera. Deployed to its own Hosting site by `infra/deploy.sh`.
 - `apps/mobile` (Flutter) is unchanged: in the repo but OUTSIDE the pnpm workspace, no longer schedule-critical. Never import from it; it consumes only `packages/shared/src/contracts/openapi.json`.
 - **Contract freeze:** after Day 2, `packages/shared/src/contracts/openapi.json` and the `/api/v1` REST surface only gain optional fields — no renames, no removals, no type changes. Regenerate the file from Zod on any additive change and commit it.
 - Controlled vocabulary for crops/issues lives in `packages/shared/src/constants/` — the Gemini response schema, the regulatory DB and the dashboard all reference it; never free-string an issue name.

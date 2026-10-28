@@ -254,10 +254,10 @@ export function buildOpenApiDocument() {
   const doc = new OpenApiGeneratorV3(registry.definitions).generateDocument({
     openapi: '3.0.3',
     info: {
-      title: 'CropWatch API',
+      title: 'Phytos API',
       version: API_VERSION,
       description:
-        'REST v1 for the CropWatch mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as "unknown", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers.',
+        'REST v1 for the Phytos mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as "unknown", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers.',
     },
     servers: [{ url: '/api/v1', description: 'Relative to the Cloud Run service URL.' }],
     tags: [

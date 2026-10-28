@@ -7,21 +7,21 @@ export function SourcesSection({ sources }: { sources: RecommendationView['sourc
   return (
     <div>
       <p className="eyebrow mb-1 flex items-center gap-1.5">
-        <BookOpen size={16} strokeWidth={2.25} aria-hidden />
+        <BookOpen size={16} strokeWidth={2} aria-hidden />
         From these guides
       </p>
       <ul>
         {sources.map(source => (
-          <li key={source.uri} className="border-b border-rule py-2 last:border-b-0">
+          <li key={source.uri} className="border-b border-line py-2 last:border-b-0">
             <a
               href={source.uri}
               target="_blank"
               rel="noreferrer"
-              className="text-label font-semibold underline decoration-rule decoration-2 underline-offset-4"
+              className="text-label font-semibold text-navy underline decoration-line-strong decoration-1 underline-offset-4"
             >
               {source.title}
             </a>
-            <p className="mt-0.5 font-mono text-eyebrow font-semibold uppercase text-copper">
+            <p className="mt-0.5 font-mono text-eyebrow font-semibold uppercase text-copper-deep">
               {TIER_NAMES[source.tier] ?? 'Source'}
             </p>
           </li>

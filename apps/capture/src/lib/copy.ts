@@ -12,26 +12,26 @@ export const SEVERITY_TEXT: Record<SeverityBand, string> = {
   severe: 'Severe damage',
 }
 
-export type StampTone = 'outline' | 'maize' | 'leaf'
+export type TagTone = 'outline' | 'attention' | 'guidance'
 
-export interface StampSpec {
+export interface StatusTagSpec {
   word: string
-  tone: StampTone
-  // Something is still happening: the stamp shows a waiting ellipsis.
+  tone: TagTone
+  // Something is still happening: the tag shows a waiting ellipsis.
   waiting: boolean
 }
 
 // Clients treat an unrecognised status as generic in-progress (frozen contract).
-export function stampFor(status: ObservationStatus | string): StampSpec {
+export function statusTagFor(status: ObservationStatus | string): StatusTagSpec {
   switch (status) {
     case 'diagnosing':
       return { word: 'Assessing', tone: 'outline', waiting: true }
     case 'recommending':
       return { word: 'Assessed', tone: 'outline', waiting: true }
     case 'awaiting_expert_review':
-      return { word: 'With an officer', tone: 'maize', waiting: false }
+      return { word: 'With an officer', tone: 'attention', waiting: false }
     case 'complete':
-      return { word: 'Advice ready', tone: 'leaf', waiting: false }
+      return { word: 'Advice ready', tone: 'guidance', waiting: false }
     default:
       return { word: 'In progress', tone: 'outline', waiting: true }
   }

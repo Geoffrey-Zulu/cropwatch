@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "CropWatch API",
+    "title": "Phytos API",
     "version": "1.0.0",
-    "description": "REST v1 for the CropWatch mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as \"unknown\", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers."
+    "description": "REST v1 for the Phytos mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as \"unknown\", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers."
   },
   "servers": [
     {
@@ -59,7 +59,7 @@
           "maize_lethal_necrosis",
           "unknown"
         ],
-        "description": "Controlled vocabulary, append-only; \"unknown\" always routes to expert review. Clients MUST treat an unrecognised value as \"unknown\", never as an error. Labels: fall_armyworm = Fall armyworm; tuta_absoluta = Tuta absoluta (tomato leafminer); late_blight = Late blight; early_blight = Early blight; diamondback_moth = Diamondback moth; cassava_mosaic = Cassava mosaic disease; cassava_brown_streak = Cassava brown streak disease; maize_lethal_necrosis = Maize lethal necrosis; unknown = Unknown — needs expert review."
+        "description": "Controlled vocabulary, append-only; \"unknown\" always routes to expert review. Clients MUST treat an unrecognised value as \"unknown\", never as an error. Labels: fall_armyworm = Fall armyworm; tuta_absoluta = Tuta absoluta (tomato leafminer); late_blight = Late blight; early_blight = Early blight; diamondback_moth = Diamondback moth; cassava_mosaic = Cassava mosaic disease; cassava_brown_streak = Cassava brown streak disease; maize_lethal_necrosis = Maize lethal necrosis; unknown = Unknown: needs expert review."
       },
       "Province": {
         "type": "string",
@@ -390,7 +390,7 @@
           "ELEVATED",
           "HIGH"
         ],
-        "description": "Qualitative prototype signal (CropWatch Risk Model v0). Never a probability; always shown with its contributing factors."
+        "description": "Qualitative prototype signal (Phytos Risk Model v0). Never a probability; always shown with its contributing factors."
       },
       "AlertType": {
         "type": "string",
@@ -399,6 +399,15 @@
           "risk_change",
           "org_priority"
         ]
+      },
+      "AlertClass": {
+        "type": "string",
+        "enum": [
+          "weather_advisory",
+          "verified_cluster",
+          "model_risk_signal"
+        ],
+        "description": "weather_advisory: forecast conditions only, no report confirms it. verified_cluster: the cluster rule is met and at least one report in it was verified by an officer. model_risk_signal: Risk Model v0 over AI-assessed reports, not yet verified. Treat a missing or unknown value as model_risk_signal."
       },
       "Alert": {
         "type": "object",
@@ -446,6 +455,17 @@
           },
           "sim": {
             "type": "boolean"
+          },
+          "alert_class": {
+            "$ref": "#/components/schemas/AlertClass"
+          },
+          "reports": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verified_reports": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
@@ -462,7 +482,7 @@
           "created_at",
           "sim"
         ],
-        "description": "Area alert. Always show level together with contributing_factors."
+        "description": "Area alert. Always show level together with contributing_factors, and the alert_class label with its uncertainty wording when present."
       },
       "AlertPushData": {
         "type": "object",
@@ -748,7 +768,7 @@
           },
           "sim": {
             "type": "boolean",
-            "description": "true for simulated demo data: show the DEMO DATA — SIMULATED badge."
+            "description": "true for simulated demo data: show the DEMO DATA · SIMULATED badge."
           }
         },
         "required": [

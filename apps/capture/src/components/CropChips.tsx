@@ -27,8 +27,8 @@ export function CropChips({
           return (
             <label
               key={crop}
-              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-slip border-2 border-ink px-3 text-body font-extrabold transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-copper ${
-                selected ? 'bg-ink text-paper shadow-sign-sm' : 'bg-slip text-ink'
+              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-card border-1.5 px-3 text-body font-extrabold transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-copper ${
+                selected ? 'border-navy bg-navy text-white' : 'border-line-strong bg-sheet text-ink'
               }`}
             >
               <input
@@ -39,7 +39,7 @@ export function CropChips({
                 onChange={() => onChange(crop)}
                 className="sr-only"
               />
-              <Glyph size={28} strokeWidth={2.25} aria-hidden />
+              <Glyph size={26} strokeWidth={2} aria-hidden />
               {CROP_LABELS[crop]}
             </label>
           )

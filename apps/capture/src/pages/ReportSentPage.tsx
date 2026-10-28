@@ -1,8 +1,8 @@
-import { ChevronRight } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { useEffect } from 'react'
-import { SignboardHeader } from '../components/SignboardHeader'
-import { Slip } from '../components/Slip'
-import { ThumbBar } from '../components/ThumbBar'
+import { AppHeader } from '../components/AppHeader'
+import { CaseCard } from '../components/CaseCard'
+import { ActionBar } from '../components/ActionBar'
 import type { Route } from '../hooks/useRoute'
 import { reportNumber } from '../lib/report'
 
@@ -21,30 +21,31 @@ export function ReportSentPage({
 
   return (
     <>
-      <SignboardHeader />
+      <AppHeader />
       <main className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-10">
-        <Slip raised eyebrow={`Report ${reportNumber(obsId)}`}>
+        <CaseCard emphasis eyebrow={`Report ${reportNumber(obsId)}`}>
           <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <span className="inline-flex -rotate-3 animate-stamp rounded-stamp border-[3px] border-leaf px-4 py-2 font-stencil text-[44px] font-extrabold uppercase leading-none text-leaf">
+            <span className="inline-flex animate-tag items-center gap-2 rounded-tag border-1.5 border-green bg-green px-3 py-1.5 font-mono text-label font-semibold uppercase tracking-[0.08em] text-white">
+              <Check size={18} strokeWidth={2} aria-hidden />
               Sent
             </span>
-            <p className="text-title font-extrabold">We have your report</p>
+            <p className="font-display text-display font-semibold text-navy">We have your report</p>
             <p className="text-body text-ink-2">
               We are looking at your photo now. Advice usually comes within a minute.
             </p>
           </div>
-        </Slip>
+        </CaseCard>
       </main>
-      <ThumbBar>
+      <ActionBar>
         <button
           type="button"
-          className="btn-sign"
+          className="btn-primary"
           onClick={() => navigate({ page: 'report', obsId }, { replace: true })}
         >
           See the result
-          <ChevronRight size={24} strokeWidth={2.5} aria-hidden />
+          <ChevronRight size={24} strokeWidth={2} aria-hidden />
         </button>
-      </ThumbBar>
+      </ActionBar>
     </>
   )
 }

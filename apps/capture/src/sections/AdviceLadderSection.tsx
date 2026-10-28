@@ -1,29 +1,30 @@
 import { UserCheck } from 'lucide-react'
-import type { RecommendationView } from '@repo/shared'
+import { withoutEmDash, type RecommendationView } from '@repo/shared'
 
 // The IPM ladder: steps in the order the API gives them (scout → field practice → natural
-// control), on a rail, with chemicals always the last rung. A chemical rung shows only
-// registered products with their label dose verbatim; otherwise it is the officer referral.
+// control), on the green guidance rail, with chemicals always the last rung. A chemical rung
+// shows only registered products with their label dose verbatim; otherwise it is the officer
+// referral.
 export function AdviceLadderSection({ recommendation }: { recommendation: RecommendationView }) {
   const steps = recommendation.ipm_steps.slice(0, -1)
   const chemicalLine = recommendation.ipm_steps[recommendation.ipm_steps.length - 1]
 
   return (
-    <ol aria-label="What to do, step by step" className="relative flex flex-col gap-4 pl-9">
-      <span aria-hidden className="absolute bottom-2 left-[11px] top-2 w-1 bg-ink" />
+    <ol aria-label="What to do, step by step" className="relative flex flex-col gap-4 pl-10">
+      <span aria-hidden className="absolute bottom-2 left-[13px] top-2 w-0.5 bg-green" />
       {steps.map((step, i) => (
-        <Rung key={step} index={i} label={`Step ${i + 1}`}>
-          <p className="text-body">{step}</p>
+        <Rung key={step} index={i} label={`Step ${i + 1}`} marker={String(i + 1)}>
+          <p className="text-body">{withoutEmDash(step)}</p>
         </Rung>
       ))}
-      <Rung index={steps.length} label="Chemicals">
+      <Rung index={steps.length} label="Chemicals" marker="C">
         {recommendation.chemical_options.length > 0 ? (
           <div className="flex flex-col gap-3">
-            <p className="text-body">{chemicalLine}</p>
+            <p className="text-body">{withoutEmDash(chemicalLine)}</p>
             {recommendation.chemical_options.map(option => (
               <div
                 key={option.registration_no}
-                className="rounded-slip border-2 border-ink bg-slip p-3"
+                className="rounded-card border border-line bg-paper p-3"
               >
                 <p className="text-body font-extrabold">{option.trade_name}</p>
                 <p className="text-label font-semibold text-ink-2">{option.active_ingredient}</p>
@@ -45,9 +46,14 @@ export function AdviceLadderSection({ recommendation }: { recommendation: Recomm
             ))}
           </div>
         ) : (
-          <div className="flex gap-3 rounded-slip border-2 border-ink bg-maize p-3 text-ink">
-            <UserCheck size={24} strokeWidth={2.25} aria-hidden className="mt-0.5 shrink-0" />
-            <p className="text-body font-semibold">{chemicalLine}</p>
+          <div className="flex gap-3 rounded-card border border-copper-deep border-l-4 bg-copper-tint p-3 text-ink">
+            <UserCheck
+              size={24}
+              strokeWidth={2}
+              aria-hidden
+              className="mt-0.5 shrink-0 text-copper-deep"
+            />
+            <p className="text-body font-semibold">{withoutEmDash(chemicalLine)}</p>
           </div>
         )}
       </Rung>
@@ -58,18 +64,22 @@ export function AdviceLadderSection({ recommendation }: { recommendation: Recomm
 function Rung({
   index,
   label,
+  marker,
   children,
 }: {
   index: number
   label: string
+  marker: string
   children: React.ReactNode
 }) {
   return (
-    <li className="relative animate-rung" style={{ animationDelay: `${index * 80}ms` }}>
+    <li className="relative animate-rung" style={{ animationDelay: `${index * 60}ms` }}>
       <span
         aria-hidden
-        className="absolute -left-9 top-1 h-6 w-6 rounded-[3px] border-2 border-ink bg-slip shadow-sign-sm"
-      />
+        className="absolute -left-10 top-0.5 inline-flex h-7 w-7 items-center justify-center rounded-tag border-1.5 border-green bg-sheet font-mono text-eyebrow font-semibold text-green-deep"
+      >
+        {marker}
+      </span>
       <p className="eyebrow mb-1">{label}</p>
       {children}
     </li>
@@ -81,14 +91,14 @@ export function AdvicePending({ text }: { text: string }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-body font-semibold text-ink-2">{text}…</p>
-      <div aria-hidden className="relative flex flex-col gap-4 pl-9 opacity-50">
-        <span className="absolute bottom-2 left-[11px] top-2 w-1 bg-ink" />
+      <div aria-hidden className="relative flex flex-col gap-4 pl-10 opacity-60">
+        <span className="absolute bottom-2 left-[13px] top-2 w-0.5 bg-line" />
         {[0, 1, 2].map(i => (
           <div key={i} className="relative">
-            <span className="absolute -left-9 top-1 h-6 w-6 rounded-[3px] border-2 border-ink bg-slip" />
-            <div className="h-3 w-16 bg-rule" />
-            <div className="mt-2 h-4 w-full bg-rule" />
-            <div className="mt-1 h-4 w-3/4 bg-rule" />
+            <span className="absolute -left-10 top-0.5 h-7 w-7 rounded-tag border-1.5 border-line bg-sheet" />
+            <div className="h-3 w-16 bg-line" />
+            <div className="mt-2 h-4 w-full bg-line" />
+            <div className="mt-1 h-4 w-3/4 bg-line" />
           </div>
         ))}
       </div>

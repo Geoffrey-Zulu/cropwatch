@@ -2,8 +2,8 @@
 export function DemoBadge({ rows }: { rows: { sim: boolean }[] }) {
   if (!rows.some(row => row.sim)) return null
   return (
-    <p className="inline-block rounded-stamp border-2 border-ink bg-maize px-2 py-1 font-mono text-eyebrow font-semibold uppercase text-ink">
-      Demo data — simulated
+    <p className="inline-block rounded-tag border border-copper-deep bg-copper-tint bg-hatch px-2 py-1 font-mono text-eyebrow font-semibold uppercase text-copper-deep">
+      Demo data · simulated
     </p>
   )
 }
