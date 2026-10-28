@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { ObservationRow, RiskLevel, RiskSignal } from '@repo/shared'
+import {
+  WEATHER_NOTES,
+  type ObservationRow,
+  type RiskLevel,
+  type RiskSignal,
+  type WeatherCondition,
+} from '@repo/shared'
 import type { DetectedCluster } from './detect'
 import type { ClusterChange, NewAlert, OutbreakStore } from './outbreakStore'
 import { tracker } from './track'
@@ -25,6 +31,7 @@ const detected: DetectedCluster = {
   district_slug: 'chongwe',
   sim: false,
   newLast24h: 5,
+  verified: 0,
 }
 
 const signal = (level: RiskLevel): RiskSignal => ({
@@ -35,6 +42,7 @@ const signal = (level: RiskLevel): RiskSignal => ({
 function fakeStore({
   changes = [] as ClusterChange[],
   risk = {} as Record<string, { previous: RiskLevel | null; level: RiskLevel }>,
+  weather = [] as WeatherCondition[],
 } = {}) {
   const alerts: NewAlert[] = []
   const store: OutbreakStore = {
@@ -47,6 +55,7 @@ function fakeStore({
         previous: r.previous,
         signal: signal(r.level),
         sim: false,
+        weather: slug === 'chongwe' ? weather : [],
       }
     }),
     raiseAlert: vi.fn(async (alert: NewAlert) => {
@@ -155,5 +164,45 @@ describe('tracker', () => {
         .mock.calls.map(c => c[0])
         .sort()
     ).toEqual(['chongwe', 'lusaka'])
+  })
+
+  it('raises a verified cluster alert when an officer verified a report in the new cluster', async () => {
+    const { store, alerts } = fakeStore({
+      changes: [{ id: 'c1', kind: 'created', cluster: { ...detected, verified: 2 } }],
+    })
+    await run(store, row()).result
+    expect(alerts[0]).toMatchObject({ alert_class: 'verified_cluster', verified_reports: 2 })
+  })
+
+  it('labels an unverified new cluster a model risk signal', async () => {
+    const { store, alerts } = fakeStore({
+      changes: [{ id: 'c1', kind: 'created', cluster: detected }],
+    })
+    await run(store, row()).result
+    expect(alerts[0]).toMatchObject({ alert_class: 'model_risk_signal', verified_reports: 0 })
+  })
+
+  it('raises a weather advisory once a day, never dispatched, at Watch at most', async () => {
+    const condition: WeatherCondition = {
+      issue: 'tuta_absoluta',
+      favourable: true,
+      observed: '0 mm of rain in the last 14 days',
+      note: WEATHER_NOTES.tuta_absoluta,
+    }
+    const { store, alerts } = fakeStore({
+      risk: { chongwe: { previous: 'HIGH', level: 'HIGH' } },
+      weather: [condition],
+    })
+    await run(store, row(), []).result
+    expect(alerts).toEqual([
+      expect.objectContaining({
+        id: 'weather-chongwe-tuta_absoluta-2026-10-26',
+        alert_class: 'weather_advisory',
+        level: 'ELEVATED',
+        dispatch: false,
+        observation_ids: [],
+      }),
+    ])
+    expect(alerts[0].factors[0].startsWith('Weather (Open-Meteo): 0 mm of rain')).toBe(true)
   })
 })

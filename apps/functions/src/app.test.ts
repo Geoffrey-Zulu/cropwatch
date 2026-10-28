@@ -26,6 +26,31 @@ const CALLERS: Record<string, Caller> = Object.fromEntries(
 
 const OBS_ID = 'k3J9xQ2mW8pL5vR1tY7u'
 
+const EVIDENCE = {
+  obs_id: OBS_ID,
+  status: 'complete' as const,
+  verification_state: 'AI_ASSESSED' as const,
+  verified_issue: null,
+  diagnosis: null,
+  retrieval: null,
+  regulatory: null,
+  sim: false,
+}
+
+const OVERVIEW = {
+  org_id: 'org1',
+  name: 'DEMO OUTGROWER CO.',
+  enrolled_farmers: 1240,
+  sim: true,
+  window_days: 14,
+  reports: 0,
+  verified_reports: 0,
+  top_issue: null,
+  camps: [],
+  officers: [],
+  unassigned: [],
+}
+
 const ALERT = {
   alert_id: 'alert1',
   type: 'cluster' as const,
@@ -117,6 +142,11 @@ beforeEach(() => {
     alerts: vi.fn(async () => [ALERT]),
     dispatch: vi.fn(async () => 'sent' as const),
     now: () => new Date('2026-10-22T09:30:00.000Z'),
+    dashboard: {
+      evidence: vi.fn(async () => EVIDENCE),
+      outgrower: vi.fn(async () => OVERVIEW),
+      weather: vi.fn(async () => null),
+    },
   }
   app = createApp({ corsOrigins: ['http://localhost:5173'], services })
 })
@@ -137,6 +167,37 @@ describe('health', () => {
     expect((await app.request('/health')).status).toBe(200)
     const res = await app.request('/api/v1/health')
     expect(await res.json()).toEqual({ status: 'ok', version: 'test-rev' })
+  })
+})
+
+describe('tRPC dashboard procedures', () => {
+  const query = (path: string, input: unknown, caller: Caller | null) =>
+    get(`/trpc/${path}?input=${encodeURIComponent(JSON.stringify(input))}`, caller)
+
+  it('refuses callers without a valid token', async () => {
+    expect((await query('evidence.observation', { obsId: OBS_ID }, null)).status).toBe(401)
+    expect((await query('outgrower.overview', { orgId: 'org1' }, null)).status).toBe(401)
+  })
+
+  it('shows evidence to Command Center roles only', async () => {
+    expect((await query('evidence.observation', { obsId: OBS_ID }, FARMER)).status).toBe(403)
+    expect((await query('evidence.observation', { obsId: OBS_ID }, OFFICER_SAME_ORG)).status).toBe(
+      403
+    )
+    const res = await query('evidence.observation', { obsId: OBS_ID }, AGRONOMIST)
+    expect(res.status).toBe(200)
+    expect(JSON.stringify(await res.json())).not.toMatch(/model_confidence|latitude/)
+  })
+
+  it('shows an org overview to its own field officers and the Command Center, no one else', async () => {
+    expect((await query('outgrower.overview', { orgId: 'org1' }, OFFICER_SAME_ORG)).status).toBe(
+      200
+    )
+    expect((await query('outgrower.overview', { orgId: 'org1' }, AGRONOMIST)).status).toBe(200)
+    expect((await query('outgrower.overview', { orgId: 'org1' }, OFFICER_OTHER_ORG)).status).toBe(
+      403
+    )
+    expect((await query('outgrower.overview', { orgId: 'org1' }, FARMER)).status).toBe(403)
   })
 })
 

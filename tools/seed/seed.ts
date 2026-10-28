@@ -241,6 +241,7 @@ async function writeFirestore(seed: SeedData) {
         members: c.members,
         size: c.members.length,
         new_last_24h: c.new_last_24h,
+        verified_members: c.verified,
         sim: true,
         active: true,
         first_detected_at: new FsTimestamp(c.first_detected_at),
@@ -262,6 +263,7 @@ async function writeFirestore(seed: SeedData) {
       set: `alerts/${a.id}`,
       data: {
         type: 'cluster',
+        alert_class: a.alert_class,
         issue: a.issue,
         district: a.district,
         district_slug: a.district_slug,
@@ -270,6 +272,7 @@ async function writeFirestore(seed: SeedData) {
         level: a.level,
         contributing_factors: a.contributing_factors,
         observation_ids: a.observation_ids,
+        verified_reports: a.verified_reports,
         channels_sent: [],
         created_at: new FsTimestamp(a.created_at),
         sim: true,

@@ -13,6 +13,8 @@ import { firestoreObservations } from './services/firestoreObservations'
 import { firestoreRecommender, registeredProducts } from './services/firestoreRecommender'
 import { geminiDiagnosisModel, geminiJsonModel } from './services/gemini'
 import { firestoreAlerts } from './services/alerts/alertReader'
+import { firestoreDashboard } from './services/dashboard/firestoreDashboard'
+import { openMeteo } from './services/weather/openMeteo'
 import { fcmPush, firestoreDispatcher } from './services/alerts/dispatch'
 import { pubsubPublisher } from './services/alerts/pubsub'
 import { africasTalking, smsLogOnly } from './services/alerts/sms'
@@ -38,11 +40,12 @@ const prompt = loadPrompt('diagnose-v1')
 const recommendPrompt = loadPrompt('recommend-v1')
 
 const index = parseGcsUri(env.knowledgeIndexUri)
+const loadIndex = cachedIndex(async () => {
+  const [bytes] = await storage.bucket(index.bucket).file(index.object).download()
+  return bytes
+})
 const knowledge = ragKnowledge({
-  loadIndex: cachedIndex(async () => {
-    const [bytes] = await storage.bucket(index.bucket).file(index.object).download()
-    return bytes
-  }),
+  loadIndex,
   retrieve: withRetrieveRetry(vertexRetrieve()),
   compose: withTransientRetry(
     geminiJsonModel(env, {
@@ -59,6 +62,8 @@ const knowledge = ragKnowledge({
 
 // Outbreaks (technicaldoc §9–10): BigQuery snapshots and the cluster rule, Firestore clusters,
 // risk and alerts, Pub/Sub to dispatch, FCM and Africa's Talking to deliver.
+// Open-Meteo forecasts: weather context for risk and advisories, and the dashboard.
+const weather = openMeteo()
 const bigquery = bigQueryRest({
   projectId: env.projectId,
   location: env.location,
@@ -72,6 +77,7 @@ const track = tracker({
     bigquery,
     dataset: env.bigQueryDataset,
     publish: pubsubPublisher({ projectId: env.projectId, topic: env.alertsTopic }),
+    weather,
   }),
 })
 const sms = env.sms
@@ -109,6 +115,7 @@ const app = createApp({
     ),
     alerts: firestoreAlerts(db),
     dispatch: firestoreDispatcher({ db, push: fcmPush(messaging), sms }),
+    dashboard: firestoreDashboard({ db, index: loadIndex, weather }),
   },
 })
 

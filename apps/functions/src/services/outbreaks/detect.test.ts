@@ -11,6 +11,7 @@ const row = (id: string, neighbours: string[], over: Partial<ClusterRow> = {}): 
   district: 'Chongwe',
   district_slug: 'chongwe',
   sim: false,
+  verification_weight: 0.5,
   neighbours,
   ...over,
 })

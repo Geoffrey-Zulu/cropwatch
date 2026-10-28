@@ -1,5 +1,11 @@
 import type { Firestore } from 'firebase-admin/firestore'
-import { AlertSchema, AlertViewSchema, ISSUE_LABELS, type AlertView } from '@repo/shared'
+import {
+  AlertSchema,
+  alertClassOf,
+  AlertViewSchema,
+  ISSUE_LABELS,
+  type AlertView,
+} from '@repo/shared'
 import { fromFirestore } from '../../lib/firestoreData'
 
 export type ListAlerts = (districtSlug: string) => Promise<AlertView[]>
@@ -32,6 +38,9 @@ export function firestoreAlerts(db: Firestore, limit = 20): ListAlerts {
           radius_km: a.radius_km,
           created_at: a.created_at,
           sim: a.sim,
+          alert_class: alertClassOf(a),
+          reports: a.observation_ids.length,
+          ...(a.verified_reports != null && { verified_reports: a.verified_reports }),
         })
       )
     }

@@ -12,3 +12,6 @@ export * from './risk'
 
 // Display text helpers (no em dashes in UI copy)
 export * from './text'
+
+// Weather context (Open-Meteo) for Risk Model v0 and weather advisories
+export * from './weather'

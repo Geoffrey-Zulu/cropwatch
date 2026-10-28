@@ -3,11 +3,13 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 import { appRouter } from './trpc/router'
+import { bearerToken } from './auth'
 import { eventRoutes, type EventServices } from './rest/events'
 import { restV1, type RestServices } from './rest/v1'
 import { errorFields, log } from './lib/log'
+import type { DashboardServices } from './services/dashboard/types'
 
-export type AppServices = RestServices & EventServices
+export type AppServices = RestServices & EventServices & { dashboard: DashboardServices }
 
 export interface AppOptions {
   // Browser origins: the dashboard (/trpc) and the capture PWA (/api/v1). Mobile and Eventarc
@@ -41,7 +43,13 @@ export function createApp({ corsOrigins, services, logRequests = false }: AppOpt
       endpoint: '/trpc',
       req: c.req.raw,
       router: appRouter,
-      createContext: () => ({}),
+      // The dashboard signs in with Firebase; a missing or invalid token is an anonymous caller,
+      // which every dashboard procedure refuses.
+      createContext: async ({ req }) => {
+        const token = bearerToken(req.headers.get('authorization') ?? undefined)
+        const caller = token ? await services.verifyIdToken(token).catch(() => null) : null
+        return { caller, services: services.dashboard }
+      },
     })
   )
 

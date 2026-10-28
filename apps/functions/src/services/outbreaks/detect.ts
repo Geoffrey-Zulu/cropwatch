@@ -5,6 +5,7 @@ import {
   CLUSTER_RADIUS_KM,
   CLUSTER_WINDOW_HOURS,
   mergeAnchors,
+  VERIFICATION_WEIGHTS,
   type GeoPoint,
   type KnownIssue,
 } from '@repo/shared'
@@ -18,6 +19,7 @@ export interface ClusterRow {
   district: string
   district_slug: string
   sim: boolean
+  verification_weight: number
   neighbours: string[]
 }
 
@@ -31,6 +33,8 @@ export interface DetectedCluster {
   // Any simulated member makes the cluster simulated (CLAUDE.md invariant 5).
   sim: boolean
   newLast24h: number
+  // Members an officer verified (field or expert): what makes it a verified cluster alert.
+  verified: number
 }
 
 // technicaldoc §9 in BigQuery GIS: the latest state of each report (observations_latest), the
@@ -38,7 +42,7 @@ export interface DetectedCluster {
 // (≥ 5 including itself) merge in mergeAnchors, the same code the seed uses.
 export const clusterSql = (dataset: string) => `
 WITH q AS (
-  SELECT obs_id, geo, created_at, district, district_slug, sim
+  SELECT obs_id, geo, created_at, district, district_slug, sim, verification_weight
   FROM \`${dataset}.observations_latest\`
   WHERE issue = @issue
     AND verification_weight >= ${CLUSTER_MIN_WEIGHT}
@@ -53,6 +57,7 @@ SELECT
   ANY_VALUE(a.district) AS district,
   ANY_VALUE(a.district_slug) AS district_slug,
   ANY_VALUE(a.sim) AS sim,
+  ANY_VALUE(a.verification_weight) AS verification_weight,
   ARRAY_AGG(b.obs_id) AS neighbours
 FROM q AS a
 JOIN q AS b ON ST_DWITHIN(a.geo, b.geo, ${CLUSTER_RADIUS_KM * 1000})
@@ -86,6 +91,8 @@ export function clustersFromRows(
       district_slug: slug,
       sim: members.some(m => m.sim),
       newLast24h: members.filter(m => Date.parse(m.created_at) > dayAgo).length,
+      verified: members.filter(m => m.verification_weight >= VERIFICATION_WEIGHTS.FIELD_VERIFIED)
+        .length,
     }
   })
 }

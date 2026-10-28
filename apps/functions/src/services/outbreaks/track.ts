@@ -3,6 +3,7 @@ import {
   CLUSTER_RADIUS_KM,
   findDistrict,
   riskRose,
+  weatherFactor,
   type KnownIssue,
   type ObservationRow,
 } from '@repo/shared'
@@ -21,8 +22,10 @@ export type Track = (obsId: string) => Promise<TrackOutcome>
 
 // After a report changes (diagnosed, verified), and alongside its recommendation: record the
 // snapshot in BigQuery, re-run the cluster rule for its issue, refresh district risk, and raise
-// an alert for a new cluster or for a district that has just turned HIGH. Live reports dispatch
-// (push + SMS); nothing else does.
+// alerts. A new cluster is a verified cluster alert if an officer verified any report in it,
+// otherwise a model risk signal; a district that has just turned HIGH without one raises a
+// model risk signal; favourable forecast conditions raise a weather advisory (once a day per
+// district and issue). Live cluster and risk alerts dispatch (push + SMS); advisories do not.
 export function tracker({
   record,
   detect,
@@ -40,6 +43,7 @@ export function tracker({
     if (!row) return outcome
     outcome.recorded = true
     const at = now()
+    const raised = (id: string | null) => id && outcome.alerts.push(id)
 
     const districts = new Set([row.district_slug])
     let created: { id: string; cluster: DetectedCluster }[] = []
@@ -64,10 +68,11 @@ export function tracker({
     const alerted = new Set<string>()
     for (const { id, cluster } of created) {
       const risk = risks.get(cluster.district_slug)!
-      outcome.alerts.push(
+      raised(
         await store.raiseAlert(
           {
             type: 'cluster',
+            alert_class: cluster.verified > 0 ? 'verified_cluster' : 'model_risk_signal',
             issue: cluster.issue,
             district: cluster.district,
             district_slug: cluster.district_slug,
@@ -76,6 +81,7 @@ export function tracker({
             level: risk.signal.level,
             factors: risk.signal.factors,
             observation_ids: cluster.members,
+            verified_reports: cluster.verified,
             sim: cluster.sim,
             cluster_id: id,
             dispatch: true,
@@ -90,10 +96,11 @@ export function tracker({
       if (!riskRose(risk.previous, risk.signal.level)) continue
       const center = findDistrict(risk.district_slug)?.center
       if (!center) continue
-      outcome.alerts.push(
+      raised(
         await store.raiseAlert(
           {
             type: 'risk_change',
+            alert_class: 'model_risk_signal',
             issue: row.district_slug === risk.district_slug && row.issue ? row.issue : 'unknown',
             district: risk.district,
             district_slug: risk.district_slug,
@@ -102,6 +109,7 @@ export function tracker({
             level: risk.signal.level,
             factors: risk.signal.factors,
             observation_ids: [obsId],
+            verified_reports: null,
             sim: risk.sim,
             cluster_id: null,
             dispatch: true,
@@ -109,6 +117,37 @@ export function tracker({
           at
         )
       )
+    }
+
+    // Weather advisories: forecast conditions only, never sent by SMS or push. "Watch" is the
+    // most an advisory says; the district's own level stays with its report-based factors.
+    for (const risk of risks.values()) {
+      const center = findDistrict(risk.district_slug)?.center
+      if (!center) continue
+      for (const condition of risk.weather) {
+        raised(
+          await store.raiseAlert(
+            {
+              id: `weather-${risk.district_slug}-${condition.issue}-${at.slice(0, 10)}`,
+              type: 'risk_change',
+              alert_class: 'weather_advisory',
+              issue: condition.issue,
+              district: risk.district,
+              district_slug: risk.district_slug,
+              center,
+              radius_km: 25,
+              level: 'ELEVATED',
+              factors: [weatherFactor(condition)],
+              observation_ids: [],
+              verified_reports: null,
+              sim: risk.sim,
+              cluster_id: null,
+              dispatch: false,
+            },
+            at
+          )
+        )
+      }
     }
 
     log('INFO', 'tracked', { obs_id: obsId, ...outcome })

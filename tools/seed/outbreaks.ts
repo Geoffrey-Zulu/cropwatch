@@ -4,6 +4,7 @@ import {
   clusters,
   ISSUE_LABELS,
   riskV0,
+  type AlertClass,
   type GeoPoint,
   type Issue,
   type RiskLevel,
@@ -22,6 +23,8 @@ export interface SeedCluster {
   center: GeoPoint
   members: string[]
   new_last_24h: number
+  // Members an officer verified (field or expert).
+  verified: number
   // When the fifth member arrived.
   first_detected_at: string
   alert_id: string
@@ -43,6 +46,8 @@ export interface SeedAlert {
   level: RiskLevel
   contributing_factors: string[]
   observation_ids: string[]
+  verified_reports: number
+  alert_class: AlertClass
   created_at: string
   cluster_id: string
 }
@@ -74,6 +79,10 @@ export function seedOutbreaks(data: Pick<SeedData, 'anchor' | 'observations'>) {
       center: centroid(members.map(m => m.location)),
       members: cluster.members,
       new_last_24h: members.filter(m => Date.parse(m.created_at) > at - DAY).length,
+      verified: members.filter(
+        m =>
+          m.verification_state === 'FIELD_VERIFIED' || m.verification_state === 'EXPERT_CONFIRMED'
+      ).length,
       first_detected_at: times[CLUSTER_MIN_REPORTS - 1],
       alert_id: `sim-alert-${i + 1}`,
     }
@@ -118,6 +127,8 @@ export function seedOutbreaks(data: Pick<SeedData, 'anchor' | 'observations'>) {
       level: r.level,
       contributing_factors: r.contributing_factors,
       observation_ids: c.members,
+      verified_reports: c.verified,
+      alert_class: c.verified > 0 ? 'verified_cluster' : 'model_risk_signal',
       created_at: c.first_detected_at,
       cluster_id: c.id,
     }
