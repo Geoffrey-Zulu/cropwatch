@@ -7,6 +7,7 @@ export type Route =
   | { page: 'queue'; id?: string }
   | { page: 'outgrower' }
   | { page: 'sources' }
+  | { page: 'scenario' }
 
 // Hash routes: the static host serves one page, and a refresh lands on the same screen.
 export function parseRoute(hash: string): Route {
@@ -16,6 +17,7 @@ export function parseRoute(hash: string): Route {
   if (page === 'queue') return id ? { page: 'queue', id } : { page: 'queue' }
   if (page === 'outgrower') return { page: 'outgrower' }
   if (page === 'sources') return { page: 'sources' }
+  if (page === 'scenario') return { page: 'scenario' }
   return { page: 'map' }
 }
 
@@ -33,6 +35,8 @@ export function hrefFor(route: Route) {
       return '#/outgrower'
     case 'sources':
       return '#/sources'
+    case 'scenario':
+      return '#/scenario'
   }
 }
 

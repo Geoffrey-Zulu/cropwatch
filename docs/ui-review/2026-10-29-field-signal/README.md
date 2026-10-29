@@ -27,3 +27,11 @@ What changed:
 | Command Center: officer queue      | ![](../2026-10-29/dashboard-queue.png)          | ![](dashboard-queue.png)          |
 | Command Center: Outgrower View     | ![](../2026-10-29/dashboard-outgrower.png)      | ![](dashboard-outgrower.png)      |
 | Command Center: Knowledge sources  | ![](../2026-10-29/dashboard-sources.png)        | ![](dashboard-sources.png)        |
+
+## Added after the pass: the dry-spell scenario (prototype, behind `VITE_FEATURE_SCENARIO`)
+
+"If the next 14 days turn dry, which camps need closer monitoring?" A new view, not a re-flow: the real Open-Meteo 14-day forecast (or the one canned dry spell) × the crop-stage table × officer-verified reports, every assumption on the page, camps ranked with reason chips. It calls Open-Meteo from the browser and never the Phytos API.
+
+| Forecast as published       | Dry spell on                          |
+| --------------------------- | ------------------------------------- |
+| ![](dashboard-scenario.png) | ![](dashboard-scenario-dry-spell.png) |

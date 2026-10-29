@@ -1,6 +1,7 @@
-import { BookOpen, ClipboardCheck, LogOut, Map, Users, type LucideIcon } from 'lucide-react'
+import { BookOpen, ClipboardCheck, LogOut, Map, Sun, Users, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { hrefFor, type Route } from '../hooks/useRoute'
+import { SCENARIO_ENABLED } from '../lib/features'
 
 interface NavItem {
   page: Route['page']
@@ -32,6 +33,17 @@ const NAV: NavItem[] = [
     route: { page: 'outgrower' },
     commandCenterOnly: false,
   },
+  ...(SCENARIO_ENABLED
+    ? [
+        {
+          page: 'scenario',
+          label: 'Dry-spell scenario',
+          icon: Sun,
+          route: { page: 'scenario' },
+          commandCenterOnly: true,
+        } satisfies NavItem,
+      ]
+    : []),
   {
     page: 'sources',
     label: 'Knowledge sources',

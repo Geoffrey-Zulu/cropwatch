@@ -197,9 +197,11 @@ ok "${CAPTURE_URL} (manifest 200)"
 
 # -----------------------------------------------------------------------------
 step "Command Center dashboard → Firebase Hosting site ${PROJECT_ID}"
-VITE_API_BASE="${URL}" pnpm --filter web build >/dev/null ||
+# The dry-spell scenario (prototype) is behind a build-time flag: FEATURE_SCENARIO=false hides it.
+FEATURE_SCENARIO="${FEATURE_SCENARIO:-true}"
+VITE_API_BASE="${URL}" VITE_FEATURE_SCENARIO="${FEATURE_SCENARIO}" pnpm --filter web build >/dev/null ||
   die "dashboard build failed (run: pnpm --filter web build)"
-ok "built apps/web"
+ok "built apps/web (dry-spell scenario: ${FEATURE_SCENARIO})"
 firebase deploy --only hosting:dashboard \
   --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
 DASHBOARD_URL="https://${PROJECT_ID}.web.app"

@@ -184,6 +184,29 @@ try {
     "the reporter can't read internal numbers",
     `HTTP ${ownInternal.status}`
   )
+
+  console.log('\nAdvice (live)')
+  while (Date.now() - started < 60_000 && view.status === 'recommending') {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    view = (await (await api(farmer.idToken, `/observations/${obsId}`)).json()) as typeof view
+  }
+  if (view.status === 'awaiting_expert_review') {
+    console.log('        routed to an officer: no advice expected')
+  } else {
+    const recommendation = view.recommendation as {
+      chemical_options: { trade_name: string; label_dose: string; source?: string }[]
+    } | null
+    const options = recommendation?.chemical_options ?? []
+    check(view.status === 'complete' && recommendation !== null, 'advice landed', `${view.status}`)
+    // Invariant 1: only products that passed the register check, never a placeholder.
+    check(
+      options.every(o => o.source !== 'placeholder' && o.label_dose.length > 0),
+      'chemical options passed the register check',
+      options.length
+        ? options.map(o => `${o.trade_name} [${o.source ?? 'label'}]`).join('; ')
+        : 'none: IPM only, with the officer referral'
+    )
+  }
 } finally {
   if (keep) {
     console.log(`\n--keep: left observation ${obsId} and user ${farmer.uid}`)

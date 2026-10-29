@@ -21,6 +21,7 @@ import { ObservationDetailView } from '../pages/ObservationDetailPage'
 import { OfficerQueuePage, queueRows } from '../pages/OfficerQueuePage'
 import { OutbreakDetailView } from '../pages/OutbreakDetailPage'
 import { OutgrowerViewPage } from '../pages/OutgrowerViewPage'
+import { ScenarioPage } from '../pages/ScenarioPage'
 import { trpc } from '../lib/trpc'
 
 interface Fixtures {
@@ -120,6 +121,7 @@ export function Preview({ route }: { route: string }) {
           {page === 'queue' && <OfficerQueuePage selectedId={null} officer={officer} {...live} />}
           {page === 'outgrower' && <OutgrowerViewPage officer={officer} />}
           {page === 'sources' && <KnowledgeSourcesPage />}
+          {page === 'scenario' && <ScenarioPage observations={live.observations} />}
         </AppShell>
       </QueryClientProvider>
     </trpc.Provider>

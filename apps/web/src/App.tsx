@@ -3,12 +3,14 @@ import { AppShell } from './components/AppShell'
 import { useAuth } from './hooks/useAuth'
 import { useAlerts, useClusters, useObservations, useRisk } from './hooks/useLive'
 import { useRoute } from './hooks/useRoute'
+import { SCENARIO_ENABLED } from './lib/features'
 import { KnowledgeSourcesPage } from './pages/KnowledgeSourcesPage'
 import { NationalMapPage } from './pages/NationalMapPage'
 import { ObservationDetailPage } from './pages/ObservationDetailPage'
 import { OfficerQueuePage, queueRows } from './pages/OfficerQueuePage'
 import { OutbreakDetailPage } from './pages/OutbreakDetailPage'
 import { OutgrowerViewPage } from './pages/OutgrowerViewPage'
+import { ScenarioPage } from './pages/ScenarioPage'
 import { SignInPage } from './pages/SignInPage'
 
 const VERIFIED = new Set(['FIELD_VERIFIED', 'EXPERT_CONFIRMED'])
@@ -69,6 +71,12 @@ export function App() {
       )}
       {page.page === 'outgrower' && <OutgrowerViewPage officer={officer} />}
       {page.page === 'sources' && <KnowledgeSourcesPage />}
+      {page.page === 'scenario' &&
+        (SCENARIO_ENABLED ? (
+          <ScenarioPage observations={live.observations} />
+        ) : (
+          <NationalMapPage {...live} />
+        ))}
     </AppShell>
   )
 }
