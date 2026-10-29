@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
-// A console panel: mono kicker, grotesque title, optional actions, then content.
+// A panel: mono kicker, grotesque title, optional actions, then content. 24 px padding on the
+// 8 px grid.
 export function Panel({
   eyebrow,
   title,
@@ -15,9 +16,9 @@ export function Panel({
   className?: string
 }) {
   return (
-    <section className={`rounded-card border border-hairline bg-panel p-4 ${className}`}>
+    <section className={`rounded-card border border-hairline bg-panel p-6 ${className}`}>
       {(eyebrow || title || actions) && (
-        <header className="mb-3 flex items-start justify-between gap-3">
+        <header className="mb-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             {eyebrow && <p className="eyebrow">{eyebrow}</p>}
             {title && (
@@ -32,36 +33,33 @@ export function Panel({
   )
 }
 
-// A row of figures on hairline dividers. One figure per view carries `emphasis` (MASTER.md §2:
-// the single loudest element); the rest stay quiet.
+// The stat row, as on the pitch PDF: a hairline above, then each figure as a large Bricolage
+// number in deep leaf with a two-line small label beside it. No boxes.
 export function Figures({ children }: { children: ReactNode }) {
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-card border border-hairline bg-panel md:grid-cols-4 [&>*]:border-hairline [&>*]:px-4 [&>*]:py-3.5 max-md:[&>*:nth-child(even)]:border-l max-md:[&>*:nth-child(n+3)]:border-t md:[&>*:not(:first-child)]:border-l">
+    <div className="grid grid-cols-1 gap-x-8 gap-y-4 border-t border-hairline pt-4 sm:grid-cols-2 xl:grid-cols-4">
       {children}
     </div>
   )
 }
 
-// A figure: the number large in the grotesque, its label in mono.
-export function Figure({
-  value,
-  label,
-  emphasis = false,
-}: {
-  value: ReactNode
-  label: string
-  emphasis?: boolean
-}) {
+export function Figure({ value, label }: { value: ReactNode; label: string }) {
+  const word = typeof value === 'string' && value.length > 8
   return (
-    <div className="min-w-0">
+    // A word (an issue name) stacks its label underneath instead of squeezing it.
+    <div className={`flex min-w-0 gap-3 ${word ? 'flex-col gap-1' : 'items-center'}`}>
       <p
-        className={`font-display font-semibold ${
-          typeof value === 'string' && value.length > 8 ? 'text-display' : 'text-stat'
-        } ${emphasis ? 'text-signal-text' : 'text-fg'}`}
+        className={`shrink-0 font-display font-bold leading-none text-signal-text ${
+          word ? 'text-[26px]' : 'text-[40px]'
+        }`}
       >
         {value}
       </p>
-      <p className="eyebrow mt-1.5">{label}</p>
+      <p
+        className={`text-caption leading-[18px] text-fg-2 ${word ? 'max-w-[16rem]' : 'max-w-[9.5rem]'}`}
+      >
+        {label}
+      </p>
     </div>
   )
 }

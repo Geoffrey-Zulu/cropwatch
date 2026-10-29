@@ -30,11 +30,7 @@ export function AppHeader({
           </span>
         </a>
         <div className="ml-auto flex min-w-0 items-center gap-3">
-          {district && (
-            <span className="truncate font-mono text-eyebrow font-medium uppercase text-fg-2">
-              {district}
-            </span>
-          )}
+          {district && <span className="text-label text-fg-2">{district}</span>}
           {onReports && (
             <button
               type="button"

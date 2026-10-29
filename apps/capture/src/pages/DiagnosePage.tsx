@@ -139,7 +139,7 @@ export function DiagnosePage({
         />
 
         <div>
-          <label htmlFor="planted" className="eyebrow mb-2 block">
+          <label htmlFor="planted" className="mb-2 block text-label font-semibold text-fg">
             Planting date (if you know it)
           </label>
           <input
@@ -153,7 +153,7 @@ export function DiagnosePage({
         </div>
 
         <div>
-          <label htmlFor="notes" className="eyebrow mb-2 block">
+          <label htmlFor="notes" className="mb-2 block text-label font-semibold text-fg">
             What do you see? (optional)
           </label>
           <textarea

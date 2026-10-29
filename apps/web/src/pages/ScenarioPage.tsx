@@ -33,8 +33,7 @@ const CONCERN: Record<Concern, string> = {
   none: 'border-hairline text-fg-2',
 }
 
-const chip =
-  'rounded-tag border px-1 font-mono text-[11px] font-medium uppercase leading-[18px] tracking-[0.08em]'
+const chip = 'chip'
 
 // Scenario (prototype): "If the next 14 days turn dry, which camps need closer monitoring?"
 // Real Open-Meteo forecast (or one canned dry spell) × the crop-stage table × verified reports,
@@ -70,8 +69,8 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
   const routine = rows.filter(r => r.band === 'routine')
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-3xl">
           <p className="eyebrow">Scenario · next {SCENARIO_WINDOW_DAYS} days</p>
           <h1 className="mt-1 font-display text-display font-bold text-fg">
@@ -79,9 +78,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-tag border border-attention px-1.5 py-0.5 font-mono text-eyebrow font-medium uppercase text-attention-text">
-            Prototype
-          </span>
+          <span className="chip border-attention text-attention-text">Prototype</span>
           <DemoBadge rows={rows} />
         </div>
       </div>
@@ -115,7 +112,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
               </span>
             </span>
           </div>
-          <p className="font-mono text-eyebrow uppercase text-fg-2">
+          <p className="meta">
             {drySpell
               ? 'Rain: dry spell scenario'
               : forecast.isPending && slugs.length > 0
@@ -128,13 +125,16 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
       </Panel>
 
       <Figures>
-        <Figure value={observations ? count('closer') : '·'} label="Closer monitoring" emphasis />
-        <Figure value={observations ? count('watch') : '·'} label="Watch" />
-        <Figure value={observations ? count('routine') : '·'} label="Routine" />
-        <Figure value={observations ? rows.length : '·'} label="Camps with reports, 14 days" />
+        <Figure value={observations ? count('closer') : '·'} label="camps for closer monitoring" />
+        <Figure value={observations ? count('watch') : '·'} label="camps to watch" />
+        <Figure value={observations ? count('routine') : '·'} label="camps routine" />
+        <Figure
+          value={observations ? rows.length : '·'}
+          label="camps with reports in the last 14 days"
+        />
       </Figures>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Panel eyebrow="Where to look first" title="Camps, ranked">
           {observations === null && <Muted>Loading reports…</Muted>}
           {observations && rows.length === 0 && <Muted>No reports in the last 14 days.</Muted>}
@@ -154,7 +154,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
             group =>
               group.rows.length > 0 && (
                 <details key={group.band} className="mt-2">
-                  <summary className="cursor-pointer py-1.5 font-mono text-eyebrow uppercase text-fg-2 hover:text-fg">
+                  <summary className="cursor-pointer py-2 text-label font-medium text-fg-2 hover:text-fg">
                     {group.rows.length} camps {group.band === 'watch' ? 'to watch' : 'routine'}
                   </summary>
                   <CampRows rows={group.rows} start={group.start} drySpell={drySpell} />
@@ -212,13 +212,13 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
       </div>
 
       <Panel eyebrow="Assumption table" title="Crop stage: what a dry spell would leave unchecked">
-        <div className="-mx-4 overflow-x-auto px-4">
+        <div className="-mx-6 overflow-x-auto px-6">
           <table className="w-full min-w-[860px] text-left text-label">
             <thead>
               <tr className="border-b border-hairline">
                 {['Crop', 'Stage', 'Days after planting', 'Concern', 'Watch for', 'Basis'].map(
                   h => (
-                    <th key={h} className="eyebrow py-2 pr-3">
+                    <th key={h} className="th py-2 pr-4">
                       {h}
                     </th>
                   )
@@ -262,6 +262,15 @@ function rainText(c: CampScenario, drySpell: boolean) {
   return `${c.dry ? 'Dry' : 'Not dry'}: ${c.rainMm} mm forecast`
 }
 
+const CONCERN_DOT: Record<Concern, string> = {
+  high: 'bg-high',
+  moderate: 'bg-attention',
+  low: 'bg-hairline-strong',
+  none: 'bg-hairline',
+}
+
+// Two lines a row (patterns.md rules 8 and 9): the camp with its one chip (the band), then one
+// secondary line in full: crop-stage concern as a dot and words, the rain, the verified reports.
 function CampRows({
   rows,
   start,
@@ -274,42 +283,42 @@ function CampRows({
   return (
     <ol className="flex flex-col divide-y divide-hairline">
       {rows.map((c, i) => (
-        <li key={`${c.districtSlug}|${c.camp}`} className="py-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="w-5 shrink-0 font-mono text-eyebrow text-fg-2">{start + i}</span>
-            <span
-              className={`shrink-0 rounded-tag border px-1.5 py-0.5 font-mono text-eyebrow font-semibold uppercase ${BAND[c.band].className}`}
-            >
-              {BAND[c.band].label}
+        <li key={`${c.districtSlug}|${c.camp}`} className="py-3">
+          <div className="flex items-start gap-2">
+            <span className="w-5 shrink-0 pt-0.5 font-mono text-caption text-fg-2">
+              {start + i}
             </span>
-            <span className="shrink-0 font-semibold text-fg">{c.camp}</span>
-            <span className="min-w-0 truncate text-label text-fg-2">
-              {c.district} · {c.crops.map(crop => CROP_LABELS[crop]).join(', ')} · {c.reports}{' '}
-              {c.reports === 1 ? 'report' : 'reports'}
-              {c.stageRow && c.stageRow.concern !== 'none'
-                ? ` · watch for ${c.stageRow.watch.toLowerCase()}`
-                : ''}
-            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-semibold text-fg">{c.camp}</span>
+                <span className={`chip ${BAND[c.band].className}`}>{BAND[c.band].label}</span>
+              </div>
+              {/* One secondary line: the camp, then every input that ranked it. */}
+              <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-label text-fg-2">
+                <span>
+                  {c.district} · {c.crops.map(crop => CROP_LABELS[crop]).join(', ')} · {c.reports}{' '}
+                  {c.reports === 1 ? 'report' : 'reports'}
+                </span>
+                {c.stageRow && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span
+                      aria-hidden
+                      className={`h-2 w-2 rounded-full ${CONCERN_DOT[c.concern]}`}
+                    />
+                    <span className="text-fg" title={c.stageRow.watch}>
+                      {c.stageUnknown ? 'Stage not recorded' : c.stageRow.stage}
+                      {c.concern !== 'none' ? ` (${c.concern})` : ''}
+                    </span>
+                  </>
+                )}
+                <span>· {rainText(c, drySpell)}</span>
+                {c.verified.map(v => (
+                  <span key={v.issue}>· {verifiedText(v)}</span>
+                ))}
+              </p>
+            </div>
           </div>
-          <ul className="mt-1 flex flex-wrap gap-1 pl-7" aria-label="Reasons">
-            <li
-              className={`${chip} ${c.dry ? 'border-attention text-attention-text' : 'border-hairline-strong text-fg-2'}`}
-            >
-              {rainText(c, drySpell)}
-            </li>
-            {c.stageRow && (
-              <li className={`${chip} ${CONCERN[c.concern]}`}>
-                {c.stageUnknown
-                  ? `${CROP_LABELS[c.stageRow.crop]}: stage not recorded`
-                  : `${CROP_LABELS[c.stageRow.crop]} ${c.stageRow.stage}`}
-              </li>
-            )}
-            {c.verified.map(v => (
-              <li key={v.issue} className={`${chip} border-signal-text text-signal-text`}>
-                {verifiedText(v)}
-              </li>
-            ))}
-          </ul>
         </li>
       ))}
     </ol>

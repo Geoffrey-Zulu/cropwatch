@@ -49,7 +49,7 @@ export function KnowledgeSourcesPage() {
   const tiers = [...new Set(shown.map(r => r.tier))].sort()
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div>
         <p className="eyebrow">Read only · from the corpus manifest</p>
         <h1 className="mt-1 font-display text-display-xl font-bold text-fg">Knowledge sources</h1>
@@ -61,10 +61,13 @@ export function KnowledgeSourcesPage() {
       </div>
 
       <Figures>
-        <Figure value={rows.length} label="Curated documents" />
-        <Figure value={counts.retrievable} label="In retrieval" emphasis />
-        <Figure value={counts.pending} label="Pending (by request)" />
-        <Figure value={counts.not_fetched + counts.fetched} label="Not yet in retrieval" />
+        <Figure
+          value={rows.length}
+          label="curated documents from MoA, ZARI, FAO, CABI and research"
+        />
+        <Figure value={counts.retrievable} label="in retrieval: advice can cite them" />
+        <Figure value={counts.pending} label="pending, requested from the publisher" />
+        <Figure value={counts.not_fetched + counts.fetched} label="listed, not yet in retrieval" />
       </Figures>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
@@ -74,11 +77,7 @@ export function KnowledgeSourcesPage() {
             type="button"
             aria-pressed={filter === s}
             onClick={() => setFilter(s)}
-            className={`rounded-card border px-3 py-1.5 font-mono text-eyebrow font-medium uppercase ${
-              filter === s
-                ? 'border-fg-2 bg-well text-fg'
-                : 'border-hairline text-fg-2 hover:bg-well hover:text-fg'
-            }`}
+            className="toggle"
           >
             {s === 'all' ? `All (${rows.length})` : `${STATUS[s].label} (${counts[s]})`}
           </button>
@@ -94,7 +93,7 @@ export function KnowledgeSourcesPage() {
                 <li key={r.id} className="py-2.5">
                   <div className="flex flex-wrap items-start gap-2">
                     <span
-                      className={`rounded-tag border-1.5 px-1.5 py-0.5 font-mono text-eyebrow font-semibold uppercase ${STATUS[r.status].className}`}
+                      className={`chip ${STATUS[r.status].className}`}
                       title={STATUS[r.status].note}
                     >
                       {STATUS[r.status].label}

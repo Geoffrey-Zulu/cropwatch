@@ -2,7 +2,7 @@ import { ListChecks, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { CROP_LABELS, type OutgrowerOverview, type Visit, type VisitReason } from '@repo/shared'
 import { DemoBadge } from '../components/DemoBadge'
-import { LevelTag } from '../components/LevelTag'
+import { LevelDot } from '../components/LevelTag'
 import { Figure, Figures, Muted, Panel } from '../components/Panel'
 import type { Officer } from '../hooks/useAuth'
 import { ago } from '../lib/copy'
@@ -17,13 +17,35 @@ const PRIORITY = {
   3: { label: 'When nearby', className: 'border-hairline-strong text-fg-2' },
 } as const
 
-// The reasons as chips; the sentences stay on hover.
-const REASON_CHIP: Record<VisitReason, { label: string; className: string }> = {
+// At most two chips a row (patterns.md): the priority, then the top reason if it is one of
+// these. Severity is a dot and a word; everything else folds into the row's one reason line.
+const REASON_CHIP: Partial<Record<VisitReason, { label: string; className: string }>> = {
   cluster: { label: 'Cluster', className: 'border-attention text-attention-text' },
-  severe: { label: 'Severe', className: 'border-high text-high-text' },
-  moderate: { label: 'Moderate', className: 'border-hairline-strong text-fg-2' },
   awaiting_review: { label: 'Awaiting review', className: 'border-hairline-strong text-fg' },
-  high_district: { label: 'High district', className: 'border-high text-high-text' },
+}
+const CHIP_ORDER: VisitReason[] = ['cluster', 'awaiting_review']
+
+const SEVERITY_DOT: Partial<Record<VisitReason, { word: string; dot: string }>> = {
+  severe: { word: 'Severe damage', dot: 'bg-high' },
+  moderate: { word: 'Moderate damage', dot: 'bg-attention' },
+}
+
+function reasonParts(v: Visit) {
+  const codes = v.reason_codes ?? []
+  const chip = CHIP_ORDER.find(code => codes.includes(code)) ?? null
+  const severity = codes.map(code => SEVERITY_DOT[code]).find(Boolean) ?? null
+  const rest = codes.flatMap(code =>
+    code === chip || SEVERITY_DOT[code]
+      ? []
+      : code === 'high_district'
+        ? [`${v.district} at High`]
+        : code === 'awaiting_review'
+          ? ['Waiting for an officer']
+          : code === 'cluster'
+            ? ['In an active cluster']
+            : []
+  )
+  return { chip, severity, rest }
 }
 
 // Outgrower View: what an outgrower company needs to send its field officers to the right
@@ -50,8 +72,8 @@ function Overview({ data }: { data: OutgrowerOverview }) {
   const rows = [{ sim: data.sim }, ...data.officers.flatMap(o => o.visits), ...data.unassigned]
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Outgrower View · last {data.window_days} days</p>
           <h1 className="mt-1 font-display text-display-xl font-bold text-fg">{data.name}</h1>
@@ -64,15 +86,18 @@ function Overview({ data }: { data: OutgrowerOverview }) {
       </p>
 
       <Figures>
-        <Figure value={data.enrolled_farmers.toLocaleString('en-GB')} label="Enrolled farmers" />
-        <Figure value={data.reports} label="Reports from members" />
-        <Figure value={data.verified_reports} label="Verified by an officer" emphasis />
+        <Figure
+          value={data.enrolled_farmers.toLocaleString('en-GB')}
+          label="enrolled farmers in the scheme"
+        />
+        <Figure value={data.reports} label="reports from members, last 14 days" />
+        <Figure value={data.verified_reports} label="verified by an officer" />
         <Figure
           value={data.top_issue ? data.top_issue.issue_label : 'None'}
           label={
             data.top_issue
-              ? `Top emerging issue: ${data.top_issue.this_week} this week, ${data.top_issue.last_week} the week before`
-              : 'Top emerging issue'
+              ? `top emerging issue: ${data.top_issue.this_week} this week, ${data.top_issue.last_week} the week before`
+              : 'top emerging issue'
           }
         />
       </Figures>
@@ -94,7 +119,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
                     'In a cluster',
                     'With an officer',
                   ].map(h => (
-                    <th key={h} className="eyebrow py-2 pr-3">
+                    <th key={h} className="th py-2 pr-4">
                       {h}
                     </th>
                   ))}
@@ -106,14 +131,14 @@ function Overview({ data }: { data: OutgrowerOverview }) {
                     <td className="py-2 pr-3">
                       <span className="font-semibold text-fg">{c.camp}</span>
                       {c.attention && (
-                        <span className="ml-2 font-mono text-eyebrow font-semibold uppercase text-attention-text">
+                        <span className="chip ml-2 border-attention text-attention-text">
                           Attention
                         </span>
                       )}
                       <span className="block text-caption text-fg-2">{c.district}</span>
                     </td>
                     <td className="py-2 pr-3">
-                      {c.district_level ? <LevelTag level={c.district_level} /> : 'None'}
+                      {c.district_level ? <LevelDot level={c.district_level} /> : 'None'}
                     </td>
                     <td className="py-2 pr-3 font-mono">{c.reports}</td>
                     <td className="py-2 pr-3">{c.top_issue_label ?? 'Not identified'}</td>
@@ -154,7 +179,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
             to see each officer's list, most urgent first.
           </Muted>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
             {data.officers.map(o => (
               <OfficerList
                 key={o.officer_id}
@@ -195,10 +220,10 @@ function OfficerList({
   const urgent = visits.filter(v => v.priority < 3)
   const nearby = visits.filter(v => v.priority === 3)
   return (
-    <section className="rounded-card border border-hairline bg-ground p-3">
+    <section className="rounded-card border border-hairline bg-ground p-4">
       <header className="mb-2 flex items-baseline justify-between gap-2">
         <h3 className="font-display text-[17px] font-semibold text-fg">{title}</h3>
-        <span className="font-mono text-eyebrow uppercase text-fg-2">
+        <span className="meta">
           {district} · {visits.length} visits
         </span>
       </header>
@@ -209,7 +234,7 @@ function OfficerList({
           <VisitItems visits={urgent} start={1} />
           {nearby.length > 0 && (
             <details className="mt-1">
-              <summary className="cursor-pointer py-1.5 font-mono text-eyebrow uppercase text-fg-2 hover:text-fg">
+              <summary className="cursor-pointer py-2 text-label font-medium text-fg-2 hover:text-fg">
                 {nearby.length} more when nearby
               </summary>
               <VisitItems visits={nearby} start={urgent.length + 1} />
@@ -224,40 +249,48 @@ function OfficerList({
 function VisitItems({ visits, start }: { visits: Visit[]; start: number }) {
   return (
     <ol className="flex flex-col divide-y divide-hairline">
-      {visits.map((v, i) => (
-        <li
-          key={`${v.report_number}-${v.farm_label}`}
-          className="py-2"
-          title={v.reasons.join(' · ')}
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="w-5 shrink-0 font-mono text-eyebrow text-fg-2">{start + i}</span>
-            <span
-              className={`shrink-0 rounded-tag border px-1.5 py-0.5 font-mono text-eyebrow font-semibold uppercase ${PRIORITY[v.priority].className}`}
-            >
-              {PRIORITY[v.priority].label}
-            </span>
-            <span className="shrink-0 font-semibold text-fg">{v.farm_label}</span>
-            <span className="min-w-0 truncate text-label text-fg-2">
-              {v.camp} · {CROP_LABELS[v.crop]} · {v.issue_label}
-            </span>
-            <span className="ml-auto shrink-0 font-mono text-eyebrow uppercase text-fg-2">
-              {ago(v.last_report_at)}
-            </span>
-          </div>
-          <ul className="mt-1 flex flex-wrap gap-1 pl-7" aria-label="Reasons">
-            {(v.reason_codes ?? []).map(code => (
-              <li
-                key={code}
-                className={`rounded-tag border px-1 font-mono text-[11px] font-medium uppercase leading-[18px] tracking-[0.08em] ${REASON_CHIP[code].className}`}
-              >
-                {REASON_CHIP[code].label}
-              </li>
-            ))}
-            {!v.reason_codes && <li className="text-caption text-fg-2">{v.reasons.join(' · ')}</li>}
-          </ul>
-        </li>
-      ))}
+      {visits.map((v, i) => {
+        const { chip, severity, rest } = reasonParts(v)
+        const chipStyle = chip ? REASON_CHIP[chip] : undefined
+        return (
+          <li key={`${v.report_number}-${v.farm_label}`} className="py-3">
+            <div className="flex items-start gap-2">
+              <span className="w-5 shrink-0 pt-0.5 font-mono text-caption text-fg-2">
+                {start + i}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-semibold text-fg">{v.farm_label}</span>
+                  <span className={`chip ${PRIORITY[v.priority].className}`}>
+                    {PRIORITY[v.priority].label}
+                  </span>
+                  {chipStyle && (
+                    <span className={`chip ${chipStyle.className}`}>{chipStyle.label}</span>
+                  )}
+                  <span className="meta ml-auto">{ago(v.last_report_at)}</span>
+                </div>
+                {/* One secondary line: where, what, and every reason left after the chips. */}
+                <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-label text-fg-2">
+                  <span>
+                    {v.camp} · {CROP_LABELS[v.crop]} · {v.issue_label}
+                  </span>
+                  {severity && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span aria-hidden className={`h-2 w-2 rounded-full ${severity.dot}`} />
+                      <span className="text-fg">{severity.word}</span>
+                    </>
+                  )}
+                  {rest.map(r => (
+                    <span key={r}>· {r}</span>
+                  ))}
+                  {!v.reason_codes && <span>· {v.reasons.join(' · ')}</span>}
+                </p>
+              </div>
+            </div>
+          </li>
+        )
+      })}
     </ol>
   )
 }

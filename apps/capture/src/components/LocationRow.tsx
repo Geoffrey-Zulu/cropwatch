@@ -24,7 +24,7 @@ export function LocationRow({
 
   return (
     <div>
-      <label htmlFor="district" className="eyebrow mb-2 block">
+      <label htmlFor="district" className="mb-2 block text-label font-semibold text-fg">
         District
       </label>
       <div className="flex items-center gap-2 pb-2 text-label font-semibold text-fg-2">

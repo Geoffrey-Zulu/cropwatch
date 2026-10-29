@@ -67,7 +67,7 @@ export function ObservationDetailView({
   officer: Officer
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <a
         href={cluster ? hrefFor({ page: 'outbreak', id: cluster.id }) : '#/'}
         className="inline-flex items-center gap-1 text-label font-semibold text-fg"
@@ -75,7 +75,7 @@ export function ObservationDetailView({
         <ArrowLeft size={16} strokeWidth={2} aria-hidden />
         {cluster ? 'Outbreak detail' : 'National map'}
       </a>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">
             Report {reportNumber(o.id)} · {dateTime(o.createdAt)} · {STATUS_TEXT[o.status]}
@@ -88,40 +88,40 @@ export function ObservationDetailView({
         <DemoBadge rows={[o]} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-4">
           <PhotoSection path={o.photoPaths[0] ?? null} sim={o.sim} />
           <Panel eyebrow="Report" title="Facts">
             <dl className="grid grid-cols-[8rem_1fr] gap-x-3 gap-y-1.5 text-label">
-              <dt className="eyebrow pt-0.5">Place</dt>
+              <dt className="th pt-0.5">Place</dt>
               <dd>
                 {o.district}
                 {o.camp ? ` · ${o.camp}` : ''} ({o.province})
               </dd>
-              <dt className="eyebrow pt-0.5">Precise point</dt>
+              <dt className="th pt-0.5">Precise point</dt>
               <dd className="font-mono">
                 {o.location.latitude.toFixed(4)}, {o.location.longitude.toFixed(4)}
                 <span className="block font-body text-caption text-fg-2">
                   Command Center only; never in outgrower views.
                 </span>
               </dd>
-              <dt className="eyebrow pt-0.5">Reporter</dt>
+              <dt className="th pt-0.5">Reporter</dt>
               <dd>{o.reporterRole === 'field_officer' ? 'Field officer' : 'Farmer'}</dd>
               {o.plantingDate && (
                 <>
-                  <dt className="eyebrow pt-0.5">Planted</dt>
+                  <dt className="th pt-0.5">Planted</dt>
                   <dd>{shortDate(o.plantingDate)}</dd>
                 </>
               )}
               {o.description && (
                 <>
-                  <dt className="eyebrow pt-0.5">Farmer says</dt>
+                  <dt className="th pt-0.5">Farmer says</dt>
                   <dd>{o.description}</dd>
                 </>
               )}
               {cluster && (
                 <>
-                  <dt className="eyebrow pt-0.5">Cluster</dt>
+                  <dt className="th pt-0.5">Cluster</dt>
                   <dd>
                     <a
                       href={hrefFor({ page: 'outbreak', id: cluster.id })}

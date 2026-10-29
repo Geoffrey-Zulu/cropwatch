@@ -4,27 +4,28 @@ import { Maximize2, Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
 import { ISSUE_LABELS, type GeoPoint, type Issue, type RiskLevel } from '@repo/shared'
 
-// The night console (MASTER.md §6): unlit land, risk districts glowing (gold for Elevated, red-gold
-// for High), reports as points of light, clusters ringed in signal. The Command Center is always
-// in the night exposure, so the map names its colours directly.
+// The map on the day ground (MASTER.md §6): a pale paper basemap with moss district outlines,
+// Elevated and High filled in gold and amber, reports as dark dots, clusters as deep-leaf rings.
+// Projectors wash out dark maps, so the risk is carried by fill and outline, never by glow.
 const MAP = {
-  sea: '#0A110E',
-  land: '#192820',
-  border: '#34483C',
-  hover: '#EDE9DD',
-  report: '#EDE9DD',
-  simReport: '#9DB0A3',
-  ring: '#C9E265',
-  ringFill: '#C9E26514',
+  sea: '#EAE6D8',
+  land: '#FBFAF5',
+  border: '#9AAA9C',
+  hover: '#1A2420',
+  report: '#1A2420',
+  simReport: '#55675B',
+  ring: '#4E6A14',
+  ringFill: '#5F7F1C1A',
 }
 const MAP_FILL: Record<RiskLevel, string> = {
-  HIGH: '#E07B3973',
-  ELEVATED: '#D9A44147',
-  LOW: '#203129',
+  HIGH: '#E39A55',
+  ELEVATED: '#F0D69C',
+  LOW: '#F1F0E6',
 }
-const MAP_GLOW: Partial<Record<RiskLevel, string>> = {
-  HIGH: '#E8873F',
-  ELEVATED: '#D9A441',
+// Elevated and High also get a darker outline in their own hue, so they read without colour too.
+const MAP_EDGE: Partial<Record<RiskLevel, string>> = {
+  HIGH: '#9A4515',
+  ELEVATED: '#A87A1C',
 }
 
 type DistrictFeature = Feature<
@@ -79,6 +80,7 @@ export function ZambiaMap({
   onPoint,
   onCluster,
   onDistrict,
+  selected = null,
   height = 560,
 }: {
   levels: Map<string, RiskLevel>
@@ -89,6 +91,8 @@ export function ZambiaMap({
   onPoint?: (id: string) => void
   onCluster?: (id: string) => void
   onDistrict?: (slug: string) => void
+  // The district selected in the side panel: outlined in deep leaf (patterns.md rule 5).
+  selected?: string | null
   height?: number
 }) {
   const districts = useDistricts()
@@ -210,45 +214,16 @@ export function ZambiaMap({
         onPointerUp={onUp}
         onPointerLeave={onUp}
       >
-        <defs>
-          <filter id="map-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation={6 / view.k} />
-          </filter>
-          <filter id="dot-glow" x="-200%" y="-200%" width="500%" height="500%">
-            <feGaussianBlur stdDeviation={2.2 / Math.sqrt(view.k)} result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-          {/* The glow: a blurred copy of each Elevated or High district, under the map. */}
-          <g filter="url(#map-glow)" aria-hidden>
-            {paths.map(p => {
-              const glow = MAP_GLOW[levels.get(p.slug) ?? 'LOW']
-              return glow ? (
-                <path
-                  key={p.key}
-                  d={p.d}
-                  fill={glow}
-                  fillOpacity={0.25}
-                  stroke={glow}
-                  strokeWidth={6 / view.k}
-                />
-              ) : null
-            })}
-          </g>
           {paths.map(p => {
             const level = levels.get(p.slug)
-            const glow = level && MAP_GLOW[level]
+            const edge = level && MAP_EDGE[level]
             return (
               <path
                 key={p.key}
                 d={p.d}
                 fill={level ? MAP_FILL[level] : MAP.land}
-                stroke={hover === p.key ? MAP.hover : (glow ?? MAP.border)}
-                strokeOpacity={hover === p.key || !glow ? 1 : 0.7}
+                stroke={hover === p.key ? MAP.hover : (edge ?? MAP.border)}
                 strokeWidth={(hover === p.key ? 1.6 : 0.7) / view.k}
                 className={onDistrict ? 'cursor-pointer' : undefined}
                 onPointerEnter={() => setHover(p.key)}
@@ -263,6 +238,19 @@ export function ZambiaMap({
             )
           })}
 
+          {paths
+            .filter(p => p.slug === selected)
+            .map(p => (
+              <path
+                key={`selected-${p.key}`}
+                d={p.d}
+                fill="none"
+                stroke={MAP.ring}
+                strokeWidth={2.5 / view.k}
+                pointerEvents="none"
+              />
+            ))}
+
           {clusters.map(c => {
             const at = project(c.center)
             if (!at) return null
@@ -273,14 +261,14 @@ export function ZambiaMap({
                 className={onCluster ? 'cursor-pointer' : undefined}
                 onClick={() => onCluster?.(c.id)}
               >
-                {/* A dark halo keeps the ring readable over a glowing High district. */}
+                {/* A paper halo keeps the ring readable over an amber High district. */}
                 <circle
                   cx={at[0]}
                   cy={at[1]}
                   r={r}
                   fill="none"
-                  stroke={MAP.sea}
-                  strokeOpacity={0.8}
+                  stroke={MAP.land}
+                  strokeOpacity={0.9}
                   strokeWidth={5 / view.k}
                 />
                 <circle
@@ -298,7 +286,7 @@ export function ZambiaMap({
                   textAnchor="middle"
                   fontSize={12 / view.k}
                   fill={MAP.ring}
-                  stroke={MAP.sea}
+                  stroke={MAP.land}
                   strokeWidth={3 / view.k}
                   paintOrder="stroke"
                   className="font-mono font-semibold"
@@ -323,10 +311,9 @@ export function ZambiaMap({
                 r={(p.sim ? 2.2 : 3.4) / Math.sqrt(view.k)}
                 fill={p.sim ? MAP.simReport : MAP.report}
                 fillOpacity={p.sim ? 0.8 : 1}
-                stroke={MAP.sea}
-                strokeOpacity={p.sim ? 0.7 : 0}
+                stroke={MAP.land}
+                strokeOpacity={0.9}
                 strokeWidth={0.6 / Math.sqrt(view.k)}
-                filter={p.sim ? undefined : 'url(#dot-glow)'}
                 className={onPoint ? 'cursor-pointer' : undefined}
                 onClick={() => onPoint?.(p.id)}
               >
@@ -352,9 +339,11 @@ export function ZambiaMap({
       {hovered && (
         <div className="pointer-events-none absolute left-3 top-3 rounded-card border border-hairline bg-panel px-3 py-2 shadow-raise">
           <p className="text-label font-semibold text-fg">{hovered.name}</p>
-          <p className="font-mono text-eyebrow uppercase text-fg-2">
+          <p className="meta">
             {hovered.partOf ? `Counted with ${hovered.partOf} · ` : ''}
-            {hoverLevel ? `Prototype signal: ${hoverLevel}` : 'No reports'}
+            {hoverLevel
+              ? `Prototype signal: ${hoverLevel.charAt(0)}${hoverLevel.slice(1).toLowerCase()}`
+              : 'No reports'}
           </p>
         </div>
       )}
@@ -401,8 +390,7 @@ function MapLegend() {
               className="h-3 w-4 rounded-[1px] border"
               style={{
                 background: MAP_FILL[level],
-                borderColor: MAP_GLOW[level] ?? MAP.border,
-                boxShadow: MAP_GLOW[level] ? `0 0 6px ${MAP_GLOW[level]}` : undefined,
+                borderColor: MAP_EDGE[level] ?? MAP.border,
               }}
             />
             {level === 'HIGH' ? 'High' : level === 'ELEVATED' ? 'Elevated' : 'Low'}
@@ -412,7 +400,7 @@ function MapLegend() {
           <span
             aria-hidden
             className="h-2.5 w-2.5 rounded-full"
-            style={{ background: MAP.report, boxShadow: `0 0 5px ${MAP.report}` }}
+            style={{ background: MAP.report }}
           />
           Report
         </span>

@@ -43,8 +43,8 @@ export function OfficerQueuePage({
     (selectedId && (observations ?? []).find(o => o.id === selectedId)) || shown[0] || null
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Human in the loop</p>
           <h1 className="mt-1 font-display text-display-xl font-bold text-fg">Officer queue</h1>
@@ -61,7 +61,7 @@ export function OfficerQueuePage({
         </Tab>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <Panel eyebrow={tab === 'review' ? 'Never guessed' : 'Verify to upgrade the alert'}>
           {observations === null && <Muted>Loading…</Muted>}
           {observations && shown.length === 0 && <Muted>Nothing waiting here.</Muted>}
@@ -73,20 +73,25 @@ export function OfficerQueuePage({
                   <a
                     href={hrefFor({ page: 'queue', id: o.id })}
                     aria-current={current ? 'true' : undefined}
-                    className={`flex items-center gap-3 px-2 py-2.5 ${current ? 'bg-well' : 'hover:bg-ground'}`}
+                    className={`flex items-center gap-3 px-3 py-3 ${current ? 'bg-signal-tint' : 'hover:bg-well'}`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="eyebrow">
-                        {reportNumber(o.id)} · {o.district} · {ago(o.createdAt)}
-                        {o.sim && <span className="ml-1 text-attention-text">· demo</span>}
+                      <p className="meta">
+                        <span className="font-mono">{reportNumber(o.id)}</span> · {o.district} ·{' '}
+                        {ago(o.createdAt)}
+                        {o.sim && (
+                          <span className="chip ml-1.5 border-attention text-attention-text">
+                            Demo
+                          </span>
+                        )}
                       </p>
-                      <p className="truncate font-semibold text-fg">
+                      <p className="mt-0.5 font-semibold text-fg">
                         {CROP_LABELS[o.crop]} ·{' '}
                         {o.suspectedIssue && o.suspectedIssue !== 'unknown'
                           ? `AI: ${ISSUE_LABELS[o.suspectedIssue]}`
                           : 'AI: not sure'}
                       </p>
-                      <p className="truncate text-caption text-fg-2">
+                      <p className="text-caption text-fg-2">
                         {NEEDS_REVIEW(o) && o.reviewReason
                           ? REVIEW_REASON_TEXT[o.reviewReason]
                           : clustered.has(o.id)
@@ -151,17 +156,7 @@ function Tab({
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={current}
-      onClick={onClick}
-      className={`rounded-card border px-3 py-1.5 font-mono text-eyebrow font-medium uppercase ${
-        current
-          ? 'border-fg-2 bg-well text-fg'
-          : 'border-hairline text-fg-2 hover:bg-well hover:text-fg'
-      }`}
-    >
+    <button type="button" role="tab" aria-selected={current} onClick={onClick} className="toggle">
       {children}
     </button>
   )

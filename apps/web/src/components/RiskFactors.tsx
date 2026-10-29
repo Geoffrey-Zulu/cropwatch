@@ -12,9 +12,7 @@ export function RiskFactors({
     <div>
       <div className="flex items-center gap-2">
         <LevelTag level={risk.level} />
-        <span className="font-mono text-eyebrow uppercase text-fg-2">
-          computed {ago(risk.computedAt)}
-        </span>
+        <span className="meta">computed {ago(risk.computedAt)}</span>
       </div>
       <ul className="mt-2 flex flex-col gap-1.5">
         {risk.factors.map(f => (

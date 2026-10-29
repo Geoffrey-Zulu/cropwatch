@@ -27,13 +27,11 @@ export function CaseCard({
   )
 }
 
-// One ruled row on a case card: a data-type label and its value.
+// One ruled row on a case card: a quiet label and its value.
 export function CaseField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-baseline gap-3 border-b border-hairline py-2 last:border-b-0">
-      <dt className="w-24 shrink-0 font-mono text-eyebrow font-semibold uppercase text-fg-2">
-        {label}
-      </dt>
+      <dt className="w-24 shrink-0 text-label text-fg-2">{label}</dt>
       <dd className="min-w-0 flex-1 text-body font-semibold">{children}</dd>
     </div>
   )

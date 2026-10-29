@@ -2,14 +2,14 @@
 
 The single source of truth for Phytos interfaces: the capture PWA (`apps/capture`) and the Command Center dashboard (`apps/web`). Tokens live in `packages/ui/theme` (CSS variables in `phytos.css` plus a Tailwind preset); this file says what they are for. The design language behind it is [philosophy.md](philosophy.md). Page overrides go in `pages/<page>.md`.
 
-Replaces "Field Brief" (navy and copper, 28 Oct 2026) on 29 Oct 2026. Layouts were kept; colour, type and the density of lists changed.
+Replaces "Field Brief" (navy and copper, 28 Oct 2026) on 29 Oct 2026. Layouts were kept; colour, type and the density of lists changed. **Revised the same day (freeze-2026-10-29b):** the Command Center moved to the day exposure (hotel projectors wash out dark grounds), mono caps were restricted to kickers, chips and stat labels, and the chrome and lists follow [patterns.md](patterns.md), a study of OneSoil, John Deere Operations Center, Climate FieldView, xarvio, Linear and Stripe.
 
 ## 1. Concept
 
 Phytos is a **monitoring station after dark**: the land is unlit, and every point of light is a fact someone checked. One identity in two exposures:
 
-- **Night** (the Command Center, `exposure-night` on `<html>`): dark moss ground, panels a step lighter, hairlines instead of shadows. For people who watch the whole country, on a laptop or a projector.
-- **Day** (the capture app, the default): bone-light ground with the same three signals, for farmers and officers standing in direct sun.
+- **Night** (`exposure-night` on `<html>`): dark moss ground, panels a step lighter, hairlines instead of shadows. Kept for documents and dark slides; **no app uses it since 29 Oct**, because projectors wash it out.
+- **Day** (the default, both apps): bone-light ground with the same three signals, for farmers in direct sun and for the Command Center on a hotel projector.
 
 Three lights are allowed on the ground, each with one job:
 
@@ -23,9 +23,9 @@ High risk is the one deeper amber (red-gold); no other hue enters.
 
 1. **Evidence before conclusion.** Show what a signal rests on (reports, sources, weather, rules) next to the signal. A level never appears without its contributing factors (CLAUDE.md invariant 2).
 2. **Say how sure, in words.** AI confidence is a band in words ("AI assessment: high confidence"), never a number or the word "probability" (invariant 3). Unverified things look unverified: dashed outlines mean modelled or forecast; solid chartreuse means verified by an officer.
-3. **One loud thing per view.** A single chartreuse fill per screen: the primary action, or the one figure that matters. Everything else stays quiet. Until an action can run, its button stays quiet too.
-4. **Sunlight on the phone, projector on the console.** Capture body text ≥ 7:1, actions ≥ 4.5:1, body never below 17 px. The dashboard keeps body text ≥ 12:1 on its panels so a washed-out projector still reads.
-5. **Density without sentences.** Lists are rows: chips for reasons, one line of text, the full sentence on hover or in the detail view.
+3. **One loud thing per view.** A single chartreuse fill per screen: the primary action. Chartreuse is also the active-nav bar, and nothing else: never selection, links or chips (patterns.md rule 12). Until an action can run, its button stays quiet too.
+4. **Sunlight on the phone, projector on the console.** Capture body text ≥ 7:1, actions ≥ 4.5:1, body never below 17 px. The Command Center is light too: on a projector, contrast survives on a light ground and dies on a dark one.
+5. **Density without chip soup.** A row is at most two lines (the name, then one secondary line joined with middle dots) and carries at most two chips; status is a coloured dot and a word; text wraps, never ends in "…" in a panel we present (patterns.md rules 7 to 10).
 6. **Grounded language.** It is a prototype, not a platform. Signals are "prototype signals"; models "assess", officers "verify".
 7. **No auto-learning claims.** Officer-verified observations are evaluation data: "every correction becomes a test case". Never say the model learns or improves from corrections.
 8. **Cheap on data.** Fonts are self-hosted and precached; no remote images or map tiles; photos are resized before upload.
@@ -77,11 +77,11 @@ In one-line alert rows the short form shows and the full sentence is on hover; t
 
 ## 4. Type
 
-| Role         | Family                         | Use                                                                                                                                                 |
-| ------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Headline** | Bricolage Grotesque (variable) | The wordmark, screen titles, panel titles, issue names, figures. 600 to 800. No serif anywhere.                                                     |
-| **Readout**  | IBM Plex Mono (400, 500, 600)  | Every label, kicker, stat label, status, chip, date, id and dose. Uppercase and letterspaced (+0.12em) for labels; sentence case for doses and ids. |
-| **Body**     | Instrument Sans (variable)     | Everything people read: advice steps, factors, notes. 400 to 600, open leading.                                                                     |
+| Role         | Family                         | Use                                                                                                                                                                                                                        |
+| ------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Headline** | Bricolage Grotesque (variable) | The wordmark, screen titles, panel titles, issue names, figures. 600 to 800. No serif anywhere.                                                                                                                            |
+| **Readout**  | IBM Plex Mono (400, 500, 600)  | Mono caps **only** on kickers (the `.eyebrow` above a title), chips and stat labels. Mono in sentence case for ids, dates and doses. Nav, table headers, form labels, buttons and body are Instrument Sans, sentence case. |
+| **Body**     | Instrument Sans (variable)     | Everything people read: advice steps, factors, notes. 400 to 600, open leading.                                                                                                                                            |
 
 Scale (px, line-height): `stat` 40/40 · `display-xl` 36/40 (dashboard titles) · `display` 28/32 (capture titles: one step down from the Field Brief) · `title` 21/28 · `body` 18/27 (capture) · `body-sm` 16/24 (dashboard) · `label` 15/20 · `caption` 13/18 · `eyebrow` 12/16 (Mono, uppercase, +0.12em) · `data` 15/22 (Mono).
 
@@ -90,7 +90,7 @@ Scale (px, line-height): `stat` 40/40 · `display-xl` 36/40 (dashboard titles) �
 - **Radius:** 4 px cards, panels, buttons and inputs; 2 px chips. No pills except status dots.
 - **Borders:** 1 px `--hairline` on panels; 1 to 1.5 px `--hairline-strong` on inputs; a 2 px chartreuse rail on the current page in the dashboard navigation.
 - **Depth:** flat, edges drawn with hairlines. One elevation, `--raise`, only for things floating above the page (map tooltips, menus).
-- **Light:** on the night map only, Elevated and High districts glow (a blurred copy under the fill) and real reports are points of light. Nothing else glows.
+- **Light:** nothing glows. Risk on the map is carried by fill and outline, so it reads on a projector and in greyscale.
 - **Texture:** none, except the diagonal hatch that marks simulated data (the DEMO badge).
 
 ## 6. Components
@@ -106,16 +106,16 @@ Capture (day exposure, same layouts as the Field Brief):
 - **Crop chips, location row, inputs:** panel with a hairline-strong border; the selected chip is ink with ground text.
 - **Demo badge:** `DEMO DATA · SIMULATED` in Mono on the gold tint with the hatch and a gold border, whenever a simulated row is on screen (invariant 5).
 
-Dashboard (night exposure):
+Dashboard (day exposure, since 29 Oct; patterns.md):
 
-- **Shell:** the ground with a hairline below the top bar: wordmark chip, `COMMAND CENTER` and the `PROTOTYPE` tag in Mono, the live verified counter (the number in chartreuse: a verified fact is what the console lights up), the account. Left rail of pages in Mono; the current page has the chartreuse rail.
-- **Figures:** a strip of four on hairline dividers; the number in Bricolage 40 px, the label in Mono. One figure per view carries the chartreuse (the active clusters on the map, verified reports on the outbreak and Outgrower views, documents in retrieval on Knowledge sources).
-- **Map:** district boundaries as SVG (no tiles) on unlit land; Elevated and High glow; real reports are bone points of light, simulated reports smaller sage dots; clusters are chartreuse 10 km rings with the count above. Legend always visible.
-- **Alert rows:** one line each, table-like: class chip, level chip, issue · district, the first factor (truncated), the short uncertainty form, age, `DETAIL`.
-- **Districts to watch:** one line each: level chip, district, the first factor.
-- **Visit lists:** one line per farm (rank, priority chip, farm label, camp · crop · issue, age) and reason chips beneath: `CLUSTER`, `SEVERE`, `MODERATE`, `AWAITING REVIEW`, `HIGH DISTRICT`.
+- **Shell:** a panel-coloured top bar with a hairline below. Left: the wordmark chip, "Command Center", a small `PROTOTYPE` badge. Right: the verified-observations chip (leaf dot, Bricolage count, "verified observations") and a round initials avatar that opens the account menu (email, role, sign out). **No email in the chrome.** Sidebar on the ground, icon plus sentence-case label; the current page has a 3 px chartreuse bar and the signal tint; counts are quiet grey badges. Content sits at a maximum of 1320 px.
+- **Figures:** the pitch-PDF stat row: a hairline above, then each figure as a Bricolage 40 px number in deep leaf with a two-line small label beside it that reads on from the number ("408 reports in the last 14 days"). No boxes.
+- **Map:** district boundaries as SVG (no tiles) on a pale paper basemap with moss outlines; Elevated in gold, High in amber, each with a darker outline in its own hue; reports as dark dots, simulated reports as smaller sage dots; clusters as deep-leaf 10 km rings with the count above; the selected district outlined in deep leaf, and its row tinted in Districts to watch (two-way selection). Legend always visible, attached under the map. The side panel is 360 px on the right.
+- **Alert rows:** class chip, level chip, issue · district, the first factor in full (wrapped), the short uncertainty form, age, Detail.
+- **Districts to watch:** two lines each: the district and its level chip, then the full first factor.
+- **Visit lists:** two lines per farm. Line 1: farm label, the priority chip, at most one reason chip (`CLUSTER`, else `AWAITING REVIEW`), age. Line 2: camp · crop · issue, severity as a coloured dot and a word, then every other reason in words ("Chipata at High"). In tables, a level is a dot and a word, never a filled pill.
 - **Evidence panel:** retrieved sources with tiers, the register check (passed products, rejected candidates and why), escalation status, model and prompt version. Confidence in words only.
-- **Tables:** hairline rows, Mono headers, no zebra striping.
+- **Tables:** hairline rows, sentence-case Instrument Sans headers, no zebra striping.
 
 ## 7. Icons
 
@@ -132,20 +132,21 @@ Short, plain English, second person on the phone ("Take a photo of the damaged l
 ## 10. Anti-patterns
 
 - Warm cream and soft copper (the generic look this replaced); agritech emerald gradients, leaf illustrations, stock farmers.
-- More than one chartreuse fill on a screen; chartreuse as decoration; glow anywhere but the map.
+- More than one chartreuse fill on a screen; chartreuse as decoration; glow anywhere.
 - Sentences repeated on every row of a list (use chips; keep the sentence for hover and detail).
-- Serif headings; labels in body type where a Mono readout belongs.
+- Serif headings; mono caps on nav, table headers, form labels, buttons or body (it reads as a template); truncated text in a presented panel; an email address in the chrome.
 - "Platform", "revolutionary", "predicts outbreaks", "AI-powered" as decoration.
 - Spinners with no words; percentages anywhere near the AI; a level without factors.
 - Map tiles or remote images (hotel wifi and 4G).
 
 ## 11. Checks before shipping a screen
 
-Text ≥ 4.5:1 and controls ≥ 3:1 (use only tokens) · one chartreuse fill per view · touch targets ≥ 48 px on the phone (primary 56) · visible focus ring (leaf by day, chartreuse by night) · labels on every icon · readable at 360 px with no horizontal page scroll · DEMO badge whenever a sim row shows · no confidence numbers and no em dash in any rendered string.
+Text ≥ 4.5:1 and controls ≥ 3:1 (use only tokens) · one chartreuse fill per view · mono caps only on kickers, chips and stat labels · no row over two lines or two chips · no `truncate` in a presented panel · no email in the chrome · spacing on the 8 px grid · touch targets ≥ 48 px on the phone (primary 56) · visible focus ring (leaf by day, chartreuse by night) · labels on every icon · readable at 360 px with no horizontal page scroll · DEMO badge whenever a sim row shows · no confidence numbers and no em dash in any rendered string.
 
 ## References
 
 - [philosophy.md](philosophy.md): Field Signal, the Phytos design language.
+- [patterns.md](patterns.md): header, nav, map and panel, list density; what Phytos takes from six products.
 - GSMA, [AgriTech UX Design Guidebook](https://www.gsma.com/solutions-and-impact/connectivity-for-good/mobile-for-development/wp-content/uploads/2025/10/AgriTech-UX-Design-Guidebook.pdf) (2025): recognisable patterns, short text.
 - Google, [Android colour contrast](https://support.google.com/accessibility/android/answer/7158390): contrast for extreme lighting.
 - Bricolage Grotesque, IBM Plex Mono, Instrument Sans: SIL Open Font License, self-hosted via Fontsource.

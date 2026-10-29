@@ -28,7 +28,7 @@ export function AdviceSection({
       {recommendation.chemical_options.map(c => (
         <div
           key={c.registration_no}
-          className="rounded-card border border-hairline bg-ground p-2 text-label"
+          className="rounded-card border border-hairline bg-ground p-3 text-label"
         >
           <strong className="font-semibold">{c.trade_name}</strong> ({c.active_ingredient})
           <span className="block font-mono text-caption">

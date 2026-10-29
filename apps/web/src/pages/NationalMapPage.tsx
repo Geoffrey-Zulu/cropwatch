@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ISSUE_LABELS, RISK_ORDER } from '@repo/shared'
 import { AlertRows } from '../components/AlertCard'
@@ -63,8 +64,8 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
   const shown = [...recent, ...(clusters ?? []), ...(risk ?? []), ...(alerts ?? [])]
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Zambia · last {WINDOW_DAYS} days</p>
           <h1 className="mt-1 font-display text-display-xl font-bold text-fg">National picture</h1>
@@ -73,16 +74,16 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
       </div>
 
       <Figures>
-        <Figure value={observations ? recent.length : '·'} label="Reports, 14 days" />
-        <Figure value={clusters?.length ?? '·'} label="Active clusters" emphasis />
+        <Figure value={observations ? recent.length : '·'} label="reports in the last 14 days" />
+        <Figure value={clusters?.length ?? '·'} label="active clusters of 5 or more reports" />
         <Figure
           value={risk ? risk.filter(r => r.level === 'HIGH').length : '·'}
-          label="Districts at High"
+          label="districts at High (prototype signal)"
         />
-        <Figure value={observations ? awaiting : '·'} label="Waiting for an officer" />
+        <Figure value={observations ? awaiting : '·'} label="reports waiting for an officer" />
       </Figures>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Map focus">
             {(Object.keys(FOCUS) as (keyof typeof FOCUS)[]).map(key => (
@@ -91,11 +92,7 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
                 type="button"
                 aria-pressed={focus === key}
                 onClick={() => setFocus(key)}
-                className={`rounded-card border px-3 py-1.5 font-mono text-eyebrow font-medium uppercase ${
-                  focus === key
-                    ? 'border-fg-2 bg-well text-fg'
-                    : 'border-hairline text-fg-2 hover:bg-well hover:text-fg'
-                }`}
+                className="toggle"
               >
                 {FOCUS[key].label}
               </button>
@@ -124,6 +121,7 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
             onCluster={id => (window.location.hash = hrefFor({ page: 'outbreak', id }))}
             onPoint={id => (window.location.hash = hrefFor({ page: 'observation', id }))}
             onDistrict={setDistrict}
+            selected={district}
           />
           <Muted>
             Shading is Risk Model v0, a rule-based prototype signal from reports (and weather
@@ -134,26 +132,40 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
 
         <div className="flex min-w-0 flex-col gap-4">
           {selected && (
-            <Panel eyebrow="Selected district" title={selected.district}>
+            <Panel
+              eyebrow="Selected district"
+              title={selected.district}
+              actions={
+                <button
+                  type="button"
+                  aria-label="Close the selected district"
+                  onClick={() => setDistrict(null)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-card text-fg-2 hover:bg-well hover:text-fg"
+                >
+                  <X size={18} strokeWidth={2} aria-hidden />
+                </button>
+              }
+            >
               <RiskFactors risk={selected} />
             </Panel>
           )}
           <Panel eyebrow="Prototype risk signal" title="Districts to watch">
             {risk === null && <Muted>Loading…</Muted>}
             {risk && watch.length === 0 && <Muted>No district is above Low.</Muted>}
-            <ul className="-mx-4 flex flex-col">
+            <ul className="-mx-6 -mb-6 flex flex-col">
               {watch.map(r => (
                 <li key={r.districtSlug} className="border-t border-hairline first:border-t-0">
                   <button
                     type="button"
                     onClick={() => setDistrict(r.districtSlug)}
                     aria-pressed={district === r.districtSlug}
-                    title={r.factors[0]}
-                    className={`flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-well ${district === r.districtSlug ? 'bg-well' : ''}`}
+                    className={`block w-full px-6 py-3 text-left hover:bg-well ${district === r.districtSlug ? 'bg-signal-tint' : ''}`}
                   >
-                    <LevelTag level={r.level} />
-                    <span className="shrink-0 font-semibold text-fg">{r.district}</span>
-                    <span className="min-w-0 truncate text-label text-fg-2">{r.factors[0]}</span>
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-fg">{r.district}</span>
+                      <LevelTag level={r.level} />
+                    </span>
+                    <span className="mt-1 block text-label text-fg-2">{r.factors[0]}</span>
                   </button>
                 </li>
               ))}

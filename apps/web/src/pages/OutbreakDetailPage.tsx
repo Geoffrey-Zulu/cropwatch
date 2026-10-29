@@ -87,11 +87,11 @@ export function OutbreakDetailView({
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <a href="#/" className="inline-flex items-center gap-1 text-label font-semibold text-fg">
         <ArrowLeft size={16} strokeWidth={2} aria-hidden /> National map
       </a>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">
             Outbreak · cluster {cluster.active ? 'active' : 'closed'} · first detected{' '}
@@ -105,13 +105,16 @@ export function OutbreakDetailView({
       </div>
 
       <Figures>
-        <Figure value={cluster.size} label={`Reports within ${cluster.radiusKm} km`} />
-        <Figure value={cluster.verifiedMembers} label="Verified by an officer" emphasis />
-        <Figure value={cluster.newLast24h} label="New in 24 hours" />
-        <Figure value={shortDate(cluster.updatedAt)} label="Last updated" />
+        <Figure value={cluster.size} label={`reports within ${cluster.radiusKm} km, same issue`} />
+        <Figure
+          value={cluster.verifiedMembers}
+          label="verified by an officer; the rest AI-assessed"
+        />
+        <Figure value={cluster.newLast24h} label="new in the last 24 hours" />
+        <Figure value={shortDate(cluster.updatedAt)} label="last updated" />
       </Figures>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="flex min-w-0 flex-col gap-4">
           <ZambiaMap
             levels={levels}
@@ -200,7 +203,7 @@ export function ReportsTable({ rows }: { rows: DashObservation[] }) {
           <tr className="border-b border-hairline">
             {['Report', 'Sent', 'Place', 'Crop', 'AI assessment', 'Verification', 'Status'].map(
               h => (
-                <th key={h} className="eyebrow py-2 pr-3 font-semibold">
+                <th key={h} className="th py-2 pr-4">
                   {h}
                 </th>
               )

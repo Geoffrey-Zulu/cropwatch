@@ -18,3 +18,19 @@ export function LevelTag({ level }: { level: RiskLevel }) {
     </span>
   )
 }
+
+const DOT: Record<RiskLevel, string> = {
+  HIGH: 'bg-high',
+  ELEVATED: 'bg-attention',
+  LOW: 'bg-hairline-strong',
+}
+
+// The level inside tables and lists: a dot and the word, never a filled pill (patterns.md rule 7).
+export function LevelDot({ level }: { level: RiskLevel }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-label text-fg">
+      <span aria-hidden className={`h-2 w-2 rounded-full ${DOT[level]}`} />
+      {LEVEL_TEXT[level]}
+    </span>
+  )
+}

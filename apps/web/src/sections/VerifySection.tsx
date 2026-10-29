@@ -69,7 +69,7 @@ export function VerifySection({
         {observation.verifiedIssue && ` as ${ISSUE_LABELS[observation.verifiedIssue]}`}
       </p>
       <fieldset className="flex flex-col gap-2">
-        <legend className="eyebrow mb-1">{level}</legend>
+        <legend className="th mb-1">{level}</legend>
         {ai && ai !== 'unknown' && (
           <label className="flex items-center gap-2 text-label">
             <input
@@ -107,7 +107,7 @@ export function VerifySection({
         </label>
       </fieldset>
       <label className="flex flex-col gap-1">
-        <span className="eyebrow">Notes (optional)</span>
+        <span className="th">Notes (optional)</span>
         <textarea
           className="field min-h-16 py-2"
           maxLength={500}

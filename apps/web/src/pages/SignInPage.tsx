@@ -56,7 +56,7 @@ export function SignInPage({
         ) : (
           <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
             <label className="flex flex-col gap-1">
-              <span className="eyebrow">Email</span>
+              <span className="th">Email</span>
               <input
                 className="field"
                 type="email"
@@ -67,7 +67,7 @@ export function SignInPage({
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="eyebrow">Password</span>
+              <span className="th">Password</span>
               <input
                 className="field"
                 type="password"

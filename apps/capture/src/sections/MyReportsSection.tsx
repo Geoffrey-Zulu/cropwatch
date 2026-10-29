@@ -35,11 +35,11 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
               className="flex items-center gap-3 rounded-card border border-hairline bg-panel p-3 transition-colors duration-150 active:bg-well"
             >
               <div className="min-w-0 flex-1">
-                <p className="eyebrow">
-                  Report {reportNumber(report.id)} · {shortDate(report.createdAt)} ·{' '}
-                  {report.district}
+                <p className="text-label text-fg-2">
+                  Report <span className="font-mono">{reportNumber(report.id)}</span> ·{' '}
+                  {shortDate(report.createdAt)} · {report.district}
                 </p>
-                <p className="mt-1 truncate text-body font-extrabold">
+                <p className="mt-1 text-body font-extrabold">
                   {CROP_LABELS[report.crop]}
                   {report.issue && report.issue !== 'unknown'
                     ? ` · ${ISSUE_LABELS[report.issue]}`

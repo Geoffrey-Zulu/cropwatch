@@ -19,7 +19,7 @@ export function CropChips({
 }) {
   return (
     <fieldset>
-      <legend className="eyebrow mb-2">Crop</legend>
+      <legend className="mb-2 text-label font-semibold text-fg">Crop</legend>
       <div className="grid grid-cols-2 gap-3">
         {CROPS.map(crop => {
           const Glyph = GLYPHS[crop]

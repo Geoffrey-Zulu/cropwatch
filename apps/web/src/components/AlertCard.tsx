@@ -29,9 +29,7 @@ export function AlertCard({ alert }: { alert: DashAlert }) {
             Demo
           </span>
         )}
-        <span className="ml-auto font-mono text-eyebrow uppercase text-fg-2">
-          {ago(alert.createdAt)}
-        </span>
+        <span className="meta ml-auto">{ago(alert.createdAt)}</span>
       </div>
       <p className="mt-2 font-display text-[17px] font-semibold leading-snug text-fg">
         {issueName(alert)} · {alert.district}
@@ -52,25 +50,26 @@ export function AlertCard({ alert }: { alert: DashAlert }) {
   return alert.clusterId ? (
     <a
       href={hrefFor({ page: 'outbreak', id: alert.clusterId })}
-      className="group block rounded-card border border-hairline bg-panel p-3 transition-colors hover:border-hairline-strong"
+      className="group block rounded-card border border-hairline bg-panel p-4 transition-colors hover:border-hairline-strong"
     >
       {body}
-      <span className="mt-1 inline-flex items-center gap-0.5 font-mono text-eyebrow uppercase text-fg group-hover:underline">
+      <span className="mt-2 inline-flex items-center gap-0.5 text-label font-semibold text-fg group-hover:underline">
         Outbreak detail
         <ChevronRight size={14} strokeWidth={2} aria-hidden />
       </span>
     </a>
   ) : (
-    <div className="rounded-card border border-hairline bg-panel p-3">{body}</div>
+    <div className="rounded-card border border-hairline bg-panel p-4">{body}</div>
   )
 }
 
-// Alerts as signal rows, one line each: class, level, issue and district, the first factor,
-// how sure it is (the full uncertainty sentence on hover and on the outbreak detail), age, link.
+// Alerts as signal rows: class, level, issue and district, the first factor in full (wrapped,
+// never cut), how sure it is (the full uncertainty sentence on hover and on the outbreak
+// detail), age, link.
 // Pass rows to the page's DemoBadge: a row does not repeat it.
 export function AlertRows({ alerts }: { alerts: DashAlert[] }) {
   return (
-    <div className="-mx-4 overflow-x-auto px-4">
+    <div className="-mx-6 overflow-x-auto px-6">
       <table className="w-full border-collapse text-label">
         <thead className="sr-only">
           <tr>
@@ -87,7 +86,7 @@ export function AlertRows({ alerts }: { alerts: DashAlert[] }) {
           {alerts.map(alert => (
             <tr
               key={alert.id}
-              className="border-t border-hairline first:border-t-0 [&>td]:whitespace-nowrap [&>td]:py-2 [&>td]:pr-3 [&>td]:align-middle"
+              className="border-t border-hairline first:border-t-0 [&>td]:whitespace-nowrap [&>td]:py-3 [&>td]:pr-4 [&>td]:align-top"
             >
               <td>
                 <AlertClassTag alertClass={alert.alertClass} />
@@ -101,21 +100,18 @@ export function AlertRows({ alerts }: { alerts: DashAlert[] }) {
               >
                 {shortIssueName(alert)} · {alert.district}
               </td>
-              <td className="w-full max-w-0 truncate text-fg-2" title={alert.factors[0]}>
+              <td className="w-full min-w-[16rem] !whitespace-normal text-fg-2">
                 {alert.factors[0]}
               </td>
-              <td
-                className="font-mono text-eyebrow uppercase text-fg-2"
-                title={alertUncertainty(alert.alertClass, uncertaintyOf(alert))}
-              >
+              <td className="meta" title={alertUncertainty(alert.alertClass, uncertaintyOf(alert))}>
                 {uncertaintyShort(alert.alertClass, uncertaintyOf(alert))}
               </td>
-              <td className="font-mono text-eyebrow uppercase text-fg-2">{ago(alert.createdAt)}</td>
+              <td className="meta">{ago(alert.createdAt)}</td>
               <td className="!pr-0 text-right">
                 {alert.clusterId && (
                   <a
                     href={hrefFor({ page: 'outbreak', id: alert.clusterId })}
-                    className="inline-flex items-center gap-0.5 font-mono text-eyebrow font-semibold uppercase text-fg hover:text-signal-text"
+                    className="inline-flex items-center gap-0.5 text-label font-semibold text-fg hover:text-signal-text"
                   >
                     Detail
                     <ChevronRight size={14} strokeWidth={2} aria-hidden />

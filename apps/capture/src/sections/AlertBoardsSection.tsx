@@ -91,7 +91,7 @@ export function AlertBoardsSection({
             <h3 className="mt-2 font-display text-title font-bold text-fg">
               {alert.issue === 'unknown' ? 'Crop problem' : ISSUE_LABELS[alert.issue]}
             </h3>
-            <p className="eyebrow mt-0.5">
+            <p className="mt-0.5 text-label text-fg-2">
               {alert.district} · {shortDate(alert.created_at)}
             </p>
             <ul className="mt-2 flex flex-col gap-1">

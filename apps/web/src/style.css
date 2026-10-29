@@ -15,7 +15,7 @@
     min-height: 100dvh;
   }
   :focus-visible {
-    outline: 2px solid var(--signal);
+    outline: 3px solid var(--leaf);
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -30,18 +30,41 @@
 }
 
 @layer components {
-  /* The action: a chartreuse fill with dark text, the loudest thing in its view. */
+  /* The action: a chartreuse fill with dark text, the loudest thing in its view. Sentence case. */
   .btn-primary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card bg-signal px-4 font-mono text-eyebrow font-semibold uppercase text-signal-ink transition-colors duration-150 ease-snap hover:brightness-110 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card bg-signal px-4 font-body text-label font-semibold text-signal-ink transition-[filter] duration-150 ease-snap hover:brightness-95 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
   }
   .btn-quiet {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card border border-hairline-strong bg-transparent px-3 font-mono text-eyebrow font-medium uppercase text-fg transition-colors duration-150 ease-snap hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card border border-hairline-strong bg-panel px-4 font-body text-label font-medium text-fg transition-colors duration-150 ease-snap hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
   }
-  /* Instrument readout: every kicker, label and status in mono, uppercase, letterspaced. */
+  /* Mono caps live here and on chips and stat labels only (MASTER.md §4): the kicker. */
   .eyebrow {
     @apply font-mono text-eyebrow font-medium uppercase text-fg-2;
   }
+  /* A chip: mono caps, small, bordered. At most two per row. */
+  .chip {
+    @apply inline-flex shrink-0 items-center gap-1 rounded-tag border px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase leading-4 tracking-[0.08em];
+  }
+  /* Secondary facts on a row: when, where, how many. Sentence case. */
+  .meta {
+    @apply text-caption text-fg-2;
+  }
+  /* Table headers and form labels: sentence case, quiet. */
+  .th {
+    @apply text-caption font-semibold text-fg-2;
+  }
+  /* Segmented filters (map focus, statuses, queue tabs). */
+  .toggle {
+    @apply rounded-card border px-3 py-1.5 font-body text-label font-medium transition-colors;
+  }
+  .toggle[aria-pressed='true'],
+  .toggle[aria-selected='true'] {
+    @apply border-fg bg-fg text-ground;
+  }
+  .toggle:not([aria-pressed='true']):not([aria-selected='true']) {
+    @apply border-hairline-strong bg-panel text-fg hover:bg-well;
+  }
   .field {
-    @apply min-h-10 w-full rounded-card border border-hairline-strong bg-ground px-3 font-body text-body-sm text-fg placeholder:text-fg-2;
+    @apply min-h-10 w-full rounded-card border border-hairline-strong bg-panel px-3 font-body text-body-sm text-fg placeholder:text-fg-2;
   }
 }
