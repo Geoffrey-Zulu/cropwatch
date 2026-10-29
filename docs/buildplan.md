@@ -518,3 +518,28 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | Live demo armed at the venue                       | `-15.388311, 28.346069`: 4 qualifying reports; armed until 31 Oct 20:46 UTC. Re-arm on the pitch morning                                                                                   |
 | Two automated demo runs at the venue               | `outbreak-e2e` ×2: all checks passed; report → dispatched in 8.0 s and 7.6 s; SMS log-only (no Africa's Talking secrets yet); cleaned up                                                   |
 | **Human runs, backup recordings, officer sign-in** | **Pending: the team, on the real devices, with officer accounts**                                                                                                                          |
+
+### D8b · Wed 29 Oct (afternoon) — final UI pass, then the UI freeze
+
+**Landed**
+
+- **Research** (60-minute cap): `design-system/phytos/patterns.md`. It covers how OneSoil, John Deere Operations Center, Climate FieldView, xarvio, Linear and Stripe handle the header and account menu, navigation, the map with a side panel, and list density, all from public material with sources. It ends with 12 rules for Phytos and a table of which rules were applied.
+- **Command Center on the light day exposure.**
+  - Header: wordmark, a small prototype badge, the verified-observations chip, and an initials avatar menu. No email in the chrome.
+  - Nav: sentence case with icons and a chartreuse active bar.
+  - Mono caps only on kickers, chips and stat labels.
+  - Lists: at most two chips and two lines per row; status as a dot and a word; no truncation in presented panels.
+  - Pitch-PDF stat row; 8 px grid; 1320 px maximum width.
+  - Light map: paper basemap, gold and amber risk fills, deep-leaf rings, two-way district selection.
+- **Capture:** sentence-case field and form labels; layouts unchanged.
+- **Product rows:** the four mancozeb rows were held back, because the late-blight PHI was borrowed from the early-blight guide. 13 rows are live, and late blight is IPM-only with the officer referral.
+- **UI freeze:** tag `freeze-2026-10-29b`. After it, UI feedback goes to `docs/ui-feedback-log.md`, not into code, until after the final pitch.
+
+**Checks**
+
+| Check         | Result                                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate   | Green (typecheck, lint, build, all tests); 3 new header tests (no email in the chrome, current page, initials) |
+| UI review     | The same 12 views and the scenario, before and after: `docs/ui-review/2026-10-29b/`                            |
+| No truncation | No `truncate` left in `apps/web/src`                                                                           |
+| Deployed      | Capture and dashboard Hosting only; the API is unchanged (`cropwatch-api-00009-lh7`)                           |
