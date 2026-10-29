@@ -45,7 +45,7 @@ export function EvidenceSection({ obsId, bare = false }: { obsId: string; bare?:
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="border-t border-hairline pt-3 first:border-t-0 first:pt-0">
+    <div>
       <h3 className="eyebrow mb-1.5">{title}</h3>
       {children}
     </div>
@@ -72,7 +72,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
             {evidence.verified_issue && ` as ${ISSUE_LABELS[evidence.verified_issue]}`}
           </li>
           {diagnosis?.needs_expert_review ? (
-            <li className="font-semibold text-attention-text">
+            <li className="font-semibold text-fg">
               Routed to an officer:{' '}
               {diagnosis.expert_review_reason
                 ? REVIEW_REASON_TEXT[diagnosis.expert_review_reason]
@@ -213,7 +213,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                       size={16}
                       strokeWidth={2}
                       aria-hidden
-                      className="mt-0.5 shrink-0 text-attention-text"
+                      className="mt-0.5 shrink-0 text-fg-2"
                     />
                     <span>
                       {r.candidate}: {REJECTION_TEXT[r.reason] ?? r.reason.replace(/_/g, ' ')}

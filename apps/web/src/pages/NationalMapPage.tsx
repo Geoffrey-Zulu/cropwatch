@@ -12,6 +12,8 @@ import { ago, reportNumber, shortDate } from '../lib/copy'
 
 const DAY = 86_400_000
 const WINDOW_DAYS = 14
+// Districts the rail shows before "Show all".
+const RAIL_FIRST = 5
 
 const FOCUS = {
   zambia: { label: 'All Zambia', box: null },
@@ -40,6 +42,7 @@ const FOCUS = {
 export function NationalMapPage({ observations, clusters, risk }: LiveData) {
   const [focus, setFocus] = useState<keyof typeof FOCUS>('zambia')
   const [district, setDistrict] = useState<string | null>(null)
+  const [allDistricts, setAllDistricts] = useState(false)
   const { open } = useDrawerLinks()
 
   const now = useNow()
@@ -74,14 +77,13 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
       {observations && clusters && risk ? (
         <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
           {[
-            [recent.length, 'reports in 14 days'],
             [clusters.length, 'active clusters'],
             [high, 'districts at High'],
             [awaiting, 'waiting for an officer'],
           ].map(([value, label]) => (
             <div key={label} className="flex items-baseline gap-2">
               <dt className="sr-only">{label}</dt>
-              <dd className="text-title font-semibold tabular-nums text-fg">{value}</dd>
+              <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
               <span aria-hidden className="text-fg-2">
                 {label}
               </span>
@@ -95,7 +97,7 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="relative min-w-0">
           <div
-            className="absolute left-3 top-3 z-10 flex gap-1 rounded-card bg-panel p-1 shadow-raise"
+            className="mb-2 flex gap-1 rounded-card bg-well p-1 sm:absolute sm:left-3 sm:top-3 sm:z-10 sm:mb-0 sm:bg-panel sm:shadow-raise"
             role="group"
             aria-label="Map focus"
           >
@@ -141,7 +143,7 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
         </div>
 
         <section aria-labelledby="watch" className="min-w-0">
-          <h2 id="watch" className="text-label font-semibold text-fg">
+          <h2 id="watch" className="text-section font-semibold text-fg">
             Districts to watch
           </h2>
           <p className="text-caption text-fg-2">
@@ -152,15 +154,15 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
             <p className="py-4 text-label text-fg-2">No district is above Low.</p>
           )}
           <ul className="mt-2 flex flex-col">
-            {watch.map(r => {
+            {(allDistricts ? watch : watch.slice(0, RAIL_FIRST)).map(r => {
               const isOpen = district === r.districtSlug
               return (
-                <li key={r.districtSlug} className="border-t border-hairline first:border-t-0">
+                <li key={r.districtSlug}>
                   <button
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setDistrict(isOpen ? null : r.districtSlug)}
-                    className={`block w-full rounded-card px-3 py-2.5 text-left hover:bg-well ${isOpen ? 'bg-signal-tint' : ''}`}
+                    className={`-mx-2 block w-[calc(100%+1rem)] rounded-card px-2 py-2 text-left hover:bg-well ${isOpen ? 'bg-signal-tint' : ''}`}
                   >
                     <span className="flex items-baseline justify-between gap-3">
                       <span className="font-semibold text-fg">{r.district}</span>
@@ -169,7 +171,7 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
                     <span className="mt-0.5 block text-caption text-fg-2">{r.factors[0]}</span>
                   </button>
                   {isOpen && (
-                    <div className="px-3 pb-3">
+                    <div className="pb-2 pl-0 pt-1">
                       <ul className="flex flex-col gap-1 text-caption text-fg">
                         {r.factors.slice(1).map(f => (
                           <li key={f}>{f}</li>
@@ -182,6 +184,15 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
               )
             })}
           </ul>
+          {!allDistricts && watch.length > RAIL_FIRST && (
+            <button
+              type="button"
+              onClick={() => setAllDistricts(true)}
+              className="mt-1 text-label font-medium text-signal-text hover:underline"
+            >
+              Show all {watch.length} districts
+            </button>
+          )}
         </section>
       </div>
     </div>

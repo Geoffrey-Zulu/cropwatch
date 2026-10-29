@@ -1,119 +1,128 @@
-import { Activity, BadgeCheck, ChevronRight, CloudSun, type LucideIcon } from 'lucide-react'
-import { useState } from 'react'
-import { ALERT_CLASS_LABELS, alertUncertainty, ISSUE_LABELS, type AlertClass } from '@repo/shared'
+import { ChevronRight } from 'lucide-react'
+import { ALERT_CLASS_LABELS, alertUncertainty, ISSUE_LABELS, type RiskLevel } from '@repo/shared'
 import type { DashAlert } from '../hooks/useLive'
 import { useDrawerLinks } from '../hooks/useRoute'
-import { ago, uncertaintyShort } from '../lib/copy'
+import { markAlertSeen } from '../hooks/useSeenAlerts'
+import { ago, LEVEL_TEXT, uncertaintyShort } from '../lib/copy'
 import { DemoBadge } from './DemoBadge'
 import { Drawer } from './Drawer'
-import { LevelDot } from './LevelTag'
+import { LevelIcon } from './LevelTag'
+import { Disclosure } from './PageHeader'
 import { SkeletonRows } from './Skeleton'
 
-const CLASS_ICON: Record<AlertClass, LucideIcon> = {
-  weather_advisory: CloudSun,
-  verified_cluster: BadgeCheck,
-  model_risk_signal: Activity,
+const LEVEL_WORD: Record<RiskLevel, string> = {
+  HIGH: 'text-high-text',
+  ELEVATED: 'text-attention-text',
+  LOW: 'text-fg-2',
 }
-
-const FILTERS: { key: AlertClass | 'all'; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'verified_cluster', label: 'Verified' },
-  { key: 'model_risk_signal', label: 'Model' },
-  { key: 'weather_advisory', label: 'Weather' },
-]
 
 const uncertaintyOf = (alert: DashAlert) => ({
   verified: alert.verifiedReports ?? 0,
   reports: alert.observationIds.length,
 })
 
-// The alerts, off the map page and behind the header bell (patterns-v2.md). A row says what
-// and where, how bad and how sure; its factors and the full uncertainty sentence are one click
-// down; the outbreak opens in its own drawer.
+// The alerts, behind the header bell (patterns-v2.md decision 7, after Grafana's alert list):
+// grouped by level with counts, newest first; Low only on request. A row is what and where and
+// when, then level, class and how sure, then the first factor in full. Opening a row shows the
+// outbreak in this drawer, with a way back.
 export function AlertsDrawer({ alerts }: { alerts: DashAlert[] | null }) {
-  const { open, close } = useDrawerLinks()
-  const [filter, setFilter] = useState<AlertClass | 'all'>('all')
-  const shown = (alerts ?? []).filter(a => filter === 'all' || a.alertClass === filter)
-  const count = (key: AlertClass | 'all') =>
-    (alerts ?? []).filter(a => key === 'all' || a.alertClass === key).length
+  const { close } = useDrawerLinks()
+  const sorted = [...(alerts ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const group = (level: RiskLevel) => sorted.filter(a => a.level === level)
   return (
     <Drawer
-      width="list"
-      kicker="Alerts"
-      title="What has been raised"
-      question="Each alert with how bad it is and how sure we are."
+      title="Alerts"
+      question="What has been raised, how bad, and how sure?"
       aside={<DemoBadge rows={alerts ?? []} />}
       closeHref={close()}
     >
-      <div className="mb-2 flex flex-wrap gap-1" role="tablist" aria-label="Alert class">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            type="button"
-            role="tab"
-            aria-selected={filter === f.key}
-            onClick={() => setFilter(f.key)}
-            className="toggle"
-          >
-            {f.label} <span className="text-fg-2">{count(f.key)}</span>
-          </button>
-        ))}
-      </div>
       {alerts === null && <SkeletonRows rows={6} label="Loading alerts" />}
-      {alerts && shown.length === 0 && <p className="py-6 text-label text-fg-2">No alerts.</p>}
-      <ul className="flex flex-col">
-        {shown.map(alert => {
-          const Icon = CLASS_ICON[alert.alertClass]
-          return (
-            <li key={alert.id} className="border-b border-hairline last:border-b-0">
-              <details className="group">
-                <summary className="flex cursor-pointer list-none flex-col gap-1 py-3 [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-baseline gap-3">
-                    <LevelDot level={alert.level} />
-                    <span className="min-w-0 flex-1 font-semibold text-fg">
-                      {alert.issue === 'unknown' ? 'Crop problem' : ISSUE_LABELS[alert.issue]} ·{' '}
-                      {alert.district}
-                    </span>
-                    <span className="meta shrink-0">{ago(alert.createdAt)}</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 text-caption text-fg-2">
-                    <Icon size={14} strokeWidth={2} aria-hidden />
-                    {ALERT_CLASS_LABELS[alert.alertClass]} ·{' '}
-                    {uncertaintyShort(alert.alertClass, uncertaintyOf(alert))}
-                    <ChevronRight
-                      size={14}
-                      strokeWidth={2}
-                      aria-hidden
-                      className="ml-auto transition-transform group-open:rotate-90"
-                    />
-                  </span>
+      {alerts && alerts.length === 0 && <p className="py-6 text-label text-fg-2">No alerts.</p>}
+      {(['HIGH', 'ELEVATED'] as const).map(level =>
+        group(level).length ? (
+          <section key={level} className="mb-5" aria-label={`${LEVEL_TEXT[level]} alerts`}>
+            <h3 className="mb-1 text-section font-semibold text-fg">
+              {LEVEL_TEXT[level]}{' '}
+              <span className="font-normal text-fg-2">· {group(level).length}</span>
+            </h3>
+            <AlertList alerts={group(level)} />
+          </section>
+        ) : null
+      )}
+      {group('LOW').length > 0 && (
+        <Disclosure summary="Show low" hint={group('LOW').length}>
+          <AlertList alerts={group('LOW')} />
+        </Disclosure>
+      )}
+    </Drawer>
+  )
+}
+
+function AlertList({ alerts }: { alerts: DashAlert[] }) {
+  const { open } = useDrawerLinks()
+  return (
+    <ul className="-mx-2 flex flex-col">
+      {alerts.map(alert => {
+        const body = (
+          <>
+            <span className="flex items-center gap-2">
+              <LevelIcon level={alert.level} />
+              <span className="min-w-0 flex-1 font-medium text-fg">
+                {alert.issue === 'unknown' ? 'Crop problem' : ISSUE_LABELS[alert.issue]} ·{' '}
+                {alert.district}
+              </span>
+              <span className="meta shrink-0">{ago(alert.createdAt)}</span>
+            </span>
+            <span className="mt-0.5 block pl-6 text-caption text-fg-2">
+              <span className={`font-medium ${LEVEL_WORD[alert.level]}`}>
+                {LEVEL_TEXT[alert.level]}
+              </span>{' '}
+              · {ALERT_CLASS_LABELS[alert.alertClass]} ·{' '}
+              {uncertaintyShort(alert.alertClass, uncertaintyOf(alert))}
+            </span>
+            <span className="mt-0.5 block pl-6 text-caption text-fg-2">{alert.factors[0]}</span>
+          </>
+        )
+        const title = alertUncertainty(alert.alertClass, uncertaintyOf(alert))
+        return (
+          <li key={alert.id}>
+            {alert.clusterId ? (
+              <a
+                href={open({ kind: 'outbreak', id: alert.clusterId, via: 'alerts' })}
+                title={title}
+                onClick={() => markAlertSeen(alert.id)}
+                className="block rounded-card px-2 py-2.5 hover:bg-well"
+              >
+                {body}
+              </a>
+            ) : (
+              <details className="group rounded-card px-2 py-2.5 hover:bg-well">
+                <summary
+                  title={title}
+                  onClick={() => markAlertSeen(alert.id)}
+                  className="cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+                >
+                  {body}
                 </summary>
-                <div className="flex flex-col gap-2 pb-4 text-label">
-                  <ul className="flex flex-col gap-1">
-                    {alert.factors.map(f => (
-                      <li key={f} className="text-fg">
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-caption text-fg-2">
-                    {alertUncertainty(alert.alertClass, uncertaintyOf(alert))}
+                <div className="mt-2 flex flex-col gap-1 pl-6 text-caption">
+                  {alert.factors.slice(1).map(f => (
+                    <p key={f} className="text-fg">
+                      {f}
+                    </p>
+                  ))}
+                  <p className="text-fg-2">{title}</p>
+                  <p className="inline-flex items-center gap-1 text-fg-2">
+                    <ChevronRight size={14} strokeWidth={2} aria-hidden />
+                    {alert.alertClass === 'weather_advisory'
+                      ? 'No outbreak: forecast conditions only.'
+                      : 'A district signal, not a single outbreak.'}
                   </p>
-                  {alert.clusterId && (
-                    <a
-                      href={open({ kind: 'outbreak', id: alert.clusterId })}
-                      className="inline-flex items-center gap-0.5 self-start font-semibold text-signal-text hover:underline"
-                    >
-                      Open the outbreak
-                      <ChevronRight size={16} strokeWidth={2} aria-hidden />
-                    </a>
-                  )}
                 </div>
               </details>
-            </li>
-          )
-        })}
-      </ul>
-    </Drawer>
+            )}
+          </li>
+        )
+      })}
+    </ul>
   )
 }

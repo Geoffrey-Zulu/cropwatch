@@ -11,11 +11,12 @@
 
 @layer base {
   body {
-    @apply bg-ground font-body text-body-sm text-fg antialiased;
+    @apply bg-ground font-body text-body text-fg antialiased;
     min-height: 100dvh;
+    font-variant-numeric: tabular-nums;
   }
   :focus-visible {
-    outline: 3px solid var(--leaf);
+    outline: 2px solid var(--signal);
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -29,42 +30,56 @@
   }
 }
 
+/* Command Center components (design-system/phytos/patterns-v2.md): sentence case everywhere,
+   one accent for the action, borders only on controls. */
 @layer components {
-  /* The action: a chartreuse fill with dark text, the loudest thing in its view. Sentence case. */
   .btn-primary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card bg-signal px-4 font-body text-label font-semibold text-signal-ink transition-[filter] duration-150 ease-snap hover:brightness-95 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-card bg-signal px-4 font-body text-label font-medium text-signal-ink transition-[filter] duration-150 ease-snap hover:brightness-110 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
   }
   .btn-quiet {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card border border-hairline-strong bg-panel px-4 font-body text-label font-medium text-fg transition-colors duration-150 ease-snap hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-card border border-hairline-strong bg-panel px-3 font-body text-label font-medium text-fg transition-colors duration-150 ease-snap hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
   }
-  /* Mono caps live here and on chips and stat labels only (MASTER.md §4): the kicker. */
+  /* A quiet line above a title: secondary, sentence case. */
   .eyebrow {
-    @apply font-mono text-eyebrow font-medium uppercase text-fg-2;
+    @apply text-caption font-medium text-fg-2;
   }
-  /* A chip: mono caps, small, bordered. At most two per row. */
+  /* A chip: at most one a row (patterns-v2.md decision 3). */
   .chip {
-    @apply inline-flex shrink-0 items-center gap-1 rounded-tag border px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase leading-4 tracking-[0.08em];
+    @apply inline-flex shrink-0 items-center gap-1 rounded border px-1.5 text-caption font-medium;
   }
-  /* Secondary facts on a row: when, where, how many. Sentence case. */
   .meta {
     @apply text-caption text-fg-2;
   }
-  /* Table headers and form labels: sentence case, quiet. */
   .th {
-    @apply text-caption font-semibold text-fg-2;
+    @apply text-caption font-medium text-fg-2;
   }
-  /* Segmented filters (map focus, statuses, queue tabs). */
+  /* Segmented filters: the selected one sits on the rail grey; no borders. */
   .toggle {
-    @apply rounded-card border px-3 py-1.5 font-body text-label font-medium transition-colors;
+    @apply rounded-card px-3 py-1.5 font-body text-label font-medium text-fg-2 transition-colors hover:text-fg;
   }
   .toggle[aria-pressed='true'],
   .toggle[aria-selected='true'] {
-    @apply border-fg bg-fg text-ground;
-  }
-  .toggle:not([aria-pressed='true']):not([aria-selected='true']) {
-    @apply border-hairline-strong bg-panel text-fg hover:bg-well;
+    @apply bg-well text-fg;
   }
   .field {
-    @apply min-h-10 w-full rounded-card border border-hairline-strong bg-panel px-3 font-body text-body-sm text-fg placeholder:text-fg-2;
+    @apply h-9 w-full rounded-card border border-hairline-strong bg-panel px-3 font-body text-label text-fg placeholder:text-fg-2;
+  }
+  /* Skeleton bars appear only after 250 ms, so fast loads never flash (patterns-v2.md §5). */
+  .skeleton-bar {
+    @apply block rounded bg-skeleton;
+    opacity: 0;
+    animation:
+      skeleton-in 1ms 250ms forwards,
+      skeleton-pulse 1.5s 250ms ease-in-out infinite;
+  }
+  @keyframes skeleton-in {
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes skeleton-pulse {
+    50% {
+      filter: brightness(0.96);
+    }
   }
 }

@@ -82,7 +82,7 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
             </rect>
           )
         })}
-        <polyline points={line} fill="none" stroke="var(--attention)" strokeWidth={2} />
+        <polyline points={line} fill="none" stroke="var(--fg)" strokeWidth={2} />
         <line
           x1={today}
           x2={today}
@@ -106,12 +106,12 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
           <span aria-hidden className="h-2.5 w-2.5 bg-fg-2" /> Rain per day (mm)
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-0.5 w-4 bg-attention" /> Mean temperature (
-          {tMin.toFixed(0)} to {tMax.toFixed(0)} °C scale)
+          <span aria-hidden className="h-0.5 w-4 bg-fg" /> Mean temperature ({tMin.toFixed(0)} to{' '}
+          {tMax.toFixed(0)} °C scale)
         </span>
       </p>
 
-      <ul className="flex flex-col divide-y divide-hairline">
+      <ul className="flex flex-col gap-3">
         {weather.conditions.map(c => (
           <li key={c.issue} className="py-2">
             <div className="flex flex-wrap items-center gap-2">

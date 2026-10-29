@@ -132,7 +132,7 @@ export function ObservationDrawerView({
       </div>
 
       <section className="mt-6" aria-labelledby="ai">
-        <h3 id="ai" className="text-label font-semibold text-fg">
+        <h3 id="ai" className="text-section font-semibold text-fg">
           AI assessment
         </h3>
         {o.band ? (
@@ -157,7 +157,7 @@ export function ObservationDrawerView({
       </section>
 
       <section className="mt-6" aria-labelledby="advice">
-        <h3 id="advice" className="text-label font-semibold text-fg">
+        <h3 id="advice" className="text-section font-semibold text-fg">
           What the farmer received
         </h3>
         <div className="mt-2">
@@ -166,7 +166,7 @@ export function ObservationDrawerView({
       </section>
 
       <section className="mt-6" aria-labelledby="officer">
-        <h3 id="officer" className="text-label font-semibold text-fg">
+        <h3 id="officer" className="text-section font-semibold text-fg">
           Officer: {VERIFICATION_TEXT[o.verification]}
         </h3>
         <div className="mt-2">

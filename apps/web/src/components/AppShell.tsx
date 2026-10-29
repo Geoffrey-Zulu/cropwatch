@@ -95,14 +95,12 @@ export function AppShell({
       <header className="sticky top-0 z-30 border-b border-hairline bg-panel">
         <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-6">
           <a href="#/" className="flex items-center gap-3" aria-label="Phytos Command Center">
-            <span className="rounded-tag bg-chip px-2.5 py-1.5 font-display text-[16px] font-extrabold uppercase leading-none tracking-[0.16em] text-chip-fg">
+            <span className="rounded-tag bg-chip px-2 py-1 font-wordmark text-[15px] font-extrabold uppercase leading-none tracking-[0.16em] text-chip-fg">
               Phytos
             </span>
-            <span className="hidden text-label font-semibold text-fg sm:inline">
-              Command Center
-            </span>
+            <span className="hidden text-label font-medium text-fg sm:inline">Command Center</span>
           </a>
-          <span className="rounded-tag border border-attention px-1 font-mono text-[10px] font-semibold uppercase leading-4 tracking-[0.1em] text-attention-text">
+          <span className="rounded bg-well px-1.5 text-caption font-medium text-fg-2">
             Prototype
           </span>
           <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
@@ -116,7 +114,7 @@ export function AppShell({
       <div className="lg:flex">
         <nav
           aria-label="Pages"
-          className="sticky top-14 z-20 flex gap-1 overflow-x-auto border-b border-hairline bg-ground px-2 py-2 lg:h-[calc(100dvh-56px)] lg:w-56 lg:shrink-0 lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r lg:px-3 lg:py-4"
+          className="sticky top-14 z-20 flex gap-0.5 overflow-x-auto bg-well px-2 py-2 lg:h-[calc(100dvh-56px)] lg:w-56 lg:shrink-0 lg:flex-col lg:overflow-visible lg:px-3 lg:py-4"
         >
           {items.map(item => {
             const current = item.page === active
@@ -125,10 +123,8 @@ export function AppShell({
                 key={item.page}
                 href={hrefFor(item.route)}
                 aria-current={current ? 'page' : undefined}
-                className={`relative flex shrink-0 items-center gap-2.5 rounded-card px-3 py-2 text-label transition-colors ${
-                  current
-                    ? 'bg-signal-tint font-semibold text-fg'
-                    : 'font-medium text-fg-2 hover:bg-well hover:text-fg'
+                className={`relative flex shrink-0 items-center gap-2.5 rounded-card px-3 py-1.5 text-label font-medium transition-colors ${
+                  current ? 'bg-signal-tint text-fg' : 'text-fg-2 hover:bg-panel hover:text-fg'
                 }`}
               >
                 {current && (
@@ -137,10 +133,10 @@ export function AppShell({
                     className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-signal max-lg:inset-x-3 max-lg:bottom-0 max-lg:top-auto max-lg:h-[3px] max-lg:w-auto"
                   />
                 )}
-                <item.icon size={18} strokeWidth={2} aria-hidden />
+                <item.icon size={16} strokeWidth={2} aria-hidden />
                 {item.label}
                 {item.page === 'queue' && queue !== null && queue > 0 && (
-                  <span className="ml-auto rounded-full bg-well px-2 text-caption font-medium text-fg-2">
+                  <span className="ml-auto text-caption font-medium tabular-nums text-fg-2">
                     {queue}
                   </span>
                 )}
@@ -179,15 +175,11 @@ function AlertsBell({ count }: { count: number }) {
 function VerifiedChip({ count }: { count: number }) {
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full border border-hairline bg-ground py-1 pl-2 pr-2.5 sm:gap-2 sm:pl-2.5 sm:pr-3"
+      className="flex items-baseline gap-1.5"
       aria-live="polite"
       aria-label={`${count} verified observations`}
     >
-      <span aria-hidden className="h-2 w-2 rounded-full bg-leaf" />
-      <span
-        key={count}
-        className="animate-tag text-label font-semibold leading-none tabular-nums text-fg"
-      >
+      <span key={count} className="animate-tag text-label font-semibold tabular-nums text-fg">
         {count}
       </span>
       <span className="hidden text-caption text-fg-2 sm:inline">verified observations</span>

@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react'
 
 // Loading states shaped like what will land (patterns-v2.md): grey bars where the text will be,
-// never a spinner in the middle of content. The pulse stops under reduced motion (style.css).
+// never a spinner in the middle of content. Bars appear after 250 ms (style.css, .skeleton-bar).
 export function Bar({ className = '' }: { className?: string }) {
-  return (
-    <span aria-hidden className={`block rounded bg-well motion-safe:animate-pulse ${className}`} />
-  )
+  return <span aria-hidden className={`skeleton-bar ${className}`} />
 }
 
 export function Loading({ label, children }: { label: string; children: ReactNode }) {

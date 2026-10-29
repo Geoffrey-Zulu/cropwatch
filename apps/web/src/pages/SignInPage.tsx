@@ -45,7 +45,7 @@ export function SignInPage({
         </p>
 
         {signedInAsFarmer ? (
-          <div className="mt-6 rounded-card border border-hairline bg-panel p-4">
+          <div className="mt-6 rounded-card bg-well p-4">
             <p className="text-body-sm">
               This account has no officer role. Sign out and sign in with an officer account.
             </p>
@@ -78,7 +78,7 @@ export function SignInPage({
               />
             </label>
             {error && (
-              <p role="alert" className="text-label font-semibold text-attention-text">
+              <p role="alert" className="text-label font-semibold text-fg">
                 {error}
               </p>
             )}

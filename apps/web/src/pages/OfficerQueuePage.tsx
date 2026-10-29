@@ -2,6 +2,8 @@ import { ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { CROP_LABELS, ISSUE_LABELS } from '@repo/shared'
 import { DemoBadge } from '../components/DemoBadge'
+import { PageHeader } from '../components/PageHeader'
+import { SkeletonRows } from '../components/Skeleton'
 import { Muted, Panel } from '../components/Panel'
 import type { Officer } from '../hooks/useAuth'
 import type { DashCluster, DashObservation, LiveData } from '../hooks/useLive'
@@ -44,13 +46,11 @@ export function OfficerQueuePage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Human in the loop</p>
-          <h1 className="mt-1 font-display text-display-xl font-bold text-fg">Officer queue</h1>
-        </div>
-        <DemoBadge rows={shown} />
-      </div>
+      <PageHeader
+        title="Officer queue"
+        question="Which reports need an officer before anyone acts on them?"
+        aside={<DemoBadge rows={shown} />}
+      />
 
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Queue">
         <Tab current={tab === 'review'} onClick={() => setTab('review')}>
@@ -63,9 +63,9 @@ export function OfficerQueuePage({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <Panel eyebrow={tab === 'review' ? 'Never guessed' : 'Verify to upgrade the alert'}>
-          {observations === null && <Muted>Loading…</Muted>}
+          {observations === null && <SkeletonRows rows={6} label="Loading the queue" />}
           {observations && shown.length === 0 && <Muted>Nothing waiting here.</Muted>}
-          <ul className="flex max-h-[70vh] flex-col divide-y divide-hairline overflow-y-auto">
+          <ul className="flex max-h-[70vh] flex-col gap-0.5 overflow-y-auto">
             {shown.map(o => {
               const current = selected?.id === o.id
               return (
@@ -79,11 +79,6 @@ export function OfficerQueuePage({
                       <p className="meta">
                         <span className="font-mono">{reportNumber(o.id)}</span> · {o.district} ·{' '}
                         {ago(o.createdAt)}
-                        {o.sim && (
-                          <span className="chip ml-1.5 border-attention text-attention-text">
-                            Demo
-                          </span>
-                        )}
                       </p>
                       <p className="mt-0.5 font-semibold text-fg">
                         {CROP_LABELS[o.crop]} ·{' '}

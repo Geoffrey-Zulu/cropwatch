@@ -126,6 +126,54 @@ async function check(page: Page, width: number) {
         }
       }
     }
+    // patterns-v2.md decision 3, measured in the viewport: bordered boxes (3 or 4 sides) and
+    // non-neutral hue families (30-degree buckets) across text, fills, borders and SVG.
+    const rgb = (v: string) => {
+      const m = /rgba?\(([^)]+)\)/.exec(v)
+      if (!m) return null
+      const [r, g, b, a = 1] = m[1]
+        .split(/[\s,/]+/)
+        .filter(Boolean)
+        .map(Number)
+      return a === 0 ? null : { r: r / 255, g: g / 255, b: b / 255 }
+    }
+    const hue = (c: { r: number; g: number; b: number }) => {
+      const max = Math.max(c.r, c.g, c.b)
+      const min = Math.min(c.r, c.g, c.b)
+      const l = (max + min) / 2
+      const d = max - min
+      const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
+      if (sat < 0.25 || l < 0.12 || l > 0.94) return null
+      const h =
+        max === c.r
+          ? ((c.g - c.b) / d) % 6
+          : max === c.g
+            ? (c.b - c.r) / d + 2
+            : (c.r - c.g) / d + 4
+      return Math.floor(((((h * 60) % 360) + 360) % 360) / 30)
+    }
+    let boxes = 0
+    const hues = new Set<number>()
+    for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+      const r = el.getBoundingClientRect()
+      if (r.width < 1 || r.height < 1 || r.bottom <= 0 || r.top >= innerHeight) continue
+      const cs = getComputedStyle(el)
+      if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue
+      let sides = 0
+      for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
+        const w = parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`))
+        const c = rgb(cs.getPropertyValue(`border-${side.toLowerCase()}-color`))
+        if (w > 0 && c) sides++
+      }
+      if (sides >= 3) boxes++
+      for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke]) {
+        const c = v && v !== 'none' ? rgb(v) : null
+        const h = c ? hue(c) : null
+        if (h !== null) hues.add(h)
+      }
+    }
+    if (boxes > 8) issues.push(`${boxes} bordered boxes in view (decision 3 allows 8)`)
+    if (hues.size > 3) issues.push(`${hues.size} hue families in view (decision 3 allows 3)`)
     return issues
   }, width)
 }

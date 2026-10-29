@@ -64,7 +64,8 @@ export function OutbreakDrawerView({
   risk: DashRisk | null | undefined
   observations: DashObservation[] | null
 }) {
-  const { open, close } = useDrawerLinks()
+  const { route, open, close } = useDrawerLinks()
+  const fromAlerts = route.drawer?.kind === 'outbreak' && route.drawer.via === 'alerts'
   const members = useMemo(() => {
     if (!cluster || !observations) return []
     const ids = new Set(cluster.members)
@@ -90,6 +91,7 @@ export function OutbreakDrawerView({
       kicker={`Outbreak · ${cluster.active ? 'active' : 'closed'} · first seen ${dateTime(cluster.firstDetectedAt)}`}
       title={`${ISSUE_LABELS[cluster.issue]} near ${cluster.district}`}
       question="How big is this cluster, and how sure are we?"
+      back={fromAlerts ? { href: open({ kind: 'alerts' }), label: 'Back to alerts' } : undefined}
       aside={<DemoBadge rows={[cluster, ...members]} />}
       closeHref={close()}
     >
@@ -100,14 +102,14 @@ export function OutbreakDrawerView({
           [cluster.newLast24h, 'new in 24 hours'],
         ].map(([value, label]) => (
           <div key={label}>
-            <dd className="text-display font-semibold tabular-nums text-fg">{value}</dd>
+            <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
             <dt className="text-caption text-fg-2">{label}</dt>
           </div>
         ))}
       </dl>
 
       <section className="mt-6" aria-labelledby="raised">
-        <h3 id="raised" className="text-label font-semibold text-fg">
+        <h3 id="raised" className="text-section font-semibold text-fg">
           What was raised
         </h3>
         {alert === undefined && <SkeletonRows rows={1} label="Loading the alert" />}
@@ -133,27 +135,43 @@ export function OutbreakDrawerView({
       </section>
 
       <section className="mt-6" aria-labelledby="district">
-        <h3 id="district" className="text-label font-semibold text-fg">
+        <h3 id="district" className="text-section font-semibold text-fg">
           {cluster.district} district
         </h3>
         {risk === undefined && <SkeletonRows rows={1} label="Loading the district signal" />}
         {risk === null && <p className="mt-1 text-label text-fg-2">Not computed yet.</p>}
         {risk && (
-          <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-label text-fg">
-            <LevelDot level={risk.level} />
-            <span className="text-fg-2">{risk.factors[0]}</span>
-          </p>
+          <div className="mt-1 text-label">
+            <p className="flex items-baseline gap-2">
+              <LevelDot level={risk.level} />
+              <span className="meta">computed {ago(risk.computedAt)}</span>
+            </p>
+            <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-5 text-fg">
+              {risk.factors.map(f => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
+
+      <p className="mt-6 text-label">
+        <a href="#/queue" className="font-medium text-signal-text hover:underline">
+          Verify these reports in the officer queue
+        </a>
+        <span className="text-fg-2">
+          : a verified report turns this into a verified cluster alert.
+        </span>
+      </p>
 
       <div className="mt-6">
         <Disclosure summary="Reports in this cluster" hint={members.length}>
           <ul className="flex flex-col">
             {members.map(o => (
-              <li key={o.id} className="border-b border-hairline last:border-b-0">
+              <li key={o.id}>
                 <a
                   href={open({ kind: 'observation', id: o.id })}
-                  className="flex items-start gap-3 py-2.5 hover:bg-well"
+                  className="-mx-2 flex items-start gap-3 rounded-card px-2 py-2 hover:bg-well"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block text-label text-fg">
@@ -180,16 +198,6 @@ export function OutbreakDrawerView({
         <Disclosure summary="Reports per day" hint="last 7 days">
           <Timeline members={members} />
         </Disclosure>
-        {risk && risk.factors.length > 1 && (
-          <Disclosure summary="All district factors" hint={risk.factors.length}>
-            <ul className="flex flex-col gap-1 text-label text-fg">
-              {risk.factors.map(f => (
-                <li key={f}>{f}</li>
-              ))}
-            </ul>
-            <p className="mt-1 text-caption text-fg-2">Computed {ago(risk.computedAt)}</p>
-          </Disclosure>
-        )}
         <Disclosure summary="Weather context" hint="Open-Meteo">
           <WeatherSection districtSlug={cluster.districtSlug} bare />
         </Disclosure>

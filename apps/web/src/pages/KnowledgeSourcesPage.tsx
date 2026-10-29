@@ -1,7 +1,8 @@
 import { ExternalLink } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { CROP_LABELS, ISSUE_LABELS, type Crop, type Issue } from '@repo/shared'
-import { Figure, Figures, Muted, Panel } from '../components/Panel'
+import { PageHeader } from '../components/PageHeader'
+import { Muted, Panel } from '../components/Panel'
 import sources from '../data/knowledge-sources.json'
 import { dateTime, TIER_NAMES } from '../lib/copy'
 
@@ -20,7 +21,7 @@ const STATUS: Record<Status, { label: string; className: string; note: string }>
   },
   pending: {
     label: 'Pending',
-    className: 'border-attention text-attention-text',
+    className: 'border-hairline-strong text-fg-2',
     note: 'Requested; ingested the day it arrives.',
   },
   not_fetched: {
@@ -50,25 +51,29 @@ export function KnowledgeSourcesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="eyebrow">Read only · from the corpus manifest</p>
-        <h1 className="mt-1 font-display text-display-xl font-bold text-fg">Knowledge sources</h1>
-        <p className="mt-1 max-w-3xl text-body-sm text-fg-2">
-          Advice is written only from passages retrieved from these documents, and every chemical is
-          then checked against the pesticide register. Tier 1 is the Ministry of Agriculture; a
-          lower tier wins where guides disagree.
-        </p>
-      </div>
+      <PageHeader title="Knowledge sources" question="What does the advice rest on?" />
+      <p className="-mt-3 max-w-3xl text-label text-fg-2">
+        Advice is written only from passages retrieved from these documents, and every chemical is
+        then checked against the pesticide register. Tier 1 is the Ministry of Agriculture; a lower
+        tier wins where guides disagree. Read only, from the corpus manifest.
+      </p>
 
-      <Figures>
-        <Figure
-          value={rows.length}
-          label="curated documents from MoA, ZARI, FAO, CABI and research"
-        />
-        <Figure value={counts.retrievable} label="in retrieval: advice can cite them" />
-        <Figure value={counts.pending} label="pending, requested from the publisher" />
-        <Figure value={counts.not_fetched + counts.fetched} label="listed, not yet in retrieval" />
-      </Figures>
+      <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
+        {[
+          [rows.length, 'curated documents'],
+          [counts.retrievable, 'in retrieval, so advice can cite them'],
+          [counts.pending, 'pending from the publisher'],
+          [counts.not_fetched + counts.fetched, 'listed, not yet in retrieval'],
+        ].map(([value, label]) => (
+          <div key={label} className="flex items-baseline gap-2">
+            <dt className="sr-only">{label}</dt>
+            <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
+            <span aria-hidden className="text-fg-2">
+              {label}
+            </span>
+          </div>
+        ))}
+      </dl>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
         {(['all', ...Object.keys(STATUS)] as (Status | 'all')[]).map(s => (
@@ -86,7 +91,7 @@ export function KnowledgeSourcesPage() {
 
       {tiers.map(tier => (
         <Panel key={tier} eyebrow={`Tier ${tier}`} title={TIER_NAMES[tier] ?? 'Other'}>
-          <ul className="flex flex-col divide-y divide-hairline">
+          <ul className="flex flex-col gap-1">
             {shown
               .filter(r => r.tier === tier)
               .map(r => (

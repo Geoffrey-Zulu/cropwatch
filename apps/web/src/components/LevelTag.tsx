@@ -1,24 +1,6 @@
 import type { RiskLevel } from '@repo/shared'
 import { LEVEL_TEXT } from '../lib/copy'
 
-// High is the only filled level (red-gold); Elevated is gold on its tint; Low stays quiet.
-const TONE: Record<RiskLevel, string> = {
-  HIGH: 'border-high bg-high text-high-ink',
-  ELEVATED: 'border-attention bg-attention-tint text-attention-text',
-  LOW: 'border-hairline-strong text-fg-2',
-}
-
-// Risk Model v0 level: a prototype signal, shown with its factors wherever it appears.
-export function LevelTag({ level }: { level: RiskLevel }) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-tag border px-1.5 py-0.5 font-mono text-eyebrow font-semibold uppercase ${TONE[level]}`}
-    >
-      {LEVEL_TEXT[level]}
-    </span>
-  )
-}
-
 const DOT: Record<RiskLevel, string> = {
   HIGH: 'bg-high',
   ELEVATED: 'bg-attention',
@@ -33,4 +15,21 @@ export function LevelDot({ level }: { level: RiskLevel }) {
       {LEVEL_TEXT[level]}
     </span>
   )
+}
+
+// The alert-row icon: shape as well as colour, so the level reads without colour vision
+// (patterns-v2.md decision 7): High a filled circle with "!", Elevated an empty ring, Low a dot.
+export function LevelIcon({ level }: { level: RiskLevel }) {
+  if (level === 'HIGH')
+    return (
+      <span
+        aria-hidden
+        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-high text-[11px] font-bold leading-none text-high-ink"
+      >
+        !
+      </span>
+    )
+  if (level === 'ELEVATED')
+    return <span aria-hidden className="h-4 w-4 shrink-0 rounded-full border-2 border-attention" />
+  return <span aria-hidden className="mx-1 h-2 w-2 shrink-0 rounded-full bg-hairline-strong" />
 }

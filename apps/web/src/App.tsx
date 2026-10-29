@@ -5,8 +5,8 @@ import { ObservationDrawer } from './components/ObservationDrawer'
 import { OutbreakDrawer } from './components/OutbreakDrawer'
 import { useAuth } from './hooks/useAuth'
 import { useAlerts, useClusters, useObservations, useRisk } from './hooks/useLive'
-import { useNow } from './hooks/useNow'
 import { useRoute, type Route } from './hooks/useRoute'
+import { useSeenAlerts } from './hooks/useSeenAlerts'
 import { SCENARIO_ENABLED } from './lib/features'
 import { KnowledgeSourcesPage } from './pages/KnowledgeSourcesPage'
 import { NationalMapPage } from './pages/NationalMapPage'
@@ -33,10 +33,11 @@ export function App() {
     () => observations.rows?.filter(o => VERIFIED.has(o.verification)).length ?? null,
     [observations.rows]
   )
-  const now = useNow()
+  // The bell counts High and Elevated alerts this browser has not opened (patterns-v2.md).
+  const seen = useSeenAlerts()
   const newAlerts = useMemo(
-    () => alerts.rows?.filter(a => now - Date.parse(a.createdAt) < 86_400_000).length ?? null,
-    [alerts.rows, now]
+    () => alerts.rows?.filter(a => a.level !== 'LOW' && !seen.has(a.id)).length ?? null,
+    [alerts.rows, seen]
   )
   const queue = useMemo(
     () => (observations.rows ? queueRows(observations.rows, clusters.rows).length : null),

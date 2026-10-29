@@ -11,7 +11,7 @@ export function DemoBadge({ rows }: { rows: readonly { sim: boolean }[] }) {
   return (
     <span
       role="status"
-      className="inline-flex shrink-0 items-center rounded-tag border border-attention bg-attention-tint bg-hatch px-2 py-1 font-mono text-eyebrow font-semibold uppercase text-attention-text"
+      className="inline-flex shrink-0 items-center rounded-tag border border-hairline-strong bg-well bg-hatch px-2 py-1 font-mono text-eyebrow font-semibold uppercase text-fg"
     >
       {DEMO_BADGE_TEXT}
     </span>

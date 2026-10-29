@@ -25,7 +25,7 @@ export function PhotoSection({ path, sim }: { path: string | null; sim: boolean 
       <img
         src={current.url}
         alt="The reported crop"
-        className="aspect-[4/3] w-full rounded-card border border-hairline object-cover"
+        className="aspect-[4/3] w-full rounded-card object-cover"
       />
     )
   return (

@@ -44,14 +44,6 @@ const REASON_PHRASE: Record<VisitReason, string> = {
   high_district: 'District at High',
   moderate: 'Moderate damage',
 }
-const REASON_CHIP: Record<VisitReason, string> = {
-  cluster: 'Cluster',
-  severe: 'Severe',
-  awaiting_review: 'Awaiting review',
-  high_district: 'High district',
-  moderate: 'Moderate',
-}
-
 const topReason = (v: Visit) => {
   const code = REASON_ORDER.find(c => v.reason_codes?.includes(c))
   return code ? REASON_PHRASE[code] : v.reasons[0]
@@ -153,7 +145,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
           ].map(([value, label]) => (
             <div key={label} className="flex items-baseline gap-2">
               <dt className="sr-only">{label}</dt>
-              <dd className="text-title font-semibold tabular-nums text-fg">{value}</dd>
+              <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
               <span aria-hidden className="text-fg-2">
                 {label}
               </span>
@@ -180,7 +172,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
       <section aria-labelledby="visits" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 id="visits" className="text-title font-semibold text-fg">
+            <h2 id="visits" className="text-section font-semibold text-fg">
               Visit lists
             </h2>
             <p className="text-label text-fg-2">
@@ -234,8 +226,8 @@ function OfficerColumn({ list }: { list: OfficerList }) {
   const rest = list.visits.slice(FIRST)
   return (
     <section aria-label={list.title}>
-      <header className="flex items-baseline justify-between gap-2 border-b border-hairline pb-2">
-        <h3 className="font-semibold text-fg">{list.title}</h3>
+      <header className="flex items-baseline justify-between gap-2 pb-1">
+        <h3 className="text-label font-semibold text-fg">{list.title}</h3>
         <span className="meta">
           {list.district} · {list.visits.length} visits
         </span>
@@ -313,13 +305,8 @@ function VisitDrawer({
       aside={<DemoBadge rows={[v]} />}
       closeHref={closeHref}
     >
-      <ul className="flex flex-wrap gap-1.5" aria-label="Priority and reasons">
+      <ul className="flex flex-wrap gap-1.5" aria-label="Priority">
         <li className={`chip ${PRIORITY[v.priority].className}`}>{PRIORITY[v.priority].label}</li>
-        {(v.reason_codes ?? []).map(code => (
-          <li key={code} className="chip border-hairline-strong text-fg">
-            {REASON_CHIP[code]}
-          </li>
-        ))}
       </ul>
 
       <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-label">
@@ -349,7 +336,7 @@ function VisitDrawer({
       </dl>
 
       <section className="mt-6" aria-labelledby="why">
-        <h3 id="why" className="text-label font-semibold text-fg">
+        <h3 id="why" className="text-section font-semibold text-fg">
           Why it is on the list
         </h3>
         <ul className="mt-1 flex flex-col gap-0.5 text-label text-fg">
@@ -360,12 +347,12 @@ function VisitDrawer({
       </section>
 
       <section className="mt-6" aria-labelledby="history">
-        <h3 id="history" className="text-label font-semibold text-fg">
+        <h3 id="history" className="text-section font-semibold text-fg">
           Reports from this farm, last 14 days
         </h3>
         <ol className="mt-1 flex flex-col">
           {(v.history ?? []).map(h => (
-            <li key={h.report_number} className="border-b border-hairline py-2 last:border-b-0">
+            <li key={h.report_number} className="py-1.5">
               <p className="text-label text-fg">
                 <span className="font-mono">{h.report_number}</span> · {dateTime(h.created_at)}
               </p>
@@ -383,7 +370,7 @@ function VisitDrawer({
 
       {district && (
         <section className="mt-6" aria-labelledby="where">
-          <h3 id="where" className="text-label font-semibold text-fg">
+          <h3 id="where" className="text-section font-semibold text-fg">
             Where: {district.name} district
           </h3>
           <div className="mt-2">

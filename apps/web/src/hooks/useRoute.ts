@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react'
 //   #/?outbreak=<id>   map + outbreak drawer  #/queue?observation=<id>
 //   #/?alerts          map + alerts drawer    #/outgrower?visit=<report number>
 export type Drawer =
-  | { kind: 'outbreak'; id: string }
+  // `via`: opened from the alerts drawer, so the outbreak offers "Back to alerts".
+  | { kind: 'outbreak'; id: string; via?: 'alerts' }
   | { kind: 'observation'; id: string }
   | { kind: 'visit'; id: string }
   | { kind: 'alerts' }
@@ -26,6 +27,8 @@ function parseDrawer(query: string): Drawer | undefined {
   if (params.has('alerts')) return { kind: 'alerts' }
   for (const kind of DRAWERS) {
     const id = params.get(kind)
+    if (id && kind === 'outbreak' && params.get('via') === 'alerts')
+      return { kind, id, via: 'alerts' }
     if (id) return { kind, id }
   }
   return undefined
@@ -66,7 +69,9 @@ export function hrefFor(route: Route) {
   const { drawer } = route
   if (!drawer) return pathFor(route)
   const query =
-    drawer.kind === 'alerts' ? 'alerts' : `${drawer.kind}=${encodeURIComponent(drawer.id)}`
+    drawer.kind === 'alerts'
+      ? 'alerts'
+      : `${drawer.kind}=${encodeURIComponent(drawer.id)}${drawer.kind === 'outbreak' && drawer.via ? `&via=${drawer.via}` : ''}`
   return `${pathFor(route)}?${query}`
 }
 

@@ -15,8 +15,8 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
       <div className="min-w-0">
-        <h1 className="text-display font-semibold tracking-tight text-fg">{title}</h1>
-        <p className="mt-1 text-body-sm text-fg-2">{question}</p>
+        <h1 className="text-display font-semibold text-fg">{title}</h1>
+        <p className="mt-0.5 text-label text-fg-2">{question}</p>
       </div>
       {aside && <div className="flex shrink-0 items-center gap-2">{aside}</div>}
     </header>
@@ -36,8 +36,8 @@ export function Disclosure({
   children: ReactNode
 }) {
   return (
-    <details open={defaultOpen} className="group border-t border-hairline">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-label font-semibold text-fg hover:text-signal-text [&::-webkit-details-marker]:hidden">
+    <details open={defaultOpen} className="group">
+      <summary className="-mx-2 flex cursor-pointer list-none items-center gap-2 rounded-card px-2 py-2 text-section font-semibold text-fg hover:bg-well [&::-webkit-details-marker]:hidden">
         <ChevronRight
           size={16}
           strokeWidth={2}
@@ -47,7 +47,7 @@ export function Disclosure({
         {summary}
         {hint && <span className="ml-auto font-normal text-fg-2">{hint}</span>}
       </summary>
-      <div className="pb-4 pl-6">{children}</div>
+      <div className="pb-4 pl-6 pt-1">{children}</div>
     </details>
   )
 }

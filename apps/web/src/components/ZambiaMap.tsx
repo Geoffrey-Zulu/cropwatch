@@ -4,23 +4,23 @@ import { Maximize2, Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
 import { ISSUE_LABELS, type GeoPoint, type Issue, type RiskLevel } from '@repo/shared'
 
-// The map on the day ground (MASTER.md §6): a pale paper basemap with moss district outlines,
-// Elevated and High filled in gold and amber, reports as dark dots, clusters as deep-leaf rings.
-// Projectors wash out dark maps, so the risk is carried by fill and outline, never by glow.
+// The map on the console (patterns-v2.md): white land on a light grey ground, grey district
+// lines, Elevated in amber and High in red-gold (the only warm colours), reports as ink dots,
+// clusters and the selected district in the one accent. No glow: projectors wash it out.
 const MAP = {
-  sea: '#EAE6D8',
-  land: '#FBFAF5',
-  border: '#9AAA9C',
-  hover: '#1A2420',
-  report: '#1A2420',
-  simReport: '#55675B',
-  ring: '#4E6A14',
-  ringFill: '#5F7F1C1A',
+  sea: '#F4F5F6',
+  land: '#FFFFFF',
+  border: '#D3D7DC',
+  hover: '#17191C',
+  report: '#17191C',
+  simReport: '#8E949C',
+  ring: '#2160C4',
+  ringFill: '#2160C414',
 }
 const MAP_FILL: Record<RiskLevel, string> = {
-  HIGH: '#E39A55',
-  ELEVATED: '#F0D69C',
-  LOW: '#F1F0E6',
+  HIGH: '#E2A27F',
+  ELEVATED: '#F3DDAB',
+  LOW: '#F8F9FA',
 }
 // Elevated and High also get a darker outline in their own hue, so they read without colour too.
 const MAP_EDGE: Partial<Record<RiskLevel, string>> = {
@@ -124,16 +124,17 @@ export function ZambiaMap({
         }
       )
     } else {
+      // The floating legend sits bottom left: keep the country clear of it.
       p.fitExtent(
         [
           [16, 16],
-          [WIDTH - 16, HEIGHT - 16],
+          [WIDTH - 16, HEIGHT - (compact ? 16 : 96)],
         ],
         districts
       )
     }
     return p
-  }, [districts, focus])
+  }, [districts, focus, compact])
 
   const paths = useMemo(() => {
     if (!districts || !projection) return []
@@ -196,10 +197,7 @@ export function ZambiaMap({
   const hoverLevel = hovered ? levels.get(hovered.slug) : undefined
 
   return (
-    <div
-      className="relative overflow-hidden rounded-card border border-hairline"
-      style={{ background: MAP.sea }}
-    >
+    <div className="relative overflow-hidden rounded-card" style={{ background: MAP.sea }}>
       {!districts && (
         <p className="absolute inset-0 flex items-center justify-center text-label text-fg-2">
           Loading district boundaries…
@@ -208,8 +206,9 @@ export function ZambiaMap({
       <svg
         ref={svg}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        style={{ height }}
-        className="w-full touch-none select-none"
+        // Phones take the map at its own 4:3 shape; wider screens give it the requested height.
+        style={{ ['--map-h' as string]: `${height}px` }}
+        className="aspect-[4/3] w-full touch-none select-none sm:aspect-auto sm:h-[var(--map-h)]"
         role="img"
         aria-label="Map of Zambia: districts shaded by prototype risk level, with reports and clusters"
         onWheel={onWheel}
@@ -328,7 +327,7 @@ export function ZambiaMap({
         </g>
       </svg>
 
-      <div className={`absolute right-3 top-3 flex flex-col gap-1 ${compact ? 'hidden' : ''}`}>
+      <div className={`absolute right-3 top-3 hidden flex-col gap-1 ${compact ? '' : 'sm:flex'}`}>
         <MapButton label="Zoom in" onClick={() => zoomAt(1.5)}>
           <Plus size={18} strokeWidth={2} aria-hidden />
         </MapButton>
@@ -341,7 +340,7 @@ export function ZambiaMap({
       </div>
 
       {hovered && (
-        <div className="pointer-events-none absolute left-3 top-3 rounded-card border border-hairline bg-panel px-3 py-2 shadow-raise">
+        <div className="pointer-events-none absolute left-3 top-14 rounded-card bg-panel px-3 py-2 shadow-raise">
           <p className="text-label font-semibold text-fg">{hovered.name}</p>
           <p className="meta">
             {hovered.partOf ? `Counted with ${hovered.partOf} · ` : ''}
@@ -353,7 +352,7 @@ export function ZambiaMap({
       )}
 
       {!compact && <MapLegend />}
-      <p className="bg-panel px-3 pb-2 font-mono text-[10px] leading-tight text-fg-2">
+      <p className="px-3 pb-1 text-[10px] leading-tight text-fg-2 sm:absolute sm:bottom-1 sm:right-2 sm:p-0">
         Boundaries: geoBoundaries, GRID3 and Office of the Surveyor General (CC BY 4.0)
       </p>
     </div>
@@ -375,7 +374,7 @@ function MapButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-card border border-hairline-strong bg-panel text-fg hover:bg-well"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-card bg-panel text-fg shadow-raise hover:bg-well"
     >
       {children}
     </button>
@@ -384,14 +383,14 @@ function MapButton({
 
 function MapLegend() {
   return (
-    <div className="border-t border-hairline bg-panel px-3 py-2">
-      <p className="eyebrow mb-1">Prototype risk signal</p>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption">
+    <div className="bg-panel px-3 py-2 sm:absolute sm:bottom-3 sm:left-3 sm:max-w-[calc(100%-1.5rem)] sm:rounded-card sm:shadow-raise">
+      <p className="text-caption font-medium text-fg">Prototype risk signal</p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-fg-2">
         {(['HIGH', 'ELEVATED', 'LOW'] as const).map(level => (
           <span key={level} className="inline-flex items-center gap-1.5">
             <span
               aria-hidden
-              className="h-3 w-4 rounded-[1px] border"
+              className="h-2.5 w-3.5 rounded-[2px] border"
               style={{
                 background: MAP_FILL[level],
                 borderColor: MAP_EDGE[level] ?? MAP.border,

@@ -18,7 +18,7 @@ export function AdviceSection({
       <ol className="flex flex-col gap-2">
         {recommendation.ipm_steps.map((step, i) => (
           <li key={step} className="flex gap-3 text-label">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-tag border-1.5 border-leaf font-mono text-eyebrow font-semibold text-signal-text">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-well text-caption font-semibold text-fg-2">
               {i === last ? 'C' : i + 1}
             </span>
             <span>{withoutEmDash(step)}</span>
@@ -26,10 +26,7 @@ export function AdviceSection({
         ))}
       </ol>
       {recommendation.chemical_options.map(c => (
-        <div
-          key={c.registration_no}
-          className="rounded-card border border-hairline bg-ground p-3 text-label"
-        >
+        <div key={c.registration_no} className="rounded-card bg-well p-3 text-label">
           <strong className="font-semibold">{c.trade_name}</strong> ({c.active_ingredient})
           <span className="block font-mono text-caption">
             {c.source === 'plantwise_pmdg'
@@ -44,7 +41,7 @@ export function AdviceSection({
           {recommendation.rag_sources.map(s => (
             <li key={s.uri} className="text-label">
               {s.title}
-              <span className="ml-1.5 font-mono text-eyebrow uppercase text-attention-text">
+              <span className="chip ml-1.5 border-hairline-strong text-fg-2">
                 {TIER_NAMES[s.tier] ?? 'Source'}
               </span>
             </li>
