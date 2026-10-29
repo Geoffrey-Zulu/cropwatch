@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Phytos: pitch-morning checklist</title>
+<!-- Print source for docs/morning-checklist.pdf (A4, one page). The full runbook is docs/demo-ops.md.
+     Re-render: chrome --headless=new --print-to-pdf=docs/morning-checklist.pdf --no-pdf-header-footer docs/morning-checklist.html -->
+<style>
+  @font-face { font-family: 'Bricolage Grotesque'; src: url('../apps/web/node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2') format('woff2'); font-weight: 200 800; }
+  @font-face { font-family: 'Instrument Sans'; src: url('../apps/web/node_modules/@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2') format('woff2'); font-weight: 400 700; }
+  @font-face { font-family: 'IBM Plex Mono'; src: url('../apps/web/node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2') format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'IBM Plex Mono'; src: url('../apps/web/node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2') format('woff2'); font-weight: 600; }
+  @page { size: A4; margin: 9mm 11mm; }
+  :root { --ink: #1a2420; --ink2: #55675b; --leaf: #4e6a14; --gold: #7e5b10; --line: #d6d1c2; --chip: #0e1613; --signal: #c9e265; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 9.3pt/1.34 'Instrument Sans', system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 10px; border-bottom: 1.5px solid var(--ink); padding-bottom: 6px; margin-bottom: 7px; }
+  .mark { background: var(--chip); color: var(--signal); font: 800 13pt/1 'Bricolage Grotesque', sans-serif; letter-spacing: .16em; padding: 5px 8px; border-radius: 2px; }
+  h1 { font: 700 15pt/1.1 'Bricolage Grotesque', sans-serif; margin: 0; }
+  .meta { margin-left: auto; text-align: right; font: 7.6pt/1.35 'IBM Plex Mono', monospace; color: var(--ink2); }
+  .kick { font: 600 7.4pt/1.2 'IBM Plex Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); }
+  section { break-inside: avoid; border-top: 1px solid var(--line); padding: 5px 0 4px; }
+  h2 { font: 700 10.6pt/1.2 'Bricolage Grotesque', sans-serif; margin: 0 0 2px; display: flex; gap: 8px; align-items: baseline; }
+  h2 .t { margin-left: auto; font: 600 7.4pt 'IBM Plex Mono', monospace; color: var(--gold); letter-spacing: .08em; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { position: relative; padding-left: 15px; margin: 1.5px 0; }
+  li::before { content: ''; position: absolute; left: 0; top: 2.5px; width: 8px; height: 8px; border: 1.2px solid var(--ink); border-radius: 1px; }
+  code { font: 7.9pt/1.3 'IBM Plex Mono', monospace; background: #f0ede2; padding: 0 2px; border-radius: 2px; overflow-wrap: anywhere; }
+  .good { color: var(--leaf); font-weight: 600; }
+  .warn { color: var(--gold); font-weight: 600; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.4pt; }
+  td { border-top: 1px solid var(--line); padding: 2px 4px 2px 0; vertical-align: top; }
+  td:first-child { font: 600 7.6pt 'IBM Plex Mono', monospace; white-space: nowrap; color: var(--ink2); }
+  footer { margin-top: 5px; border-top: 1.5px solid var(--ink); padding-top: 4px; font: 7.4pt/1.35 'IBM Plex Mono', monospace; color: var(--ink2); }
+</style>
+</head>
+<body>
+<header>
+  <span class="mark">PHYTOS</span>
+  <div>
+    <p class="kick" style="white-space:nowrap">GreenCode final · 3-minute live demo</p>
+    <h1>Pitch-morning checklist</h1>
+  </div>
+  <div class="meta">Start 2 h before the pitch<br />Laptop: repo at tag <b>freeze-2026-10-29</b>, pnpm 12.9.1<br />gcloud as zulugeoffrey034@gmail.com · run from the repo root</div>
+</header>
+
+<section>
+  <h2>1. Warm the API <span class="t">2 MIN</span></h2>
+  <ul>
+    <li><code>bash infra/scale.sh 1</code> → <span class="good">ok: min instances 1; {"status":"ok",…}</span> (about US$2 a day until step 9)</li>
+  </ul>
+</section>
+
+<section>
+  <h2>2. Re-arm the live demo at the venue <span class="t">5 MIN</span></h2>
+  <ul>
+    <li>Dry run: <code>pnpm --filter @repo/seed seed --live-demo --demo-issue tuta_absoluta --demo-center=-15.388311,28.346069 --demo-district Lusaka</code></li>
+    <li>Good: <span class="good">4 qualifying tuta_absoluta reports within 10 km</span>, <span class="good">Armed until</span> a time <b>after the pitch</b>, no <span class="warn">Checks failed</span></li>
+    <li>Same command again with <code>--commit</code></li>
+  </ul>
+</section>
+
+<section>
+  <h2>3. Rehearse the presenter's report, then undo it <span class="t">5 MIN</span></h2>
+  <ul>
+    <li><code>pnpm --filter @repo/admin-tools outbreak-e2e --image leaf-mines.jpg --center -15.388311,28.346069 --district Lusaka</code></li>
+    <li>Good: <span class="good">All checks passed</span>; report → dispatched under 30 s (8 s on 29 Oct). It cleans up after itself; the demo stays armed.</li>
+    <li><code>pnpm --filter @repo/admin-tools smoke-e2e --image leaf-mines.jpg --crop tomato</code> → <span class="good">all checks passed</span>, including the advice check</li>
+  </ul>
+</section>
+
+<div class="cols">
+  <section>
+    <h2>4. SMS (Africa's Talking) <span class="t">5 MIN</span></h2>
+    <ul>
+      <li>Secrets in Secret Manager and deployed? If not, alerts go by push only and the SMS is logged: say so on stage</li>
+      <li>Account balance checked</li>
+      <li>Judges' phones subscribed with consent: <code>sms-subscribe add --phone +260… --district Lusaka --consent "verbal, at the venue, 1 Nov"</code></li>
+    </ul>
+  </section>
+  <section>
+    <h2>5. Quota and spend <span class="t">3 MIN</span></h2>
+    <ul>
+      <li>A <span class="warn">429</span> in step 3 means Gemini quota pressure: wait 10 min, re-run, keep the recordings ready</li>
+      <li>Billing → Budgets: <code>cropwatch-hackathon</code> well under its first 50% alert</li>
+    </ul>
+  </section>
+</div>
+
+<section>
+  <h2>6. Devices <span class="t">10 MIN</span></h2>
+  <div class="cols">
+    <ul>
+      <li><b>Demo phone:</b> Phytos installed from the capture URL, camera and location allowed, mobile data on (not only wifi), battery above 80%</li>
+      <li><b>The leaf:</b> tomato with <b>LEAF MINES</b>. Photograph the mines close up in daylight. <span class="warn">Not fruit</span> (a fruit photo once came back as early blight)</li>
+    </ul>
+    <ul>
+      <li><b>Laptop:</b> signed in to the Command Center as the agronomist, national map, focus <b>Lusaka and Chongwe</b>, projector tested (dark console reads?)</li>
+      <li><b>Kit:</b> hotspot charged; backup recordings on the desktop and the USB stick; printed copy of this sheet</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>7. One full run at the venue, with a stopwatch <span class="t">5 MIN</span></h2>
+  <table>
+    <tr><td>0:00</td><td>P1: the problem</td><td>1:15</td><td>P2: officer queue, confirm the report, counter ticks, alert becomes a verified cluster alert</td></tr>
+    <tr><td>0:20</td><td>P2: national map, DEMO badge visible</td><td>1:35</td><td>P2: Outgrower View, Prioritise field officers</td></tr>
+    <tr><td>0:30</td><td>P1: camera, leaf mines, Tomato, Send; bridge line while it diagnoses</td><td>1:55</td><td>P2: Evidence panel (cut first if late)</td></tr>
+    <tr><td>0:55</td><td>P2: report lands, cluster ring, model risk signal, phone buzzes</td><td>2:10</td><td>P1: close: who pays, what is next, the team</td></tr>
+  </table>
+  <ul>
+    <li>Practice reports near the venue complete the cluster: if this run used the real leaf near the venue, <b>repeat step 2 (--commit)</b> before the pitch</li>
+  </ul>
+</section>
+
+<div class="cols">
+  <section>
+    <h2>8. If it goes wrong on stage</h2>
+    <ul>
+      <li>"An officer will review": verify it in the queue; that completes the cluster</li>
+      <li>Wrong issue: "an honest miss: this is why officers verify"; correct it to Tuta absoluta</li>
+      <li>Wifi or API down: hotspot; still down, play that step's recording and keep talking</li>
+      <li>Slow diagnosis: keep talking over the map; it retries by itself. Over 10 s: recording</li>
+    </ul>
+  </section>
+  <section>
+    <h2>9. After the demo</h2>
+    <ul>
+      <li><code>bash infra/scale.sh 0</code> → <span class="good">min instances 0</span></li>
+      <li>Optional: <code>pnpm --filter @repo/seed seed --commit</code> (default demo data, not armed)</li>
+    </ul>
+    <h2 style="margin-top:6px">Never say</h2>
+    <p style="margin:0">"predicts", "probability", a confidence percentage, "the model learns from corrections", "registered" for a PMDG product, "platform".</p>
+  </section>
+</div>
+
+<footer>Capture https://crop-watch01-capture.web.app · Command Center https://crop-watch01.web.app · API https://cropwatch-api-24960589333.europe-west1.run.app/api/v1 · Full runbook: docs/demo-ops.md</footer>
+</body>
+</html>

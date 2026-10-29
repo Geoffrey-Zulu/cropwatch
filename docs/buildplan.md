@@ -493,3 +493,28 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | Live, revision `cropwatch-api-00008-2b7`      | `outbreak-e2e` passes: report → dispatched in 9.2 s. The new cluster's alert is stored as a **model risk signal** (0 of 5 verified). Lusaka's factors include the live Open-Meteo line. A **weather advisory** (Tuta, late dry season) was raised and not dispatched. Rehearsal removed and the demo re-armed |
 | Deployed                                      | Dashboard https://crop-watch01.web.app ("Phytos Command Center"); capture https://crop-watch01-capture.web.app (manifest "Phytos"); unsigned tRPC calls get 401                                                                                                                                               |
 | **Live: sign in, map, verify, counter ticks** | **Pending: officer account (Geoffrey)**                                                                                                                                                                                                                                                                       |
+
+### D8 · Wed 29 Oct — "Field Signal" UI pass, PMDG register live, dry-spell scenario, freeze
+
+**Landed**
+
+- **"Field Signal" design system** (`design-system/phytos/MASTER.md`, `philosophy.md`) replaces the navy/copper "Field Brief": one identity in two exposures. The Command Center is the night console (dark ground, glowing risk districts, chartreuse cluster rings); the capture app is the day exposure (wordmark on its dark chip, smaller headline, chartreuse sticky Send report). Bricolage Grotesque, IBM Plex Mono for every label, Instrument Sans. Same layouts, same wording.
+- **Density**: alerts are one-line signal rows; districts to watch are one line each; visit lists are one line per farm with reason chips (`reason_codes`, an additive tRPC field); one emphasised figure per view.
+- **PMDG register live**: 17 rows from the four tomato and cabbage PMDGs (`source: plantwise_pmdg`), doses verbatim from the guides; the seven placeholders retired. The UI shows "Plantwise Zambia PMDG" and "Dose (from the guide)", never the `PMDG-…` id as a registration number. Spot-check list for Geoffrey: `docs/pmdg-spot-check.md`. Excluded: cassava mosaic cypermethrin (the guide advises against it for smallholders); copper and mancozeb + metalaxyl (no PHI in the guides).
+- **Dry-spell scenario** (prototype, behind `VITE_FEATURE_SCENARIO`, on in `infra/deploy.sh`): "If the next 14 days turn dry, which camps need closer monitoring?" Open-Meteo forecast or the canned dry spell × crop-stage table (each row quotes its guide or says it is a Phytos assumption) × verified reports; camps ranked with reasons; no free text, no yields. Browser-only: it never calls the Phytos API.
+- **Landing page cut** from hackathon scope (post-event).
+- **Freeze**: tag `freeze-2026-10-29`; printed morning checklist (`docs/morning-checklist.pdf`); Saturday test plan (`docs/hackathon-backlog.md`).
+
+**Checks**
+
+| Check                                              | Result                                                                                                                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate                                        | Green: typecheck, lint, build; tests 387 (139 API, 122 shared, 25 seed, 18 regulatory, 16 dashboard, 14 capture, …)                                                                        |
+| UI review                                          | The same 12 views before and after, plus the scenario: `docs/ui-review/2026-10-29-field-signal/`                                                                                           |
+| Contrast                                           | Every text token ≥ 4.5:1 on its ground in both exposures; input borders ≥ 3:1 (MASTER.md §3)                                                                                               |
+| Deployed                                           | API `cropwatch-api-00009-lh7`; capture and dashboard on Hosting; dashboard redeployed with the scenario on                                                                                 |
+| Register                                           | `load-products --commit`: 17 added, 7 placeholders removed; a live row parses; spot-check by Geoffrey pending (`verified_by`)                                                              |
+| Live smoke (Tuta leaf)                             | Diagnosed Tuta absoluta, high confidence, in 2.6 to 3.1 s; advice complete. The model proposed no chemical, so the advice was IPM-only with the officer referral (PMDG rows not exercised) |
+| Live demo armed at the venue                       | `-15.388311, 28.346069`: 4 qualifying reports; armed until 31 Oct 20:46 UTC. Re-arm on the pitch morning                                                                                   |
+| Two automated demo runs at the venue               | `outbreak-e2e` ×2: all checks passed; report → dispatched in 8.0 s and 7.6 s; SMS log-only (no Africa's Talking secrets yet); cleaned up                                                   |
+| **Human runs, backup recordings, officer sign-in** | **Pending: the team, on the real devices, with officer accounts**                                                                                                                          |

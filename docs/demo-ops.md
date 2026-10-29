@@ -5,6 +5,7 @@ The checklist and the timed run for the live Phytos demo at the GreenCode final 
 - Capture app (presenter's phone): https://crop-watch01-capture.web.app
 - Command Center (laptop): https://crop-watch01.web.app
 - API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
+- Printed one-page version of the morning checklist: [`morning-checklist.pdf`](morning-checklist.pdf) (source `morning-checklist.html`). Saturday's test plan: [`hackathon-backlog.md`](hackathon-backlog.md).
 
 ## Before the day (D9 freeze, Wed 29 Oct)
 
@@ -51,15 +52,15 @@ If the code changed since the last deploy, deploy instead (about 8 min, same eff
 
 ### 2. Re-arm the live demo at the venue (the current arming has expired)
 
-The arming lasts about 59 hours, so do this **on the morning of the pitch**. The venue is the **M'Kango Golfview Hotel, Lusaka**: take the coordinates from Geoffrey's Google Maps pin (long-press the pin, copy `latitude, longitude`). The demo issue is Tuta absoluta on tomato. Dry run first:
+The arming lasts about 59 hours, so do this **on the morning of the pitch**. The venue is the **M'Kango Golfview Hotel, Lusaka: `-15.388311, 28.346069`** (Geoffrey's Google Maps pin). The demo issue is Tuta absoluta on tomato. Dry run first:
 
 ```bash
-pnpm --filter @repo/seed seed --live-demo --demo-issue tuta_absoluta --demo-center=<lat>,<lng> --demo-district Lusaka
+pnpm --filter @repo/seed seed --live-demo --demo-issue tuta_absoluta --demo-center=-15.388311,28.346069 --demo-district Lusaka
 ```
 
 Good:
 
-- `Live demo: 4 qualifying tuta_absoluta reports within 10 km of <venue>`.
+- `Live demo: 4 qualifying tuta_absoluta reports within 10 km of -15.388311, 28.346069`.
 - `Armed until <time>`, with that time **after the pitch**.
 - No `Checks failed` (the checks also confirm the presenter's report will form a **new** cluster, which is what raises the alert).
 
@@ -70,14 +71,16 @@ Then run the same command with `--commit` added.
 With a photo of the actual demo leaf (**leaf mines**):
 
 ```bash
-pnpm --filter @repo/admin-tools outbreak-e2e --image path/to/leaf-mines.jpg --center <lat>,<lng> --district Lusaka
+pnpm --filter @repo/admin-tools outbreak-e2e --image path/to/leaf-mines.jpg --center -15.388311,28.346069 --district Lusaka
 ```
 
 Good: `All checks passed`; the cluster and its alert within seconds of the report; dispatch finished well under 30 s. It deletes and retracts everything it made, so the demo stays armed. Then a plain diagnosis check far from the venue:
 
 ```bash
-pnpm --filter @repo/admin-tools smoke-e2e --image path/to/leaf-mines.jpg
+pnpm --filter @repo/admin-tools smoke-e2e --image path/to/leaf-mines.jpg --crop tomato
 ```
+
+Good: `all checks passed`, including the advice check (every chemical option passed the register check; none is a placeholder). On 29 Oct the model proposed no chemical for a Tuta leaf, so the advice was IPM-only with the officer referral: expected, and safe.
 
 ### 4. SMS (Africa's Talking)
 
@@ -115,16 +118,16 @@ pnpm --filter @repo/admin-tools smoke-e2e --image path/to/leaf-mines.jpg
 
 Two presenters: P1 on the phone, P2 on the dashboard (projected). Times are from the start of the pitch.
 
-| Time      | Who | What happens                                                                                                                               | Say (short)                                                                                          |
-| --------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| 0:00–0:20 | P1  | The problem.                                                                                                                               | Pests reach a district before anyone sees the pattern.                                               |
-| 0:20–0:30 | P2  | National map on screen, DEMO badge visible.                                                                                                | "Three weeks of simulated history. One report is about to be real."                                  |
-| 0:30–0:55 | P1  | Phytos opens on the camera. Photograph the leaf mines, choose Tomato, Send. Diagnosis then advice in about 7–10 s.                         | "AI assessment, in words. Advice only from Zambian and FAO guides; chemicals only if registered."    |
-| 0:55–1:15 | P2  | The report lands; the cluster ring appears; Lusaka goes from Elevated to High. The alert: **model risk signal**. The judge's phone buzzes. | "Five reports within 10 km: a prototype signal, labelled as not yet verified."                       |
-| 1:15–1:35 | P2  | Officer queue: confirm the presenter's report. The verified counter ticks; the alert becomes a **verified cluster alert**.                 | "An officer confirms it. Every correction becomes a test case. The model does not learn on its own." |
-| 1:35–1:55 | P2  | Outgrower View → **Prioritise field officers** → visit lists.                                                                              | "Which farms each field officer visits first. Camp level only: no farm locations."                   |
-| 1:55–2:10 | P2  | (Cut first if late.) Evidence panel on the presenter's report.                                                                             | "Every answer shows what it rests on."                                                               |
-| 2:10–3:00 | P1  | Close: who pays, what is next, the team.                                                                                                   | "One farmer can report a problem. Phytos lets a district see it in time."                            |
+| Time      | Who | What happens                                                                                                                               | Say (short)                                                                                                  |
+| --------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| 0:00–0:20 | P1  | The problem.                                                                                                                               | Pests reach a district before anyone sees the pattern.                                                       |
+| 0:20–0:30 | P2  | National map on screen, DEMO badge visible.                                                                                                | "Three weeks of simulated history. One report is about to be real."                                          |
+| 0:30–0:55 | P1  | Phytos opens on the camera. Photograph the leaf mines, choose Tomato, Send. Diagnosis then advice in about 7–10 s.                         | "AI assessment, in words. Advice only from Zambian and FAO guides; chemicals only after the register check." |
+| 0:55–1:15 | P2  | The report lands; the cluster ring appears; Lusaka goes from Elevated to High. The alert: **model risk signal**. The judge's phone buzzes. | "Five reports within 10 km: a prototype signal, labelled as not yet verified."                               |
+| 1:15–1:35 | P2  | Officer queue: confirm the presenter's report. The verified counter ticks; the alert becomes a **verified cluster alert**.                 | "An officer confirms it. Every correction becomes a test case. The model does not learn on its own."         |
+| 1:35–1:55 | P2  | Outgrower View → **Prioritise field officers** → visit lists.                                                                              | "Which farms each field officer visits first. Camp level only: no farm locations."                           |
+| 1:55–2:10 | P2  | (Cut first if late.) Evidence panel on the presenter's report.                                                                             | "Every answer shows what it rests on."                                                                       |
+| 2:10–3:00 | P1  | Close: who pays, what is next, the team.                                                                                                   | "One farmer can report a problem. Phytos lets a district see it in time."                                    |
 
 If the diagnosis says an officer will review, verify it in the officer queue straight away: the verification completes the cluster (the alert then arrives as a verified cluster alert). If anything stalls for more than 10 s, play that step's recording.
 
