@@ -1,6 +1,6 @@
 # Saturday test plan (Sat 31 Oct, GreenCode Hackathon day 2)
 
-Team Phytos tests the frozen build today; nobody builds new features. The code is frozen at the tag `freeze-2026-10-29`. The pitch is a 3-minute live demo, run with `docs/demo-ops.md`; the printed morning checklist is `docs/morning-checklist.md`.
+Team Phytos tests the frozen build today; nobody builds new features. The code is frozen at the tag `freeze-2026-10-29b` (UI feedback goes to `docs/ui-feedback-log.md`, not code). The pitch is a 3-minute live demo, run with `docs/demo-ops.md`; the printed morning checklist is `docs/morning-checklist.md`.
 
 - Capture app (farmer, phone): https://crop-watch01-capture.web.app
 - Command Center (officer, laptop or phone): https://crop-watch01.web.app
