@@ -1,0 +1,36 @@
+# Visual pass
+
+2026-10-29T12:32:14.133Z
+
+- **capture-1-camera-laptop.png**: ok
+- **capture-1-camera-phone.png**: ok
+- **capture-2-diagnose-ready-laptop.png**: ok
+- **capture-2-diagnose-ready-phone.png**: ok
+- **capture-3-report-sent-laptop.png**: ok
+- **capture-3-report-sent-phone.png**: ok
+- **capture-4-result-advice-laptop.png**: ok
+- **capture-4-result-advice-phone.png**: ok
+- **capture-5-result-officer-laptop.png**: ok
+- **capture-5-result-officer-phone.png**: ok
+- **capture-6-home-alerts-laptop.png**: ok
+- **capture-6-home-alerts-phone.png**: ok
+- **dashboard-map-laptop.png**: ok
+- **dashboard-map-phone.png**: ok
+- **dashboard-alerts-laptop.png**: ok
+- **dashboard-alerts-phone.png**: ok
+- **dashboard-outbreak-laptop.png**: ok
+- **dashboard-outbreak-phone.png**: ok
+- **dashboard-observation-laptop.png**: ok
+- **dashboard-observation-phone.png**: ok
+- **dashboard-queue-laptop.png**: ok
+- **dashboard-queue-phone.png**: ok
+- **dashboard-outgrower-laptop.png**: ok
+- **dashboard-outgrower-phone.png**: ok
+- **dashboard-visit-laptop.png**: ok
+- **dashboard-visit-phone.png**: ok
+- **dashboard-sources-laptop.png**: ok
+- **dashboard-sources-phone.png**: ok
+- **dashboard-scenario-laptop.png**: ok
+- **dashboard-scenario-phone.png**: ok
+- **dashboard-scenario-dry-laptop.png**: ok
+- **dashboard-scenario-dry-phone.png**: ok

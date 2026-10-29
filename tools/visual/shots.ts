@@ -154,7 +154,15 @@ for (const view of VIEWS.filter(v => !only || only.includes(v.name) || only.incl
     if (view.prepare) await view.prepare(page)
     const issues = [...(await check(page, size.width)), ...errors]
     const file = `${view.name}-${size.label}.png`
-    await page.screenshot({ path: resolve(out, file), fullPage: true })
+    // Stretch the viewport to the page so fixed bars sit at the bottom, as on a device, instead
+    // of floating mid-page in a full-page capture.
+    const height = await page.evaluate(() => document.documentElement.scrollHeight)
+    await page.setViewportSize({
+      width: size.width,
+      height: Math.min(Math.max(height, size.height), 8000),
+    })
+    await page.waitForTimeout(400)
+    await page.screenshot({ path: resolve(out, file) })
     problems += issues.length
     report.push(`- **${file}**: ${issues.length ? issues.join('; ') : 'ok'}`)
     console.log(
