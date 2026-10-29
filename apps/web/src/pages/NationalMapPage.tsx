@@ -119,7 +119,8 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
             key={focus}
             levels={levels}
             focus={FOCUS[focus].box as [[number, number], [number, number]] | null}
-            height={600}
+            // The projector view (v2.1): most of the screen height.
+            height="max(480px, 70vh)"
             selected={district}
             points={recent.map(o => ({
               id: o.id,

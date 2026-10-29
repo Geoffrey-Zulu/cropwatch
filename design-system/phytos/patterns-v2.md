@@ -295,6 +295,31 @@ Source: live https://play.grafana.org (reachable, so the Datadog fallback was no
 - **Click.** Anywhere on the row opens the outbreak detail in the same drawer, with "Back to alerts". The map pans to the cluster and outlines it in accent. "5 reports" in the detail links straight to the reports section, as Grafana's "1 instance" links to Instances.
 - **Bell.** The badge counts High and Elevated alerts not yet opened, as a white figure on ink.
 
+## v2.1 (29 Oct, after Geoffrey's review of v2)
+
+The v2 structure is the keeper. These four changes amend the decisions above; nothing else changed. After v2.1, work before the pitch is point-and-fix polish on this structure, with no further re-architecture.
+
+- **Outgrower View: never empty on first paint** (amends decision 4).
+  - "Camps needing attention" is open on load: the top 5 camps, then "Show all 21 camps".
+  - Below it, one line per field officer: officer and district, visit count, the farm to visit first with its one reason, and View (the visit drawer).
+  - "Prioritise field officers" still opens the full ranked lists, as in the runbook.
+  - On phones the camps table keeps its first four columns.
+- **Map: the projector view.**
+  - The map takes about 70% of the screen height, at least 480 px. The map page may widen to 1760 px; the other pages keep 1320 px.
+  - Report dots are twice the radius, and simulated dots are dark grey instead of light grey.
+  - Risk fills are stronger, so they read from the back of a room: High `#C8612A`, Elevated `#E5B451`, outlines `#7A3109` and `#8F6511`.
+  - A cluster is one ring with its report count inside. Where the 10 km circle is too small for the count, the ring becomes a white badge at a fixed size on screen. Badges that would overlap are nudged apart, as with Lusaka and Chongwe at the national view.
+  - The region toggle stays.
+- **Navigation: a slim icon rail** (after OneSoil).
+  - The rail is 56 px wide on screens from 1024 px. The page name shows as a tooltip on hover and keyboard focus.
+  - The current page has a filled icon (accent at 22%) and an accent bar on the rail's edge. The queue count is a badge on its icon.
+  - Phones keep the labelled strip: touch has no hover.
+- **Copy.**
+  - The officer queue's routed list is headed "AI could not identify".
+  - The publisher, year and country column on Knowledge sources is in the body sans, not mono.
+
+**Post-event:** the map as a full canvas, with panels floating over it, is on the roadmap in `docs/hackathon-backlog.md`.
+
 ## Not observed
 
 - **OneSoil.** The web app behind its login. Its UI comes from 2024 help-centre screenshots; its tokens come from the login page CSS. The app's loading states beyond the flat grey screen were not seen, and there is no live measurement of the light app.

@@ -112,7 +112,7 @@ export function KnowledgeSourcesPage() {
                       {r.title}
                       <ExternalLink size={12} strokeWidth={2} aria-hidden className="ml-1 inline" />
                     </a>
-                    <span className="font-mono text-eyebrow text-fg-2">
+                    <span className="text-caption text-fg-2">
                       {r.source} · {r.year} · {r.country}
                     </span>
                   </div>

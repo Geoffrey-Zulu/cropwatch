@@ -33,7 +33,7 @@ Record each step of the run below on the real devices, once it passes, and keep 
 2. The dashboard map as the report lands and the cluster ring appears; Lusaka going from Elevated to High; the bell showing the new alert and the alerts drawer.
 3. The SMS arriving on a phone (or the Africa's Talking simulator, if the live account is not ready).
 4. The officer queue: verifying the presenter's report, the counter ticking, the alert turning into a verified cluster alert (open the bell to show it).
-5. The Outgrower View: "Prioritise field officers", the visit lists, and one visit drawer (View).
+5. The Outgrower View: the camps and officer lines on load, "Prioritise field officers", the visit lists, and one visit drawer (View).
 6. The presenter's report in its drawer, then "Why this advice?" (sources with tiers, the register check).
 
 If the wifi or the API fails on stage, play the matching recording and keep talking.

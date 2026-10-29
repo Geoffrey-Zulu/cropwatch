@@ -6,27 +6,33 @@ import { ISSUE_LABELS, type GeoPoint, type Issue, type RiskLevel } from '@repo/s
 
 // The map on the console (patterns-v2.md): white land on a light grey ground, grey district
 // lines, Elevated in amber and High in red-gold (the only warm colours), reports as ink dots,
-// clusters and the selected district in the one accent. No glow: projectors wash it out.
+// clusters and the selected district in the one accent. It is the projector view (v2.1): fills
+// strong and dots large enough to read from the back of a room. No glow: projectors wash it out.
 const MAP = {
   sea: '#F4F5F6',
   land: '#FFFFFF',
   border: '#D3D7DC',
   hover: '#17191C',
   report: '#17191C',
-  simReport: '#8E949C',
+  simReport: '#4D535B',
   ring: '#2160C4',
-  ringFill: '#2160C414',
+  ringText: '#1B4F8F',
+  ringFill: '#2160C41A',
 }
 const MAP_FILL: Record<RiskLevel, string> = {
-  HIGH: '#E2A27F',
-  ELEVATED: '#F3DDAB',
+  HIGH: '#C8612A',
+  ELEVATED: '#E5B451',
   LOW: '#F8F9FA',
 }
 // Elevated and High also get a darker outline in their own hue, so they read without colour too.
 const MAP_EDGE: Partial<Record<RiskLevel, string>> = {
-  HIGH: '#9A4515',
-  ELEVATED: '#A87A1C',
+  HIGH: '#7A3109',
+  ELEVATED: '#8F6511',
 }
+// Report dot radii at the national view, in map units.
+const DOT = { report: 6.8, sim: 4.4 }
+// A cluster is one ring with its report count inside, never smaller than this (screen units).
+const BADGE = 14
 
 type DistrictFeature = Feature<
   MultiPolygon,
@@ -96,7 +102,8 @@ export function ZambiaMap({
   selected?: string | null
   // A small locator (the visit drawer): no zoom controls, no legend.
   compact?: boolean
-  height?: number
+  // Pixels, or any CSS length ("max(480px, 70vh)") on screens wider than a phone.
+  height?: number | string
 }) {
   const districts = useDistricts()
   const [view, setView] = useState({ x: 0, y: 0, k: 1 })
@@ -196,6 +203,39 @@ export function ZambiaMap({
   const hovered = paths.find(p => p.key === hover)
   const hoverLevel = hovered ? levels.get(hovered.slug) : undefined
 
+  // Cluster rings: the 10 km circle, or a badge where that is too small to hold the count.
+  // Badges that would overlap at this zoom (Lusaka and Chongwe at the national view) are nudged
+  // apart so every count stays readable.
+  const rings = clusters.flatMap(c => {
+    const at = project(c.center)
+    if (!at) return []
+    const km = kmToPx(c.center, c.radiusKm)
+    const badge = km * view.k < BADGE
+    return [{ cluster: c, x: at[0], y: at[1], r: badge ? BADGE / view.k : km, badge }]
+  })
+  for (let pass = 0; pass < 24; pass++) {
+    let moved = false
+    for (let i = 0; i < rings.length; i++)
+      for (let j = i + 1; j < rings.length; j++) {
+        const a = rings[i]
+        const b = rings[j]
+        if (!a.badge || !b.badge) continue
+        const dx = b.x - a.x
+        const dy = b.y - a.y
+        const dist = Math.hypot(dx, dy) || 0.01
+        const overlap = a.r + b.r + 2 / view.k - dist
+        if (overlap <= 0) continue
+        const ux = dist > 0.01 ? dx / dist : 1
+        const uy = dist > 0.01 ? dy / dist : 0
+        a.x -= (ux * overlap) / 2
+        a.y -= (uy * overlap) / 2
+        b.x += (ux * overlap) / 2
+        b.y += (uy * overlap) / 2
+        moved = true
+      }
+    if (!moved) break
+  }
+
   return (
     <div className="relative overflow-hidden rounded-card" style={{ background: MAP.sea }}>
       {!districts && (
@@ -207,7 +247,7 @@ export function ZambiaMap({
         ref={svg}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         // Phones take the map at its own 4:3 shape; wider screens give it the requested height.
-        style={{ ['--map-h' as string]: `${height}px` }}
+        style={{ ['--map-h' as string]: typeof height === 'number' ? `${height}px` : height }}
         className="aspect-[4/3] w-full touch-none select-none sm:aspect-auto sm:h-[var(--map-h)]"
         role="img"
         aria-label="Map of Zambia: districts shaded by prototype risk level, with reports and clusters"
@@ -254,55 +294,6 @@ export function ZambiaMap({
               />
             ))}
 
-          {clusters.map(c => {
-            const at = project(c.center)
-            if (!at) return null
-            const r = Math.max(kmToPx(c.center, c.radiusKm), 6 / view.k)
-            return (
-              <g
-                key={c.id}
-                className={onCluster ? 'cursor-pointer' : undefined}
-                onClick={() => onCluster?.(c.id)}
-              >
-                {/* A paper halo keeps the ring readable over an amber High district. */}
-                <circle
-                  cx={at[0]}
-                  cy={at[1]}
-                  r={r}
-                  fill="none"
-                  stroke={MAP.land}
-                  strokeOpacity={0.9}
-                  strokeWidth={5 / view.k}
-                />
-                <circle
-                  cx={at[0]}
-                  cy={at[1]}
-                  r={r}
-                  fill={MAP.ringFill}
-                  stroke={MAP.ring}
-                  strokeWidth={2 / view.k}
-                  strokeDasharray={c.sim ? `${4 / view.k} ${3 / view.k}` : undefined}
-                />
-                <text
-                  x={at[0]}
-                  y={at[1] - r - 4 / view.k}
-                  textAnchor="middle"
-                  fontSize={12 / view.k}
-                  fill={MAP.ring}
-                  stroke={MAP.land}
-                  strokeWidth={3 / view.k}
-                  paintOrder="stroke"
-                  className="font-mono font-semibold"
-                >
-                  {c.size}
-                </text>
-                <title>
-                  Cluster: {ISSUE_LABELS[c.issue]}, {c.size} reports within {c.radiusKm} km
-                </title>
-              </g>
-            )
-          })}
-
           {points.map(p => {
             const at = project(p.location)
             if (!at) return null
@@ -311,12 +302,10 @@ export function ZambiaMap({
                 key={p.id}
                 cx={at[0]}
                 cy={at[1]}
-                r={(p.sim ? 2.2 : 3.4) / Math.sqrt(view.k)}
+                r={(p.sim ? DOT.sim : DOT.report) / Math.sqrt(view.k)}
                 fill={p.sim ? MAP.simReport : MAP.report}
-                fillOpacity={p.sim ? 0.8 : 1}
                 stroke={MAP.land}
-                strokeOpacity={0.9}
-                strokeWidth={0.6 / Math.sqrt(view.k)}
+                strokeWidth={1.2 / Math.sqrt(view.k)}
                 className={onPoint ? 'cursor-pointer' : undefined}
                 onClick={() => onPoint?.(p.id)}
               >
@@ -324,6 +313,56 @@ export function ZambiaMap({
               </circle>
             )
           })}
+
+          {/* Over the dots: a badge stands for the reports under it. */}
+          {rings.map(({ cluster: c, x, y, r, badge }) => (
+            <g
+              key={c.id}
+              className={onCluster ? 'cursor-pointer' : undefined}
+              onClick={() => onCluster?.(c.id)}
+            >
+              {/* A paper halo keeps the ring readable over a red-gold High district. */}
+              <circle
+                cx={x}
+                cy={y}
+                r={r}
+                fill="none"
+                stroke={MAP.land}
+                strokeOpacity={0.9}
+                strokeWidth={5 / view.k}
+                pointerEvents="none"
+              />
+              {/* A large ring takes clicks on its edge only, so the reports inside stay clickable. */}
+              <circle
+                cx={x}
+                cy={y}
+                r={r}
+                pointerEvents={badge ? 'visiblePainted' : 'visibleStroke'}
+                fill={badge ? MAP.land : MAP.ringFill}
+                stroke={MAP.ring}
+                strokeWidth={2.5 / view.k}
+                strokeDasharray={c.sim ? `${4 / view.k} ${2.5 / view.k}` : undefined}
+              />
+              <text
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={14 / view.k}
+                fontWeight={700}
+                fill={MAP.ringText}
+                stroke={MAP.land}
+                strokeWidth={badge ? 0 : 3 / view.k}
+                paintOrder="stroke"
+                className="tabular-nums"
+              >
+                {c.size}
+              </text>
+              <title>
+                Cluster: {ISSUE_LABELS[c.issue]}, {c.size} reports within {c.radiusKm} km
+              </title>
+            </g>
+          ))}
         </g>
       </svg>
 
@@ -400,17 +439,13 @@ function MapLegend() {
           </span>
         ))}
         <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ background: MAP.report }}
-          />
+          <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: MAP.report }} />
           Report
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
-            className="h-2 w-2 rounded-full opacity-75"
+            className="h-2 w-2 rounded-full"
             style={{ background: MAP.simReport }}
           />
           Simulated report
@@ -418,10 +453,12 @@ function MapLegend() {
         <span className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
-            className="h-3 w-3 rounded-full border-2"
-            style={{ borderColor: MAP.ring }}
-          />
-          Cluster (10 km)
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px] font-bold leading-none"
+            style={{ borderColor: MAP.ring, color: MAP.ringText }}
+          >
+            5
+          </span>
+          Cluster: reports within 10 km
         </span>
       </div>
     </div>

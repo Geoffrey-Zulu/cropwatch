@@ -65,8 +65,9 @@ const NAV: NavItem[] = [
 
 // The Command Center frame (patterns.md): the wordmark on its chip and a small prototype badge on
 // the left; the live verified count and the account menu (initials, never a raw email in the
-// chrome) on the right; sentence-case navigation with a chartreuse bar on the current page; the
-// page at a readable maximum width.
+// chrome) on the right; the page at a readable maximum width. Navigation is a slim icon rail on
+// wide screens (v2.1, after OneSoil) with the page name as a tooltip, and the current page a
+// filled icon with a bar, so the width goes to the map; phones keep a labelled strip.
 export function AppShell({
   active,
   commandCenter,
@@ -114,38 +115,71 @@ export function AppShell({
       <div className="lg:flex">
         <nav
           aria-label="Pages"
-          className="sticky top-14 z-20 flex gap-0.5 overflow-x-auto bg-well px-2 py-2 lg:h-[calc(100dvh-56px)] lg:w-56 lg:shrink-0 lg:flex-col lg:overflow-visible lg:px-3 lg:py-4"
+          className="sticky top-14 z-20 flex gap-0.5 overflow-x-auto bg-well px-2 py-2 lg:h-[calc(100dvh-56px)] lg:w-14 lg:shrink-0 lg:flex-col lg:items-center lg:gap-1 lg:overflow-visible lg:py-3"
         >
           {items.map(item => {
             const current = item.page === active
+            const count = item.page === 'queue' && queue !== null && queue > 0 ? queue : null
             return (
               <a
                 key={item.page}
                 href={hrefFor(item.route)}
                 aria-current={current ? 'page' : undefined}
-                className={`relative flex shrink-0 items-center gap-2.5 rounded-card px-3 py-1.5 text-label font-medium transition-colors ${
-                  current ? 'bg-signal-tint text-fg' : 'text-fg-2 hover:bg-panel hover:text-fg'
+                className={`group relative flex shrink-0 items-center gap-2.5 rounded-card px-3 py-1.5 text-label font-medium transition-colors lg:h-10 lg:w-10 lg:justify-center lg:p-0 ${
+                  current ? 'text-signal-text' : 'text-fg-2 hover:bg-panel hover:text-fg'
                 }`}
               >
                 {current && (
                   <span
                     aria-hidden
-                    className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-signal max-lg:inset-x-3 max-lg:bottom-0 max-lg:top-auto max-lg:h-[3px] max-lg:w-auto"
+                    className="absolute bg-signal max-lg:inset-x-3 max-lg:bottom-0 max-lg:h-[3px] max-lg:rounded-full lg:-left-2 lg:inset-y-1.5 lg:w-[3px] lg:rounded-r-full"
                   />
                 )}
-                <item.icon size={16} strokeWidth={2} aria-hidden />
-                {item.label}
-                {item.page === 'queue' && queue !== null && queue > 0 && (
-                  <span className="ml-auto text-caption font-medium tabular-nums text-fg-2">
-                    {queue}
+                <span className="relative inline-flex">
+                  <item.icon
+                    strokeWidth={2}
+                    aria-hidden
+                    className="h-4 w-4 lg:h-5 lg:w-5"
+                    fill={current ? 'currentColor' : 'none'}
+                    fillOpacity={current ? 0.22 : undefined}
+                  />
+                  {count !== null && (
+                    <span
+                      aria-hidden
+                      className="absolute -right-2.5 -top-2 hidden min-w-[18px] rounded-full bg-fg px-1 text-center text-[11px] font-semibold leading-[18px] text-ground lg:block"
+                    >
+                      {count > 99 ? '99+' : count}
+                    </span>
+                  )}
+                </span>
+                <span className="lg:sr-only">
+                  {item.label}
+                  {count !== null && <span className="sr-only">, {count} waiting</span>}
+                </span>
+                {count !== null && (
+                  <span
+                    aria-hidden
+                    className="ml-auto text-caption font-medium tabular-nums text-fg-2 lg:hidden"
+                  >
+                    {count}
                   </span>
                 )}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-full top-1/2 z-40 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-card bg-fg px-2.5 py-1.5 text-caption font-medium text-ground shadow-raise lg:group-hover:block lg:group-focus-visible:block"
+                >
+                  {item.label}
+                  {count !== null ? ` · ${count} waiting` : ''}
+                </span>
               </a>
             )
           })}
         </nav>
         <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
-          <div className="mx-auto max-w-[1320px]">{children}</div>
+          {/* The map page is the projector view: it takes a 1080p screen's width too. */}
+          <div className={`mx-auto ${active === 'map' ? 'max-w-[1760px]' : 'max-w-[1320px]'}`}>
+            {children}
+          </div>
         </main>
       </div>
     </div>

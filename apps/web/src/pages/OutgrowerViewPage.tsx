@@ -11,7 +11,7 @@ import {
 import { DemoBadge } from '../components/DemoBadge'
 import { Drawer } from '../components/Drawer'
 import { LevelDot } from '../components/LevelTag'
-import { Disclosure, PageHeader } from '../components/PageHeader'
+import { PageHeader } from '../components/PageHeader'
 import { Muted } from '../components/Panel'
 import { Bar, Loading, SkeletonRows } from '../components/Skeleton'
 import { ZambiaMap } from '../components/ZambiaMap'
@@ -51,6 +51,8 @@ const topReason = (v: Visit) => {
 
 // Rows an officer column shows before "more".
 const FIRST = 5
+// Camps shown on first paint, before "Show all".
+const CAMPS_FIRST = 5
 
 interface OfficerList {
   key: string
@@ -60,8 +62,9 @@ interface OfficerList {
 }
 
 // Outgrower View: which farms each field officer should visit first. Camp and district level
-// only: no farm locations (CLAUDE.md invariant 6). Each officer gets a short ranked list; why a
-// farm is on it, its history and where its district is open in a drawer (patterns-v2.md).
+// only: no farm locations (CLAUDE.md invariant 6). The first paint is never empty: the top camps
+// and one line a field officer show on load; "Prioritise" opens the full ranked lists. Why a
+// farm is on a list, its history and where its district is open in a drawer (patterns-v2.md).
 export function OutgrowerViewPage({ officer }: { officer: Officer }) {
   const orgId = officer.commandCenter ? DEMO_ORG_ID : officer.orgId
   const overview = trpc.outgrower.overview.useQuery(
@@ -80,11 +83,8 @@ function OverviewSkeleton() {
       <div className="flex flex-col gap-5">
         <Bar className="h-8 w-72" />
         <Bar className="h-4 w-96" />
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map(i => (
-            <SkeletonRows key={i} rows={5} label="Loading a visit list" />
-          ))}
-        </div>
+        <SkeletonRows rows={CAMPS_FIRST} label="Loading the camps" />
+        <SkeletonRows rows={6} label="Loading the visit lists" />
       </div>
     </Loading>
   )
@@ -121,7 +121,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
           .flatMap(l => l.visits.map(v => ({ visit: v, list: l })))
           .find(x => x.visit.report_number === drawer.id)
       : undefined
-  const showLists = prioritised || Boolean(opened)
+  const showLists = prioritised
   const visits = lists.reduce((n, l) => n + l.visits.length, 0)
   const levels = useMemo(
     () => new Map(data.camps.map(c => [c.district_slug, c.district_level] as const)),
@@ -169,6 +169,19 @@ function Overview({ data }: { data: OutgrowerOverview }) {
         </p>
       </div>
 
+      <section aria-labelledby="camps" className="flex flex-col gap-2">
+        <div>
+          <h2 id="camps" className="text-section font-semibold text-fg">
+            Camps needing attention
+          </h2>
+          <p className="text-label text-fg-2">
+            {data.camps.length} camps with reports from member farms in {data.window_days} days,
+            camps with a cluster first.
+          </p>
+        </div>
+        <CampsTable camps={data.camps} />
+      </section>
+
       <section aria-labelledby="visits" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -191,12 +204,14 @@ function Overview({ data }: { data: OutgrowerOverview }) {
             </button>
           )}
         </div>
-        {showLists && (
+        {showLists ? (
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {lists.map(list => (
               <OfficerColumn key={list.key} list={list} />
             ))}
           </div>
+        ) : (
+          <OfficerSummary lists={lists} />
         )}
         <p className="text-caption text-fg-2">
           Priority is an ordering from the reasons shown (cluster membership, damage reported,
@@ -204,10 +219,6 @@ function Overview({ data }: { data: OutgrowerOverview }) {
           the roadmap only; they are not built.
         </p>
       </section>
-
-      <Disclosure summary="Camps needing attention" hint={`${data.camps.length} camps`}>
-        <CampsTable camps={data.camps} />
-      </Disclosure>
 
       {opened && (
         <VisitDrawer
@@ -218,6 +229,53 @@ function Overview({ data }: { data: OutgrowerOverview }) {
         />
       )}
     </div>
+  )
+}
+
+// Before "Prioritise": one line a field officer (how many visits, the farm to visit first, View),
+// so the page has its answer on first paint.
+function OfficerSummary({ lists }: { lists: OfficerList[] }) {
+  const { open } = useDrawerLinks()
+  return (
+    <ul className="flex flex-col" aria-label="Visit lists, first farm each">
+      {lists.map(list => {
+        const top = list.visits[0]
+        return (
+          <li key={list.key}>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-0.5 py-2 sm:grid-cols-[minmax(10rem,14rem)_6rem_minmax(0,1fr)_auto]">
+              <span className="text-label">
+                <span className="font-semibold text-fg">{list.title}</span>
+                <span className="block text-caption text-fg-2">{list.district}</span>
+              </span>
+              <span className="text-label tabular-nums text-fg-2">
+                {list.visits.length} {list.visits.length === 1 ? 'visit' : 'visits'}
+              </span>
+              <span className="text-label">
+                {top ? (
+                  <>
+                    <span className="text-fg-2">First: </span>
+                    <span className="font-semibold text-fg">{top.farm_label}</span>{' '}
+                    <span className="text-fg-2">· {topReason(top)}</span>
+                  </>
+                ) : (
+                  <span className="text-fg-2">No visits needed.</span>
+                )}
+              </span>
+              {top && (
+                <a
+                  href={open({ kind: 'visit', id: top.report_number })}
+                  aria-label={`View ${top.farm_label}`}
+                  className="inline-flex items-center justify-self-end text-label font-medium text-signal-text hover:underline"
+                >
+                  View
+                  <ChevronRight size={14} strokeWidth={2} aria-hidden />
+                </a>
+              )}
+            </div>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -396,11 +454,12 @@ function VisitDrawer({
 
 function CampsTable({ camps }: { camps: OutgrowerOverview['camps'] }) {
   const [all, setAll] = useState(false)
-  const shown = all ? camps : camps.slice(0, 8)
+  const shown = all ? camps : camps.slice(0, CAMPS_FIRST)
   if (camps.length === 0) return <Muted>No reports from member farms in this window.</Muted>
   return (
     <div className="overflow-x-auto" data-visual-scroll>
-      <table className="w-full min-w-[640px] text-left text-label">
+      {/* Phones show the first four columns; the counts behind them need a wider screen. */}
+      <table className="w-full text-left text-label md:min-w-[640px]">
         <thead>
           <tr className="border-b border-hairline">
             {[
@@ -411,8 +470,8 @@ function CampsTable({ camps }: { camps: OutgrowerOverview['camps'] }) {
               'Damage reported',
               'In a cluster',
               'With an officer',
-            ].map(h => (
-              <th key={h} className="th py-2 pr-4">
+            ].map((h, i) => (
+              <th key={h} className={`th py-2 pr-4 ${i > 3 ? 'max-md:hidden' : ''}`}>
                 {h}
               </th>
             ))}
@@ -430,9 +489,9 @@ function CampsTable({ camps }: { camps: OutgrowerOverview['camps'] }) {
               </td>
               <td className="py-2 pr-4 tabular-nums">{c.reports}</td>
               <td className="py-2 pr-4">{c.top_issue_label ?? 'Not identified'}</td>
-              <td className="py-2 pr-4 tabular-nums">{c.damaged}</td>
-              <td className="py-2 pr-4 tabular-nums">{c.in_cluster}</td>
-              <td className="py-2 pr-4 tabular-nums">{c.awaiting_review}</td>
+              <td className="py-2 pr-4 tabular-nums max-md:hidden">{c.damaged}</td>
+              <td className="py-2 pr-4 tabular-nums max-md:hidden">{c.in_cluster}</td>
+              <td className="py-2 pr-4 tabular-nums max-md:hidden">{c.awaiting_review}</td>
             </tr>
           ))}
         </tbody>

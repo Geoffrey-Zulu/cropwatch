@@ -24,12 +24,26 @@ const capture = flag('capture') ?? 'http://localhost:5174'
 const photo = flag('photo') ? resolve(root, flag('photo')!) : null
 const only = flag('only')?.split(',')
 
+interface Size {
+  label: string
+  width: number
+  height: number
+}
+
 interface View {
   name: string
   app: 'dashboard' | 'capture'
   route: string
   prepare?: (page: Page) => Promise<void>
+  // Shot at these sizes as well as laptop and phone.
+  extra?: Size[]
 }
+
+// The national map is the projector view: a mirrored laptop at 1280 x 800 and a 1080p screen.
+const PROJECTOR: Size[] = [
+  { label: 'projector-1280', width: 1280, height: 800 },
+  { label: 'projector-1920', width: 1920, height: 1080 },
+]
 
 const VIEWS: View[] = [
   { name: 'capture-1-camera', app: 'capture', route: 'diagnose' },
@@ -48,18 +62,21 @@ const VIEWS: View[] = [
   { name: 'capture-4-result-advice', app: 'capture', route: 'result' },
   { name: 'capture-5-result-officer', app: 'capture', route: 'officer' },
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
-  { name: 'dashboard-map', app: 'dashboard', route: 'map' },
+  { name: 'dashboard-map', app: 'dashboard', route: 'map', extra: PROJECTOR },
   { name: 'dashboard-alerts', app: 'dashboard', route: 'alerts' },
   { name: 'dashboard-outbreak', app: 'dashboard', route: 'outbreak' },
   { name: 'dashboard-observation', app: 'dashboard', route: 'observation' },
   { name: 'dashboard-queue', app: 'dashboard', route: 'queue' },
+  // First paint: the camps and one line a field officer, before anyone presses anything.
+  { name: 'dashboard-outgrower', app: 'dashboard', route: 'outgrower' },
   {
-    name: 'dashboard-outgrower',
+    name: 'dashboard-outgrower-prioritised',
     app: 'dashboard',
     route: 'outgrower',
-    // As in the demo: the visit lists appear on "Prioritise field officers".
+    // As in the demo: the full visit lists appear on "Prioritise field officers".
     prepare: async page => {
-      await page.getByRole('button', { name: /prioritise field officers/i }).click()
+      // No wait for the button to settle: a slow machine timed out on it (29 Oct).
+      await page.getByRole('button', { name: /prioritise field officers/i }).click({ force: true })
       await page.waitForTimeout(500)
     },
   },
@@ -77,7 +94,7 @@ const VIEWS: View[] = [
   },
 ]
 
-const WIDTHS = [
+const WIDTHS: Size[] = [
   { label: 'laptop', width: 1440, height: 900 },
   { label: 'phone', width: 390, height: 844 },
 ]
@@ -193,7 +210,7 @@ mkdirSync(out, { recursive: true })
 const report: string[] = [`# Visual pass`, '', `${new Date().toISOString()}`, '']
 let problems = 0
 for (const view of VIEWS.filter(v => !only || only.includes(v.name) || only.includes(v.route))) {
-  for (const size of WIDTHS) {
+  for (const size of [...WIDTHS, ...(view.extra ?? [])]) {
     const context = await browser.newContext({
       viewport: { width: size.width, height: size.height },
       deviceScaleFactor: size.label === 'phone' ? 2 : 1,

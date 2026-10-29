@@ -1,9 +1,13 @@
-# UI feedback log (after freeze-2026-10-29b)
+# UI feedback log
 
-The UI is frozen at the tag `freeze-2026-10-29b` until after the final pitch on Sunday 1 November. From the tag on, UI feedback is **logged here, not built**. The exception is a defect on the demo path, which follows the triage rule in `docs/hackathon-backlog.md` §3.
+The dashboard redesign (v2, then v2.1 on 29 Oct) replaced the freeze at `freeze-2026-10-29b`. **v2.1 is the keeper structure.** Saturday 31 October at the venue is point-and-fix polish on it, with no further re-architecture; the hard freeze is at 18:00 that day. After the freeze, UI feedback is **logged here, not built**, until after the final pitch on Sunday 1 November. The exception is a defect on the demo path, which follows the triage rule in `docs/hackathon-backlog.md` §3.
 
 Add one row per item, newest at the bottom. "View" is one of: national map, outbreak detail, observation detail, officer queue, Outgrower View, knowledge sources, dry-spell scenario, capture (camera / report sent / result / home).
 
-| #   | Date | From | View | What was seen or suggested | Demo path? | Decision (log only / fix now) | Follow-up after the pitch |
-| --- | ---- | ---- | ---- | -------------------------- | ---------- | ----------------------------- | ------------------------- |
-| 1   |      |      |      |                            |            |                               |                           |
+| #   | Date   | From                 | View                             | What was seen or suggested                                                                               | Demo path? | Decision (log only / fix now)                                         | Follow-up after the pitch                |
+| --- | ------ | -------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------- | ---------------------------------------- |
+| 1   | 29 Oct | Geoffrey (v2 review) | Outgrower View                   | Looked empty on first paint: camps collapsed, lists only after Prioritise                                | Yes        | Built in v2.1: top 5 camps open, one line per field officer with View |                                          |
+| 2   | 29 Oct | Geoffrey (v2 review) | national map                     | Must carry on a projector: taller map, darker and larger dots, stronger fills, cluster count in one ring | Yes        | Built in v2.1                                                         | Map as a full canvas: post-event roadmap |
+| 3   | 29 Oct | Geoffrey (v2 review) | all (navigation)                 | Sidebar to a slim icon rail with tooltips, as OneSoil; filled icon and bar for the current page          | No         | Built in v2.1                                                         |                                          |
+| 4   | 29 Oct | Geoffrey (v2 review) | officer queue, knowledge sources | "Never guessed" to "AI could not identify"; sources' right column in the body sans                       | No         | Built in v2.1                                                         |                                          |
+| 5   |        |                      |                                  |                                                                                                          |            |                                                                       |                                          |
