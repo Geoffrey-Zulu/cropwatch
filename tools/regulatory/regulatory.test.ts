@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import { parseCsv } from './csv'
-import { COLUMNS, parseProductsCsv } from './products'
+import { COLUMNS, markVerified, parseProductsCsv } from './products'
 
 describe('parseCsv', () => {
   it('splits plain rows', () => {
@@ -116,5 +116,99 @@ describe('placeholder-products.csv', () => {
     }
     expect(products.some(p => p.expiry !== null && p.expiry < '2026-01-01')).toBe(true)
     expect(products.some(p => p.registration_no.includes('/'))).toBe(true)
+  })
+})
+
+describe('verified_by column', () => {
+  const withColumn = `${header},verified_by
+${valid},
+${valid.replace('ZM/PCS/0012', 'ZM-9')},geoffrey
+`
+
+  it('is optional, and empty means not yet checked', () => {
+    expect(
+      parseProductsCsv(`${header}
+${valid}
+`).products[0].verified_by
+    ).toBeNull()
+    const { products, errors } = parseProductsCsv(withColumn)
+    expect(errors).toEqual([])
+    expect(products.map(p => p.verified_by)).toEqual([null, 'geoffrey'])
+  })
+
+  it('markVerified changes only the verified_by cell of the named rows, idempotently', () => {
+    const once = markVerified(withColumn, ['ZM/PCS/0012'], 'geoffrey')
+    expect(once.changed).toBe(1)
+    expect(once.missing).toEqual([])
+    expect(once.text).toBe(
+      withColumn.replace(
+        'into the whorl  ",14,II,label,gs://labels/alpha.pdf,,',
+        'into the whorl  ",14,II,label,gs://labels/alpha.pdf,,geoffrey'
+      )
+    )
+    const twice = markVerified(once.text, ['ZM/PCS/0012', 'ZM-9'], 'geoffrey')
+    expect(twice.changed).toBe(0)
+    expect(twice.text).toBe(once.text)
+    expect(parseProductsCsv(twice.text).products[0].label_dose).toBe(
+      '  10 ml / 15 L, into the whorl  '
+    )
+  })
+
+  it('markVerified reports unknown ids and refuses a file without the column', () => {
+    expect(markVerified(withColumn, ['NOPE'], 'geoffrey').missing).toEqual(['NOPE'])
+    expect(() =>
+      markVerified(
+        `${header}
+${valid}
+`,
+        ['ZM/PCS/0012'],
+        'geoffrey'
+      )
+    ).toThrow('verified_by')
+    expect(() => markVerified(withColumn, ['ZM-9'], 'two words')).toThrow('plain name')
+  })
+})
+
+describe('pmdg-products.csv (the live register)', () => {
+  const text = readFileSync(new URL('./pmdg-products.csv', import.meta.url), 'utf8')
+  const { products, errors } = parseProductsCsv(text)
+  const byId = new Map(products.map(p => [p.registration_no, p]))
+
+  it('is valid, all Plantwise PMDG, never a placeholder, with ids that cannot pass for a registration number', () => {
+    expect(errors).toEqual([])
+    expect(products.length).toBeGreaterThanOrEqual(17)
+    for (const p of products) {
+      expect(p.source).toBe('plantwise_pmdg')
+      expect(p.registration_no).toMatch(/^PMDG-[A-Z0-9-]+$/)
+      expect(p.source_doc).toMatch(/^pw-pmdg-/)
+      expect(p.expiry).toBeNull()
+      expect(`${p.trade_name} ${p.label_dose}`).not.toMatch(/placeholder/i)
+    }
+  })
+
+  it('covers the four PMDG demo issues and leaves cassava mosaic IPM-only (the PMDG advises against it for smallholders)', () => {
+    const pairs = new Set(
+      products.flatMap(p => p.approved_crops.flatMap(c => p.approved_issues.map(i => `${c}/${i}`)))
+    )
+    for (const pair of [
+      'tomato/tuta_absoluta',
+      'tomato/late_blight',
+      'tomato/early_blight',
+      'cabbage/diamondback_moth',
+    ]) {
+      expect(pairs, pair).toContain(pair)
+    }
+    expect(products.some(p => p.approved_issues.includes('cassava_mosaic'))).toBe(false)
+    expect(products.some(p => p.approved_issues.includes('fall_armyworm'))).toBe(false)
+  })
+
+  it('keeps the guide text verbatim', () => {
+    expect(byId.get('PMDG-TUTA-BELT-480SC')?.label_dose).toBe('4mls per 20L')
+    expect(byId.get('PMDG-DBM-SENTINEL-15EC')?.label_dose).toBe(
+      'Often applied at 20-30ml per 20 litres, but double-check with product labels.'
+    )
+    expect(byId.get('PMDG-TUTA-SPINOSAD')?.label_dose).toBe(
+      'The guide gives no rate for this product. Use the rate on the product label.'
+    )
   })
 })

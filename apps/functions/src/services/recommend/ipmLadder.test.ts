@@ -59,6 +59,7 @@ const option = {
   label_dose: '10 ml / 15 L knapsack',
   phi_days: 14,
   source_doc: 'gs://labels/alpha.pdf',
+  source: 'label' as const,
 }
 
 const build = (filtered: FilterResult = { options: [option], rejected: [] }, result = knowledge) =>

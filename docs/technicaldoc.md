@@ -253,7 +253,9 @@ Response composition: IPM ladder first (scout → cultural → biological → ch
 
 ## 8. Regulatory Product Database (the chemical firewall)
 
-**Dependency [NEEDS VALIDATION]:** machine-readable ZEMA register unconfirmed. Build the table from available sources in priority order: (1) ZEMA registration data if obtainable, (2) product labels photographed at agro-dealers, checked against the products the Zambian Plantwise PMDGs name (worksheet: `tools/regulatory/products-from-pmdg.md`), (3) the MoA FAW manual's products annex, only if the manual ever arrives (requested by email 2026-10-21, no reply; nothing waits on it). Demo scope only needs the products relevant to demo crops/issues (~20–40 rows).
+**Dependency [NEEDS VALIDATION]:** machine-readable ZEMA register unconfirmed. Build the table from available sources in priority order: (1) ZEMA registration data if obtainable, (2) product labels photographed at agro-dealers (worksheet: `tools/regulatory/products-from-pmdg.md`), (3) the MoA FAW manual's products annex, only if the manual ever arrives (requested by email 2026-10-21, no reply; nothing waits on it), (4) the Zambian Plantwise PMDGs themselves.
+
+**Live register since 2026-10-29 (approved):** `tools/regulatory/pmdg-products.csv`, 17 rows with `source: plantwise_pmdg` ("Plantwise Zambia PMDG"), one per product or product type the four tomato/cabbage PMDGs name for chemical control. A PMDG has no registration number, so `registration_no` is an internal id (`PMDG-…`) that the UI never shows as a registration number; `label_dose` is the guide's own text, copied verbatim, or, where the guide gives no rate, "The guide gives no rate for this product. Use the rate on the product label."; `phi_days` is the guide's value (the longer end of a range); `verified_by` records Geoffrey's spot-check (`tools/regulatory/mark-verified.ts`, then reload). Loading it retired the seven placeholder rows. Left out on purpose: cassava mosaic cypermethrin (the PMDG advises against insecticides for small-scale farmers), and the copper and mancozeb + metalaxyl products (neither guide gives a pre-harvest interval, and the register never invents one). Fall armyworm has no Zambian PMDG in the corpus, so it stays IPM-only with the officer referral. Spot-check list: `docs/pmdg-spot-check.md`. Label or ZEMA rows join the same CSV later and take precedence.
 
 Schema (`registered_products/{registeredProductDocId(registration_no)}`; the document ID is the percent-encoded number, since ZEMA numbers may contain `/`). Loaded from a CSV with `tools/regulatory/load-products.ts`, which validates every row against `@repo/shared` and treats the CSV as the whole register:
 
@@ -265,16 +267,17 @@ Schema (`registered_products/{registeredProductDocId(registration_no)}`; the doc
   "registrant": "string",
   "approved_crops": ["tomato", "maize"],
   "approved_issues": ["tuta_absoluta"],
-  "label_dose": "string, verbatim from label",
+  "label_dose": "string, verbatim from the label (or, for plantwise_pmdg, from the guide)",
   "phi_days": 7,
   "who_class": "II",
-  "source": "zema | label | moa_faw_manual | placeholder",
-  "source_doc": "uri",
-  "expiry": "date|null (valid through this date)"
+  "source": "zema | label | moa_faw_manual | plantwise_pmdg | placeholder",
+  "source_doc": "uri, or corpus document id + page",
+  "expiry": "date|null (valid through this date)",
+  "verified_by": "string|null (who spot-checked the row; optional)"
 }
 ```
 
-Filter logic (deterministic, in `/recommend`; `apps/functions/src/services/recommend/regulatoryFilter.ts`): every chemical candidate from RAG/Gemini must match a row (by exact registration number, or by trade name or active ingredient ignoring case and spacing) on `approved_crops` AND `approved_issues`, unexpired on the Lusaka calendar date. Rows with `source: placeholder` exist only so the filter is testable before the real register lands; they are excluded unless a caller explicitly allows them, so they never reach a farmer as advice. The chemical rung of the IPM ladder is always written by Phytos, never taken from retrieved text. No match → dropped and logged in `regulatory_check.rejected_products`. Doses rendered ONLY from `label_dose`. If zero chemicals survive, the recommendation ships IPM-only with "consult an extension officer for chemical options".
+Filter logic (deterministic, in `/recommend`; `apps/functions/src/services/recommend/regulatoryFilter.ts`): every chemical candidate from RAG/Gemini must match a row (by exact registration number, or by trade name or active ingredient ignoring case and spacing) on `approved_crops` AND `approved_issues`, unexpired on the Lusaka calendar date. Rows with `source: placeholder` exist only so the filter is testable before the real register lands; they are excluded unless a caller explicitly allows them, so they never reach a farmer as advice. The chemical rung of the IPM ladder is always written by Phytos, never taken from retrieved text. No match → dropped and logged in `regulatory_check.rejected_products`. Doses rendered ONLY from `label_dose`. Each chemical option carries its row's `source` (optional in the contract), so clients name a PMDG row's source instead of showing its id as a registration number. The server reads the register fail-closed per row: a row it cannot parse is left out, never guessed at. If zero chemicals survive, the recommendation ships IPM-only with "consult an extension officer for chemical options".
 
 Commercial firewall: "where to buy" renders after the recommendation, lists ALL registered options for the issue, never filtered by sponsor.
 

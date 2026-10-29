@@ -1,5 +1,7 @@
 # Products named in the Zambia PMDGs: worksheet for label checks
 
+> **Update 2026-10-29:** the PMDG-derived rows were approved and are the live register: `tools/regulatory/pmdg-products.csv` (`source: plantwise_pmdg`, doses verbatim from the guides; spot-check in `docs/pmdg-spot-check.md`). This worksheet stays for photographing real labels, which would add `source: label` rows alongside.
+
 **For Geoffrey, at the agro-dealer.** This lists every pesticide product and active ingredient that the five Zambian Plantwise Pest Management Decision Guides (PMDGs) in the corpus name, per crop problem. It is a shopping list of what to look for, **not** the register. Nothing here is loaded into `registered_products`. A row is loaded only after you have photographed a real label and confirmed it below. Placeholders stay gated until then.
 
 **Rules (CLAUDE.md invariant 1):**

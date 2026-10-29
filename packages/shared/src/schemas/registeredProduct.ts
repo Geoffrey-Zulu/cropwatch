@@ -10,12 +10,32 @@ export const RegistrationNoSchema = z.string().min(1).openapi('RegistrationNo', 
   description: 'Product registration number from the Regulatory Product Database.',
 })
 
-// Where a row came from, in technicaldoc §8 priority order. `placeholder` rows exist only so
-// the filter is testable before the real register lands; the filter excludes them unless a
-// caller explicitly allows them, so they can never reach a farmer as real advice.
-export const PRODUCT_SOURCES = ['zema', 'label', 'moa_faw_manual', 'placeholder'] as const
-export const ProductSourceSchema = z.enum(PRODUCT_SOURCES)
+// Where a row came from, in technicaldoc §8 priority order. `plantwise_pmdg` rows come from
+// the Zambian Plantwise Pest Management Decision Guides: no registration number, and the dose
+// is the guide's text, not a label's. `placeholder` rows exist only so the filter is testable;
+// the filter excludes them unless a caller explicitly allows them, so they can never reach a
+// farmer as real advice.
+export const PRODUCT_SOURCES = [
+  'zema',
+  'label',
+  'moa_faw_manual',
+  'plantwise_pmdg',
+  'placeholder',
+] as const
+export const ProductSourceSchema = z.enum(PRODUCT_SOURCES).openapi('ProductSource', {
+  description:
+    'Where a product row came from. plantwise_pmdg: a Zambian Plantwise Pest Management Decision Guide; it has no registration number and its dose is the guide text. Treat unrecognised values as a generic source.',
+})
 export type ProductSource = z.infer<typeof ProductSourceSchema>
+
+// How a source is named on screen.
+export const PRODUCT_SOURCE_LABELS: Record<ProductSource, string> = {
+  zema: 'ZEMA register',
+  label: 'Product label',
+  moa_faw_manual: 'MoA fall armyworm manual',
+  plantwise_pmdg: 'Plantwise Zambia PMDG',
+  placeholder: 'Placeholder, not a real product',
+}
 
 // Regulatory Product Database row, registered_products/{registeredProductDocId(no)}
 // (technicaldoc.md §8). The chemical firewall: every chemical recommendation must match a row
@@ -35,6 +55,9 @@ export const RegisteredProductSchema = z.object({
   source_doc: z.string().min(1),
   // Valid through this date, inclusive.
   expiry: DateSchema.nullable(),
+  // Who checked the row against its source (e.g. "geoffrey"). A record of the spot-check only:
+  // the filter does not depend on it.
+  verified_by: z.string().min(1).nullish(),
 })
 export type RegisteredProduct = z.infer<typeof RegisteredProductSchema>
 

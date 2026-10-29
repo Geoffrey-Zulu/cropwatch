@@ -166,6 +166,17 @@
         "minLength": 1,
         "description": "Product registration number from the Regulatory Product Database."
       },
+      "ProductSource": {
+        "type": "string",
+        "enum": [
+          "zema",
+          "label",
+          "moa_faw_manual",
+          "plantwise_pmdg",
+          "placeholder"
+        ],
+        "description": "Where a product row came from. plantwise_pmdg: a Zambian Plantwise Pest Management Decision Guide; it has no registration number and its dose is the guide text. Treat unrecognised values as a generic source."
+      },
       "ChemicalOption": {
         "type": "object",
         "properties": {
@@ -191,6 +202,9 @@
           "source_doc": {
             "type": "string",
             "minLength": 1
+          },
+          "source": {
+            "$ref": "#/components/schemas/ProductSource"
           }
         },
         "required": [
@@ -201,7 +215,7 @@
           "phi_days",
           "source_doc"
         ],
-        "description": "A registered product that passed the regulatory filter for this crop and issue. Render label_dose exactly as given (verbatim label text). phi_days is the pre-harvest interval."
+        "description": "A product that passed the regulatory filter for this crop and issue. Render label_dose exactly as given (verbatim source text). phi_days is the pre-harvest interval. When source is plantwise_pmdg, registration_no is an internal id, not a registration number: show the source (\"Plantwise Zambia PMDG\") instead, and label_dose is the guide text."
       },
       "Source": {
         "type": "object",
