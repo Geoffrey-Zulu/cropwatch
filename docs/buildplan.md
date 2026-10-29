@@ -459,3 +459,37 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
   4. Top up a little airtime credit (Zambian SMS is billed per message).
   5. Request an alphanumeric sender ID ("Phytos") now for after the hackathon. It goes through ZICTA per carrier, MTN only displays pre-registered IDs, and it takes weeks, so the demo uses AT's default sender.
 - **Subscribe the demo phones** (with consent): `pnpm --filter @repo/admin-tools sms-subscribe add --phone +260… --district Lusaka --consent "…"`; use `--district all` for the presenter's phone.
+
+### D7 · Tue 28 to Wed 29 Oct — Phytos rebrand, "Field Brief" restyle, Command Center dashboard
+
+**Status:** built, tested and deployed (branch `d7-phytos`). Acceptance against live data waits on the officer accounts, which only Geoffrey can create (they grant roles): see `docs/demo-ops.md`, "Officer accounts". Category 2 (landing page, dry-forecast scenario) has not started: the brief allows it only once D7 passes acceptance.
+
+**Landed**
+
+- **Rebrand to Phytos** on every user-facing surface. Infrastructure keeps its names. Versioned prompts are untouched: they are model-facing.
+- **"Field Brief" design system** (`design-system/phytos/MASTER.md`): paper, navy, copper, and muted green for guidance only. Derived shades exist only where the given colours could not carry text.
+- **Capture restyle**: same layouts; the app opens on a live camera viewfinder. No em dashes in UI copy.
+- **Alert classes**: weather advisory / verified cluster alert / model risk signal, each with uncertainty wording, shared by the app, the dashboard, push and SMS. A cluster alert becomes "verified" when an officer verifies any report in it, and follows later verifications.
+- **Weather context** from Open-Meteo. Guide notes come from the corpus; the thresholds are Phytos prototype thresholds and are labelled as such. Weather counts as a factor, never sets a level, and raises weather advisories (never sent by SMS).
+- **Dashboard** (`apps/web`):
+  - national map;
+  - outbreak detail;
+  - observation detail with the Evidence panel;
+  - officer queue with verify and the live verified counter;
+  - Outgrower View with per-officer visit lists;
+  - Knowledge sources page.
+- **tRPC procedures** with role guards: evidence, outgrower, weather.
+- **Architecture**: `docs/architecture.md` and `.svg`.
+- **Runbook**: `docs/demo-ops.md` retimed to the 3-minute final.
+
+**Checks**
+
+| Check                                         | Result                                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate                                   | Green. Typecheck, lint, build, and tests: 369 across 10 packages (138 API, 120 shared, 25 seed, 13 capture, 8 dashboard)                                                                                                                                                                                      |
+| Invariants in tests                           | Outgrower output has no coordinate (schema plus string check). Evidence carries no `model_confidence`. No copy string has an em dash or reads as odds. Verification copy says "test case", never learning                                                                                                     |
+| tRPC guards                                   | Unsigned calls get 401. Evidence is for Command Center roles only. Outgrower is for the Command Center or the org's own field officers                                                                                                                                                                        |
+| Every page rendered with seed fixtures        | Desktop 1440 px and phone 390 px with no horizontal scroll (`docs/ui-review/2026-10-29/`)                                                                                                                                                                                                                     |
+| Live, revision `cropwatch-api-00008-2b7`      | `outbreak-e2e` passes: report → dispatched in 9.2 s. The new cluster's alert is stored as a **model risk signal** (0 of 5 verified). Lusaka's factors include the live Open-Meteo line. A **weather advisory** (Tuta, late dry season) was raised and not dispatched. Rehearsal removed and the demo re-armed |
+| Deployed                                      | Dashboard https://crop-watch01.web.app ("Phytos Command Center"); capture https://crop-watch01-capture.web.app (manifest "Phytos"); unsigned tRPC calls get 401                                                                                                                                               |
+| **Live: sign in, map, verify, counter ticks** | **Pending: officer account (Geoffrey)**                                                                                                                                                                                                                                                                       |
