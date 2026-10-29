@@ -15,7 +15,7 @@ export function WeatherSection({ districtSlug }: { districtSlug: string }) {
     <Panel
       eyebrow="Weather context"
       title={weather.data ? `${weather.data.district}: 14 days back, 14 ahead` : 'Weather'}
-      actions={<CloudSun size={20} strokeWidth={2} aria-hidden className="text-navy" />}
+      actions={<CloudSun size={20} strokeWidth={2} aria-hidden className="text-fg" />}
     >
       {weather.isLoading && <Muted>Fetching the forecast…</Muted>}
       {weather.error && <Muted>The forecast is not available right now.</Muted>}
@@ -48,7 +48,7 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
         role="img"
         aria-label="Daily rain and mean temperature, 14 days back and 14 ahead"
       >
-        <rect x={today} y={0} width={W - today} height={H - 14} fill="var(--navy-tint)" />
+        <rect x={today} y={0} width={W - today} height={H - 14} fill="var(--well)" />
         {days.map((d, i) => {
           const h = ((d.rain ?? 0) / maxRain) * 60
           return (
@@ -58,7 +58,7 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
               y={H - 16 - h}
               width={step - 4}
               height={h}
-              fill="var(--navy)"
+              fill="var(--fg-2)"
             >
               <title>
                 {d.date}: {d.rain ?? 0} mm, mean {d.tmean ?? '?'} °C
@@ -66,54 +66,54 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
             </rect>
           )
         })}
-        <polyline points={line} fill="none" stroke="var(--copper)" strokeWidth={2} />
+        <polyline points={line} fill="none" stroke="var(--attention)" strokeWidth={2} />
         <line
           x1={today}
           x2={today}
           y1={0}
           y2={H - 14}
-          stroke="var(--ink-2)"
+          stroke="var(--hairline-strong)"
           strokeDasharray="3 3"
         />
-        <text x={4} y={H - 2} fontSize={14} className="fill-ink-2 font-mono">
+        <text x={4} y={H - 2} fontSize={14} className="fill-fg-2 font-mono">
           {weather.past[0]?.date.slice(5)}
         </text>
-        <text x={today + 4} y={H - 2} fontSize={14} className="fill-ink-2 font-mono">
+        <text x={today + 4} y={H - 2} fontSize={14} className="fill-fg-2 font-mono">
           today (forecast)
         </text>
-        <text x={W - 4} y={H - 2} fontSize={14} textAnchor="end" className="fill-ink-2 font-mono">
+        <text x={W - 4} y={H - 2} fontSize={14} textAnchor="end" className="fill-fg-2 font-mono">
           {weather.forecast[weather.forecast.length - 1]?.date.slice(5)}
         </text>
       </svg>
-      <p className="flex flex-wrap gap-x-4 text-caption text-ink-2">
+      <p className="flex flex-wrap gap-x-4 text-caption text-fg-2">
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-2.5 w-2.5 bg-navy" /> Rain per day (mm)
+          <span aria-hidden className="h-2.5 w-2.5 bg-fg-2" /> Rain per day (mm)
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-0.5 w-4 bg-copper" /> Mean temperature ({tMin.toFixed(0)}{' '}
-          to {tMax.toFixed(0)} °C scale)
+          <span aria-hidden className="h-0.5 w-4 bg-attention" /> Mean temperature (
+          {tMin.toFixed(0)} to {tMax.toFixed(0)} °C scale)
         </span>
       </p>
 
-      <ul className="flex flex-col divide-y divide-line">
+      <ul className="flex flex-col divide-y divide-hairline">
         {weather.conditions.map(c => (
           <li key={c.issue} className="py-2">
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={`rounded-tag border px-1.5 py-0.5 font-mono text-eyebrow font-semibold uppercase ${
                   c.favourable
-                    ? 'border-navy bg-navy-tint text-navy'
-                    : 'border-line-strong text-ink-2'
+                    ? 'border-attention text-attention-text'
+                    : 'border-hairline-strong text-fg-2'
                 }`}
               >
                 {c.favourable ? 'Conditions favour' : 'Not indicated'}
               </span>
-              <span className="font-semibold text-navy">{ISSUE_LABELS[c.issue]}</span>
+              <span className="font-semibold text-fg">{ISSUE_LABELS[c.issue]}</span>
             </div>
             <p className="mt-1 text-label">
               Forecast: {c.observed}. Guide note: {c.guide} ({c.document_title}).
             </p>
-            <p className="text-caption text-ink-2">
+            <p className="text-caption text-fg-2">
               Prototype threshold, set by Phytos: {c.threshold}.
             </p>
           </li>
@@ -123,7 +123,7 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
         href={weather.source.url}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-1 text-caption font-semibold text-navy underline decoration-line-strong underline-offset-2"
+        className="inline-flex items-center gap-1 text-caption font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
       >
         {weather.source.licence}
         <ExternalLink size={12} strokeWidth={2} aria-hidden />

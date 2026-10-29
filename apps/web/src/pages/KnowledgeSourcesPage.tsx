@@ -1,7 +1,7 @@
 import { ExternalLink } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { CROP_LABELS, ISSUE_LABELS, type Crop, type Issue } from '@repo/shared'
-import { Figure, Muted, Panel } from '../components/Panel'
+import { Figure, Figures, Muted, Panel } from '../components/Panel'
 import sources from '../data/knowledge-sources.json'
 import { dateTime, TIER_NAMES } from '../lib/copy'
 
@@ -10,22 +10,22 @@ type Status = 'retrievable' | 'fetched' | 'pending' | 'not_fetched'
 const STATUS: Record<Status, { label: string; className: string; note: string }> = {
   retrievable: {
     label: 'In retrieval',
-    className: 'border-navy bg-navy text-white',
+    className: 'border-signal-text text-signal-text',
     note: 'Indexed in RAG Engine: advice can cite it.',
   },
   fetched: {
     label: 'Fetched, not indexed',
-    className: 'border-navy bg-navy-tint text-navy',
+    className: 'border-hairline-strong text-fg',
     note: 'Saved, not yet ingested.',
   },
   pending: {
     label: 'Pending',
-    className: 'border-copper-deep bg-copper-tint text-copper-deep',
+    className: 'border-attention text-attention-text',
     note: 'Requested; ingested the day it arrives.',
   },
   not_fetched: {
     label: 'Not fetched',
-    className: 'border-dashed border-ink-2 text-ink-2',
+    className: 'border-dashed border-fg-2 text-fg-2',
     note: 'Listed, but not available to fetch.',
   },
 }
@@ -52,20 +52,20 @@ export function KnowledgeSourcesPage() {
     <div className="flex flex-col gap-4">
       <div>
         <p className="eyebrow">Read only · from the corpus manifest</p>
-        <h1 className="font-display text-display-xl font-semibold text-navy">Knowledge sources</h1>
-        <p className="mt-1 max-w-3xl text-body-sm text-ink-2">
+        <h1 className="mt-1 font-display text-display-xl font-bold text-fg">Knowledge sources</h1>
+        <p className="mt-1 max-w-3xl text-body-sm text-fg-2">
           Advice is written only from passages retrieved from these documents, and every chemical is
           then checked against the pesticide register. Tier 1 is the Ministry of Agriculture; a
           lower tier wins where guides disagree.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 rounded-card border border-line bg-sheet p-4 md:grid-cols-4">
+      <Figures>
         <Figure value={rows.length} label="Curated documents" />
-        <Figure value={counts.retrievable} label="In retrieval" />
+        <Figure value={counts.retrievable} label="In retrieval" emphasis />
         <Figure value={counts.pending} label="Pending (by request)" />
         <Figure value={counts.not_fetched + counts.fetched} label="Not yet in retrieval" />
-      </div>
+      </Figures>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
         {(['all', ...Object.keys(STATUS)] as (Status | 'all')[]).map(s => (
@@ -74,10 +74,10 @@ export function KnowledgeSourcesPage() {
             type="button"
             aria-pressed={filter === s}
             onClick={() => setFilter(s)}
-            className={`rounded-card border-1.5 px-3 py-1.5 text-label font-semibold ${
+            className={`rounded-card border px-3 py-1.5 font-mono text-eyebrow font-medium uppercase ${
               filter === s
-                ? 'border-navy bg-navy text-white'
-                : 'border-line-strong bg-sheet text-navy hover:bg-navy-tint'
+                ? 'border-fg-2 bg-well text-fg'
+                : 'border-hairline text-fg-2 hover:bg-well hover:text-fg'
             }`}
           >
             {s === 'all' ? `All (${rows.length})` : `${STATUS[s].label} (${counts[s]})`}
@@ -87,7 +87,7 @@ export function KnowledgeSourcesPage() {
 
       {tiers.map(tier => (
         <Panel key={tier} eyebrow={`Tier ${tier}`} title={TIER_NAMES[tier] ?? 'Other'}>
-          <ul className="flex flex-col divide-y divide-line">
+          <ul className="flex flex-col divide-y divide-hairline">
             {shown
               .filter(r => r.tier === tier)
               .map(r => (
@@ -103,30 +103,30 @@ export function KnowledgeSourcesPage() {
                       href={r.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="min-w-0 flex-1 font-semibold text-navy underline decoration-line-strong underline-offset-2"
+                      className="min-w-0 flex-1 font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
                     >
                       {r.title}
                       <ExternalLink size={12} strokeWidth={2} aria-hidden className="ml-1 inline" />
                     </a>
-                    <span className="font-mono text-eyebrow text-ink-2">
+                    <span className="font-mono text-eyebrow text-fg-2">
                       {r.source} · {r.year} · {r.country}
                     </span>
                   </div>
-                  <p className="mt-1 text-caption text-ink-2">
+                  <p className="mt-1 text-caption text-fg-2">
                     {[
                       ...r.crop.map(c => CROP_LABELS[c as Crop]),
                       ...r.issue.map(i => ISSUE_LABELS[i as Issue]),
                     ].join(' · ')}
                     {r.licence ? ` · Licence: ${r.licence}` : ''}
                   </p>
-                  {r.note && <p className="text-caption text-ink-2">{r.note}</p>}
+                  {r.note && <p className="text-caption text-fg-2">{r.note}</p>}
                 </li>
               ))}
           </ul>
         </Panel>
       ))}
       {shown.length === 0 && <Muted>No documents with this status.</Muted>}
-      <p className="text-caption text-ink-2">
+      <p className="text-caption text-fg-2">
         Generated {dateTime(sources.generated_at)} · knowledge index of{' '}
         {dateTime(sources.index_generated_at)}.
       </p>

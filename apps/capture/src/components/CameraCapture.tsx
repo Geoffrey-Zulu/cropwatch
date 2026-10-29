@@ -100,7 +100,7 @@ export function CameraCapture({
       />
 
       {preview ? (
-        <div className="relative overflow-hidden rounded-card bg-navy">
+        <div className="relative overflow-hidden rounded-card bg-fg">
           <img src={preview} alt="Your photo" className="aspect-[4/3] w-full object-cover" />
           <button type="button" onClick={onRetake} className="btn-quiet absolute bottom-3 right-3">
             <RotateCcw size={20} strokeWidth={2} aria-hidden />
@@ -111,20 +111,20 @@ export function CameraCapture({
         <button
           type="button"
           onClick={() => fallback.current?.click()}
-          className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-card border-1.5 border-dashed border-line-strong bg-sheet px-6 text-center transition-colors duration-150 active:bg-navy-tint"
+          className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-card border-1.5 border-dashed border-hairline-strong bg-panel px-6 text-center transition-colors duration-150 active:bg-well"
         >
-          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-navy text-white">
+          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-signal text-signal-ink">
             <Camera size={30} strokeWidth={2} aria-hidden />
           </span>
-          <span className="text-title font-extrabold text-navy">
+          <span className="font-display text-title font-bold text-fg">
             Take a photo of the damaged leaf
           </span>
-          <span className="text-label font-semibold text-ink-2">
+          <span className="text-label font-semibold text-fg-2">
             Close up, in daylight, one plant
           </span>
         </button>
       ) : (
-        <div className="relative overflow-hidden rounded-card bg-navy">
+        <div className="relative overflow-hidden rounded-card bg-fg">
           <video
             ref={video}
             muted
@@ -138,14 +138,14 @@ export function CameraCapture({
               Starting the camera…
             </p>
           )}
-          <p className="absolute inset-x-0 top-0 bg-[rgb(19_41_61/0.72)] px-3 py-2 text-center text-label font-semibold text-white">
+          <p className="absolute inset-x-0 top-0 bg-[rgb(14_22_19/0.72)] px-3 py-2 text-center text-label font-semibold text-white">
             Damaged leaf, close up, in daylight
           </p>
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-3 pb-3">
             <button
               type="button"
               onClick={() => gallery.current?.click()}
-              className="inline-flex min-h-12 items-center gap-1.5 rounded-card bg-[rgb(19_41_61/0.8)] px-3 text-label font-semibold text-white"
+              className="inline-flex min-h-12 items-center gap-1.5 rounded-card bg-[rgb(14_22_19/0.8)] px-3 text-label font-semibold text-white"
             >
               <Images size={20} strokeWidth={2} aria-hidden />
               Gallery
@@ -155,7 +155,7 @@ export function CameraCapture({
               onClick={shoot}
               disabled={state !== 'live'}
               aria-label="Take photo"
-              className="inline-flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white bg-navy text-white disabled:opacity-60"
+              className="inline-flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white bg-signal text-signal-ink disabled:opacity-60"
             >
               <Camera size={30} strokeWidth={2} aria-hidden />
             </button>

@@ -12,16 +12,16 @@ export function SourcesSection({ sources }: { sources: RecommendationView['sourc
       </p>
       <ul>
         {sources.map(source => (
-          <li key={source.uri} className="border-b border-line py-2 last:border-b-0">
+          <li key={source.uri} className="border-b border-hairline py-2 last:border-b-0">
             <a
               href={source.uri}
               target="_blank"
               rel="noreferrer"
-              className="text-label font-semibold text-navy underline decoration-line-strong decoration-1 underline-offset-4"
+              className="text-label font-semibold text-fg underline decoration-hairline-strong decoration-1 underline-offset-4"
             >
               {source.title}
             </a>
-            <p className="mt-0.5 font-mono text-eyebrow font-semibold uppercase text-copper-deep">
+            <p className="mt-0.5 font-mono text-eyebrow font-semibold uppercase text-attention-text">
               {TIER_NAMES[source.tier] ?? 'Source'}
             </p>
           </li>

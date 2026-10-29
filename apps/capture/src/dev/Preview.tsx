@@ -196,7 +196,7 @@ export function Preview({ state }: { state: string }) {
           <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-6">
             <div>
               <p className="eyebrow">Crop health · Zambia</p>
-              <h1 className="font-display text-display font-semibold text-navy">
+              <h1 className="font-display text-display font-bold text-fg">
                 Photograph a sick crop. Get advice from Zambian guides.
               </h1>
             </div>

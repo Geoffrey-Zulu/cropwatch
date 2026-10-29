@@ -34,7 +34,7 @@ export function App() {
     [observations.rows, clusters.rows]
   )
 
-  if (!ready) return <p className="p-6 text-label text-ink-2">Starting Phytos…</p>
+  if (!ready) return <p className="p-6 text-label text-fg-2">Starting Phytos…</p>
   if (!officer || officer.role === 'farmer') {
     return <SignInPage signedInAsFarmer={Boolean(officer)} onSignIn={signIn} onSignOut={signOut} />
   }

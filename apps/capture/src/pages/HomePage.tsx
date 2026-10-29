@@ -25,7 +25,7 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
       <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-6">
         <div>
           <p className="eyebrow">Crop health · Zambia</p>
-          <h1 className="font-display text-display font-semibold text-navy">
+          <h1 className="font-display text-display font-bold text-fg">
             Photograph a sick crop. Get advice from Zambian guides.
           </h1>
         </div>
@@ -33,7 +33,7 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
         {push.alert && (
           <div
             role="alert"
-            className="flex gap-3 rounded-card border border-copper-deep border-l-4 bg-copper-tint p-3"
+            className="flex gap-3 rounded-card border border-attention-text border-l-4 bg-attention-tint p-3"
           >
             <div className="min-w-0 flex-1">
               <p className="font-mono text-eyebrow font-semibold uppercase">

@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { ISSUE_LABELS, RISK_ORDER } from '@repo/shared'
-import { AlertCard } from '../components/AlertCard'
+import { AlertRows } from '../components/AlertCard'
 import { DemoBadge } from '../components/DemoBadge'
 import { LevelTag } from '../components/LevelTag'
 import { RiskFactors } from '../components/RiskFactors'
-import { Figure, Muted, Panel } from '../components/Panel'
+import { Figure, Figures, Muted, Panel } from '../components/Panel'
 import { ZambiaMap } from '../components/ZambiaMap'
 import type { LiveData } from '../hooks/useLive'
 import { useNow } from '../hooks/useNow'
 import { hrefFor } from '../hooks/useRoute'
-import { ago, reportNumber, shortDate } from '../lib/copy'
+import { reportNumber, shortDate } from '../lib/copy'
 
 const DAY = 86_400_000
 const WINDOW_DAYS = 14
@@ -67,20 +67,20 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Zambia · last {WINDOW_DAYS} days</p>
-          <h1 className="font-display text-display-xl font-semibold text-navy">National picture</h1>
+          <h1 className="mt-1 font-display text-display-xl font-bold text-fg">National picture</h1>
         </div>
         <DemoBadge rows={shown} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 rounded-card border border-line bg-sheet p-4 md:grid-cols-4">
+      <Figures>
         <Figure value={observations ? recent.length : '·'} label="Reports, 14 days" />
-        <Figure value={clusters?.length ?? '·'} label="Active clusters" />
+        <Figure value={clusters?.length ?? '·'} label="Active clusters" emphasis />
         <Figure
           value={risk ? risk.filter(r => r.level === 'HIGH').length : '·'}
           label="Districts at High"
         />
         <Figure value={observations ? awaiting : '·'} label="Waiting for an officer" />
-      </div>
+      </Figures>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex min-w-0 flex-col gap-2">
@@ -91,10 +91,10 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
                 type="button"
                 aria-pressed={focus === key}
                 onClick={() => setFocus(key)}
-                className={`rounded-card border-1.5 px-3 py-1.5 text-label font-semibold ${
+                className={`rounded-card border px-3 py-1.5 font-mono text-eyebrow font-medium uppercase ${
                   focus === key
-                    ? 'border-navy bg-navy text-white'
-                    : 'border-line-strong bg-sheet text-navy hover:bg-navy-tint'
+                    ? 'border-fg-2 bg-well text-fg'
+                    : 'border-hairline text-fg-2 hover:bg-well hover:text-fg'
                 }`}
               >
                 {FOCUS[key].label}
@@ -130,15 +130,6 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
             context): not a prediction. Click a cluster ring for its outbreak detail, a dot for the
             report, a district for its factors.
           </Muted>
-          <Panel eyebrow="Latest" title="Alerts">
-            {alerts === null && <Muted>Loading…</Muted>}
-            {alerts?.length === 0 && <Muted>No alerts yet.</Muted>}
-            <div className="grid gap-2 md:grid-cols-2">
-              {alerts?.slice(0, 6).map(a => (
-                <AlertCard key={a.id} alert={a} compact />
-              ))}
-            </div>
-          </Panel>
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
@@ -150,22 +141,19 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
           <Panel eyebrow="Prototype risk signal" title="Districts to watch">
             {risk === null && <Muted>Loading…</Muted>}
             {risk && watch.length === 0 && <Muted>No district is above Low.</Muted>}
-            <ul className="flex flex-col divide-y divide-line">
+            <ul className="-mx-4 flex flex-col">
               {watch.map(r => (
-                <li key={r.districtSlug} className="py-2.5 first:pt-0 last:pb-0">
+                <li key={r.districtSlug} className="border-t border-hairline first:border-t-0">
                   <button
                     type="button"
                     onClick={() => setDistrict(r.districtSlug)}
-                    className="w-full text-left"
+                    aria-pressed={district === r.districtSlug}
+                    title={r.factors[0]}
+                    className={`flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-well ${district === r.districtSlug ? 'bg-well' : ''}`}
                   >
-                    <div className="flex items-center gap-2">
-                      <LevelTag level={r.level} />
-                      <span className="font-semibold text-navy">{r.district}</span>
-                      <span className="ml-auto font-mono text-eyebrow text-ink-2">
-                        {ago(r.computedAt)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-label text-ink-2">{r.factors[0]}</p>
+                    <LevelTag level={r.level} />
+                    <span className="shrink-0 font-semibold text-fg">{r.district}</span>
+                    <span className="min-w-0 truncate text-label text-fg-2">{r.factors[0]}</span>
                   </button>
                 </li>
               ))}
@@ -173,6 +161,12 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
           </Panel>
         </div>
       </div>
+
+      <Panel eyebrow="Latest" title="Alerts">
+        {alerts === null && <Muted>Loading…</Muted>}
+        {alerts?.length === 0 && <Muted>No alerts yet.</Muted>}
+        {alerts && alerts.length > 0 && <AlertRows alerts={alerts.slice(0, 8)} />}
+      </Panel>
     </div>
   )
 }

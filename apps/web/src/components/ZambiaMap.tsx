@@ -4,11 +4,27 @@ import { Maximize2, Minus, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
 import { ISSUE_LABELS, type GeoPoint, type Issue, type RiskLevel } from '@repo/shared'
 
-// Map fills: stronger than the tag tints so Elevated reads against Low at national scale.
+// The night console (MASTER.md §6): unlit land, risk districts glowing (gold for Elevated, red-gold
+// for High), reports as points of light, clusters ringed in signal. The Command Center is always
+// in the night exposure, so the map names its colours directly.
+const MAP = {
+  sea: '#0A110E',
+  land: '#192820',
+  border: '#34483C',
+  hover: '#EDE9DD',
+  report: '#EDE9DD',
+  simReport: '#9DB0A3',
+  ring: '#C9E265',
+  ringFill: '#C9E26514',
+}
 const MAP_FILL: Record<RiskLevel, string> = {
-  HIGH: 'var(--copper-deep)',
-  ELEVATED: '#E5BD97',
-  LOW: 'var(--sheet)',
+  HIGH: '#E07B3973',
+  ELEVATED: '#D9A44147',
+  LOW: '#203129',
+}
+const MAP_GLOW: Partial<Record<RiskLevel, string>> = {
+  HIGH: '#E8873F',
+  ELEVATED: '#D9A441',
 }
 
 type DistrictFeature = Feature<
@@ -172,9 +188,12 @@ export function ZambiaMap({
   const hoverLevel = hovered ? levels.get(hovered.slug) : undefined
 
   return (
-    <div className="relative overflow-hidden rounded-card border border-line bg-[#F3EEE4]">
+    <div
+      className="relative overflow-hidden rounded-card border border-hairline"
+      style={{ background: MAP.sea }}
+    >
       {!districts && (
-        <p className="absolute inset-0 flex items-center justify-center text-label text-ink-2">
+        <p className="absolute inset-0 flex items-center justify-center text-label text-fg-2">
           Loading district boundaries…
         </p>
       )}
@@ -191,16 +210,46 @@ export function ZambiaMap({
         onPointerUp={onUp}
         onPointerLeave={onUp}
       >
+        <defs>
+          <filter id="map-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation={6 / view.k} />
+          </filter>
+          <filter id="dot-glow" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation={2.2 / Math.sqrt(view.k)} result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+          {/* The glow: a blurred copy of each Elevated or High district, under the map. */}
+          <g filter="url(#map-glow)" aria-hidden>
+            {paths.map(p => {
+              const glow = MAP_GLOW[levels.get(p.slug) ?? 'LOW']
+              return glow ? (
+                <path
+                  key={p.key}
+                  d={p.d}
+                  fill={glow}
+                  fillOpacity={0.25}
+                  stroke={glow}
+                  strokeWidth={6 / view.k}
+                />
+              ) : null
+            })}
+          </g>
           {paths.map(p => {
             const level = levels.get(p.slug)
+            const glow = level && MAP_GLOW[level]
             return (
               <path
                 key={p.key}
                 d={p.d}
-                fill={level ? MAP_FILL[level] : 'var(--paper)'}
-                stroke={hover === p.key ? 'var(--navy)' : 'var(--line-strong)'}
-                strokeWidth={(hover === p.key ? 1.6 : 0.6) / view.k}
+                fill={level ? MAP_FILL[level] : MAP.land}
+                stroke={hover === p.key ? MAP.hover : (glow ?? MAP.border)}
+                strokeOpacity={hover === p.key || !glow ? 1 : 0.7}
+                strokeWidth={(hover === p.key ? 1.6 : 0.7) / view.k}
                 className={onDistrict ? 'cursor-pointer' : undefined}
                 onPointerEnter={() => setHover(p.key)}
                 onPointerLeave={() => setHover(h => (h === p.key ? null : h))}
@@ -224,21 +273,22 @@ export function ZambiaMap({
                 className={onCluster ? 'cursor-pointer' : undefined}
                 onClick={() => onCluster?.(c.id)}
               >
-                {/* A light halo keeps the ring visible over a High district. */}
+                {/* A dark halo keeps the ring readable over a glowing High district. */}
                 <circle
                   cx={at[0]}
                   cy={at[1]}
                   r={r}
                   fill="none"
-                  stroke="var(--sheet)"
+                  stroke={MAP.sea}
+                  strokeOpacity={0.8}
                   strokeWidth={5 / view.k}
                 />
                 <circle
                   cx={at[0]}
                   cy={at[1]}
                   r={r}
-                  fill="rgb(180 100 42 / 0.16)"
-                  stroke="var(--copper)"
+                  fill={MAP.ringFill}
+                  stroke={MAP.ring}
                   strokeWidth={2 / view.k}
                   strokeDasharray={c.sim ? `${4 / view.k} ${3 / view.k}` : undefined}
                 />
@@ -247,7 +297,11 @@ export function ZambiaMap({
                   y={at[1] - r - 4 / view.k}
                   textAnchor="middle"
                   fontSize={12 / view.k}
-                  className="fill-copper-deep font-mono font-semibold"
+                  fill={MAP.ring}
+                  stroke={MAP.sea}
+                  strokeWidth={3 / view.k}
+                  paintOrder="stroke"
+                  className="font-mono font-semibold"
                 >
                   {c.size}
                 </text>
@@ -266,10 +320,13 @@ export function ZambiaMap({
                 key={p.id}
                 cx={at[0]}
                 cy={at[1]}
-                r={(p.sim ? 2.6 : 3.4) / Math.sqrt(view.k)}
-                fill={p.sim ? 'var(--sheet)' : 'var(--navy)'}
-                stroke="var(--navy)"
-                strokeWidth={1.1 / Math.sqrt(view.k)}
+                r={(p.sim ? 2.2 : 3.4) / Math.sqrt(view.k)}
+                fill={p.sim ? MAP.simReport : MAP.report}
+                fillOpacity={p.sim ? 0.8 : 1}
+                stroke={MAP.sea}
+                strokeOpacity={p.sim ? 0.7 : 0}
+                strokeWidth={0.6 / Math.sqrt(view.k)}
+                filter={p.sim ? undefined : 'url(#dot-glow)'}
                 className={onPoint ? 'cursor-pointer' : undefined}
                 onClick={() => onPoint?.(p.id)}
               >
@@ -293,9 +350,9 @@ export function ZambiaMap({
       </div>
 
       {hovered && (
-        <div className="pointer-events-none absolute left-3 top-3 rounded-card border border-line bg-sheet px-3 py-2 shadow-raise">
-          <p className="text-label font-semibold text-navy">{hovered.name}</p>
-          <p className="font-mono text-eyebrow uppercase text-ink-2">
+        <div className="pointer-events-none absolute left-3 top-3 rounded-card border border-hairline bg-panel px-3 py-2 shadow-raise">
+          <p className="text-label font-semibold text-fg">{hovered.name}</p>
+          <p className="font-mono text-eyebrow uppercase text-fg-2">
             {hovered.partOf ? `Counted with ${hovered.partOf} · ` : ''}
             {hoverLevel ? `Prototype signal: ${hoverLevel}` : 'No reports'}
           </p>
@@ -303,7 +360,7 @@ export function ZambiaMap({
       )}
 
       <MapLegend />
-      <p className="bg-sheet px-3 pb-2 font-mono text-[10px] leading-tight text-ink-2">
+      <p className="bg-panel px-3 pb-2 font-mono text-[10px] leading-tight text-fg-2">
         Boundaries: geoBoundaries, GRID3 and Office of the Surveyor General (CC BY 4.0)
       </p>
     </div>
@@ -325,7 +382,7 @@ function MapButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-card border border-line-strong bg-sheet text-navy hover:bg-navy-tint"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-card border border-hairline-strong bg-panel text-fg hover:bg-well"
     >
       {children}
     </button>
@@ -334,29 +391,45 @@ function MapButton({
 
 function MapLegend() {
   return (
-    <div className="border-t border-line bg-sheet px-3 py-2">
+    <div className="border-t border-hairline bg-panel px-3 py-2">
       <p className="eyebrow mb-1">Prototype risk signal</p>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption">
         {(['HIGH', 'ELEVATED', 'LOW'] as const).map(level => (
           <span key={level} className="inline-flex items-center gap-1.5">
             <span
               aria-hidden
-              className="h-3 w-4 rounded-[1px] border border-line-strong"
-              style={{ background: MAP_FILL[level] }}
+              className="h-3 w-4 rounded-[1px] border"
+              style={{
+                background: MAP_FILL[level],
+                borderColor: MAP_GLOW[level] ?? MAP.border,
+                boxShadow: MAP_GLOW[level] ? `0 0 6px ${MAP_GLOW[level]}` : undefined,
+              }}
             />
             {level === 'HIGH' ? 'High' : level === 'ELEVATED' ? 'Elevated' : 'Low'}
           </span>
         ))}
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-navy" />
+          <span
+            aria-hidden
+            className="h-2.5 w-2.5 rounded-full"
+            style={{ background: MAP.report, boxShadow: `0 0 5px ${MAP.report}` }}
+          />
           Report
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-2.5 w-2.5 rounded-full border border-navy bg-sheet" />
+          <span
+            aria-hidden
+            className="h-2 w-2 rounded-full opacity-75"
+            style={{ background: MAP.simReport }}
+          />
           Simulated report
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-3 w-3 rounded-full border-2 border-copper" />
+          <span
+            aria-hidden
+            className="h-3 w-3 rounded-full border-2"
+            style={{ borderColor: MAP.ring }}
+          />
           Cluster (10 km)
         </span>
       </div>

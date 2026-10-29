@@ -70,7 +70,7 @@ export function ObservationDetailView({
     <div className="flex flex-col gap-4">
       <a
         href={cluster ? hrefFor({ page: 'outbreak', id: cluster.id }) : '#/'}
-        className="inline-flex items-center gap-1 text-label font-semibold text-navy"
+        className="inline-flex items-center gap-1 text-label font-semibold text-fg"
       >
         <ArrowLeft size={16} strokeWidth={2} aria-hidden />
         {cluster ? 'Outbreak detail' : 'National map'}
@@ -80,7 +80,7 @@ export function ObservationDetailView({
           <p className="eyebrow">
             Report {reportNumber(o.id)} · {dateTime(o.createdAt)} · {STATUS_TEXT[o.status]}
           </p>
-          <h1 className="font-display text-display-xl font-semibold text-navy">
+          <h1 className="mt-1 font-display text-display-xl font-bold text-fg">
             {CROP_LABELS[o.crop]} ·{' '}
             {o.issue && o.issue !== 'unknown' ? ISSUE_LABELS[o.issue] : 'Not identified yet'}
           </h1>
@@ -101,7 +101,7 @@ export function ObservationDetailView({
               <dt className="eyebrow pt-0.5">Precise point</dt>
               <dd className="font-mono">
                 {o.location.latitude.toFixed(4)}, {o.location.longitude.toFixed(4)}
-                <span className="block font-body text-caption text-ink-2">
+                <span className="block font-body text-caption text-fg-2">
                   Command Center only; never in outgrower views.
                 </span>
               </dd>
@@ -125,7 +125,7 @@ export function ObservationDetailView({
                   <dd>
                     <a
                       href={hrefFor({ page: 'outbreak', id: cluster.id })}
-                      className="font-semibold text-navy underline decoration-line-strong underline-offset-2"
+                      className="font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
                     >
                       {cluster.size} {ISSUE_LABELS[cluster.issue]} reports near {cluster.district}
                     </a>
@@ -145,7 +145,7 @@ export function ObservationDetailView({
                   {o.severity && ` · ${SEVERITY_TEXT[o.severity]}`}
                 </p>
                 {o.needsReview && o.reviewReason && (
-                  <p className="font-semibold text-copper-deep">
+                  <p className="font-semibold text-attention-text">
                     Routed to an officer: {REVIEW_REASON_TEXT[o.reviewReason]}
                   </p>
                 )}
@@ -153,7 +153,7 @@ export function ObservationDetailView({
                   <ul className="flex flex-col gap-0.5">
                     {o.symptoms.map(s => (
                       <li key={s} className="flex gap-2">
-                        <span aria-hidden className="mt-[7px] h-1 w-1 shrink-0 bg-navy" />
+                        <span aria-hidden className="mt-[8px] h-1 w-1 shrink-0 bg-attention" />
                         {withoutEmDash(s)}
                       </li>
                     ))}

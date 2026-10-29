@@ -37,7 +37,7 @@ export function App() {
               Phytos could not start ({error}). Check your connection.
             </Notice>
           ) : (
-            <p className="text-body font-semibold text-ink-2">Starting Phytos…</p>
+            <p className="text-body font-semibold text-fg-2">Starting Phytos…</p>
           )}
         </main>
       </>

@@ -47,7 +47,7 @@ export function OfficerQueuePage({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Human in the loop</p>
-          <h1 className="font-display text-display-xl font-semibold text-navy">Officer queue</h1>
+          <h1 className="mt-1 font-display text-display-xl font-bold text-fg">Officer queue</h1>
         </div>
         <DemoBadge rows={shown} />
       </div>
@@ -65,7 +65,7 @@ export function OfficerQueuePage({
         <Panel eyebrow={tab === 'review' ? 'Never guessed' : 'Verify to upgrade the alert'}>
           {observations === null && <Muted>Loading…</Muted>}
           {observations && shown.length === 0 && <Muted>Nothing waiting here.</Muted>}
-          <ul className="flex max-h-[70vh] flex-col divide-y divide-line overflow-y-auto">
+          <ul className="flex max-h-[70vh] flex-col divide-y divide-hairline overflow-y-auto">
             {shown.map(o => {
               const current = selected?.id === o.id
               return (
@@ -73,20 +73,20 @@ export function OfficerQueuePage({
                   <a
                     href={hrefFor({ page: 'queue', id: o.id })}
                     aria-current={current ? 'true' : undefined}
-                    className={`flex items-center gap-3 px-2 py-2.5 ${current ? 'bg-navy-tint' : 'hover:bg-paper'}`}
+                    className={`flex items-center gap-3 px-2 py-2.5 ${current ? 'bg-well' : 'hover:bg-ground'}`}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="eyebrow">
                         {reportNumber(o.id)} · {o.district} · {ago(o.createdAt)}
-                        {o.sim && <span className="ml-1 text-copper-deep">· demo</span>}
+                        {o.sim && <span className="ml-1 text-attention-text">· demo</span>}
                       </p>
-                      <p className="truncate font-semibold text-navy">
+                      <p className="truncate font-semibold text-fg">
                         {CROP_LABELS[o.crop]} ·{' '}
                         {o.suspectedIssue && o.suspectedIssue !== 'unknown'
                           ? `AI: ${ISSUE_LABELS[o.suspectedIssue]}`
                           : 'AI: not sure'}
                       </p>
-                      <p className="truncate text-caption text-ink-2">
+                      <p className="truncate text-caption text-fg-2">
                         {NEEDS_REVIEW(o) && o.reviewReason
                           ? REVIEW_REASON_TEXT[o.reviewReason]
                           : clustered.has(o.id)
@@ -94,7 +94,7 @@ export function OfficerQueuePage({
                             : ''}
                       </p>
                     </div>
-                    <ChevronRight size={18} strokeWidth={2} aria-hidden className="text-navy" />
+                    <ChevronRight size={18} strokeWidth={2} aria-hidden className="text-fg" />
                   </a>
                 </li>
               )
@@ -109,7 +109,7 @@ export function OfficerQueuePage({
             actions={
               <a
                 href={hrefFor({ page: 'observation', id: selected.id })}
-                className="text-label font-semibold text-navy underline decoration-line-strong underline-offset-2"
+                className="text-label font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
               >
                 Full report
               </a>
@@ -125,7 +125,7 @@ export function OfficerQueuePage({
                   {selected.severity && ` · ${SEVERITY_TEXT[selected.severity]}`}
                 </p>
                 {selected.description && (
-                  <p className="text-label text-ink-2">Farmer says: {selected.description}</p>
+                  <p className="text-label text-fg-2">Farmer says: {selected.description}</p>
                 )}
               </div>
               <VerifySection key={selected.id} observation={selected} officer={officer} />
@@ -156,10 +156,10 @@ function Tab({
       role="tab"
       aria-selected={current}
       onClick={onClick}
-      className={`rounded-card border-1.5 px-3 py-1.5 text-label font-semibold ${
+      className={`rounded-card border px-3 py-1.5 font-mono text-eyebrow font-medium uppercase ${
         current
-          ? 'border-navy bg-navy text-white'
-          : 'border-line-strong bg-sheet text-navy hover:bg-navy-tint'
+          ? 'border-fg-2 bg-well text-fg'
+          : 'border-hairline text-fg-2 hover:bg-well hover:text-fg'
       }`}
     >
       {children}

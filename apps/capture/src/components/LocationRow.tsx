@@ -27,7 +27,7 @@ export function LocationRow({
       <label htmlFor="district" className="eyebrow mb-2 block">
         District
       </label>
-      <div className="flex items-center gap-2 pb-2 text-label font-semibold text-ink-2">
+      <div className="flex items-center gap-2 pb-2 text-label font-semibold text-fg-2">
         <Icon size={20} strokeWidth={2} aria-hidden />
         <span aria-live="polite">{status}</span>
       </div>
@@ -35,7 +35,7 @@ export function LocationRow({
         id="district"
         value={district}
         onChange={event => onDistrict(event.target.value)}
-        className="min-h-14 w-full appearance-none rounded-card border-1.5 border-line-strong bg-sheet px-3 font-body text-body font-semibold text-ink"
+        className="min-h-14 w-full appearance-none rounded-card border-1.5 border-hairline-strong bg-panel px-3 font-body text-body font-semibold text-fg"
       >
         <option value="" disabled>
           Choose a district

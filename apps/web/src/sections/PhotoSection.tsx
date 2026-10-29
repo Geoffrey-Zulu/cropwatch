@@ -25,11 +25,11 @@ export function PhotoSection({ path, sim }: { path: string | null; sim: boolean 
       <img
         src={current.url}
         alt="The reported crop"
-        className="aspect-[4/3] w-full rounded-card border border-line object-cover"
+        className="aspect-[4/3] w-full rounded-card border border-hairline object-cover"
       />
     )
   return (
-    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line-strong bg-paper text-center text-label text-ink-2">
+    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card border border-dashed border-hairline-strong bg-ground text-center text-label text-fg-2">
       <ImageOff size={24} strokeWidth={2} aria-hidden />
       {sim
         ? 'Simulated report: no photo'

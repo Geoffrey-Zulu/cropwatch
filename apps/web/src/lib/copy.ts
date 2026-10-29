@@ -1,4 +1,5 @@
 import type {
+  AlertClass,
   ConfidenceBand,
   ExpertReviewReason,
   ObservationStatus,
@@ -65,6 +66,17 @@ export const TIER_NAMES: Record<number, string> = {
 // What happens to a verification: evaluation data, never automatic learning (CLAUDE.md 9).
 export const EVALUATION_NOTE =
   'Officer verifications are kept as evaluation data: every correction becomes a test case for the next prompt or model version. The model does not learn from them automatically.'
+
+// The short form of alertUncertainty for one-line alert rows; the full sentence stays on hover
+// and on the outbreak detail (CLAUDE.md invariant 10).
+export function uncertaintyShort(
+  alertClass: AlertClass,
+  { verified, reports }: { verified: number; reports: number }
+) {
+  if (alertClass === 'weather_advisory') return 'Forecast only'
+  if (alertClass === 'verified_cluster') return `${verified} of ${reports} verified`
+  return 'Not yet verified'
+}
 
 // The capture app's number (the id's first four characters); simulated ids
 // ("sim-tuta-lusaka-0001") read as their storyline and serial, e.g. "TUT-0001".

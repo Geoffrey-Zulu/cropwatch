@@ -1,10 +1,11 @@
 import type { RiskLevel } from '@repo/shared'
 import { LEVEL_TEXT } from '../lib/copy'
 
+// High is the only filled level (red-gold); Elevated is gold on its tint; Low stays quiet.
 const TONE: Record<RiskLevel, string> = {
-  HIGH: 'border-copper-deep bg-copper-deep text-white',
-  ELEVATED: 'border-copper-deep bg-copper-tint text-copper-deep',
-  LOW: 'border-line-strong bg-sheet text-ink',
+  HIGH: 'border-high bg-high text-high-ink',
+  ELEVATED: 'border-attention bg-attention-tint text-attention-text',
+  LOW: 'border-hairline-strong text-fg-2',
 }
 
 // Risk Model v0 level: a prototype signal, shown with its factors wherever it appears.
@@ -16,10 +17,4 @@ export function LevelTag({ level }: { level: RiskLevel }) {
       {LEVEL_TEXT[level]}
     </span>
   )
-}
-
-export const LEVEL_FILL: Record<RiskLevel, string> = {
-  HIGH: 'var(--copper-deep)',
-  ELEVATED: 'var(--copper-tint)',
-  LOW: 'var(--sheet)',
 }

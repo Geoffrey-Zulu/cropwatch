@@ -46,7 +46,7 @@ export function ResultPage({
           </Notice>
         )}
         {!view && !error && (
-          <p className="text-body font-semibold text-ink-2">Opening your report…</p>
+          <p className="text-body font-semibold text-fg-2">Opening your report…</p>
         )}
         {view && <ResultView view={view} liveStatus={status} />}
       </main>

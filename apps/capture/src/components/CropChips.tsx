@@ -27,8 +27,8 @@ export function CropChips({
           return (
             <label
               key={crop}
-              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-card border-1.5 px-3 text-body font-extrabold transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-copper ${
-                selected ? 'border-navy bg-navy text-white' : 'border-line-strong bg-sheet text-ink'
+              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-card border-1.5 px-3 text-body font-extrabold transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-attention ${
+                selected ? 'border-fg bg-fg text-ground' : 'border-hairline-strong bg-panel text-fg'
               }`}
             >
               <input

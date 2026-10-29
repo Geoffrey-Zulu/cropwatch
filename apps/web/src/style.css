@@ -1,7 +1,9 @@
 @import '@repo/ui/theme/phytos.css';
-@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
-@import '@fontsource-variable/atkinson-hyperlegible-mono/wght.css';
-@import '@fontsource-variable/source-serif-4/wght.css';
+@import '@fontsource-variable/bricolage-grotesque/wght.css';
+@import '@fontsource-variable/instrument-sans/wght.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 
 @tailwind base;
 @tailwind components;
@@ -9,11 +11,11 @@
 
 @layer base {
   body {
-    @apply bg-paper font-body text-body-sm text-ink antialiased;
+    @apply bg-ground font-body text-body-sm text-fg antialiased;
     min-height: 100dvh;
   }
   :focus-visible {
-    outline: 3px solid var(--copper);
+    outline: 2px solid var(--signal);
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -28,16 +30,18 @@
 }
 
 @layer components {
+  /* The action: a chartreuse fill with dark text, the loudest thing in its view. */
   .btn-primary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card bg-navy px-4 font-body text-label font-semibold text-white transition-colors duration-150 ease-snap hover:bg-navy-2 disabled:cursor-not-allowed disabled:bg-ink-2;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card bg-signal px-4 font-mono text-eyebrow font-semibold uppercase text-signal-ink transition-colors duration-150 ease-snap hover:brightness-110 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
   }
   .btn-quiet {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card border-1.5 border-line-strong bg-sheet px-3 font-body text-label font-semibold text-navy transition-colors duration-150 ease-snap hover:bg-navy-tint disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-card border border-hairline-strong bg-transparent px-3 font-mono text-eyebrow font-medium uppercase text-fg transition-colors duration-150 ease-snap hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
   }
+  /* Instrument readout: every kicker, label and status in mono, uppercase, letterspaced. */
   .eyebrow {
-    @apply font-mono text-eyebrow font-semibold uppercase text-ink-2;
+    @apply font-mono text-eyebrow font-medium uppercase text-fg-2;
   }
   .field {
-    @apply min-h-10 w-full rounded-card border-1.5 border-line-strong bg-sheet px-3 font-body text-body-sm text-ink;
+    @apply min-h-10 w-full rounded-card border border-hairline-strong bg-ground px-3 font-body text-body-sm text-fg placeholder:text-fg-2;
   }
 }

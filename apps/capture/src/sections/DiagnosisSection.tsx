@@ -8,7 +8,7 @@ import { confidenceText, SEVERITY_TEXT, waitingText } from '../lib/copy'
 export function DiagnosisSection({ view }: { view: ObservationView }) {
   const { diagnosis } = view
   if (!diagnosis) {
-    return <p className="text-body font-semibold text-ink-2">{waitingText(view.status)}…</p>
+    return <p className="text-body font-semibold text-fg-2">{waitingText(view.status)}…</p>
   }
 
   const verified = view.verified_issue
@@ -20,7 +20,7 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
     <div className="flex flex-col gap-3">
       <div>
         <p className="eyebrow">{verified ? 'Confirmed by an officer' : 'What we see'}</p>
-        <h2 className="font-display text-display font-semibold text-navy">
+        <h2 className="font-display text-display font-bold text-fg">
           {unknown ? 'Not sure yet' : label}
         </h2>
       </div>
@@ -34,7 +34,7 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
             {CONFIDENCE_BANDS.map((band, i) => (
               <span
                 key={band}
-                className={`h-2.5 w-8 rounded-tag border-1.5 border-navy ${i < level ? 'bg-navy' : 'bg-transparent'}`}
+                className={`h-2.5 w-8 rounded-tag border-1.5 border-fg ${i < level ? 'bg-fg' : 'bg-transparent'}`}
               />
             ))}
           </span>
@@ -46,10 +46,10 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
       )}
 
       {diagnosis.visible_symptoms.length > 0 && (
-        <ul className="flex flex-col gap-1 border-t border-line pt-2">
+        <ul className="flex flex-col gap-1 border-t border-hairline pt-2">
           {diagnosis.visible_symptoms.map(symptom => (
             <li key={symptom} className="flex gap-2 text-body">
-              <span aria-hidden className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-navy" />
+              <span aria-hidden className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-fg" />
               {withoutEmDash(symptom)}
             </li>
           ))}
@@ -57,12 +57,12 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
       )}
 
       {view.status === 'awaiting_expert_review' && (
-        <div className="flex gap-3 rounded-card border border-copper-deep border-l-4 bg-copper-tint p-3 text-ink">
+        <div className="flex gap-3 rounded-card border border-attention-text border-l-4 bg-attention-tint p-3 text-fg">
           <UserCheck
             size={24}
             strokeWidth={2}
             aria-hidden
-            className="mt-0.5 shrink-0 text-copper-deep"
+            className="mt-0.5 shrink-0 text-attention-text"
           />
           <p className="text-body font-semibold">
             {unknown

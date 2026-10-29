@@ -6,7 +6,7 @@ export function ActionBar({ children }: { children: ReactNode }) {
     <>
       {/* Keeps page content clear of the fixed bar. */}
       <div aria-hidden className="h-28" />
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-ground pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
         <div className="mx-auto max-w-md px-4">{children}</div>
       </div>
     </>

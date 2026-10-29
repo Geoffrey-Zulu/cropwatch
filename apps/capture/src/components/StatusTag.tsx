@@ -1,9 +1,9 @@
 import { statusTagFor } from '../lib/copy'
 
 const TONES = {
-  outline: 'border-ink text-ink bg-transparent',
-  attention: 'border-copper-deep bg-copper-tint text-ink',
-  guidance: 'border-green bg-green text-white',
+  outline: 'border-fg text-fg bg-transparent',
+  attention: 'border-attention bg-attention-tint text-attention-text',
+  guidance: 'border-leaf bg-signal-tint text-signal-text',
 } as const
 
 // A report's status. Keyed on the word, so a new status fades in once.

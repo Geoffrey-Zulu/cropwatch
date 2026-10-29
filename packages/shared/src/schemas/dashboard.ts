@@ -7,6 +7,7 @@ import { RiskLevelSchema } from './alert'
 import { DistrictSlugSchema, TimestampSchema } from './common'
 import { ExpertReviewReasonSchema } from './diagnosis'
 import { ObservationStatusSchema } from './observation'
+import { ProductSourceSchema } from './registeredProduct'
 
 // Command Center dashboard (tRPC /trpc), not the frozen mobile contract. Outputs are parsed
 // with these schemas on the server, so what they leave out cannot leak: Evidence has no field
@@ -60,6 +61,8 @@ export const ObservationEvidenceSchema = z.object({
           trade_name: z.string(),
           active_ingredient: z.string(),
           label_dose: z.string(),
+          // e.g. plantwise_pmdg: then registration_no is an internal id, not a registration.
+          source: ProductSourceSchema.nullish(),
         })
       ),
       rejected: z.array(z.object({ candidate: z.string(), reason: z.string() })),
@@ -71,6 +74,17 @@ export const ObservationEvidenceSchema = z.object({
 export type ObservationEvidence = z.infer<typeof ObservationEvidenceSchema>
 
 // ---------------------------------------------------------------- Outgrower View
+
+// Why a farm is on a visit list, as codes the view renders as chips; `reasons` keeps the sentences.
+export const VISIT_REASONS = [
+  'cluster',
+  'severe',
+  'moderate',
+  'awaiting_review',
+  'high_district',
+] as const
+export const VisitReasonSchema = z.enum(VISIT_REASONS)
+export type VisitReason = z.infer<typeof VisitReasonSchema>
 
 export const VisitSchema = z.object({
   report_number: z.string(),
@@ -85,6 +99,7 @@ export const VisitSchema = z.object({
   // 1 visit first; an ordinal, never a likelihood.
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   reasons: z.array(z.string()).min(1),
+  reason_codes: z.array(VisitReasonSchema).optional(),
   sim: z.boolean(),
 })
 export type Visit = z.infer<typeof VisitSchema>

@@ -1,37 +1,77 @@
-/* Phytos "Field Brief" design tokens (design-system/phytos/MASTER.md). Light theme only: the
-   capture app is built for sunlight and the dashboard for projectors. Text pairings meet the
-   ratios in MASTER.md §3; use these tokens, never ad-hoc colours. */
-:root {
-  --paper: #faf6ef;
-  --sheet: #fffdf9;
+/* Phytos "Field Signal" design tokens (design-system/phytos/MASTER.md). One identity in two
+   exposures: day (the capture app, used in direct sun) is the default; night (the Command
+   Center, the console that watches the whole country) is the `exposure-night` class on <html>.
+   Text pairings meet the ratios in MASTER.md §3; use these tokens, never ad-hoc colours. */
+:root,
+.exposure-day {
+  --ground: #f0ede2;
+  --panel: #faf8f1;
+  --well: #e7e3d5;
 
-  --navy: #13293d;
-  --navy-2: #2c4a66;
-  --navy-tint: #e6ebf0;
+  --fg: #1a2420;
+  --fg-2: #55675b;
 
-  --copper: #b4642a;
-  --copper-deep: #8f4519;
-  --copper-light: #e0a06a;
-  --copper-tint: #f4e6d8;
+  /* Chartreuse is a fill (actions, the one loudest element); as small text it is the deep leaf. */
+  --signal: #c9e265;
+  --signal-ink: #0e1613;
+  --signal-text: #4e6a14;
+  --signal-tint: #e9f0cf;
+  --leaf: #5f7f1c;
 
-  --green: #4f6f52;
-  --green-deep: #3e5a41;
-  --green-tint: #e6ece3;
+  --attention: #d9a441;
+  --attention-text: #7e5b10;
+  --attention-tint: #f3e6c6;
 
-  --ink: #2b3036;
-  --ink-2: #4a5058;
-  --line: #d8d2c4;
-  --line-strong: #8a8478;
+  --high: #b4521c;
+  --high-ink: #faf8f1;
+  --high-text: #9a4515;
 
-  /* The one elevation: only for things floating above the page (tooltips, menus). */
-  --raise: 0 6px 18px rgb(19 41 61 / 0.14), 0 1px 3px rgb(19 41 61 / 0.1);
+  --hairline: #d6d1c2;
+  --hairline-strong: #857f6e;
+
+  /* The dark chip the wordmark sits on, as on the pitch PDF. */
+  --chip: #0e1613;
+  --chip-fg: #c9e265;
+
+  --raise: 0 6px 18px rgb(14 22 19 / 0.14), 0 1px 3px rgb(14 22 19 / 0.1);
 
   /* Simulated data: a diagonal hatch (DEMO badge, sim markers). */
-  --hatch: repeating-linear-gradient(
-    -45deg,
-    transparent 0 5px,
-    rgb(143 69 25 / 0.12) 5px 7px
-  );
+  --hatch: repeating-linear-gradient(-45deg, transparent 0 5px, rgb(126 91 16 / 0.14) 5px 7px);
 
   color-scheme: light;
+}
+
+.exposure-night {
+  --ground: #0e1613;
+  --panel: #141f1a;
+  --well: #1b2922;
+
+  --fg: #ede9dd;
+  --fg-2: #7d9184;
+
+  --signal: #c9e265;
+  --signal-ink: #0e1613;
+  --signal-text: #c9e265;
+  --signal-tint: #1f2c1a;
+  --leaf: #c9e265;
+
+  --attention: #d9a441;
+  --attention-text: #d9a441;
+  --attention-tint: #2a2616;
+
+  --high: #e07b39;
+  --high-ink: #0e1613;
+  --high-text: #e8873f;
+
+  --hairline: #2a382f;
+  --hairline-strong: #5c7064;
+
+  --chip: #1b2922;
+  --chip-fg: #c9e265;
+
+  --raise: 0 8px 24px rgb(0 0 0 / 0.45), 0 1px 3px rgb(0 0 0 / 0.4);
+
+  --hatch: repeating-linear-gradient(-45deg, transparent 0 5px, rgb(217 164 65 / 0.16) 5px 7px);
+
+  color-scheme: dark;
 }

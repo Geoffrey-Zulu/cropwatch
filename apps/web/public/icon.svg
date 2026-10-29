@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Phytos app icon: a leaf on the navy tile, with the copper marker of one observation. -->
-  <rect width="512" height="512" rx="96" fill="#13293D"/>
+  <!-- Phytos app icon (Field Signal): a chartreuse leaf on the dark chip, with the gold marker of one observation. -->
+  <rect width="512" height="512" rx="96" fill="#0E1613"/>
   <g transform="rotate(-30 256 256)">
-    <path d="M256 92C366 166 366 346 256 420C146 346 146 166 256 92Z" fill="none" stroke="#FAF6EF" stroke-width="30" stroke-linejoin="round"/>
-    <path d="M256 150V372" stroke="#FAF6EF" stroke-width="22" stroke-linecap="round"/>
-    <path d="M256 236L310 196M256 300L316 258M256 236L202 196M256 300L196 258" stroke="#FAF6EF" stroke-width="16" stroke-linecap="round"/>
+    <path d="M256 92C366 166 366 346 256 420C146 346 146 166 256 92Z" fill="none" stroke="#C9E265" stroke-width="30" stroke-linejoin="round"/>
+    <path d="M256 150V372" stroke="#C9E265" stroke-width="22" stroke-linecap="round"/>
+    <path d="M256 236L310 196M256 300L316 258M256 236L202 196M256 300L196 258" stroke="#C9E265" stroke-width="16" stroke-linecap="round"/>
   </g>
-  <circle cx="376" cy="138" r="38" fill="#E0A06A"/>
+  <circle cx="376" cy="138" r="38" fill="#D9A441"/>
 </svg>

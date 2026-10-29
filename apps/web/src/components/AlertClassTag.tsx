@@ -1,11 +1,17 @@
 import { Activity, BadgeCheck, CloudSun, type LucideIcon } from 'lucide-react'
 import { ALERT_CLASS_LABELS, type AlertClass } from '@repo/shared'
 
-// Solid means verified; dashed means modelled or forecast only (MASTER.md §2).
+// Solid means verified (lit in signal); dashed means modelled or forecast only (MASTER.md §2).
 const TAG: Record<AlertClass, { icon: LucideIcon; className: string }> = {
-  weather_advisory: { icon: CloudSun, className: 'border-navy-tint bg-navy-tint text-navy' },
-  verified_cluster: { icon: BadgeCheck, className: 'border-navy bg-navy text-white' },
-  model_risk_signal: { icon: Activity, className: 'border-dashed border-ink-2 text-ink' },
+  weather_advisory: {
+    icon: CloudSun,
+    className: 'border-dashed border-hairline-strong text-fg-2',
+  },
+  verified_cluster: { icon: BadgeCheck, className: 'border-signal-text text-signal-text' },
+  model_risk_signal: {
+    icon: Activity,
+    className: 'border-dashed border-attention text-attention-text',
+  },
 }
 
 export function AlertClassTag({ alertClass }: { alertClass: AlertClass }) {

@@ -109,6 +109,40 @@ describe('ResultView (progressive)', () => {
     expect(screen.getByText('ZEMA/PCP/123')).toBeInTheDocument()
   })
 
+  it('shows a PMDG product with its source, never its id as a registration number', () => {
+    const dose = '4mls per 20L'
+    render(
+      <ResultView
+        view={{
+          ...base,
+          status: 'complete',
+          diagnosis,
+          recommendation: {
+            ...recommendation,
+            ipm_steps: ['Check plants.', 'Chemical control, as a last resort: …'],
+            officer_referral: false,
+            chemical_options: [
+              {
+                registration_no: 'PMDG-TUTA-BELT-480SC',
+                trade_name: 'BELT 480SC',
+                active_ingredient: 'flubendiamide',
+                label_dose: dose,
+                phi_days: 3,
+                source_doc: 'pw-pmdg-tuta-absoluta-zambia-2022 p1',
+                source: 'plantwise_pmdg',
+              },
+            ],
+          },
+        }}
+      />
+    )
+    expect(screen.getByText(dose)).toBeInTheDocument()
+    expect(screen.getByText('Plantwise Zambia PMDG')).toBeInTheDocument()
+    expect(screen.getByText(/dose \(from the guide\)/i)).toBeInTheDocument()
+    expect(screen.queryByText('PMDG-TUTA-BELT-480SC')).not.toBeInTheDocument()
+    expect(screen.queryByText(/reg\. no/i)).not.toBeInTheDocument()
+  })
+
   it('routes uncertain reports to an officer, with no advice (invariant 4)', () => {
     render(
       <ResultView

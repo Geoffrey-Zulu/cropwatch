@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { CROP_LABELS, ISSUE_LABELS } from '@repo/shared'
 import { AlertCard } from '../components/AlertCard'
 import { DemoBadge } from '../components/DemoBadge'
-import { Figure, Muted, Panel } from '../components/Panel'
+import { Figure, Figures, Muted, Panel } from '../components/Panel'
 import { RiskFactors } from '../components/RiskFactors'
 import { ZambiaMap } from '../components/ZambiaMap'
 import {
@@ -88,7 +88,7 @@ export function OutbreakDetailView({
 
   return (
     <div className="flex flex-col gap-4">
-      <a href="#/" className="inline-flex items-center gap-1 text-label font-semibold text-navy">
+      <a href="#/" className="inline-flex items-center gap-1 text-label font-semibold text-fg">
         <ArrowLeft size={16} strokeWidth={2} aria-hidden /> National map
       </a>
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -97,19 +97,19 @@ export function OutbreakDetailView({
             Outbreak · cluster {cluster.active ? 'active' : 'closed'} · first detected{' '}
             {dateTime(cluster.firstDetectedAt)}
           </p>
-          <h1 className="font-display text-display-xl font-semibold text-navy">
+          <h1 className="mt-1 font-display text-display-xl font-bold text-fg">
             {ISSUE_LABELS[cluster.issue]} near {cluster.district}
           </h1>
         </div>
         <DemoBadge rows={[cluster, ...members]} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 rounded-card border border-line bg-sheet p-4 md:grid-cols-4">
+      <Figures>
         <Figure value={cluster.size} label={`Reports within ${cluster.radiusKm} km`} />
-        <Figure value={cluster.verifiedMembers} label="Verified by an officer" />
+        <Figure value={cluster.verifiedMembers} label="Verified by an officer" emphasis />
         <Figure value={cluster.newLast24h} label="New in 24 hours" />
         <Figure value={shortDate(cluster.updatedAt)} label="Last updated" />
-      </div>
+      </Figures>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="flex min-w-0 flex-col gap-4">
@@ -179,12 +179,12 @@ function Timeline({ members }: { members: DashObservation[] }) {
     <div className="flex h-36 items-end gap-2" role="img" aria-label="Reports per day, last 7 days">
       {counts.map(c => (
         <div key={c.label} className="flex flex-1 flex-col items-center gap-1">
-          <span className="font-mono text-caption text-ink-2">{c.n || ''}</span>
+          <span className="font-mono text-caption text-fg-2">{c.n || ''}</span>
           <div
-            className="w-full rounded-t-[2px] bg-navy"
+            className="w-full rounded-t-[2px] bg-attention"
             style={{ height: `${(c.n / max) * 90}px` }}
           />
-          <span className="font-mono text-[11px] text-ink-2">{c.label}</span>
+          <span className="font-mono text-[11px] text-fg-2">{c.label}</span>
         </div>
       ))}
     </div>
@@ -197,7 +197,7 @@ export function ReportsTable({ rows }: { rows: DashObservation[] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-label">
         <thead>
-          <tr className="border-b border-line">
+          <tr className="border-b border-hairline">
             {['Report', 'Sent', 'Place', 'Crop', 'AI assessment', 'Verification', 'Status'].map(
               h => (
                 <th key={h} className="eyebrow py-2 pr-3 font-semibold">
@@ -209,16 +209,16 @@ export function ReportsTable({ rows }: { rows: DashObservation[] }) {
         </thead>
         <tbody>
           {rows.map(o => (
-            <tr key={o.id} className="border-b border-line last:border-b-0">
+            <tr key={o.id} className="border-b border-hairline last:border-b-0">
               <td className="py-2 pr-3">
                 <a
                   href={hrefFor({ page: 'observation', id: o.id })}
-                  className="font-mono font-semibold text-navy underline decoration-line-strong underline-offset-2"
+                  className="font-mono font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
                 >
                   {reportNumber(o.id)}
                 </a>
                 {o.sim && (
-                  <span className="ml-1 font-mono text-eyebrow text-copper-deep">DEMO</span>
+                  <span className="ml-1 font-mono text-eyebrow text-attention-text">DEMO</span>
                 )}
               </td>
               <td className="py-2 pr-3 font-mono">{dateTime(o.createdAt)}</td>
@@ -230,7 +230,7 @@ export function ReportsTable({ rows }: { rows: DashObservation[] }) {
               <td className="py-2 pr-3">
                 {o.suspectedIssue ? ISSUE_LABELS[o.suspectedIssue] : 'Not assessed'}
                 {o.band && (
-                  <span className="block text-caption text-ink-2">{confidenceText(o.band)}</span>
+                  <span className="block text-caption text-fg-2">{confidenceText(o.band)}</span>
                 )}
               </td>
               <td className="py-2 pr-3">{VERIFICATION_TEXT[o.verification]}</td>

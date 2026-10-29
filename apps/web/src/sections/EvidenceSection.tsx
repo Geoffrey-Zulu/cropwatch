@@ -1,6 +1,11 @@
 import { ExternalLink, ShieldCheck, ShieldX } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { ISSUE_LABELS, withoutEmDash, type ObservationEvidence } from '@repo/shared'
+import {
+  ISSUE_LABELS,
+  PRODUCT_SOURCE_LABELS,
+  withoutEmDash,
+  type ObservationEvidence,
+} from '@repo/shared'
 import { Muted, Panel } from '../components/Panel'
 import {
   confidenceText,
@@ -30,7 +35,7 @@ export function EvidenceSection({ obsId }: { obsId: string }) {
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+    <div className="border-t border-hairline pt-3 first:border-t-0 first:pt-0">
       <h3 className="eyebrow mb-1.5">{title}</h3>
       {children}
     </div>
@@ -39,7 +44,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 
 function Tier({ tier }: { tier: number }) {
   return (
-    <span className="ml-1.5 font-mono text-eyebrow uppercase text-copper-deep">
+    <span className="ml-1.5 font-mono text-eyebrow uppercase text-attention-text">
       Tier {tier} · {TIER_NAMES[tier] ?? 'Source'}
     </span>
   )
@@ -57,7 +62,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
             {evidence.verified_issue && ` as ${ISSUE_LABELS[evidence.verified_issue]}`}
           </li>
           {diagnosis?.needs_expert_review ? (
-            <li className="font-semibold text-copper-deep">
+            <li className="font-semibold text-attention-text">
               Routed to an officer:{' '}
               {diagnosis.expert_review_reason
                 ? REVIEW_REASON_TEXT[diagnosis.expert_review_reason]
@@ -76,7 +81,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
               {ISSUE_LABELS[diagnosis.suspected_issue]} ·{' '}
               {confidenceText(diagnosis.confidence_band)}
             </li>
-            <li className="font-mono text-caption text-ink-2">
+            <li className="font-mono text-caption text-fg-2">
               {diagnosis.model_id} · prompt {diagnosis.prompt_version}
               {diagnosis.attempts ? ` · ${diagnosis.attempts} attempt(s)` : ''}
             </li>
@@ -93,13 +98,13 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
               {retrieval.retrieved} passages found; {retrieval.excerpts.length} given to the model
               for the query:
             </p>
-            <p className="rounded-card bg-paper px-2 py-1 font-mono text-caption text-ink-2">
+            <p className="rounded-card bg-ground px-2 py-1 font-mono text-caption text-fg-2">
               {retrieval.query}
             </p>
             <ul className="flex flex-col gap-1">
               {retrieval.excerpts.map(e => (
                 <li key={`${e.ref}-${e.document_id}`} className="flex items-start gap-2 text-label">
-                  <span className="mt-0.5 rounded-tag border border-line-strong px-1 font-mono text-[11px]">
+                  <span className="mt-0.5 rounded-tag border border-hairline-strong px-1 font-mono text-[11px]">
                     {e.ref}
                   </span>
                   <span className="min-w-0">
@@ -108,7 +113,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                         href={e.source_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-semibold text-navy underline decoration-line-strong underline-offset-2"
+                        className="font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
                       >
                         {e.title}
                         <ExternalLink
@@ -131,7 +136,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                 <p className="text-label font-semibold">Steps the checks removed</p>
                 <ul className="flex flex-col gap-0.5">
                   {retrieval.dropped.map(d => (
-                    <li key={d.text} className="text-caption text-ink-2">
+                    <li key={d.text} className="text-caption text-fg-2">
                       {withoutEmDash(d.text)} ({d.reason.replace(/_/g, ' ')})
                     </li>
                   ))}
@@ -139,7 +144,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
               </div>
             )}
             {retrieval.model_id && (
-              <p className="font-mono text-caption text-ink-2">
+              <p className="font-mono text-caption text-fg-2">
                 Composed by {retrieval.model_id} · prompt {retrieval.prompt_version}
               </p>
             )}
@@ -169,13 +174,17 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                       size={16}
                       strokeWidth={2}
                       aria-hidden
-                      className="mt-0.5 shrink-0 text-green-deep"
+                      className="mt-0.5 shrink-0 text-signal-text"
                     />
                     <span>
                       <strong className="font-semibold">{p.trade_name}</strong> (
-                      {p.active_ingredient}), reg. {p.registration_no}
+                      {p.active_ingredient}),{' '}
+                      {p.source === 'plantwise_pmdg'
+                        ? PRODUCT_SOURCE_LABELS.plantwise_pmdg
+                        : `reg. ${p.registration_no}`}
                       <span className="block font-mono text-caption">
-                        Label dose: {p.label_dose}
+                        {p.source === 'plantwise_pmdg' ? 'Dose (from the guide)' : 'Label dose'}:{' '}
+                        {p.label_dose}
                       </span>
                     </span>
                   </li>
@@ -194,7 +203,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                       size={16}
                       strokeWidth={2}
                       aria-hidden
-                      className="mt-0.5 shrink-0 text-copper-deep"
+                      className="mt-0.5 shrink-0 text-attention-text"
                     />
                     <span>
                       {r.candidate}: {REJECTION_TEXT[r.reason] ?? r.reason.replace(/_/g, ' ')}
@@ -203,7 +212,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                 ))}
               </ul>
             )}
-            <p className="text-caption text-ink-2">
+            <p className="text-caption text-fg-2">
               Every chemical is checked against registered_products; doses come from the label,
               never from the model.
             </p>

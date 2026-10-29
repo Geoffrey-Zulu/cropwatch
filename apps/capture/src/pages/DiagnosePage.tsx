@@ -106,7 +106,7 @@ export function DiagnosePage({
       <main className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-5">
         <div>
           <p className="eyebrow">New report</p>
-          <h1 className="font-display text-display-xl font-semibold text-navy">
+          <h1 className="mt-1 font-display text-display font-bold text-fg">
             What is wrong with your crop?
           </h1>
         </div>
@@ -148,7 +148,7 @@ export function DiagnosePage({
             max={today()}
             value={plantingDate}
             onChange={event => setPlantingDate(event.target.value)}
-            className="min-h-14 w-full rounded-card border-1.5 border-line-strong bg-sheet px-3 font-mono text-data text-ink"
+            className="min-h-14 w-full rounded-card border-1.5 border-hairline-strong bg-panel px-3 font-mono text-data text-fg"
           />
         </div>
 
@@ -163,7 +163,7 @@ export function DiagnosePage({
             value={description}
             onChange={event => setDescription(event.target.value)}
             placeholder="Holes in the leaves, worms inside…"
-            className="w-full rounded-card border-1.5 border-line-strong bg-sheet p-3 font-body text-body text-ink placeholder:text-ink-2"
+            className="w-full rounded-card border-1.5 border-hairline-strong bg-panel p-3 font-body text-body text-fg placeholder:text-fg-2"
           />
         </div>
 
@@ -190,7 +190,7 @@ export function DiagnosePage({
               : 'Send report'}
         </button>
         {!ready && sending === 'idle' && (
-          <p className="mt-2 text-center text-label font-semibold text-ink-2">
+          <p className="mt-2 text-center text-label font-semibold text-fg-2">
             {!photo
               ? 'Take a photo first'
               : !crop

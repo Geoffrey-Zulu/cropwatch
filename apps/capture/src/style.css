@@ -1,7 +1,9 @@
 @import '@repo/ui/theme/phytos.css';
-@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
-@import '@fontsource-variable/atkinson-hyperlegible-mono/wght.css';
-@import '@fontsource-variable/source-serif-4/wght.css';
+@import '@fontsource-variable/bricolage-grotesque/wght.css';
+@import '@fontsource-variable/instrument-sans/wght.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 
 @tailwind base;
 @tailwind components;
@@ -13,11 +15,11 @@
     text-size-adjust: 100%;
   }
   body {
-    @apply bg-paper font-body text-body text-ink antialiased;
+    @apply bg-ground font-body text-body text-fg antialiased;
     min-height: 100dvh;
   }
   :focus-visible {
-    outline: 3px solid var(--copper);
+    outline: 3px solid var(--leaf);
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -32,14 +34,16 @@
 }
 
 @layer components {
-  /* The one primary action: navy, full width, 56 px. */
+  /* The one primary action: chartreuse with dark text, full width, 56 px. Until the action can
+     run it stays quiet, so the chartreuse only appears when there is something to do. */
   .btn-primary {
-    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-card bg-navy px-5 font-body text-title font-extrabold text-white transition-colors duration-150 ease-snap hover:bg-navy-2 active:bg-navy-2 disabled:cursor-not-allowed disabled:bg-ink-2;
+    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-card bg-signal px-5 font-display text-title font-bold text-signal-ink transition-[filter,background-color] duration-150 ease-snap active:brightness-95 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
   }
   .btn-quiet {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-card border-1.5 border-line-strong bg-sheet px-4 font-body text-label font-semibold text-navy transition-colors duration-150 ease-snap active:bg-navy-tint;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-card border-1.5 border-hairline-strong bg-panel px-4 font-body text-label font-semibold text-fg transition-colors duration-150 ease-snap active:bg-well;
   }
+  /* Instrument readout: kickers and labels in mono, uppercase, letterspaced. */
   .eyebrow {
-    @apply font-mono text-eyebrow font-semibold uppercase text-ink-2;
+    @apply font-mono text-eyebrow font-medium uppercase text-fg-2;
   }
 }

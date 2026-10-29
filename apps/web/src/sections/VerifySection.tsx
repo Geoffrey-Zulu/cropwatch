@@ -128,12 +128,12 @@ export function VerifySection({
       {message && (
         <p
           role="status"
-          className={`text-label font-semibold ${state === 'error' ? 'text-copper-deep' : 'text-green-deep'}`}
+          className={`text-label font-semibold ${state === 'error' ? 'text-attention-text' : 'text-signal-text'}`}
         >
           {message}
         </p>
       )}
-      <p className="text-caption text-ink-2">{EVALUATION_NOTE}</p>
+      <p className="text-caption text-fg-2">{EVALUATION_NOTE}</p>
     </div>
   )
 }

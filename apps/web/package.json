@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fontsource-variable/atkinson-hyperlegible-mono": "^5.3.0",
-    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
-    "@fontsource-variable/source-serif-4": "^5.3.1",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@repo/functions": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",

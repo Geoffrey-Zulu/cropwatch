@@ -3,9 +3,8 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Phytos navy and paper (design-system/phytos/MASTER.md): the browser chrome matches the header.
-const NAVY = '#13293D'
-const PAPER = '#FAF6EF'
+// Phytos day exposure (design-system/phytos/MASTER.md): the browser chrome matches the header.
+const GROUND = '#F0EDE2'
 
 export default defineConfig({
   server: { port: 5174 },
@@ -34,8 +33,8 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: PAPER,
-        theme_color: NAVY,
+        background_color: GROUND,
+        theme_color: GROUND,
         categories: ['agriculture', 'utilities'],
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

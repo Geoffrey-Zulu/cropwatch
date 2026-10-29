@@ -10,16 +10,16 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
   return (
     <section aria-labelledby="my-reports" className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-3">
-        <h2 id="my-reports" className="font-display text-display font-semibold text-navy">
+        <h2 id="my-reports" className="font-display text-display font-bold text-fg">
           My reports
         </h2>
         {reports && <DemoBadge rows={reports} />}
       </div>
 
-      {reports === null && <p className="text-body text-ink-2">Loading your reports…</p>}
+      {reports === null && <p className="text-body text-fg-2">Loading your reports…</p>}
 
       {reports?.length === 0 && (
-        <div className="flex gap-3 rounded-card border-1.5 border-dashed border-line-strong p-4">
+        <div className="flex gap-3 rounded-card border-1.5 border-dashed border-hairline-strong p-4">
           <ClipboardList size={24} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
           <p className="text-body">
             No reports yet. Photograph a sick crop and your report, with advice, will be kept here.
@@ -32,7 +32,7 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
           <li key={report.id}>
             <a
               href={`#/report/${report.id}`}
-              className="flex items-center gap-3 rounded-card border border-line bg-sheet p-3 transition-colors duration-150 active:bg-navy-tint"
+              className="flex items-center gap-3 rounded-card border border-hairline bg-panel p-3 transition-colors duration-150 active:bg-well"
             >
               <div className="min-w-0 flex-1">
                 <p className="eyebrow">
@@ -49,7 +49,7 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
                   <StatusTag status={report.status} />
                 </div>
               </div>
-              <ChevronRight size={24} strokeWidth={2} aria-hidden className="shrink-0 text-navy" />
+              <ChevronRight size={24} strokeWidth={2} aria-hidden className="shrink-0 text-fg" />
             </a>
           </li>
         ))}

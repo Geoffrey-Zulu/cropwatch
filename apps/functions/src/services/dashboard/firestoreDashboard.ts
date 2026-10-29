@@ -14,6 +14,7 @@ import {
   type RiskLevel,
   type SeverityBand,
   type Visit,
+  type VisitReason,
 } from '@repo/shared'
 import { fromFirestore } from '../../lib/firestoreData'
 import type { FetchWeather } from '../weather/openMeteo'
@@ -159,6 +160,7 @@ export function firestoreDashboard({
                   trade_name: c.trade_name,
                   active_ingredient: c.active_ingredient,
                   label_dose: c.label_dose,
+                  source: c.source ?? null,
                 })),
                 rejected: (
                   internalRec?.rejected_products ??
@@ -303,13 +305,20 @@ export function outgrowerOverview({
   const visits: (Visit & { officerKey: string })[] = []
   for (const [farm, r] of latest) {
     const reasons: string[] = []
+    const codes: VisitReason[] = []
+    const because = (code: VisitReason, sentence: string) => {
+      codes.push(code)
+      reasons.push(sentence)
+    }
     const issueName = r.issue && r.issue !== 'unknown' ? ISSUE_LABELS[r.issue] : null
     const inCluster = clustered.has(r.id)
-    if (inCluster) reasons.push(`In an active ${issueName ?? 'crop problem'} cluster`)
-    if (r.severity === 'severe') reasons.push('Severe damage reported')
-    else if (r.severity === 'moderate') reasons.push('Moderate damage reported')
-    if (r.status === 'awaiting_expert_review') reasons.push('Waiting for an officer review')
-    if (levels.get(r.districtSlug) === 'HIGH') reasons.push(`${r.district} risk is HIGH`)
+    if (inCluster) because('cluster', `In an active ${issueName ?? 'crop problem'} cluster`)
+    if (r.severity === 'severe') because('severe', 'Severe damage reported')
+    else if (r.severity === 'moderate') because('moderate', 'Moderate damage reported')
+    if (r.status === 'awaiting_expert_review')
+      because('awaiting_review', 'Waiting for an officer review')
+    if (levels.get(r.districtSlug) === 'HIGH')
+      because('high_district', `${r.district} risk is HIGH`)
     if (reasons.length === 0) continue
     const priority: 1 | 2 | 3 =
       inCluster && (r.severity === 'severe' || levels.get(r.districtSlug) === 'HIGH')
@@ -329,6 +338,7 @@ export function outgrowerOverview({
       last_report_at: r.createdAt,
       priority,
       reasons,
+      reason_codes: codes,
       sim: r.sim,
       officerKey: `${r.districtSlug}|${campOf(r)}`,
     })

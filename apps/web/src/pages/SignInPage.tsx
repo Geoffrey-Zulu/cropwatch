@@ -35,18 +35,17 @@ export function SignInPage({
     <div className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center gap-2">
-          <span aria-hidden className="h-3 w-3 rounded-full bg-copper" />
-          <span className="font-display text-[26px] font-semibold uppercase tracking-[0.14em] text-navy">
+          <span className="rounded-tag bg-chip px-3 py-2 font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.16em] text-chip-fg">
             Phytos
           </span>
         </div>
-        <h1 className="font-display text-display font-semibold text-navy">Command Center</h1>
-        <p className="mt-1 text-body-sm text-ink-2">
+        <h1 className="font-display text-display font-bold text-fg">Command Center</h1>
+        <p className="mt-1 text-body-sm text-fg-2">
           A prototype for extension officers, agronomists and outgrower field teams in Zambia.
         </p>
 
         {signedInAsFarmer ? (
-          <div className="mt-6 rounded-card border border-line bg-sheet p-4">
+          <div className="mt-6 rounded-card border border-hairline bg-panel p-4">
             <p className="text-body-sm">
               This account has no officer role. Sign out and sign in with an officer account.
             </p>
@@ -79,7 +78,7 @@ export function SignInPage({
               />
             </label>
             {error && (
-              <p role="alert" className="text-label font-semibold text-copper-deep">
+              <p role="alert" className="text-label font-semibold text-attention-text">
                 {error}
               </p>
             )}

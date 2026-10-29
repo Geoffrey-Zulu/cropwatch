@@ -25,12 +25,12 @@ export function ReportSentPage({
       <main className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-10">
         <CaseCard emphasis eyebrow={`Report ${reportNumber(obsId)}`}>
           <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <span className="inline-flex animate-tag items-center gap-2 rounded-tag border-1.5 border-green bg-green px-3 py-1.5 font-mono text-label font-semibold uppercase tracking-[0.08em] text-white">
+            <span className="inline-flex animate-tag items-center gap-2 rounded-tag border-1.5 border-leaf bg-signal-tint px-3 py-1.5 font-mono text-label font-semibold uppercase tracking-[0.12em] text-signal-text">
               <Check size={18} strokeWidth={2} aria-hidden />
               Sent
             </span>
-            <p className="font-display text-display font-semibold text-navy">We have your report</p>
-            <p className="text-body text-ink-2">
+            <p className="font-display text-display font-bold text-fg">We have your report</p>
+            <p className="text-body text-fg-2">
               We are looking at your photo now. Advice usually comes within a minute.
             </p>
           </div>

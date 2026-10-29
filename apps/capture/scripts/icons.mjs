@@ -9,9 +9,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ICONS = fileURLToPath(new URL('../public/icons/', import.meta.url))
 const svg = readFileSync(join(ICONS, 'icon.svg'), 'utf8')
-// Maskable: full-bleed navy, artwork inside the 80% safe zone.
+// Maskable: full-bleed dark chip, artwork inside the 80% safe zone.
 const maskable = svg
-  .replace('rx="96" fill="#13293D"', 'fill="#13293D"')
+  .replace('rx="96" fill="#0E1613"', 'fill="#0E1613"')
   .replace(
     /(<g transform="rotate\(-30 256 256\)">[\s\S]*<\/g>\s*<circle[^>]*\/>)/,
     '<g transform="translate(51.2 51.2) scale(0.8)">$1</g>'
@@ -48,5 +48,5 @@ function render(source, size, out, background = 'transparent') {
 
 render(svg, 192, 'icon-192.png')
 render(svg, 512, 'icon-512.png')
-render(maskable, 512, 'icon-maskable-512.png', '#13293D')
-render(maskable, 180, 'apple-touch-icon.png', '#13293D')
+render(maskable, 512, 'icon-maskable-512.png', '#0E1613')
+render(maskable, 180, 'apple-touch-icon.png', '#0E1613')
