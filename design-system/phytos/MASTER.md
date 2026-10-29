@@ -2,7 +2,9 @@
 
 The single source of truth for Phytos interfaces: the capture PWA (`apps/capture`) and the Command Center dashboard (`apps/web`). Tokens live in `packages/ui/theme` (CSS variables in `phytos.css` plus a Tailwind preset); this file says what they are for. The design language behind it is [philosophy.md](philosophy.md). Page overrides go in `pages/<page>.md`.
 
-Replaces "Field Brief" (navy and copper, 28 Oct 2026) on 29 Oct 2026. Layouts were kept; colour, type and the density of lists changed. **Revised the same day (freeze-2026-10-29b):** the Command Center moved to the day exposure (hotel projectors wash out dark grounds), mono caps were restricted to kickers, chips and stat labels, and the chrome and lists follow [patterns.md](patterns.md), a study of OneSoil, John Deere Operations Center, Climate FieldView, xarvio, Linear and Stripe.
+Replaces "Field Brief" (navy and copper, 28 Oct 2026) on 29 Oct 2026. Layouts were kept; colour, type and the density of lists changed. **Revised the same day (freeze-2026-10-29b):** mono caps restricted to kickers, chips and stat labels; chrome and lists after [patterns.md](patterns.md).
+
+> **The Command Center no longer follows this file (29 Oct, dashboard v2).** Its structure and visual language come from [patterns-v2.md](patterns-v2.md) (OneSoil, Linear, Stripe, Grafana): progressive disclosure with drawers, a neutral white console (`theme-console` in `packages/ui/theme/phytos.css`) with one blue accent `#2160C4`, amber and red-gold for risk only, Instrument Sans at a 14 px body, borders only on controls. This file still governs the **capture app** (day exposure) and the shared tokens. The dashboard sections below record the Field Signal console for history.
 
 ## 1. Concept
 
@@ -106,7 +108,7 @@ Capture (day exposure, same layouts as the Field Brief):
 - **Crop chips, location row, inputs:** panel with a hairline-strong border; the selected chip is ink with ground text.
 - **Demo badge:** `DEMO DATA · SIMULATED` in Mono on the gold tint with the hatch and a gold border, whenever a simulated row is on screen (invariant 5).
 
-Dashboard (day exposure, since 29 Oct; patterns.md):
+Dashboard (Field Signal, superseded by patterns-v2.md on 29 Oct):
 
 - **Shell:** a panel-coloured top bar with a hairline below. Left: the wordmark chip, "Command Center", a small `PROTOTYPE` badge. Right: the verified-observations chip (leaf dot, Bricolage count, "verified observations") and a round initials avatar that opens the account menu (email, role, sign out). **No email in the chrome.** Sidebar on the ground, icon plus sentence-case label; the current page has a 3 px chartreuse bar and the signal tint; counts are quiet grey badges. Content sits at a maximum of 1320 px.
 - **Figures:** the pitch-PDF stat row: a hairline above, then each figure as a Bricolage 40 px number in deep leaf with a two-line small label beside it that reads on from the number ("408 reports in the last 14 days"). No boxes.
