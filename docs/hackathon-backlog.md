@@ -104,5 +104,5 @@ Never cut the officer verification: it is the moat.
 ## Post-event (not in hackathon scope)
 
 - Landing page (cut 29 Oct).
-- A newer `recommend` prompt version that names a PMDG product when the guide supports it. In the live runs on 29 Oct the model proposed no chemical for Tuta, so the advice was IPM-only with the officer referral. That is safe, but the 17 PMDG rows were not exercised.
+- A newer `recommend` prompt version that names a PMDG product when the guide supports it. In the live runs on 29 Oct the model proposed no chemical for Tuta, so the advice was IPM-only with the officer referral. That is safe, and IPM-first is the story; the 13 PMDG rows were simply not exercised.
 - Africa's Talking sender ID ("Phytos") through ZICTA; ZEMA or label rows to replace the PMDG-derived ones.

@@ -176,7 +176,7 @@ describe('pmdg-products.csv (the live register)', () => {
 
   it('is valid, all Plantwise PMDG, never a placeholder, with ids that cannot pass for a registration number', () => {
     expect(errors).toEqual([])
-    expect(products.length).toBeGreaterThanOrEqual(17)
+    expect(products.length).toBeGreaterThanOrEqual(13)
     for (const p of products) {
       expect(p.source).toBe('plantwise_pmdg')
       expect(p.registration_no).toMatch(/^PMDG-[A-Z0-9-]+$/)
@@ -186,18 +186,21 @@ describe('pmdg-products.csv (the live register)', () => {
     }
   })
 
-  it('covers the four PMDG demo issues and leaves cassava mosaic IPM-only (the PMDG advises against it for smallholders)', () => {
+  it('covers three PMDG demo issues; late blight, cassava mosaic and fall armyworm stay IPM-only', () => {
     const pairs = new Set(
       products.flatMap(p => p.approved_crops.flatMap(c => p.approved_issues.map(i => `${c}/${i}`)))
     )
     for (const pair of [
       'tomato/tuta_absoluta',
-      'tomato/late_blight',
       'tomato/early_blight',
       'cabbage/diamondback_moth',
     ]) {
       expect(pairs, pair).toContain(pair)
     }
+    // Late blight's only PMDG products (mancozeb brands) have no PHI in that guide, and a PHI
+    // borrowed from another guide would be invented guidance: held back (29 Oct decision).
+    expect(products.some(p => p.approved_issues.includes('late_blight'))).toBe(false)
+    expect(products.some(p => p.active_ingredient === 'mancozeb')).toBe(false)
     expect(products.some(p => p.approved_issues.includes('cassava_mosaic'))).toBe(false)
     expect(products.some(p => p.approved_issues.includes('fall_armyworm'))).toBe(false)
   })
