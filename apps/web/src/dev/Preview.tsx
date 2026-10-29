@@ -1,6 +1,8 @@
 // Development only (main.tsx loads it behind import.meta.env.DEV): every Command Center page
 // from seed fixtures, for design review and screenshots without an officer sign-in.
-// #/preview/<map|outbreak|observation|queue|outgrower|sources>. Fixtures are generated from the
+// #/preview/<map|alerts|outbreak|observation|queue|outgrower|visit|sources|scenario>; alerts,
+// outbreak and observation are drawers over the map, visit a drawer over the Outgrower View.
+// Fixtures are generated from the
 // seed into ./fixtures.local.json (gitignored).
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
@@ -12,14 +14,15 @@ import type {
   OutgrowerOverview,
   Recommendation,
 } from '@repo/shared'
+import { AlertsDrawer } from '../components/AlertsDrawer'
 import { AppShell } from '../components/AppShell'
+import { ObservationDrawerView } from '../components/ObservationDrawer'
+import { OutbreakDrawerView } from '../components/OutbreakDrawer'
 import type { Officer } from '../hooks/useAuth'
 import type { LiveData } from '../hooks/useLive'
 import { KnowledgeSourcesPage } from '../pages/KnowledgeSourcesPage'
 import { NationalMapPage } from '../pages/NationalMapPage'
-import { ObservationDetailView } from '../pages/ObservationDetailPage'
 import { OfficerQueuePage, queueRows } from '../pages/OfficerQueuePage'
-import { OutbreakDetailView } from '../pages/OutbreakDetailPage'
 import { OutgrowerViewPage } from '../pages/OutgrowerViewPage'
 import { ScenarioPage } from '../pages/ScenarioPage'
 import { trpc } from '../lib/trpc'
@@ -81,7 +84,8 @@ export function Preview({ route }: { route: string }) {
   const page = route.split('/')[0] || 'map'
   const cluster = live.clusters.find(c => c.districtSlug === 'chongwe') ?? live.clusters[0] ?? null
   const sample = live.observations.find(o => o.id === fixtures.sampleId)!
-  const active = page === 'outbreak' ? 'map' : page === 'observation' ? 'map' : (page as 'map')
+  const overMap = ['map', 'alerts', 'outbreak', 'observation'].includes(page)
+  const active = overMap ? 'map' : page === 'visit' ? 'outgrower' : (page as 'map')
   const verified = live.observations.filter(o =>
     ['FIELD_VERIFIED', 'EXPERT_CONFIRMED'].includes(o.verification)
   ).length
@@ -96,20 +100,21 @@ export function Preview({ route }: { route: string }) {
           role={officer.role}
           verified={verified}
           queue={queueRows(live.observations, live.clusters).length}
+          newAlerts={live.alerts.length}
           onSignOut={() => undefined}
         >
-          {page === 'map' && <NationalMapPage {...live} />}
+          {overMap && <NationalMapPage {...live} />}
+          {page === 'alerts' && <AlertsDrawer alerts={live.alerts} />}
           {page === 'outbreak' && cluster && (
-            <OutbreakDetailView
+            <OutbreakDrawerView
               cluster={cluster}
               alert={live.alerts.find(a => a.clusterId === cluster.id) ?? null}
               risk={live.risk.find(r => r.districtSlug === cluster.districtSlug) ?? null}
               observations={live.observations}
-              allRisk={live.risk}
             />
           )}
           {page === 'observation' && (
-            <ObservationDetailView
+            <ObservationDrawerView
               observation={sample}
               recommendation={
                 sample.recommendationId ? fixtures.recommendations[sample.recommendationId] : null
@@ -119,7 +124,7 @@ export function Preview({ route }: { route: string }) {
             />
           )}
           {page === 'queue' && <OfficerQueuePage selectedId={null} officer={officer} {...live} />}
-          {page === 'outgrower' && <OutgrowerViewPage officer={officer} />}
+          {(page === 'outgrower' || page === 'visit') && <OutgrowerViewPage officer={officer} />}
           {page === 'sources' && <KnowledgeSourcesPage />}
           {page === 'scenario' && <ScenarioPage observations={live.observations} />}
         </AppShell>

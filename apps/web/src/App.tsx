@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
+import { AlertsDrawer } from './components/AlertsDrawer'
 import { AppShell } from './components/AppShell'
+import { ObservationDrawer } from './components/ObservationDrawer'
+import { OutbreakDrawer } from './components/OutbreakDrawer'
 import { useAuth } from './hooks/useAuth'
 import { useAlerts, useClusters, useObservations, useRisk } from './hooks/useLive'
-import { useRoute } from './hooks/useRoute'
+import { useNow } from './hooks/useNow'
+import { useRoute, type Route } from './hooks/useRoute'
 import { SCENARIO_ENABLED } from './lib/features'
 import { KnowledgeSourcesPage } from './pages/KnowledgeSourcesPage'
 import { NationalMapPage } from './pages/NationalMapPage'
-import { ObservationDetailPage } from './pages/ObservationDetailPage'
 import { OfficerQueuePage, queueRows } from './pages/OfficerQueuePage'
-import { OutbreakDetailPage } from './pages/OutbreakDetailPage'
 import { OutgrowerViewPage } from './pages/OutgrowerViewPage'
 import { ScenarioPage } from './pages/ScenarioPage'
 import { SignInPage } from './pages/SignInPage'
@@ -31,6 +33,11 @@ export function App() {
     () => observations.rows?.filter(o => VERIFIED.has(o.verification)).length ?? null,
     [observations.rows]
   )
+  const now = useNow()
+  const newAlerts = useMemo(
+    () => alerts.rows?.filter(a => now - Date.parse(a.createdAt) < 86_400_000).length ?? null,
+    [alerts.rows, now]
+  )
   const queue = useMemo(
     () => (observations.rows ? queueRows(observations.rows, clusters.rows).length : null),
     [observations.rows, clusters.rows]
@@ -42,7 +49,14 @@ export function App() {
   }
 
   // Field officers: their org's Outgrower View and the sources, nothing with farm locations.
-  const page = !cc && route.page !== 'sources' ? ({ page: 'outgrower' } as const) : route
+  // Field officers keep only the visit drawer, which carries no precise location.
+  const page: Route =
+    !cc && route.page !== 'sources'
+      ? {
+          page: 'outgrower',
+          ...(route.drawer?.kind === 'visit' ? { drawer: route.drawer } : {}),
+        }
+      : route
 
   const live = {
     observations: observations.rows,
@@ -59,13 +73,10 @@ export function App() {
       role={officer.role}
       verified={cc ? verified : null}
       queue={cc ? queue : null}
+      newAlerts={cc ? (newAlerts ?? 0) : null}
       onSignOut={() => void signOut()}
     >
       {page.page === 'map' && <NationalMapPage {...live} />}
-      {page.page === 'outbreak' && <OutbreakDetailPage clusterId={page.id} {...live} />}
-      {page.page === 'observation' && (
-        <ObservationDetailPage obsId={page.id} officer={officer} {...live} />
-      )}
       {page.page === 'queue' && (
         <OfficerQueuePage selectedId={page.id ?? null} officer={officer} {...live} />
       )}
@@ -77,6 +88,16 @@ export function App() {
         ) : (
           <NationalMapPage {...live} />
         ))}
+
+      {/* Drawers open over the page (patterns-v2.md). Outbreak and observation detail carry
+          precise locations, so only Command Center roles get them (CLAUDE.md invariant 6). */}
+      {cc && page.drawer?.kind === 'alerts' && <AlertsDrawer alerts={live.alerts} />}
+      {cc && page.drawer?.kind === 'outbreak' && (
+        <OutbreakDrawer clusterId={page.drawer.id} observations={live.observations} />
+      )}
+      {cc && page.drawer?.kind === 'observation' && (
+        <ObservationDrawer obsId={page.drawer.id} officer={officer} clusters={live.clusters} />
+      )}
     </AppShell>
   )
 }

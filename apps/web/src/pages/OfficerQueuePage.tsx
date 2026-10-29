@@ -113,7 +113,11 @@ export function OfficerQueuePage({
             title={`${CROP_LABELS[selected.crop]} · ${selected.district}`}
             actions={
               <a
-                href={hrefFor({ page: 'observation', id: selected.id })}
+                href={hrefFor({
+                  page: 'queue',
+                  id: selected.id,
+                  drawer: { kind: 'observation', id: selected.id },
+                })}
                 className="text-label font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
               >
                 Full report

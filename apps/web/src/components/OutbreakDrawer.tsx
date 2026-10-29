@@ -1,0 +1,229 @@
+import { Activity, BadgeCheck, ChevronRight, CloudSun, type LucideIcon } from 'lucide-react'
+import { useMemo } from 'react'
+import { ALERT_CLASS_LABELS, alertUncertainty, ISSUE_LABELS, type AlertClass } from '@repo/shared'
+import {
+  useAlertDoc,
+  useClusterDoc,
+  useRiskDoc,
+  type DashAlert,
+  type DashCluster,
+  type DashObservation,
+  type DashRisk,
+} from '../hooks/useLive'
+import { useNow } from '../hooks/useNow'
+import { useDrawerLinks } from '../hooks/useRoute'
+import {
+  ago,
+  confidenceText,
+  dateTime,
+  reportNumber,
+  shortDate,
+  VERIFICATION_TEXT,
+} from '../lib/copy'
+import { WeatherSection } from '../sections/WeatherSection'
+import { DemoBadge } from './DemoBadge'
+import { Drawer } from './Drawer'
+import { LevelDot } from './LevelTag'
+import { Disclosure } from './PageHeader'
+import { SkeletonRows } from './Skeleton'
+
+const DAY = 86_400_000
+
+const CLASS_ICON: Record<AlertClass, LucideIcon> = {
+  weather_advisory: CloudSun,
+  verified_cluster: BadgeCheck,
+  model_risk_signal: Activity,
+}
+
+// One cluster, in a drawer over the map. The default answers "how big, and how sure?"; the
+// reports, the day-by-day count, the district's factors and the weather are one click down.
+export function OutbreakDrawer({
+  clusterId,
+  observations,
+}: {
+  clusterId: string
+  observations: DashObservation[] | null
+}) {
+  const cluster = useClusterDoc(clusterId)
+  const alert = useAlertDoc(cluster?.alertId ?? null)
+  const risk = useRiskDoc(cluster?.districtSlug ?? null)
+  return (
+    <OutbreakDrawerView cluster={cluster} alert={alert} risk={risk} observations={observations} />
+  )
+}
+
+export function OutbreakDrawerView({
+  cluster,
+  alert,
+  risk,
+  observations,
+}: {
+  // undefined while loading; null when the cluster is gone.
+  cluster: DashCluster | null | undefined
+  alert: DashAlert | null | undefined
+  risk: DashRisk | null | undefined
+  observations: DashObservation[] | null
+}) {
+  const { open, close } = useDrawerLinks()
+  const members = useMemo(() => {
+    if (!cluster || !observations) return []
+    const ids = new Set(cluster.members)
+    return observations
+      .filter(o => ids.has(o.id))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }, [cluster, observations])
+
+  if (!cluster)
+    return (
+      <Drawer kicker="Outbreak" title="Opening the outbreak" closeHref={close()}>
+        {cluster === null ? (
+          <p className="text-label text-fg-2">This cluster no longer exists.</p>
+        ) : (
+          <SkeletonRows rows={4} label="Loading the outbreak" />
+        )}
+      </Drawer>
+    )
+
+  const Icon = alert ? CLASS_ICON[alert.alertClass] : null
+  return (
+    <Drawer
+      kicker={`Outbreak · ${cluster.active ? 'active' : 'closed'} · first seen ${dateTime(cluster.firstDetectedAt)}`}
+      title={`${ISSUE_LABELS[cluster.issue]} near ${cluster.district}`}
+      question="How big is this cluster, and how sure are we?"
+      aside={<DemoBadge rows={[cluster, ...members]} />}
+      closeHref={close()}
+    >
+      <dl className="grid grid-cols-3 gap-4">
+        {[
+          [cluster.size, `reports within ${cluster.radiusKm} km`],
+          [cluster.verifiedMembers, 'verified by an officer'],
+          [cluster.newLast24h, 'new in 24 hours'],
+        ].map(([value, label]) => (
+          <div key={label}>
+            <dd className="text-display font-semibold tabular-nums text-fg">{value}</dd>
+            <dt className="text-caption text-fg-2">{label}</dt>
+          </div>
+        ))}
+      </dl>
+
+      <section className="mt-6" aria-labelledby="raised">
+        <h3 id="raised" className="text-label font-semibold text-fg">
+          What was raised
+        </h3>
+        {alert === undefined && <SkeletonRows rows={1} label="Loading the alert" />}
+        {alert === null && <p className="mt-1 text-label text-fg-2">No alert for this cluster.</p>}
+        {alert && Icon && (
+          <div className="mt-2 flex flex-col gap-1">
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="inline-flex items-center gap-1.5 text-label font-medium text-fg">
+                <Icon size={16} strokeWidth={2} aria-hidden />
+                {ALERT_CLASS_LABELS[alert.alertClass]}
+              </span>
+              <LevelDot level={alert.level} />
+              <span className="meta">{ago(alert.createdAt)}</span>
+            </p>
+            <p className="text-label text-fg-2">
+              {alertUncertainty(alert.alertClass, {
+                verified: alert.verifiedReports ?? 0,
+                reports: alert.observationIds.length,
+              })}
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-6" aria-labelledby="district">
+        <h3 id="district" className="text-label font-semibold text-fg">
+          {cluster.district} district
+        </h3>
+        {risk === undefined && <SkeletonRows rows={1} label="Loading the district signal" />}
+        {risk === null && <p className="mt-1 text-label text-fg-2">Not computed yet.</p>}
+        {risk && (
+          <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-label text-fg">
+            <LevelDot level={risk.level} />
+            <span className="text-fg-2">{risk.factors[0]}</span>
+          </p>
+        )}
+      </section>
+
+      <div className="mt-6">
+        <Disclosure summary="Reports in this cluster" hint={members.length}>
+          <ul className="flex flex-col">
+            {members.map(o => (
+              <li key={o.id} className="border-b border-hairline last:border-b-0">
+                <a
+                  href={open({ kind: 'observation', id: o.id })}
+                  className="flex items-start gap-3 py-2.5 hover:bg-well"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-label text-fg">
+                      <span className="font-mono font-semibold">{reportNumber(o.id)}</span> ·{' '}
+                      {dateTime(o.createdAt)}
+                      {o.camp ? ` · ${o.camp}` : ''}
+                    </span>
+                    <span className="block text-caption text-fg-2">
+                      {o.band ? confidenceText(o.band) : 'Not assessed'} ·{' '}
+                      {VERIFICATION_TEXT[o.verification]}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    size={16}
+                    strokeWidth={2}
+                    aria-hidden
+                    className="mt-1 shrink-0 text-fg-2"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Disclosure>
+        <Disclosure summary="Reports per day" hint="last 7 days">
+          <Timeline members={members} />
+        </Disclosure>
+        {risk && risk.factors.length > 1 && (
+          <Disclosure summary="All district factors" hint={risk.factors.length}>
+            <ul className="flex flex-col gap-1 text-label text-fg">
+              {risk.factors.map(f => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+            <p className="mt-1 text-caption text-fg-2">Computed {ago(risk.computedAt)}</p>
+          </Disclosure>
+        )}
+        <Disclosure summary="Weather context" hint="Open-Meteo">
+          <WeatherSection districtSlug={cluster.districtSlug} bare />
+        </Disclosure>
+      </div>
+    </Drawer>
+  )
+}
+
+function Timeline({ members }: { members: DashObservation[] }) {
+  const days = 7
+  const end = useNow()
+  const counts = Array.from({ length: days }, (_, i) => {
+    const from = end - (days - i) * DAY
+    return {
+      label: shortDate(new Date(from + DAY).toISOString()),
+      n: members.filter(m => {
+        const t = Date.parse(m.createdAt)
+        return t > from && t <= from + DAY
+      }).length,
+    }
+  })
+  const max = Math.max(1, ...counts.map(c => c.n))
+  return (
+    <div className="flex h-28 items-end gap-2" role="img" aria-label="Reports per day, last 7 days">
+      {counts.map(c => (
+        <div key={c.label} className="flex flex-1 flex-col items-center gap-1">
+          <span className="text-caption tabular-nums text-fg-2">{c.n || ''}</span>
+          <div
+            className="w-full rounded-t-[2px] bg-fg-2"
+            style={{ height: `${(c.n / max) * 64}px` }}
+          />
+          <span className="text-[11px] text-fg-2">{c.label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}

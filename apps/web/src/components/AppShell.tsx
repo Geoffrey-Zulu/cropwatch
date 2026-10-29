@@ -1,4 +1,5 @@
 import {
+  Bell,
   BookOpen,
   ChevronDown,
   ClipboardCheck,
@@ -9,7 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { hrefFor, type Route } from '../hooks/useRoute'
+import { hrefFor, useDrawerLinks, type Route } from '../hooks/useRoute'
 import { SCENARIO_ENABLED } from '../lib/features'
 
 interface NavItem {
@@ -73,6 +74,7 @@ export function AppShell({
   role,
   verified,
   queue,
+  newAlerts = null,
   onSignOut,
   children,
 }: {
@@ -82,6 +84,8 @@ export function AppShell({
   role: string
   verified: number | null
   queue: number | null
+  // Alerts raised in the last 24 hours, for the bell; null hides the bell.
+  newAlerts?: number | null
   onSignOut: () => void
   children: ReactNode
 }) {
@@ -103,6 +107,7 @@ export function AppShell({
           </span>
           <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
             {verified !== null && <VerifiedChip count={verified} />}
+            {newAlerts !== null && <AlertsBell count={newAlerts} />}
             <AccountMenu email={email} role={role} onSignOut={onSignOut} />
           </div>
         </div>
@@ -151,23 +156,41 @@ export function AppShell({
   )
 }
 
+// The alerts live behind the bell (patterns-v2.md): the map page answers one question.
+function AlertsBell({ count }: { count: number }) {
+  const { open } = useDrawerLinks()
+  return (
+    <a
+      href={open({ kind: 'alerts' })}
+      aria-label={count ? `Alerts: ${count} in the last 24 hours` : 'Alerts'}
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-fg hover:bg-well"
+    >
+      <Bell size={20} strokeWidth={2} aria-hidden />
+      {count > 0 && (
+        <span className="absolute right-0 top-0 min-w-[18px] rounded-full bg-fg px-1 text-center text-[11px] font-semibold leading-[18px] text-ground">
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </a>
+  )
+}
+
 // The live count of officer-verified observations: the moat, ticking as officers verify.
 function VerifiedChip({ count }: { count: number }) {
   return (
     <div
       className="flex items-center gap-1.5 rounded-full border border-hairline bg-ground py-1 pl-2 pr-2.5 sm:gap-2 sm:pl-2.5 sm:pr-3"
       aria-live="polite"
+      aria-label={`${count} verified observations`}
     >
       <span aria-hidden className="h-2 w-2 rounded-full bg-leaf" />
       <span
         key={count}
-        className="animate-tag font-display text-[17px] font-bold leading-none text-fg"
+        className="animate-tag text-label font-semibold leading-none tabular-nums text-fg"
       >
         {count}
       </span>
-      <span className="text-caption text-fg-2">
-        verified<span className="hidden sm:inline"> observations</span>
-      </span>
+      <span className="hidden text-caption text-fg-2 sm:inline">verified observations</span>
     </div>
   )
 }

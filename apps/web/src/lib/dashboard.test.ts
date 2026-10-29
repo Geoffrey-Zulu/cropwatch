@@ -38,18 +38,31 @@ const obs = (over: Partial<DashObservation>): DashObservation => ({
 })
 
 describe('routes', () => {
-  it('round-trips every page through the hash', () => {
+  it('round-trips every page and drawer through the hash', () => {
     const routes: Route[] = [
       { page: 'map' },
-      { page: 'outbreak', id: 'c1' },
-      { page: 'observation', id: 'o1' },
+      { page: 'map', drawer: { kind: 'outbreak', id: 'c1' } },
+      { page: 'map', drawer: { kind: 'alerts' } },
       { page: 'queue' },
       { page: 'queue', id: 'o1' },
-      { page: 'outgrower' },
+      { page: 'queue', id: 'o1', drawer: { kind: 'observation', id: 'o1' } },
+      { page: 'outgrower', drawer: { kind: 'visit', id: 'CHI-032' } },
       { page: 'sources' },
+      { page: 'scenario' },
     ]
     for (const route of routes) expect(parseRoute(hrefFor(route))).toEqual(route)
     expect(parseRoute('#/nonsense')).toEqual({ page: 'map' })
+  })
+
+  it('opens the old detail links as drawers over the map', () => {
+    expect(parseRoute('#/outbreaks/c1')).toEqual({
+      page: 'map',
+      drawer: { kind: 'outbreak', id: 'c1' },
+    })
+    expect(parseRoute('#/observations/o1')).toEqual({
+      page: 'map',
+      drawer: { kind: 'observation', id: 'o1' },
+    })
   })
 })
 

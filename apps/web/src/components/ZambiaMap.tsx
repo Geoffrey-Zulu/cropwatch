@@ -135,8 +135,9 @@ export function ZambiaMap({
   const paths = useMemo(() => {
     if (!districts || !projection) return []
     const path = geoPath(projection)
-    return districts.features.map(f => ({
-      key: `${f.properties.slug}:${f.properties.name}`,
+    // Some districts have several parts with the same name (Senanga): the index keeps keys unique.
+    return districts.features.map((f, i) => ({
+      key: `${f.properties.slug}:${f.properties.name}:${i}`,
       slug: f.properties.slug,
       name: f.properties.name,
       partOf: f.properties.part_of,

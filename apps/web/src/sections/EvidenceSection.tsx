@@ -7,6 +7,7 @@ import {
   type ObservationEvidence,
 } from '@repo/shared'
 import { Muted, Panel } from '../components/Panel'
+import { SkeletonRows } from '../components/Skeleton'
 import {
   confidenceText,
   REJECTION_TEXT,
@@ -20,11 +21,20 @@ import { trpc } from '../lib/trpc'
 // What the diagnosis and the advice rested on, all of it already logged by the API: the
 // sources retrieved (with tiers), the register check (passed and refused, and why), and the
 // escalation state. Confidence in words only; model numbers never leave the API.
-export function EvidenceSection({ obsId }: { obsId: string }) {
+// `bare` drops the panel, for use one level down inside a drawer ("Why this advice?").
+export function EvidenceSection({ obsId, bare = false }: { obsId: string; bare?: boolean }) {
   const evidence = trpc.evidence.observation.useQuery({ obsId }, { retry: 1 })
+  if (bare)
+    return evidence.data ? (
+      <EvidenceBody evidence={evidence.data} />
+    ) : evidence.error ? (
+      <Muted>The evidence could not be loaded ({evidence.error.message}).</Muted>
+    ) : (
+      <SkeletonRows rows={4} label="Loading the evidence" />
+    )
   return (
     <Panel eyebrow="Evidence" title="What this rests on">
-      {evidence.isLoading && <Muted>Loading the evidence…</Muted>}
+      {evidence.isLoading && <SkeletonRows rows={4} label="Loading the evidence" />}
       {evidence.error && (
         <Muted>The evidence could not be loaded ({evidence.error.message}).</Muted>
       )}
@@ -44,7 +54,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 
 function Tier({ tier }: { tier: number }) {
   return (
-    <span className="ml-1.5 font-mono text-eyebrow uppercase text-attention-text">
+    <span className="chip ml-1.5 border-hairline-strong text-fg-2">
       Tier {tier} · {TIER_NAMES[tier] ?? 'Source'}
     </span>
   )

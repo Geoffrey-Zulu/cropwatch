@@ -1,16 +1,14 @@
-import { X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ISSUE_LABELS, RISK_ORDER } from '@repo/shared'
-import { AlertRows } from '../components/AlertCard'
 import { DemoBadge } from '../components/DemoBadge'
-import { LevelTag } from '../components/LevelTag'
-import { RiskFactors } from '../components/RiskFactors'
-import { Figure, Figures, Muted, Panel } from '../components/Panel'
+import { LevelDot } from '../components/LevelTag'
+import { PageHeader } from '../components/PageHeader'
+import { SkeletonRows, SkeletonStats } from '../components/Skeleton'
 import { ZambiaMap } from '../components/ZambiaMap'
 import type { LiveData } from '../hooks/useLive'
 import { useNow } from '../hooks/useNow'
-import { hrefFor } from '../hooks/useRoute'
-import { reportNumber, shortDate } from '../lib/copy'
+import { useDrawerLinks } from '../hooks/useRoute'
+import { ago, reportNumber, shortDate } from '../lib/copy'
 
 const DAY = 86_400_000
 const WINDOW_DAYS = 14
@@ -36,11 +34,13 @@ const FOCUS = {
   { label: string; box: [[number, number], [number, number]] | null }
 >
 
-// The national picture: districts shaded by the prototype risk signal, the last 14 days of
-// reports, active clusters, the districts to watch with their factors, and the latest alerts.
-export function NationalMapPage({ observations, clusters, risk, alerts }: LiveData) {
+// The national map answers one question: where is it bad right now? The map, the districts
+// to watch beside it and four numbers above it; alerts live behind the header bell and detail
+// opens in drawers (patterns-v2.md).
+export function NationalMapPage({ observations, clusters, risk }: LiveData) {
   const [focus, setFocus] = useState<keyof typeof FOCUS>('zambia')
   const [district, setDistrict] = useState<string | null>(null)
+  const { open } = useDrawerLinks()
 
   const now = useNow()
   const recent = useMemo(() => {
@@ -59,40 +59,55 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
         ),
     [risk]
   )
-  const selected = district ? (risk ?? []).find(r => r.districtSlug === district) : null
   const awaiting = recent.filter(o => o.status === 'awaiting_expert_review').length
-  const shown = [...recent, ...(clusters ?? []), ...(risk ?? []), ...(alerts ?? [])]
+  const high = (risk ?? []).filter(r => r.level === 'HIGH').length
+  const shown = [...recent, ...(clusters ?? []), ...(risk ?? [])]
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Zambia · last {WINDOW_DAYS} days</p>
-          <h1 className="mt-1 font-display text-display-xl font-bold text-fg">National picture</h1>
-        </div>
-        <DemoBadge rows={shown} />
-      </div>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="National map"
+        question="Where is it bad right now?"
+        aside={<DemoBadge rows={shown} />}
+      />
 
-      <Figures>
-        <Figure value={observations ? recent.length : '·'} label="reports in the last 14 days" />
-        <Figure value={clusters?.length ?? '·'} label="active clusters of 5 or more reports" />
-        <Figure
-          value={risk ? risk.filter(r => r.level === 'HIGH').length : '·'}
-          label="districts at High (prototype signal)"
-        />
-        <Figure value={observations ? awaiting : '·'} label="reports waiting for an officer" />
-      </Figures>
+      {observations && clusters && risk ? (
+        <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
+          {[
+            [recent.length, 'reports in 14 days'],
+            [clusters.length, 'active clusters'],
+            [high, 'districts at High'],
+            [awaiting, 'waiting for an officer'],
+          ].map(([value, label]) => (
+            <div key={label} className="flex items-baseline gap-2">
+              <dt className="sr-only">{label}</dt>
+              <dd className="text-title font-semibold tabular-nums text-fg">{value}</dd>
+              <span aria-hidden className="text-fg-2">
+                {label}
+              </span>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <SkeletonStats />
+      )}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="flex min-w-0 flex-col gap-2">
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Map focus">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="relative min-w-0">
+          <div
+            className="absolute left-3 top-3 z-10 flex gap-1 rounded-card bg-panel p-1 shadow-raise"
+            role="group"
+            aria-label="Map focus"
+          >
             {(Object.keys(FOCUS) as (keyof typeof FOCUS)[]).map(key => (
               <button
                 key={key}
                 type="button"
                 aria-pressed={focus === key}
                 onClick={() => setFocus(key)}
-                className="toggle"
+                className={`rounded px-2.5 py-1 text-caption font-medium ${
+                  focus === key ? 'bg-fg text-ground' : 'text-fg hover:bg-well'
+                }`}
               >
                 {FOCUS[key].label}
               </button>
@@ -102,7 +117,8 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
             key={focus}
             levels={levels}
             focus={FOCUS[focus].box as [[number, number], [number, number]] | null}
-            height={620}
+            height={600}
+            selected={district}
             points={recent.map(o => ({
               id: o.id,
               location: o.location,
@@ -118,67 +134,56 @@ export function NationalMapPage({ observations, clusters, risk, alerts }: LiveDa
               size: c.size,
               sim: c.sim,
             }))}
-            onCluster={id => (window.location.hash = hrefFor({ page: 'outbreak', id }))}
-            onPoint={id => (window.location.hash = hrefFor({ page: 'observation', id }))}
-            onDistrict={setDistrict}
-            selected={district}
+            onCluster={id => (window.location.hash = open({ kind: 'outbreak', id }))}
+            onPoint={id => (window.location.hash = open({ kind: 'observation', id }))}
+            onDistrict={slug => setDistrict(d => (d === slug ? null : slug))}
           />
-          <Muted>
-            Shading is Risk Model v0, a rule-based prototype signal from reports (and weather
-            context): not a prediction. Click a cluster ring for its outbreak detail, a dot for the
-            report, a district for its factors.
-          </Muted>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-4">
-          {selected && (
-            <Panel
-              eyebrow="Selected district"
-              title={selected.district}
-              actions={
-                <button
-                  type="button"
-                  aria-label="Close the selected district"
-                  onClick={() => setDistrict(null)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-card text-fg-2 hover:bg-well hover:text-fg"
-                >
-                  <X size={18} strokeWidth={2} aria-hidden />
-                </button>
-              }
-            >
-              <RiskFactors risk={selected} />
-            </Panel>
+        <section aria-labelledby="watch" className="min-w-0">
+          <h2 id="watch" className="text-label font-semibold text-fg">
+            Districts to watch
+          </h2>
+          <p className="text-caption text-fg-2">
+            Prototype risk signal from reports, not a forecast.
+          </p>
+          {risk === null && <SkeletonRows rows={6} label="Loading districts" />}
+          {risk && watch.length === 0 && (
+            <p className="py-4 text-label text-fg-2">No district is above Low.</p>
           )}
-          <Panel eyebrow="Prototype risk signal" title="Districts to watch">
-            {risk === null && <Muted>Loading…</Muted>}
-            {risk && watch.length === 0 && <Muted>No district is above Low.</Muted>}
-            <ul className="-mx-6 -mb-6 flex flex-col">
-              {watch.map(r => (
+          <ul className="mt-2 flex flex-col">
+            {watch.map(r => {
+              const isOpen = district === r.districtSlug
+              return (
                 <li key={r.districtSlug} className="border-t border-hairline first:border-t-0">
                   <button
                     type="button"
-                    onClick={() => setDistrict(r.districtSlug)}
-                    aria-pressed={district === r.districtSlug}
-                    className={`block w-full px-6 py-3 text-left hover:bg-well ${district === r.districtSlug ? 'bg-signal-tint' : ''}`}
+                    aria-expanded={isOpen}
+                    onClick={() => setDistrict(isOpen ? null : r.districtSlug)}
+                    className={`block w-full rounded-card px-3 py-2.5 text-left hover:bg-well ${isOpen ? 'bg-signal-tint' : ''}`}
                   >
-                    <span className="flex items-center justify-between gap-2">
+                    <span className="flex items-baseline justify-between gap-3">
                       <span className="font-semibold text-fg">{r.district}</span>
-                      <LevelTag level={r.level} />
+                      <LevelDot level={r.level} />
                     </span>
-                    <span className="mt-1 block text-label text-fg-2">{r.factors[0]}</span>
+                    <span className="mt-0.5 block text-caption text-fg-2">{r.factors[0]}</span>
                   </button>
+                  {isOpen && (
+                    <div className="px-3 pb-3">
+                      <ul className="flex flex-col gap-1 text-caption text-fg">
+                        {r.factors.slice(1).map(f => (
+                          <li key={f}>{f}</li>
+                        ))}
+                      </ul>
+                      <p className="mt-1 text-caption text-fg-2">Computed {ago(r.computedAt)}</p>
+                    </div>
+                  )}
                 </li>
-              ))}
-            </ul>
-          </Panel>
-        </div>
+              )
+            })}
+          </ul>
+        </section>
       </div>
-
-      <Panel eyebrow="Latest" title="Alerts">
-        {alerts === null && <Muted>Loading…</Muted>}
-        {alerts?.length === 0 && <Muted>No alerts yet.</Muted>}
-        {alerts && alerts.length > 0 && <AlertRows alerts={alerts.slice(0, 8)} />}
-      </Panel>
     </div>
   )
 }

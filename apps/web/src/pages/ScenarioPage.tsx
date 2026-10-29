@@ -98,7 +98,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
             >
               <span
                 aria-hidden
-                className={`absolute top-0.5 h-[18px] w-[18px] rounded-full transition-transform ${
+                className={`absolute left-0 top-0.5 h-[18px] w-[18px] rounded-full transition-transform ${
                   drySpell ? 'translate-x-[22px] bg-signal-ink' : 'translate-x-0.5 bg-fg-2'
                 }`}
               />

@@ -1,23 +1,39 @@
 import { CloudSun, ExternalLink } from 'lucide-react'
 import { ISSUE_LABELS, type DistrictWeather } from '@repo/shared'
 import { Muted, Panel } from '../components/Panel'
+import { SkeletonRows } from '../components/Skeleton'
 import { trpc } from '../lib/trpc'
 
 // Weather context (Open-Meteo, attributed): the last 14 days and the next 14 as rain bars and
 // mean temperature, and how the forecast reads against each issue's guide note. Context only:
 // it never sets a level (Risk Model v0).
-export function WeatherSection({ districtSlug }: { districtSlug: string }) {
+// `bare` drops the panel, for use one level down inside a drawer.
+export function WeatherSection({
+  districtSlug,
+  bare = false,
+}: {
+  districtSlug: string
+  bare?: boolean
+}) {
   const weather = trpc.weather.district.useQuery(
     { districtSlug },
     { staleTime: 30 * 60_000, retry: 1 }
   )
+  if (bare)
+    return weather.data ? (
+      <WeatherBody weather={weather.data} />
+    ) : weather.error ? (
+      <Muted>The forecast is not available right now.</Muted>
+    ) : (
+      <SkeletonRows rows={3} label="Loading the forecast" />
+    )
   return (
     <Panel
       eyebrow="Weather context"
       title={weather.data ? `${weather.data.district}: 14 days back, 14 ahead` : 'Weather'}
       actions={<CloudSun size={20} strokeWidth={2} aria-hidden className="text-fg" />}
     >
-      {weather.isLoading && <Muted>Fetching the forecast…</Muted>}
+      {weather.isLoading && <SkeletonRows rows={3} label="Loading the forecast" />}
       {weather.error && <Muted>The forecast is not available right now.</Muted>}
       {weather.data && <WeatherBody weather={weather.data} />}
     </Panel>
