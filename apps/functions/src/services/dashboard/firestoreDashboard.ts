@@ -51,7 +51,7 @@ interface InternalRecommendation {
   } | null
 }
 
-interface OrgObservation {
+export interface OrgObservation {
   id: string
   reporterId: string
   reporterRole: string
@@ -229,151 +229,7 @@ export function firestoreDashboard({
         })
       )
 
-      // The issue rising fastest, week on week.
-      const counts = new Map<Issue, { thisWeek: number; lastWeek: number }>()
-      for (const r of reports) {
-        if (!r.issue || r.issue === 'unknown') continue
-        const c = counts.get(r.issue) ?? { thisWeek: 0, lastWeek: 0 }
-        if (Date.parse(r.createdAt) > at - 7 * DAY) c.thisWeek++
-        else c.lastWeek++
-        counts.set(r.issue, c)
-      }
-      const [top] = [...counts]
-        .filter(([, c]) => c.thisWeek >= 3)
-        .sort((a, b) => b[1].thisWeek - b[1].lastWeek - (a[1].thisWeek - a[1].lastWeek))
-
-      const campOf = (r: OrgObservation) => r.camp ?? `${r.district} (camp not recorded)`
-      const camps = new Map<string, OrgObservation[]>()
-      for (const r of reports) camps.set(campOf(r), [...(camps.get(campOf(r)) ?? []), r])
-
-      // One visit per farm: its latest report, and every reason to go.
-      const latest = new Map<string, OrgObservation>()
-      for (const r of [...reports].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
-        const farm = r.reporterRole === 'farmer' ? r.reporterId : `${r.reporterId}:${r.id}`
-        latest.set(farm, r)
-      }
-      const visits: (Visit & { officerKey: string })[] = []
-      for (const [farm, r] of latest) {
-        const reasons: string[] = []
-        const issueName = r.issue && r.issue !== 'unknown' ? ISSUE_LABELS[r.issue] : null
-        const inCluster = clustered.has(r.id)
-        if (inCluster) reasons.push(`In an active ${issueName ?? 'crop problem'} cluster`)
-        if (r.severity === 'severe') reasons.push('Severe damage reported')
-        else if (r.severity === 'moderate') reasons.push('Moderate damage reported')
-        if (r.status === 'awaiting_expert_review') reasons.push('Waiting for an officer review')
-        if (levels.get(r.districtSlug) === 'HIGH') reasons.push(`${r.district} risk is HIGH`)
-        if (reasons.length === 0) continue
-        const priority: 1 | 2 | 3 =
-          inCluster && (r.severity === 'severe' || levels.get(r.districtSlug) === 'HIGH')
-            ? 1
-            : inCluster || r.severity === 'severe' || r.status === 'awaiting_expert_review'
-              ? 2
-              : 3
-        visits.push({
-          report_number: reportNumber(r.id),
-          farm_label: r.reporterRole === 'farmer' ? farmLabel(farm) : 'Officer field report',
-          camp: campOf(r),
-          district: r.district,
-          crop: r.crop as Visit['crop'],
-          issue: r.issue,
-          issue_label: issueName ?? 'Not identified yet',
-          severity_band: r.severity,
-          last_report_at: r.createdAt,
-          priority,
-          reasons,
-          sim: r.sim,
-          officerKey: `${r.districtSlug}|${campOf(r)}`,
-        })
-      }
-      visits.sort(
-        (a, b) => a.priority - b.priority || b.last_report_at.localeCompare(a.last_report_at)
-      )
-
-      // Officers cover their district; where a district has two, its camps alternate between them.
-      const byDistrict = new Map<string, typeof officers>()
-      for (const o of officers) {
-        const slug = findDistrict(o.district)?.slug ?? o.district
-        byDistrict.set(slug, [...(byDistrict.get(slug) ?? []), o])
-      }
-      const campsByDistrict = new Map<string, string[]>()
-      for (const v of visits) {
-        const [slug, camp] = v.officerKey.split('|')
-        const list = campsByDistrict.get(slug) ?? []
-        if (!list.includes(camp)) list.push(camp)
-        campsByDistrict.set(slug, list)
-      }
-      for (const list of campsByDistrict.values()) list.sort()
-      const assigned = new Map<string, Visit[]>(officers.map(o => [o.id, []]))
-      const unassigned: Visit[] = []
-      for (const { officerKey, ...visit } of visits) {
-        const [slug, camp] = officerKey.split('|')
-        const team = byDistrict.get(slug)
-        if (!team?.length) {
-          unassigned.push(visit)
-          continue
-        }
-        const officer = team[campsByDistrict.get(slug)!.indexOf(camp) % team.length]
-        assigned.get(officer.id)!.push(visit)
-      }
-
-      return {
-        org_id: orgId,
-        name: org.name,
-        enrolled_farmers: org.enrolled_farmer_count,
-        sim: org.sim,
-        window_days: WINDOW_DAYS,
-        reports: reports.length,
-        verified_reports: reports.filter(r =>
-          ['FIELD_VERIFIED', 'EXPERT_CONFIRMED'].includes(r.verification)
-        ).length,
-        top_issue: top
-          ? {
-              issue: top[0],
-              issue_label: ISSUE_LABELS[top[0]],
-              this_week: top[1].thisWeek,
-              last_week: top[1].lastWeek,
-            }
-          : null,
-        camps: [...camps]
-          .map(([camp, rows]) => {
-            const issues = new Map<string, number>()
-            for (const r of rows)
-              if (r.issue && r.issue !== 'unknown')
-                issues.set(r.issue, (issues.get(r.issue) ?? 0) + 1)
-            const [topIssue] = [...issues].sort((a, b) => b[1] - a[1])
-            const damaged = rows.filter(
-              r => r.severity === 'moderate' || r.severity === 'severe'
-            ).length
-            const inCluster = rows.filter(r => clustered.has(r.id)).length
-            const awaiting = rows.filter(r => r.status === 'awaiting_expert_review').length
-            const level = levels.get(rows[0].districtSlug) ?? null
-            return {
-              camp,
-              district: rows[0].district,
-              district_slug: rows[0].districtSlug,
-              reports: rows.length,
-              top_issue_label: topIssue ? ISSUE_LABELS[topIssue[0] as Issue] : null,
-              damaged,
-              in_cluster: inCluster,
-              awaiting_review: awaiting,
-              district_level: level,
-              attention: inCluster > 0 || level === 'HIGH' || damaged >= 3,
-            }
-          })
-          .sort(
-            (a, b) =>
-              Number(b.attention) - Number(a.attention) ||
-              b.in_cluster - a.in_cluster ||
-              b.reports - a.reports
-          ),
-        officers: officers.map(o => ({
-          officer_id: o.id,
-          label: officerLabel(o.id),
-          district: o.district,
-          visits: assigned.get(o.id)!,
-        })),
-        unassigned,
-      } satisfies OutgrowerOverview
+      return outgrowerOverview({ orgId, org, officers, reports, clustered, levels, now: at })
     },
 
     async weather(districtSlug) {
@@ -396,4 +252,172 @@ export function firestoreDashboard({
       } satisfies DistrictWeather
     },
   }
+}
+
+// The Outgrower View from an org's recent reports (pure, so the rules are testable): camp
+// aggregates, the issue rising fastest, and one visit per farm, ordered and split across the
+// field officers by district (camps alternate where a district has two). Built only from camp
+// and district fields: no coordinate goes in, so none can come out (invariant 6).
+export function outgrowerOverview({
+  orgId,
+  org,
+  officers,
+  reports: all,
+  clustered,
+  levels,
+  now: at,
+}: {
+  orgId: string
+  org: { name: string; enrolled_farmer_count: number; sim: boolean }
+  officers: { id: string; district: string }[]
+  reports: OrgObservation[]
+  clustered: Set<string>
+  levels: Map<string, RiskLevel>
+  now: number
+}): OutgrowerOverview {
+  const since = at - WINDOW_DAYS * DAY
+  const reports = all.filter(r => Date.parse(r.createdAt) > since && Date.parse(r.createdAt) <= at)
+  // The issue rising fastest, week on week.
+  const counts = new Map<Issue, { thisWeek: number; lastWeek: number }>()
+  for (const r of reports) {
+    if (!r.issue || r.issue === 'unknown') continue
+    const c = counts.get(r.issue) ?? { thisWeek: 0, lastWeek: 0 }
+    if (Date.parse(r.createdAt) > at - 7 * DAY) c.thisWeek++
+    else c.lastWeek++
+    counts.set(r.issue, c)
+  }
+  const [top] = [...counts]
+    .filter(([, c]) => c.thisWeek >= 3)
+    .sort((a, b) => b[1].thisWeek - b[1].lastWeek - (a[1].thisWeek - a[1].lastWeek))
+
+  const campOf = (r: OrgObservation) => r.camp ?? `${r.district} (camp not recorded)`
+  const camps = new Map<string, OrgObservation[]>()
+  for (const r of reports) camps.set(campOf(r), [...(camps.get(campOf(r)) ?? []), r])
+
+  // One visit per farm: its latest report, and every reason to go.
+  const latest = new Map<string, OrgObservation>()
+  for (const r of [...reports].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+    const farm = r.reporterRole === 'farmer' ? r.reporterId : `${r.reporterId}:${r.id}`
+    latest.set(farm, r)
+  }
+  const visits: (Visit & { officerKey: string })[] = []
+  for (const [farm, r] of latest) {
+    const reasons: string[] = []
+    const issueName = r.issue && r.issue !== 'unknown' ? ISSUE_LABELS[r.issue] : null
+    const inCluster = clustered.has(r.id)
+    if (inCluster) reasons.push(`In an active ${issueName ?? 'crop problem'} cluster`)
+    if (r.severity === 'severe') reasons.push('Severe damage reported')
+    else if (r.severity === 'moderate') reasons.push('Moderate damage reported')
+    if (r.status === 'awaiting_expert_review') reasons.push('Waiting for an officer review')
+    if (levels.get(r.districtSlug) === 'HIGH') reasons.push(`${r.district} risk is HIGH`)
+    if (reasons.length === 0) continue
+    const priority: 1 | 2 | 3 =
+      inCluster && (r.severity === 'severe' || levels.get(r.districtSlug) === 'HIGH')
+        ? 1
+        : inCluster || r.severity === 'severe' || r.status === 'awaiting_expert_review'
+          ? 2
+          : 3
+    visits.push({
+      report_number: reportNumber(r.id),
+      farm_label: r.reporterRole === 'farmer' ? farmLabel(farm) : 'Officer field report',
+      camp: campOf(r),
+      district: r.district,
+      crop: r.crop as Visit['crop'],
+      issue: r.issue,
+      issue_label: issueName ?? 'Not identified yet',
+      severity_band: r.severity,
+      last_report_at: r.createdAt,
+      priority,
+      reasons,
+      sim: r.sim,
+      officerKey: `${r.districtSlug}|${campOf(r)}`,
+    })
+  }
+  visits.sort((a, b) => a.priority - b.priority || b.last_report_at.localeCompare(a.last_report_at))
+
+  // Officers cover their district; where a district has two, its camps alternate between them.
+  const byDistrict = new Map<string, typeof officers>()
+  for (const o of officers) {
+    const slug = findDistrict(o.district)?.slug ?? o.district
+    byDistrict.set(slug, [...(byDistrict.get(slug) ?? []), o])
+  }
+  const campsByDistrict = new Map<string, string[]>()
+  for (const v of visits) {
+    const [slug, camp] = v.officerKey.split('|')
+    const list = campsByDistrict.get(slug) ?? []
+    if (!list.includes(camp)) list.push(camp)
+    campsByDistrict.set(slug, list)
+  }
+  for (const list of campsByDistrict.values()) list.sort()
+  const assigned = new Map<string, Visit[]>(officers.map(o => [o.id, []]))
+  const unassigned: Visit[] = []
+  for (const { officerKey, ...visit } of visits) {
+    const [slug, camp] = officerKey.split('|')
+    const team = byDistrict.get(slug)
+    if (!team?.length) {
+      unassigned.push(visit)
+      continue
+    }
+    const officer = team[campsByDistrict.get(slug)!.indexOf(camp) % team.length]
+    assigned.get(officer.id)!.push(visit)
+  }
+
+  return {
+    org_id: orgId,
+    name: org.name,
+    enrolled_farmers: org.enrolled_farmer_count,
+    sim: org.sim,
+    window_days: WINDOW_DAYS,
+    reports: reports.length,
+    verified_reports: reports.filter(r =>
+      ['FIELD_VERIFIED', 'EXPERT_CONFIRMED'].includes(r.verification)
+    ).length,
+    top_issue: top
+      ? {
+          issue: top[0],
+          issue_label: ISSUE_LABELS[top[0]],
+          this_week: top[1].thisWeek,
+          last_week: top[1].lastWeek,
+        }
+      : null,
+    camps: [...camps]
+      .map(([camp, rows]) => {
+        const issues = new Map<string, number>()
+        for (const r of rows)
+          if (r.issue && r.issue !== 'unknown') issues.set(r.issue, (issues.get(r.issue) ?? 0) + 1)
+        const [topIssue] = [...issues].sort((a, b) => b[1] - a[1])
+        const damaged = rows.filter(
+          r => r.severity === 'moderate' || r.severity === 'severe'
+        ).length
+        const inCluster = rows.filter(r => clustered.has(r.id)).length
+        const awaiting = rows.filter(r => r.status === 'awaiting_expert_review').length
+        const level = levels.get(rows[0].districtSlug) ?? null
+        return {
+          camp,
+          district: rows[0].district,
+          district_slug: rows[0].districtSlug,
+          reports: rows.length,
+          top_issue_label: topIssue ? ISSUE_LABELS[topIssue[0] as Issue] : null,
+          damaged,
+          in_cluster: inCluster,
+          awaiting_review: awaiting,
+          district_level: level,
+          // Something in the camp itself: a district at High alone flags every camp in it.
+          attention: inCluster > 0 || awaiting > 0 || damaged >= 3,
+        }
+      })
+      .sort(
+        (a, b) =>
+          Number(b.attention) - Number(a.attention) ||
+          b.in_cluster - a.in_cluster ||
+          b.reports - a.reports
+      ),
+    officers: officers.map(o => ({
+      officer_id: o.id,
+      label: officerLabel(o.id),
+      district: o.district,
+      visits: assigned.get(o.id)!,
+    })),
+    unassigned,
+  } satisfies OutgrowerOverview
 }

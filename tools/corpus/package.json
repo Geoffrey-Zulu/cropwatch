@@ -9,7 +9,8 @@
     "probe": "tsx ingest/probe.ts",
     "lint": "eslint \"fetch/**/*.ts\" \"ingest/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sources-json": "tsx fetch/sources-json.ts"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",

@@ -4,7 +4,7 @@ import { DemoBadge, DEMO_BADGE_TEXT, hasSimulatedRows } from './DemoBadge'
 describe('DemoBadge', () => {
   it('shows when any displayed row is simulated', () => {
     render(<DemoBadge rows={[{ sim: false }, { sim: true }, { sim: false }]} />)
-    expect(screen.getByRole('status')).toHaveTextContent('DEMO DATA — SIMULATED')
+    expect(screen.getByRole('status')).toHaveTextContent('DEMO DATA · SIMULATED')
   })
 
   it('stays hidden when every row is real', () => {
@@ -18,7 +18,7 @@ describe('DemoBadge', () => {
   })
 
   it('uses the exact wording from CLAUDE.md', () => {
-    expect(DEMO_BADGE_TEXT).toBe('DEMO DATA — SIMULATED')
+    expect(DEMO_BADGE_TEXT).toBe('DEMO DATA · SIMULATED')
     expect(hasSimulatedRows([{ sim: true }])).toBe(true)
   })
 })

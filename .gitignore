@@ -91,3 +91,6 @@ database-debug.log
 server/dist
 public/dist
 *.pem
+
+# Dashboard preview fixtures (generated from the seed, dev only)
+apps/web/src/dev/fixtures.local.json

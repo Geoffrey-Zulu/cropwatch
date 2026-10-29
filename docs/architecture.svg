@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img" aria-labelledby="title desc">
+  <title id="title">Phytos architecture (prototype, Oct 2026)</title>
+  <desc id="desc">Components of the Phytos crop-health early-warning prototype grouped into clients, the Cloud Run API, AI and knowledge, data and analytics, alerts and delivery, external sources and operator tools. Each box is marked working, hackathon or future. Numbered connectors 1 to 6 are the main flows described in docs/architecture.md.</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3B4752"/>
+    </marker>
+    <style>
+      .sans { font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      text { font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0; font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #2B3036; }
+      .title { font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 600; fill: #13293D; }
+      .subtitle { font-size: 13px; fill: #4A5058; }
+      .layer { fill: #F2ECE1; stroke: #D6CBB8; stroke-width: 1; }
+      .lh { font-size: 11.5px; font-weight: 700; letter-spacing: 1.3px; fill: #13293D; }
+      .lsub { font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace; font-size: 10.5px; fill: #4A5058; }
+      .frame { fill: none; stroke: #BFB29D; stroke-width: 1; }
+      .fl { font-size: 10.5px; font-style: italic; fill: #4A5058; }
+      .bw rect { fill: #FFFFFF; stroke: #13293D; stroke-width: 2; }
+      .bh rect { fill: #F4E6D8; stroke: #B4642A; stroke-width: 2; }
+      .bf rect { fill: #FAF6EF; stroke: #4A5058; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .tt { font-size: 12.5px; font-weight: 700; fill: #13293D; }
+      .td { font-size: 11px; }
+      .tm { font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace; font-size: 10px; fill: #3E4650; }
+      .bf text { fill: #6A7077; }
+      .c { fill: none; stroke: #3B4752; stroke-width: 1.4; stroke-linejoin: round; }
+      .cf { fill: none; stroke: #4A5058; stroke-width: 1.2; stroke-dasharray: 4 3; }
+      .jn { fill: #3B4752; }
+      .badge circle { fill: #B4642A; }
+      .badge text { font-size: 10.5px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; }
+      .cl { font-size: 10px; fill: #4A5058; paint-order: stroke; stroke: #FAF6EF; stroke-width: 4px; stroke-linejoin: round; }
+      .note rect { fill: #EDE6D9; stroke: #D6CBB8; stroke-width: 1; }
+      .nt { font-size: 10.5px; }
+      .nh { font-size: 11.5px; font-weight: 700; letter-spacing: 1.3px; fill: #13293D; }
+      .lg { font-size: 11px; }
+      .lgb { font-size: 12px; font-weight: 700; fill: #13293D; }
+      .foot { font-size: 11px; fill: #4A5058; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1600" height="1000" fill="#FAF6EF"/>
+  <text class="title" x="52" y="50">Phytos architecture (prototype, Oct 2026)</text>
+  <text class="subtitle" x="52" y="74">Crop-health early warning for Zambia. GreenCode Hackathon, Lusaka, 30 Oct to 1 Nov 2026.</text>
+  <text class="subtitle" x="52" y="92">GCP project crop-watch01; infrastructure keeps the cropwatch resource names.</text>
+  <g id="legend">
+  <rect class="layer" x="760" y="16" width="824" height="84" rx="8"/>
+  <g class="bw"><rect x="776" y="28" width="34" height="22" rx="4"/></g>
+  <text class="lgb" x="820" y="39">working</text>
+  <text class="lg" x="820" y="53">deployed and verified end to end</text>
+  <g class="bh"><rect x="1036" y="28" width="34" height="22" rx="4"/></g>
+  <text class="lgb" x="1080" y="39">hackathon</text>
+  <text class="lg" x="1080" y="53">built for the demo; prototype-grade</text>
+  <text class="lg" x="1080" y="66">or waiting on an external step</text>
+  <g class="bf"><rect x="1326" y="28" width="34" height="22" rx="4"/></g>
+  <text class="lgb" x="1370" y="39">future</text>
+  <text class="lg" x="1370" y="53">designed, not built</text>
+  <path class="c" d="M776 86 H810" marker-end="url(#arr)"/>
+  <text class="lg" x="820" y="90">request or data flow</text>
+  <circle class="jn" cx="976" cy="86" r="3"/>
+  <path class="c" d="M960 86 H992"/>
+  <text class="lg" x="1000" y="90">lines join</text>
+  <g class="badge"><circle cx="1094" cy="86" r="8"/><text x="1094" y="89.6">1</text></g>
+  <text class="lg" x="1108" y="90">main flow 1 to 6, explained in architecture.md</text>
+  </g>
+  <rect class="layer" x="52" y="112" width="212" height="482" rx="10"/>
+  <text class="lh" x="64" y="134">CLIENTS</text>
+  <rect class="layer" x="304" y="112" width="644" height="616" rx="10"/>
+  <text class="lh" x="316" y="134">API ON CLOUD RUN</text>
+  <text class="lsub" x="316" y="149">cropwatch-api · europe-west1 · Hono server</text>
+  <rect class="layer" x="992" y="112" width="268" height="465" rx="10"/>
+  <text class="lh" x="1004" y="134">AI AND KNOWLEDGE</text>
+  <rect class="layer" x="992" y="604" width="268" height="330" rx="10"/>
+  <text class="lh" x="1004" y="626">ALERTS AND DELIVERY</text>
+  <rect class="layer" x="1296" y="112" width="288" height="363" rx="10"/>
+  <text class="lh" x="1308" y="134">EXTERNAL SOURCES</text>
+  <rect class="layer" x="1296" y="491" width="288" height="428" rx="10"/>
+  <text class="lh" x="1308" y="513">OPERATOR TOOLS</text>
+  <text class="lsub" x="1308" y="528">tools/ and infra/, run by hand</text>
+  <rect class="layer" x="52" y="752" width="896" height="150" rx="10"/>
+  <text class="lh" x="64" y="774">DATA AND ANALYTICS</text>
+  <text class="lsub" x="64" y="789">europe-west1</text>
+  <rect class="frame" x="528" y="428" width="412" height="206" rx="8"/>
+  <text class="fl" x="934" y="443" text-anchor="end">outbreak tracking and risk</text>
+  <g id="pwa" class="bw">
+    <rect x="64" y="164" width="188" height="90" rx="6"/>
+    <text class="tt" x="74" y="183">Capture PWA</text>
+    <text class="td" x="74" y="198">camera-first photo report,</text>
+    <text class="td" x="74" y="213">diagnosis, advice, alerts</text>
+    <text class="tm" x="74" y="228">apps/capture</text>
+    <text class="tm" x="74" y="243">site crop-watch01-capture</text>
+  </g>
+  <g id="dash" class="bh">
+    <rect x="64" y="268" width="188" height="120" rx="6"/>
+    <text class="tt" x="74" y="287">Command Center dashboard</text>
+    <text class="td" x="74" y="302">risk map, outbreak detail,</text>
+    <text class="td" x="74" y="317">observation Evidence panel,</text>
+    <text class="td" x="74" y="332">officer queue and verify,</text>
+    <text class="td" x="74" y="347">Outgrower View, Knowledge</text>
+    <text class="td" x="74" y="362">sources page</text>
+    <text class="tm" x="74" y="377">apps/web (crop-watch01)</text>
+  </g>
+  <g id="landing" class="bh">
+    <rect x="64" y="402" width="188" height="45" rx="6"/>
+    <text class="tt" x="74" y="421">Landing page</text>
+    <text class="td" x="74" y="436">own Hosting site; optional</text>
+  </g>
+  <g id="flutter" class="bf">
+    <rect x="64" y="461" width="188" height="60" rx="6"/>
+    <text class="tt" x="74" y="480">Flutter mobile app</text>
+    <text class="td" x="74" y="495">would consume REST v1</text>
+    <text class="tm" x="74" y="510">apps/mobile</text>
+  </g>
+  <g id="wa" class="bf">
+    <rect x="64" y="535" width="90" height="45" rx="6"/>
+    <text class="tt" x="74" y="554">WhatsApp</text>
+    <text class="td" x="74" y="569">channel</text>
+  </g>
+  <g id="ussd" class="bf">
+    <rect x="162" y="535" width="90" height="45" rx="6"/>
+    <text class="tt" x="172" y="554">USSD</text>
+    <text class="td" x="172" y="569">channel</text>
+  </g>
+  <g class="note"><rect x="52" y="618" width="212" height="122" rx="8"/></g>
+  <text class="nh" x="64" y="638">SECURITY</text>
+  <text class="nt" x="64" y="655">Firebase Auth: farmers anonymous;</text>
+  <text class="nt" x="64" y="667.8">officers by email and password</text>
+  <text class="nt" x="64" y="680.6">with role claims</text>
+  <text class="nt" x="64" y="693.4">Firestore and Storage rules</text>
+  <text class="nt" x="64" y="706.2">deny by default</text>
+  <text class="nt" x="64" y="719">Secrets in Secret Manager</text>
+  <text class="nt" x="64" y="731.8">Service accounts, no key files</text>
+  <g id="rest" class="bw">
+    <rect x="320" y="164" width="180" height="90" rx="6"/>
+    <text class="tt" x="330" y="183">REST v1</text>
+    <text class="td" x="330" y="198">observations POST, GET;</text>
+    <text class="td" x="330" y="213">verify; alerts</text>
+    <text class="td" x="330" y="228">frozen; OpenAPI from Zod</text>
+    <text class="tm" x="330" y="243">/api/v1</text>
+  </g>
+  <g id="trpc" class="bh">
+    <rect x="320" y="268" width="180" height="75" rx="6"/>
+    <text class="tt" x="330" y="287">tRPC (dashboard)</text>
+    <text class="td" x="330" y="302">evidence, outgrower</text>
+    <text class="td" x="330" y="317">aggregates, weather</text>
+    <text class="tm" x="330" y="332">/trpc</text>
+  </g>
+  <g id="evt" class="bw">
+    <rect x="320" y="357" width="180" height="60" rx="6"/>
+    <text class="tt" x="330" y="376">Eventarc receiver</text>
+    <text class="td" x="330" y="391">photo finalize → pipeline</text>
+    <text class="tm" x="330" y="406">/internal/events/storage</text>
+  </g>
+  <g id="pipe" class="bw">
+    <rect x="536" y="164" width="180" height="253" rx="6"/>
+    <text class="tt" x="546" y="183">Pipeline</text>
+    <text class="td" x="546" y="198">diagnose, then</text>
+    <text class="td" x="546" y="213">recommend ∥ track</text>
+    <text class="td" x="546" y="228">writes Firestore</text>
+    <text class="td" x="546" y="243">re-runs on officer verify</text>
+  </g>
+  <g id="diag" class="bw">
+    <rect x="752" y="164" width="180" height="75" rx="6"/>
+    <text class="tt" x="762" y="183">Diagnosis service</text>
+    <text class="td" x="762" y="198">structured output with</text>
+    <text class="td" x="762" y="213">confidence bands; low or</text>
+    <text class="td" x="762" y="228">unknown → officer queue</text>
+  </g>
+  <g id="rec" class="bw">
+    <rect x="752" y="253" width="180" height="75" rx="6"/>
+    <text class="tt" x="762" y="272">Recommendation service</text>
+    <text class="td" x="762" y="287">retrieve, compose with</text>
+    <text class="td" x="762" y="302">citations, guards, IPM;</text>
+    <text class="td" x="762" y="317">0 matches → IPM + referral</text>
+  </g>
+  <g id="reg" class="bh">
+    <rect x="752" y="342" width="180" height="60" rx="6"/>
+    <text class="tt" x="762" y="361">Regulatory filter</text>
+    <text class="td" x="762" y="376">doses verbatim from labels</text>
+    <text class="tm" x="762" y="391">registered_products</text>
+  </g>
+  <g id="out" class="bw">
+    <rect x="536" y="450" width="180" height="75" rx="6"/>
+    <text class="tt" x="546" y="469">Outbreak tracking</text>
+    <text class="td" x="546" y="484">≥5 same-issue reports,</text>
+    <text class="td" x="546" y="499">weight ≥0.5, 10 km, 72 h</text>
+    <text class="tm" x="546" y="514">ST_DWITHIN in BigQuery</text>
+  </g>
+  <g id="risk" class="bh">
+    <rect x="752" y="450" width="180" height="75" rx="6"/>
+    <text class="tt" x="762" y="469">Risk Model v0</text>
+    <text class="td" x="762" y="484">rules: LOW, ELEVATED, HIGH</text>
+    <text class="td" x="762" y="499">with contributing factors;</text>
+    <text class="td" x="762" y="514">never a probability</text>
+  </g>
+  <g id="alert" class="bh">
+    <rect x="536" y="549" width="180" height="75" rx="6"/>
+    <text class="tt" x="546" y="568">Alert classes</text>
+    <text class="td" x="546" y="583">weather advisory,</text>
+    <text class="td" x="546" y="598">verified cluster alert,</text>
+    <text class="td" x="546" y="613">model risk signal</text>
+  </g>
+  <g id="wx" class="bh">
+    <rect x="752" y="549" width="180" height="75" rx="6"/>
+    <text class="tt" x="762" y="568">Weather context</text>
+    <text class="td" x="762" y="583">Open-Meteo forecast as a</text>
+    <text class="td" x="762" y="598">contributing factor and</text>
+    <text class="td" x="762" y="613">weather advisories</text>
+  </g>
+  <g id="disp" class="bw">
+    <rect x="752" y="656" width="180" height="60" rx="6"/>
+    <text class="tt" x="762" y="675">Alert dispatcher</text>
+    <text class="td" x="762" y="690">Pub/Sub push receiver</text>
+    <text class="tm" x="762" y="705">/internal/events/alerts</text>
+  </g>
+  <g id="gem" class="bw">
+    <rect x="1004" y="164" width="244" height="75" rx="6"/>
+    <text class="tt" x="1014" y="183">Vertex AI Gemini</text>
+    <text class="td" x="1014" y="198">Google Gen AI SDK,</text>
+    <text class="td" x="1014" y="213">eu multi-region endpoint</text>
+    <text class="tm" x="1014" y="228">gemini-3.5-flash-lite</text>
+  </g>
+  <g id="rag" class="bw">
+    <rect x="1004" y="253" width="244" height="75" rx="6"/>
+    <text class="tt" x="1014" y="272">Vertex AI RAG Engine</text>
+    <text class="td" x="1014" y="287">RagManagedDb corpus, europe-west4</text>
+    <text class="tm" x="1014" y="302">gs://crop-watch01-knowledge</text>
+    <text class="tm" x="1014" y="317">(documents + index.json)</text>
+  </g>
+  <g id="corpus" class="bw">
+    <rect x="1004" y="342" width="244" height="75" rx="6"/>
+    <text class="tt" x="1014" y="361">Knowledge corpus</text>
+    <text class="td" x="1014" y="376">MoA, ZARI, Plantwise Zambia,</text>
+    <text class="td" x="1014" y="391">FAO, CABI, research; tiers 1 to 6</text>
+    <text class="tm" x="1014" y="406">tools/corpus/manifest.json</text>
+  </g>
+  <g id="prompts" class="bw">
+    <rect x="1004" y="431" width="244" height="60" rx="6"/>
+    <text class="tt" x="1014" y="450">Versioned prompts</text>
+    <text class="td" x="1014" y="465">prompt_version, model_id stamped</text>
+    <text class="tm" x="1014" y="480">prompts/</text>
+  </g>
+  <g id="eval" class="bf">
+    <rect x="1004" y="505" width="118" height="60" rx="6"/>
+    <text class="tt" x="1014" y="524" style="font-size:12px">Evaluation set</text>
+    <text class="td" x="1014" y="539">from officer-</text>
+    <text class="td" x="1014" y="554">verified reports</text>
+  </g>
+  <g id="ondev" class="bf">
+    <rect x="1130" y="505" width="118" height="60" rx="6"/>
+    <text class="tt" x="1140" y="524" style="font-size:12px">On-device</text>
+    <text class="td" x="1140" y="539">triage of photos</text>
+    <text class="td" x="1140" y="554">before upload</text>
+  </g>
+  <g id="pubsub" class="bw">
+    <rect x="1004" y="638" width="244" height="60" rx="6"/>
+    <text class="tt" x="1014" y="657">Cloud Pub/Sub</text>
+    <text class="tm" x="1014" y="672">topic cropwatch.alerts</text>
+    <text class="tm" x="1014" y="687">push sub cropwatch-alerts-dispatch</text>
+  </g>
+  <g id="sms" class="bh">
+    <rect x="1004" y="712" width="244" height="75" rx="6"/>
+    <text class="tt" x="1014" y="731">Africa's Talking SMS</text>
+    <text class="td" x="1014" y="746">log-only until the account and</text>
+    <text class="td" x="1014" y="761">secrets exist; default sender</text>
+    <text class="td" x="1014" y="776">(sender ID via ZICTA is future)</text>
+  </g>
+  <g id="fcm" class="bw">
+    <rect x="1004" y="801" width="244" height="60" rx="6"/>
+    <text class="tt" x="1014" y="820">Firebase Cloud Messaging</text>
+    <text class="td" x="1014" y="835">PWA web push; mobile topic</text>
+    <text class="tm" x="1014" y="850">alerts-{district}</text>
+  </g>
+  <g id="nyanja" class="bf">
+    <rect x="1004" y="875" width="244" height="45" rx="6"/>
+    <text class="tt" x="1014" y="894">Nyanja alert templates</text>
+    <text class="td" x="1014" y="909">for SMS and push</text>
+  </g>
+  <g id="meteo" class="bh">
+    <rect x="1308" y="164" width="264" height="60" rx="6"/>
+    <text class="tt" x="1318" y="183">Open-Meteo forecast API</text>
+    <text class="td" x="1318" y="198">free, no key, attributed</text>
+    <text class="tm" x="1318" y="213">api.open-meteo.com</text>
+  </g>
+  <g id="agro" class="bh">
+    <rect x="1308" y="238" width="264" height="60" rx="6"/>
+    <text class="tt" x="1318" y="257">Agro-dealer label photos</text>
+    <text class="td" x="1318" y="272">manual entry with sign-off</text>
+    <text class="tm" x="1318" y="287">→ registered_products</text>
+  </g>
+  <g id="zema" class="bf">
+    <rect x="1308" y="312" width="264" height="45" rx="6"/>
+    <text class="tt" x="1318" y="331">ZEMA pesticide register</text>
+    <text class="td" x="1318" y="346">automated integration</text>
+  </g>
+  <g id="geo" class="bh">
+    <rect x="1308" y="371" width="264" height="90" rx="6"/>
+    <text class="tt" x="1318" y="390">District boundaries</text>
+    <text class="td" x="1318" y="405">geoBoundaries ZMB ADM2 (GRID3,</text>
+    <text class="td" x="1318" y="420">Surveyor General), CC BY 4.0;</text>
+    <text class="td" x="1318" y="435">static file, no tile server</text>
+    <text class="tm" x="1318" y="450">public/geo/zambia-districts.json</text>
+  </g>
+  <g id="seed" class="bw">
+    <rect x="1308" y="542" width="264" height="90" rx="6"/>
+    <text class="tt" x="1318" y="561">Seed generator</text>
+    <text class="td" x="1318" y="576">deterministic sim data, every row</text>
+    <text class="td" x="1318" y="591">sim: true; writes Firestore and</text>
+    <text class="td" x="1318" y="606">BigQuery; arms the live demo</text>
+    <text class="tm" x="1318" y="621">tools/seed (--live-demo)</text>
+  </g>
+  <g id="admin" class="bw">
+    <rect x="1308" y="644" width="264" height="90" rx="6"/>
+    <text class="tt" x="1318" y="663">Admin tools</text>
+    <text class="td" x="1318" y="678">set-role, smoke-e2e, e2e-timing,</text>
+    <text class="td" x="1318" y="693">outbreak-e2e, sms-subscribe,</text>
+    <text class="td" x="1318" y="708">test-report retraction</text>
+    <text class="tm" x="1318" y="723">tools/admin</text>
+  </g>
+  <g id="corpustool" class="bw">
+    <rect x="1308" y="746" width="264" height="90" rx="6"/>
+    <text class="tt" x="1318" y="765">Corpus fetcher and RAG ingest</text>
+    <text class="td" x="1318" y="780">sources.yaml → fetch → GCS → RAG;</text>
+    <text class="td" x="1318" y="795">sources-json builds the dashboard</text>
+    <text class="td" x="1318" y="810">Knowledge sources list</text>
+    <text class="tm" x="1318" y="825">tools/corpus</text>
+  </g>
+  <g id="infra" class="bw">
+    <rect x="1308" y="848" width="264" height="60" rx="6"/>
+    <text class="tt" x="1318" y="867">Infra scripts (idempotent)</text>
+    <text class="td" x="1318" y="882">setup.sh, deploy.sh, rag.sh</text>
+    <text class="tm" x="1318" y="897">infra/</text>
+  </g>
+  <g id="storage" class="bw">
+    <rect x="64" y="784" width="192" height="75" rx="6"/>
+    <text class="tt" x="74" y="803">Cloud Storage</text>
+    <text class="td" x="74" y="818">photos, create-only</text>
+    <text class="tm" x="74" y="833">crop-watch01.</text>
+    <text class="tm" x="74" y="848">firebasestorage.app</text>
+  </g>
+  <g id="fs" class="bw">
+    <rect x="284" y="784" width="346" height="90" rx="6"/>
+    <text class="tt" x="294" y="803">Cloud Firestore</text>
+    <text class="tm" x="294" y="818">observations (+ internal diagnosis records)</text>
+    <text class="tm" x="294" y="833">recommendations · clusters · risk</text>
+    <text class="tm" x="294" y="848">alerts (+ dispatch) · registered_products</text>
+    <text class="tm" x="294" y="863">users (+ push_tokens) · orgs · sms_subscribers</text>
+  </g>
+  <g id="bq" class="bw">
+    <rect x="646" y="784" width="168" height="105" rx="6"/>
+    <text class="tt" x="656" y="803">BigQuery · cropwatch</text>
+    <text class="tm" x="656" y="818">observations (seed)</text>
+    <text class="tm" x="656" y="833">observation_events</text>
+    <text class="tm" x="656" y="848">retracted_observations</text>
+    <text class="tm" x="656" y="863">risk_scores</text>
+    <text class="tm" x="656" y="878">view observations_latest</text>
+  </g>
+  <g id="ee" class="bf">
+    <rect x="828" y="784" width="108" height="60" rx="6"/>
+    <text class="tt" x="838" y="803" style="font-size:12px">Earth Engine</text>
+    <text class="td" x="838" y="818">satellite layer</text>
+    <text class="td" x="838" y="833">for Risk Model</text>
+  </g>
+  <path class="c" d="M252 200 H320" marker-end="url(#arr)"/>
+  <path class="c" d="M64 230 H38 V820 H64" marker-end="url(#arr)"/>
+  <path class="c" d="M256 800 H272 V400 H320" marker-end="url(#arr)"/>
+  <path class="c" d="M500 200 H536" marker-end="url(#arr)"/>
+  <path class="c" d="M500 387 H536" marker-end="url(#arr)"/>
+  <path class="c" d="M716 200 H752" marker-end="url(#arr)"/>
+  <path class="c" d="M716 290 H752" marker-end="url(#arr)"/>
+  <path class="c" d="M932 200 H1004" marker-end="url(#arr)"/>
+  <path class="c" d="M932 266 H958 V226 H1004" marker-end="url(#arr)"/>
+  <path class="c" d="M932 310 H1004" marker-end="url(#arr)"/>
+  <path class="c" d="M842 328 V342" marker-end="url(#arr)"/>
+  <path class="c" d="M1126 342 V328" marker-end="url(#arr)"/>
+  <path class="c" d="M536 408 H510 V784" marker-end="url(#arr)"/>
+  <path class="c" d="M300 874 V914 H26 V206 H64" marker-end="url(#arr)"/>
+  <path class="c" d="M626 417 V450" marker-end="url(#arr)"/>
+  <path class="c" d="M536 476 H510"/>
+  <circle class="jn" cx="510" cy="476" r="3"/>
+  <path class="c" d="M536 512 H520 V680 H720 V784" marker-end="url(#arr)"/>
+  <path class="c" d="M716 488 H752" marker-end="url(#arr)"/>
+  <path class="c" d="M580 525 V549" marker-end="url(#arr)"/>
+  <path class="c" d="M790 525 V537 H690 V549" marker-end="url(#arr)"/>
+  <path class="c" d="M1308 190 H1278 V590 H932" marker-end="url(#arr)"/>
+  <path class="c" d="M900 549 V525" marker-end="url(#arr)"/>
+  <path class="c" d="M752 610 H716" marker-end="url(#arr)"/>
+  <path class="c" d="M680 624 V644 H976 V656 H1004" marker-end="url(#arr)"/>
+  <path class="c" d="M1004 684 H932" marker-end="url(#arr)"/>
+  <path class="c" d="M880 716 V740 H968 V820 H1004" marker-end="url(#arr)"/>
+  <path class="c" d="M968 750 H1004" marker-end="url(#arr)"/>
+  <circle class="jn" cx="968" cy="750" r="3"/>
+  <path class="c" d="M1004 848 H984 V928 H14 V182 H64" marker-end="url(#arr)"/>
+  <path class="c" d="M252 316 H320" marker-end="url(#arr)"/>
+  <path class="c" d="M252 290 H280 V240 H320" marker-end="url(#arr)"/>
+  <path class="c" d="M294 784 V370 H252" marker-end="url(#arr)"/>
+  <g class="badge"><circle cx="286" cy="200" r="8"/><text x="286" y="203.6">1</text></g>
+  <g class="badge"><circle cx="38" cy="607" r="8"/><text x="38" y="610.6">1</text></g>
+  <g class="badge"><circle cx="272" cy="470" r="8"/><text x="272" y="473.6">1</text></g>
+  <text class="cl" x="282" y="746" text-anchor="start">finalize</text>
+  <g class="badge"><circle cx="734" cy="200" r="8"/><text x="734" y="203.6">2</text></g>
+  <text class="cl" x="968" y="195" text-anchor="middle">diagnose</text>
+  <text class="cl" x="981" y="221" text-anchor="middle">compose</text>
+  <text class="cl" x="968" y="305" text-anchor="middle">retrieve</text>
+  <g class="badge"><circle cx="510" cy="740" r="8"/><text x="510" y="743.6">2</text></g>
+  <text class="cl" x="500" y="744" text-anchor="end">writes</text>
+  <text class="cl" x="160" y="917" text-anchor="middle">listener</text>
+  <g class="badge"><circle cx="26" cy="560" r="8"/><text x="26" y="563.6">2</text></g>
+  <g class="badge"><circle cx="626" cy="436" r="8"/><text x="626" y="439.6">3</text></g>
+  <text class="cl" x="504" y="472" text-anchor="end">clusters, risk, alerts</text>
+  <text class="cl" x="620" y="676" text-anchor="middle">snapshot, cluster query</text>
+  <g class="badge"><circle cx="546" cy="680" r="8"/><text x="546" y="683.6">3</text></g>
+  <g class="badge"><circle cx="820" cy="644" r="8"/><text x="820" y="647.6">4</text></g>
+  <text class="cl" x="880" y="640" text-anchor="middle">publish</text>
+  <text class="cl" x="968" y="680" text-anchor="middle">push</text>
+  <text class="cl" x="924" y="736" text-anchor="middle">send</text>
+  <g class="badge"><circle cx="500" cy="928" r="8"/><text x="500" y="931.6">4</text></g>
+  <text class="cl" x="600" y="931" text-anchor="middle">web push</text>
+  <g class="badge"><circle cx="300" cy="240" r="8"/><text x="300" y="243.6">5</text></g>
+  <text class="cl" x="306" y="684" text-anchor="start">listeners</text>
+  <g class="badge"><circle cx="294" cy="660" r="8"/><text x="294" y="663.6">5</text></g>
+  <g class="badge"><circle cx="1100" cy="590" r="8"/><text x="1100" y="593.6">6</text></g>
+  <text class="cl" x="1190" y="586" text-anchor="middle">forecast</text>
+  <text class="foot" x="52" y="960">Regions: default europe-west1 (Cloud Run, Firestore, Storage, BigQuery, Pub/Sub). Gemini runs on the eu multi-region endpoint. The RAG Engine corpus is in europe-west4.</text>
+  <text class="foot" x="52" y="978">Simulated data is always labelled DEMO. Only public documents and query text go to the RAG Engine corpus.</text>
+</svg>

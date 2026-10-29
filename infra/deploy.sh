@@ -195,6 +195,18 @@ code="$(curl -sS -o /dev/null -w '%{http_code}' "${CAPTURE_URL}/manifest.webmani
 [[ "$code" == "200" ]] || die "capture manifest answered HTTP ${code}"
 ok "${CAPTURE_URL} (manifest 200)"
 
+# -----------------------------------------------------------------------------
+step "Command Center dashboard → Firebase Hosting site ${PROJECT_ID}"
+VITE_API_BASE="${URL}" pnpm --filter web build >/dev/null ||
+  die "dashboard build failed (run: pnpm --filter web build)"
+ok "built apps/web"
+firebase deploy --only hosting:dashboard \
+  --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
+DASHBOARD_URL="https://${PROJECT_ID}.web.app"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "${DASHBOARD_URL}/geo/zambia-districts.json")"
+[[ "$code" == "200" ]] || die "dashboard district boundaries answered HTTP ${code}"
+ok "${DASHBOARD_URL} (boundaries 200)"
+
 cat <<EOF
 
 Deployed ${SERVICE} (${TAG}) to ${REGION}:
@@ -203,4 +215,5 @@ Deployed ${SERVICE} (${TAG}) to ${REGION}:
   Eventarc   ${TRIGGER} → /internal/events/storage
   Pub/Sub    ${ALERTS_SUB} → /internal/events/alerts
   Capture    ${CAPTURE_URL}
+  Dashboard  ${DASHBOARD_URL}
 EOF

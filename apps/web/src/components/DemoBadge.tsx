@@ -1,5 +1,5 @@
 // CLAUDE.md invariant 5: any view that displays a simulated row shows this badge.
-export const DEMO_BADGE_TEXT = 'DEMO DATA — SIMULATED'
+export const DEMO_BADGE_TEXT = 'DEMO DATA · SIMULATED'
 
 export function hasSimulatedRows(rows: readonly { sim: boolean }[]) {
   return rows.some(row => row.sim)
@@ -9,11 +9,11 @@ export function hasSimulatedRows(rows: readonly { sim: boolean }[]) {
 export function DemoBadge({ rows }: { rows: readonly { sim: boolean }[] }) {
   if (!hasSimulatedRows(rows)) return null
   return (
-    <div
+    <span
       role="status"
-      className="inline-flex items-center rounded-md border-2 border-amber-600 bg-amber-100 px-3 py-1 text-sm font-bold uppercase tracking-wide text-amber-900"
+      className="inline-flex shrink-0 items-center rounded-tag border border-copper-deep bg-copper-tint bg-hatch px-2 py-1 font-mono text-eyebrow font-semibold uppercase text-copper-deep"
     >
       {DEMO_BADGE_TEXT}
-    </div>
+    </span>
   )
 }

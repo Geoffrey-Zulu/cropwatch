@@ -138,14 +138,14 @@ export function CameraCapture({
               Starting the camera…
             </p>
           )}
-          <p className="absolute inset-x-0 top-0 bg-navy/70 px-3 py-2 text-center text-label font-semibold text-white">
+          <p className="absolute inset-x-0 top-0 bg-[rgb(19_41_61/0.72)] px-3 py-2 text-center text-label font-semibold text-white">
             Damaged leaf, close up, in daylight
           </p>
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-3 pb-3">
             <button
               type="button"
               onClick={() => gallery.current?.click()}
-              className="inline-flex min-h-12 items-center gap-1.5 rounded-card bg-navy/80 px-3 text-label font-semibold text-white"
+              className="inline-flex min-h-12 items-center gap-1.5 rounded-card bg-[rgb(19_41_61/0.8)] px-3 text-label font-semibold text-white"
             >
               <Images size={20} strokeWidth={2} aria-hidden />
               Gallery
