@@ -84,98 +84,105 @@ const WIDTHS = [
 
 // What a person would catch by eye, measured: page overflow, clipped text, and parts of a
 // control drawn outside the control (the scenario toggle's knob on 29 Oct).
-async function check(page: Page, width: number) {
-  return page.evaluate(w => {
-    const issues: string[] = []
-    const scrollWidth = document.documentElement.scrollWidth
-    if (scrollWidth > w + 1) issues.push(`page scrolls sideways: ${scrollWidth} px wide`)
-    const describe = (el: Element) =>
-      `${el.tagName.toLowerCase()}${el.getAttribute('role') ? `[role=${el.getAttribute('role')}]` : ''} "${(el.textContent ?? '').trim().slice(0, 40)}"`
-    for (const el of document.querySelectorAll<HTMLElement>('body *')) {
-      const style = getComputedStyle(el)
-      if (style.visibility === 'hidden' || style.display === 'none') continue
-      if (el.closest('svg') || el.closest('[data-visual-scroll]')) continue
-      // Screen-reader-only text is clipped on purpose.
-      if (el.getBoundingClientRect().width <= 1 || style.clip === 'rect(0px, 0px, 0px, 0px)')
-        continue
-      const text = (el.textContent ?? '').trim()
-      if (
-        text &&
-        el.children.length === 0 &&
-        (style.textOverflow === 'ellipsis' || style.overflowX === 'hidden') &&
-        el.scrollWidth > el.clientWidth + 1
-      )
-        issues.push(`clipped text: ${describe(el)}`)
-    }
-    for (const control of document.querySelectorAll<HTMLElement>(
-      'button, [role=switch], [role=tab], a.btn-primary, a.btn-quiet'
-    )) {
-      const box = control.getBoundingClientRect()
-      if (box.width === 0 && box.height === 0) continue
-      for (const part of control.querySelectorAll<HTMLElement>('*')) {
-        const r = part.getBoundingClientRect()
-        if (r.width === 0 && r.height === 0) continue
+// The box and colour budget is the Command Center's (patterns-v2.md); the capture app keeps
+// its own design system (MASTER.md), so it is measured only for dashboard views.
+async function check(page: Page, width: number, budget: boolean) {
+  return page.evaluate(
+    ([w, measure]) => {
+      const issues: string[] = []
+      const scrollWidth = document.documentElement.scrollWidth
+      if (scrollWidth > w + 1) issues.push(`page scrolls sideways: ${scrollWidth} px wide`)
+      const describe = (el: Element) =>
+        `${el.tagName.toLowerCase()}${el.getAttribute('role') ? `[role=${el.getAttribute('role')}]` : ''} "${(el.textContent ?? '').trim().slice(0, 40)}"`
+      for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+        const style = getComputedStyle(el)
+        if (style.visibility === 'hidden' || style.display === 'none') continue
+        if (el.closest('svg') || el.closest('[data-visual-scroll]')) continue
+        // Screen-reader-only text is clipped on purpose.
+        if (el.getBoundingClientRect().width <= 1 || style.clip === 'rect(0px, 0px, 0px, 0px)')
+          continue
+        const text = (el.textContent ?? '').trim()
         if (
-          r.left < box.left - 1 ||
-          r.right > box.right + 1 ||
-          r.top < box.top - 1 ||
-          r.bottom > box.bottom + 1
-        ) {
-          issues.push(`part outside its control: ${describe(control)}`)
-          break
+          text &&
+          el.children.length === 0 &&
+          (style.textOverflow === 'ellipsis' || style.overflowX === 'hidden') &&
+          el.scrollWidth > el.clientWidth + 1
+        )
+          issues.push(`clipped text: ${describe(el)}`)
+      }
+      for (const control of document.querySelectorAll<HTMLElement>(
+        'button, [role=switch], [role=tab], a.btn-primary, a.btn-quiet'
+      )) {
+        const box = control.getBoundingClientRect()
+        if (box.width === 0 && box.height === 0) continue
+        for (const part of control.querySelectorAll<HTMLElement>('*')) {
+          const r = part.getBoundingClientRect()
+          if (r.width === 0 && r.height === 0) continue
+          if (
+            r.left < box.left - 1 ||
+            r.right > box.right + 1 ||
+            r.top < box.top - 1 ||
+            r.bottom > box.bottom + 1
+          ) {
+            issues.push(`part outside its control: ${describe(control)}`)
+            break
+          }
         }
       }
-    }
-    // patterns-v2.md decision 3, measured in the viewport: bordered boxes (3 or 4 sides) and
-    // non-neutral hue families (30-degree buckets) across text, fills, borders and SVG.
-    const rgb = (v: string) => {
-      const m = /rgba?\(([^)]+)\)/.exec(v)
-      if (!m) return null
-      const [r, g, b, a = 1] = m[1]
-        .split(/[\s,/]+/)
-        .filter(Boolean)
-        .map(Number)
-      return a === 0 ? null : { r: r / 255, g: g / 255, b: b / 255 }
-    }
-    const hue = (c: { r: number; g: number; b: number }) => {
-      const max = Math.max(c.r, c.g, c.b)
-      const min = Math.min(c.r, c.g, c.b)
-      const l = (max + min) / 2
-      const d = max - min
-      const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
-      if (sat < 0.25 || l < 0.12 || l > 0.94) return null
-      const h =
-        max === c.r
-          ? ((c.g - c.b) / d) % 6
-          : max === c.g
-            ? (c.b - c.r) / d + 2
-            : (c.r - c.g) / d + 4
-      return Math.floor(((((h * 60) % 360) + 360) % 360) / 30)
-    }
-    let boxes = 0
-    const hues = new Set<number>()
-    for (const el of document.querySelectorAll<HTMLElement>('body *')) {
-      const r = el.getBoundingClientRect()
-      if (r.width < 1 || r.height < 1 || r.bottom <= 0 || r.top >= innerHeight) continue
-      const cs = getComputedStyle(el)
-      if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue
-      let sides = 0
-      for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
-        const w = parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`))
-        const c = rgb(cs.getPropertyValue(`border-${side.toLowerCase()}-color`))
-        if (w > 0 && c) sides++
+      // patterns-v2.md decision 3, measured in the viewport: bordered boxes (3 or 4 sides) and
+      // non-neutral hue families (30-degree buckets) across text, fills, borders and SVG.
+      const rgb = (v: string) => {
+        const m = /rgba?\(([^)]+)\)/.exec(v)
+        if (!m) return null
+        const [r, g, b, a = 1] = m[1]
+          .split(/[\s,/]+/)
+          .filter(Boolean)
+          .map(Number)
+        return a === 0 ? null : { r: r / 255, g: g / 255, b: b / 255 }
       }
-      if (sides >= 3) boxes++
-      for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke]) {
-        const c = v && v !== 'none' ? rgb(v) : null
-        const h = c ? hue(c) : null
-        if (h !== null) hues.add(h)
+      const hue = (c: { r: number; g: number; b: number }) => {
+        const max = Math.max(c.r, c.g, c.b)
+        const min = Math.min(c.r, c.g, c.b)
+        const l = (max + min) / 2
+        const d = max - min
+        const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
+        if (sat < 0.25 || l < 0.12 || l > 0.94) return null
+        const h =
+          max === c.r
+            ? ((c.g - c.b) / d) % 6
+            : max === c.g
+              ? (c.b - c.r) / d + 2
+              : (c.r - c.g) / d + 4
+        return Math.floor(((((h * 60) % 360) + 360) % 360) / 30)
       }
-    }
-    if (boxes > 8) issues.push(`${boxes} bordered boxes in view (decision 3 allows 8)`)
-    if (hues.size > 3) issues.push(`${hues.size} hue families in view (decision 3 allows 3)`)
-    return issues
-  }, width)
+      let boxes = 0
+      const hues = new Set<number>()
+      for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+        const r = el.getBoundingClientRect()
+        if (r.width < 1 || r.height < 1 || r.bottom <= 0 || r.top >= innerHeight) continue
+        const cs = getComputedStyle(el)
+        if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0)
+          continue
+        let sides = 0
+        for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
+          const w = parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`))
+          const c = rgb(cs.getPropertyValue(`border-${side.toLowerCase()}-color`))
+          if (w > 0 && c) sides++
+        }
+        if (sides >= 3) boxes++
+        for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke]) {
+          const c = v && v !== 'none' ? rgb(v) : null
+          const h = c ? hue(c) : null
+          if (h !== null) hues.add(h)
+        }
+      }
+      if (measure && boxes > 8) issues.push(`${boxes} bordered boxes in view (decision 3 allows 8)`)
+      if (measure && hues.size > 3)
+        issues.push(`${hues.size} hue families in view (decision 3 allows 3)`)
+      return issues
+    },
+    [width, budget] as const
+  )
 }
 
 const browser = await chromium.launch({
@@ -209,7 +216,7 @@ for (const view of VIEWS.filter(v => !only || only.includes(v.name) || only.incl
     await page.waitForFunction(() => document.body.innerText.length > 40, null, { timeout: 30_000 })
     await page.waitForTimeout(2500)
     if (view.prepare) await view.prepare(page)
-    const issues = [...(await check(page, size.width)), ...errors]
+    const issues = [...(await check(page, size.width, view.app === 'dashboard')), ...errors]
     const file = `${view.name}-${size.label}.png`
     // Stretch the viewport to the page so fixed bars sit at the bottom, as on a device, instead
     // of floating mid-page in a full-page capture.

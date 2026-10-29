@@ -30,11 +30,11 @@ The dashboard needs officer accounts; creating them grants roles, so Geoffrey ru
 Record each step of the run below on the real devices, once it passes, and keep the files on the laptop desktop (and a USB stick):
 
 1. The capture app opening on the camera, a photo of leaf mines, Send, the diagnosis and the advice ladder.
-2. The dashboard map as the report lands and the cluster ring appears; Lusaka going from Elevated to High.
+2. The dashboard map as the report lands and the cluster ring appears; Lusaka going from Elevated to High; the bell showing the new alert and the alerts drawer.
 3. The SMS arriving on a phone (or the Africa's Talking simulator, if the live account is not ready).
-4. The officer queue: verifying the presenter's report, the counter ticking, the alert turning into a verified cluster alert.
-5. The Outgrower View: "Prioritise field officers" and the visit lists.
-6. The Evidence panel on the presenter's report (sources with tiers, the register check).
+4. The officer queue: verifying the presenter's report, the counter ticking, the alert turning into a verified cluster alert (open the bell to show it).
+5. The Outgrower View: "Prioritise field officers", the visit lists, and one visit drawer (View).
+6. The presenter's report in its drawer, then "Why this advice?" (sources with tiers, the register check).
 
 If the wifi or the API fails on stage, play the matching recording and keep talking.
 
@@ -118,16 +118,16 @@ Good: `all checks passed`, including the advice check (every chemical option pas
 
 Two presenters: P1 on the phone, P2 on the dashboard (projected). Times are from the start of the pitch.
 
-| Time      | Who | What happens                                                                                                                               | Say (short)                                                                                                  |
-| --------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| 0:00–0:20 | P1  | The problem.                                                                                                                               | Pests reach a district before anyone sees the pattern.                                                       |
-| 0:20–0:30 | P2  | National map on screen, DEMO badge visible.                                                                                                | "Three weeks of simulated history. One report is about to be real."                                          |
-| 0:30–0:55 | P1  | Phytos opens on the camera. Photograph the leaf mines, choose Tomato, Send. Diagnosis then advice in about 7–10 s.                         | "AI assessment, in words. Advice only from Zambian and FAO guides; chemicals only after the register check." |
-| 0:55–1:15 | P2  | The report lands; the cluster ring appears; Lusaka goes from Elevated to High. The alert: **model risk signal**. The judge's phone buzzes. | "Five reports within 10 km: a prototype signal, labelled as not yet verified."                               |
-| 1:15–1:35 | P2  | Officer queue: confirm the presenter's report. The verified counter ticks; the alert becomes a **verified cluster alert**.                 | "An officer confirms it. Every correction becomes a test case. The model does not learn on its own."         |
-| 1:35–1:55 | P2  | Outgrower View → **Prioritise field officers** → visit lists.                                                                              | "Which farms each field officer visits first. Camp level only: no farm locations."                           |
-| 1:55–2:10 | P2  | (Cut first if late.) Evidence panel on the presenter's report.                                                                             | "Every answer shows what it rests on."                                                                       |
-| 2:10–3:00 | P1  | Close: who pays, what is next, the team.                                                                                                   | "One farmer can report a problem. Phytos lets a district see it in time."                                    |
+| Time      | Who | What happens                                                                                                                                                                                          | Say (short)                                                                                                  |
+| --------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 0:00–0:20 | P1  | The problem.                                                                                                                                                                                          | Pests reach a district before anyone sees the pattern.                                                       |
+| 0:20–0:30 | P2  | National map on screen ("Where is it bad right now?"), DEMO badge visible.                                                                                                                            | "Three weeks of simulated history. One report is about to be real."                                          |
+| 0:30–0:55 | P1  | Phytos opens on the camera. Photograph the leaf mines, choose Tomato, Send. Diagnosis then advice in about 7–10 s.                                                                                    | "AI assessment, in words. Advice only from Zambian and FAO guides; chemicals only after the register check." |
+| 0:55–1:15 | P2  | The report lands; the cluster ring appears; Lusaka goes from Elevated to High; the bell counts it. Open the bell: the alert is a **model risk signal**, "Not yet verified". The judge's phone buzzes. | "Five reports within 10 km: a prototype signal, labelled as not yet verified."                               |
+| 1:15–1:35 | P2  | Officer queue: confirm the presenter's report. The verified counter ticks; open the bell: the alert is now a **verified cluster alert**.                                                              | "An officer confirms it. Every correction becomes a test case. The model does not learn on its own."         |
+| 1:35–1:55 | P2  | Outgrower View → **Prioritise field officers** → visit lists; open one farm with **View**.                                                                                                            | "Which farms each field officer visits first. Camp level only: no farm locations."                           |
+| 1:55–2:10 | P2  | (Cut first if late.) The presenter's report: in the queue, **Full report**, then **Why this advice?**                                                                                                 | "Every answer shows what it rests on."                                                                       |
+| 2:10–3:00 | P1  | Close: who pays, what is next, the team.                                                                                                                                                              | "One farmer can report a problem. Phytos lets a district see it in time."                                    |
 
 If the diagnosis says an officer will review, verify it in the officer queue straight away: the verification completes the cluster (the alert then arrives as a verified cluster alert). If anything stalls for more than 10 s, play that step's recording.
 
