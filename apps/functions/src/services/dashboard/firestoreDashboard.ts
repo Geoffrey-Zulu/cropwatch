@@ -36,7 +36,12 @@ export const officerLabel = (uid: string) =>
     ? `Field officer ${uid.slice(-2)}`
     : `Field officer ${uid.slice(0, 4).toUpperCase()}`
 
-const reportNumber = (obsId: string) => obsId.replace(/^sim-/, '').slice(0, 4).toUpperCase()
+// As the dashboard and capture app show it: the id's first four characters; a simulated id
+// ("sim-faw-eastern-0031") reads as its storyline and serial, "FAW-0031".
+const reportNumber = (obsId: string) => {
+  const sim = /^sim-([a-z]+)-.*?(\d+)$/.exec(obsId)
+  return sim ? `${sim[1].slice(0, 3).toUpperCase()}-${sim[2]}` : obsId.slice(0, 4).toUpperCase()
+}
 
 // observations/{id}/internal/recommendation as the recommender writes it.
 interface InternalRecommendation {
@@ -298,9 +303,11 @@ export function outgrowerOverview({
 
   // One visit per farm: its latest report, and every reason to go.
   const latest = new Map<string, OrgObservation>()
+  const byFarm = new Map<string, OrgObservation[]>()
   for (const r of [...reports].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
     const farm = r.reporterRole === 'farmer' ? r.reporterId : `${r.reporterId}:${r.id}`
     latest.set(farm, r)
+    byFarm.set(farm, [r, ...(byFarm.get(farm) ?? [])])
   }
   const visits: (Visit & { officerKey: string })[] = []
   for (const [farm, r] of latest) {
@@ -339,6 +346,14 @@ export function outgrowerOverview({
       priority,
       reasons,
       reason_codes: codes,
+      history: (byFarm.get(farm) ?? []).slice(0, 6).map(h => ({
+        report_number: reportNumber(h.id),
+        created_at: h.createdAt,
+        issue_label:
+          h.issue && h.issue !== 'unknown' ? ISSUE_LABELS[h.issue] : 'Not identified yet',
+        severity_band: h.severity,
+        verification: h.verification,
+      })),
       sim: r.sim,
       officerKey: `${r.districtSlug}|${campOf(r)}`,
     })

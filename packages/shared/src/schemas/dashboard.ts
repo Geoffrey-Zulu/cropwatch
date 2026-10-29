@@ -86,6 +86,16 @@ export const VISIT_REASONS = [
 export const VisitReasonSchema = z.enum(VISIT_REASONS)
 export type VisitReason = z.infer<typeof VisitReasonSchema>
 
+// One earlier report from the same farm, for the visit drawer (camp level: no location).
+export const VisitHistorySchema = z.object({
+  report_number: z.string(),
+  created_at: TimestampSchema,
+  issue_label: z.string(),
+  severity_band: SeverityBandSchema.nullable(),
+  verification: z.string(),
+})
+export type VisitHistory = z.infer<typeof VisitHistorySchema>
+
 export const VisitSchema = z.object({
   report_number: z.string(),
   farm_label: z.string(),
@@ -100,6 +110,8 @@ export const VisitSchema = z.object({
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   reasons: z.array(z.string()).min(1),
   reason_codes: z.array(VisitReasonSchema).optional(),
+  // The farm's reports in the window, newest first (at most 6), for the visit drawer.
+  history: z.array(VisitHistorySchema).optional(),
   sim: z.boolean(),
 })
 export type Visit = z.infer<typeof VisitSchema>

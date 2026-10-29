@@ -81,7 +81,11 @@ export function Preview({ route }: { route: string }) {
     )
 
   const { live } = fixtures
-  const page = route.split('/')[0] || 'map'
+  const page = route.split('?')[0].split('/')[0] || 'map'
+  // The visit drawer is a hash query (useRoute): open it on the first visit in the fixtures.
+  const firstVisit = fixtures.outgrower.officers[0]?.visits[0]?.report_number
+  if (page === 'visit' && firstVisit && !window.location.hash.includes('?visit='))
+    window.history.replaceState(null, '', `#/preview/visit?visit=${firstVisit}`)
   const cluster = live.clusters.find(c => c.districtSlug === 'chongwe') ?? live.clusters[0] ?? null
   const sample = live.observations.find(o => o.id === fixtures.sampleId)!
   const overMap = ['map', 'alerts', 'outbreak', 'observation'].includes(page)

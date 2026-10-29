@@ -88,6 +88,16 @@ describe('outgrowerOverview', () => {
     expect(view.officers.flatMap(o => o.visits).map(v => v.report_number)).toEqual(['B'])
   })
 
+  it('gives each visit the history of its farm in the window, newest first, without a location', () => {
+    const view = build([
+      report({ id: 'old', createdAt: hoursAgo(60), severity: 'low' }),
+      report({ id: 'new', createdAt: hoursAgo(5), severity: 'severe' }),
+    ])
+    const visit = view.officers.flatMap(o => o.visits)[0]
+    expect(visit.history?.map(h => h.report_number)).toEqual(['NEW', 'OLD'])
+    expect(JSON.stringify(visit.history)).not.toMatch(/latitude|longitude|location/)
+  })
+
   it('never carries a location, and fits the dashboard contract', () => {
     const view = build([report({ id: 'a', severity: 'severe' })], ['a'])
     expect(OutgrowerOverviewSchema.parse(view)).toEqual(view)

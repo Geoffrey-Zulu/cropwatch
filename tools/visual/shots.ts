@@ -53,7 +53,16 @@ const VIEWS: View[] = [
   { name: 'dashboard-outbreak', app: 'dashboard', route: 'outbreak' },
   { name: 'dashboard-observation', app: 'dashboard', route: 'observation' },
   { name: 'dashboard-queue', app: 'dashboard', route: 'queue' },
-  { name: 'dashboard-outgrower', app: 'dashboard', route: 'outgrower' },
+  {
+    name: 'dashboard-outgrower',
+    app: 'dashboard',
+    route: 'outgrower',
+    // As in the demo: the visit lists appear on "Prioritise field officers".
+    prepare: async page => {
+      await page.getByRole('button', { name: /prioritise field officers/i }).click()
+      await page.waitForTimeout(500)
+    },
+  },
   { name: 'dashboard-visit', app: 'dashboard', route: 'visit' },
   { name: 'dashboard-sources', app: 'dashboard', route: 'sources' },
   { name: 'dashboard-scenario', app: 'dashboard', route: 'scenario' },

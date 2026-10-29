@@ -81,6 +81,7 @@ export function ZambiaMap({
   onCluster,
   onDistrict,
   selected = null,
+  compact = false,
   height = 560,
 }: {
   levels: Map<string, RiskLevel>
@@ -93,6 +94,8 @@ export function ZambiaMap({
   onDistrict?: (slug: string) => void
   // The district selected in the side panel: outlined in deep leaf (patterns.md rule 5).
   selected?: string | null
+  // A small locator (the visit drawer): no zoom controls, no legend.
+  compact?: boolean
   height?: number
 }) {
   const districts = useDistricts()
@@ -325,7 +328,7 @@ export function ZambiaMap({
         </g>
       </svg>
 
-      <div className="absolute right-3 top-3 flex flex-col gap-1">
+      <div className={`absolute right-3 top-3 flex flex-col gap-1 ${compact ? 'hidden' : ''}`}>
         <MapButton label="Zoom in" onClick={() => zoomAt(1.5)}>
           <Plus size={18} strokeWidth={2} aria-hidden />
         </MapButton>
@@ -349,7 +352,7 @@ export function ZambiaMap({
         </div>
       )}
 
-      <MapLegend />
+      {!compact && <MapLegend />}
       <p className="bg-panel px-3 pb-2 font-mono text-[10px] leading-tight text-fg-2">
         Boundaries: geoBoundaries, GRID3 and Office of the Surveyor General (CC BY 4.0)
       </p>
