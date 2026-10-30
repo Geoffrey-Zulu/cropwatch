@@ -543,3 +543,35 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | UI review     | The same 12 views and the scenario, before and after: `docs/ui-review/2026-10-29b/`                            |
 | No truncation | No `truncate` left in `apps/web/src`                                                                           |
 | Deployed      | Capture and dashboard Hosting only; the API is unchanged (`cropwatch-api-00009-lh7`)                           |
+
+### D9 · 29 to 30 Oct — dashboard v2 and v2.1, the final script, the freeze
+
+**Landed**
+
+- **Dashboard v2** (three increments on 29 Oct), after the research in `design-system/phytos/patterns-v2.md`:
+  - each page answers one question;
+  - detail opens in right-side drawers, with alerts behind the header bell;
+  - a white console with one blue accent, and amber and red-gold for risk only;
+  - skeleton loading.
+- **v2.1**, Geoffrey's review of v2, accepted 30 Oct as the keeper structure:
+  - the Outgrower View has its answer on first paint;
+  - the map is the projector view;
+  - navigation is a slim icon rail;
+  - the routed queue reads "AI could not identify, or was unsure".
+  - On phones, Knowledge sources titles keep their width again. v2.1 broke this; it was found by eye before the tag.
+  - Reviews: `docs/ui-review/2026-10-29-v2/`.
+- **Visual pass** (`tools/visual`): Playwright screenshots of every view at laptop, phone and projector sizes, with automated checks, run on every deploy.
+- **The Sunday 3-minute final script** in `docs/demo-ops.md`, with stage notes from the build. The printed checklist and the Saturday test plan follow it.
+- **Freeze:** tag `freeze-2026-10-30`.
+  - Saturday at the venue is point-and-fix polish on this structure until 18:00 (test plan, rule 3), then the hard freeze.
+  - The map as a full canvas is post-event.
+
+**Checks**
+
+| Check                   | Result                                                                                                                                                                                                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate             | Green (typecheck, lint, build, 392 tests)                                                                                                                                                                                                                                              |
+| Demo check at the venue | `outbreak-e2e` passed after every deploy. 30 Oct: report → dispatched in 13.3 s and 8.9 s. Lusaka ended Elevated, not High: 17 reports this week, +31% on last week, is under the +50% surge that makes a 5-report cluster High. Re-arm on the pitch morning (stage notes in demo-ops) |
+| Visual pass             | All views at laptop and phone, the map at 1280 and 1920: `docs/ui-review/2026-10-30-freeze/`                                                                                                                                                                                           |
+| Deployed                | Dashboard Hosting; the API is unchanged since increment 2 (`cropwatch-api-00010-f44`)                                                                                                                                                                                                  |
+| **Still with the team** | **Officer accounts; the human runs and backup recordings; Africa's Talking secrets (SMS is log-only); Geoffrey's spot-check of the 13 PMDG rows**                                                                                                                                      |
