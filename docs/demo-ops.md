@@ -45,6 +45,29 @@ PHYTOS_RECORD_EMAIL=<officer email> PHYTOS_RECORD_PASSWORD=<password> pnpm --fil
 pnpm --filter @repo/admin-tools retract-report --obs <the id it prints> --commit
 ```
 
+### Field-airy rebuild: preview and cutover (31 Oct)
+
+The rebuild (mockup A, with B's map motion) runs on the "rebuild" Hosting preview channels. Production stays on the stable UI all Saturday for the mentor walkthroughs.
+
+- Dashboard preview: https://crop-watch01--rebuild-we2jq4zo.web.app
+- Capture preview: https://crop-watch01-capture--rebuild-dmzdlrt4.web.app
+
+Both channels expire 6 Nov and are allowed by the API's CORS. To redeploy the previews from the current branch:
+
+```bash
+URL=$(gcloud run services describe cropwatch-api --region europe-west1 --project crop-watch01 --account zulugeoffrey034@gmail.com --format='value(status.url)')
+VITE_API_BASE="$URL" VITE_FEATURE_SCENARIO=true pnpm --filter web build
+VITE_API_URL="https://cropwatch-api-24960589333.europe-west1.run.app/api/v1" pnpm --filter capture build
+firebase hosting:channel:deploy rebuild --only dashboard,capture --expires 7d --project crop-watch01 --account zulugeoffrey034@gmail.com
+```
+
+**Cutover**, only when the rebuild passes the full gate, the demo check and the visual pass: run `bash infra/deploy.sh` (it rebuilds and deploys both production sites), then the demo check. **Fallback** until 09:00 Sunday: check out the tag `stable-2026-10-30c` and run `bash infra/deploy.sh`.
+
+### Still to do before Sunday (people)
+
+- **Recording 3,** the SMS or alert buzz on the phone, filmed at the next human run.
+- **The in-app alert buzz,** tested on the demo phone: "Send alerts for Lusaka to this phone" in the capture app, then one demo check at the venue pin (step 3). The phone should buzz with the alert.
+
 ## Morning-of checklist
 
 ### 1. Warm the API

@@ -106,6 +106,8 @@ Never cut the officer verification: it is the moat.
 
 ## Post-event (not in hackathon scope)
 
+- Rotate the password of david@phytos.com (it was shared in a working chat on 30 Oct).
+- Delete the anonymous test accounts left by the demo checks and the recording runs.
 - Landing page (cut 29 Oct).
 - The national map as a full canvas, with the stat strip, districts to watch and drawers floating over it (v2.1 review, 29 Oct).
 - A newer `recommend` prompt version that names a PMDG product when the guide supports it. In the live runs on 29 Oct the model proposed no chemical for Tuta, so the advice was IPM-only with the officer referral. That is safe, and IPM-first is the story; the 13 PMDG rows were simply not exercised.
