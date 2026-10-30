@@ -1,6 +1,6 @@
 # Saturday test plan (Sat 31 Oct, GreenCode Hackathon day 2)
 
-Team Phytos tests the frozen build today; nobody builds new features. The code is frozen at the tag `freeze-2026-10-29b` (UI feedback goes to `docs/ui-feedback-log.md`, not code). The pitch is a 3-minute live demo, run with `docs/demo-ops.md`; the printed morning checklist is `docs/morning-checklist.md`.
+Team Phytos tests the frozen build today; nobody builds new features. The code is frozen at the tag `freeze-2026-10-30` (dashboard v2.1). The one exception is point-and-fix polish on the v2.1 structure, from Geoffrey at the venue, until the hard freeze at **18:00** (rule 3). The pitch is a 3-minute live demo, run with the Sunday final script in `docs/demo-ops.md`. The printed morning checklist is `docs/morning-checklist.pdf`.
 
 - Capture app (farmer, phone): https://crop-watch01-capture.web.app
 - Command Center (officer, laptop or phone): https://crop-watch01.web.app
@@ -24,11 +24,11 @@ Before the first run: install the capture app from the link above (Add to Home S
 
 **Officer flow (Command Center):**
 
-1. Open the officer queue and find your report.
+1. Open the officer queue and find your report: the top row of **Routed to an officer** if the AI was unsure, otherwise of **In a cluster, not verified** (if your report is in a cluster).
 2. Confirm it, or correct it if the AI was wrong.
 3. Watch the verified counter tick in the header.
-4. Open the report's Evidence panel.
-5. Open the Outgrower View and press **Prioritise field officers**.
+4. Open the report with **Full report**, then **Why this advice?**
+5. Open the Outgrower View: the camps and one line per field officer show on load. Press **Prioritise field officers** for the full lists.
 
 | Presenter | Run | Phone and network | Diagnosis (s) | Advice (s) | Farmer flow OK? | Officer flow OK? | Counter ticked? | Problems (log in 3) |
 | --------- | --- | ----------------- | ------------- | ---------- | --------------- | ---------------- | --------------- | ------------------- |
@@ -61,7 +61,11 @@ Sit together with the Command Center on the projector, if you can get one. For e
   3. Re-run `outbreak-e2e` at the venue (morning checklist, step 3).
   4. Tag the result `freeze-2026-10-31-N`.
   5. Two people agree before deploying.
-- **Anything else** (cosmetic, wording, a view that is not on the demo path): **log it only.** Nothing ships on Saturday that isn't a demo-path fix. The dry-spell scenario is off the demo path; if it breaks, flag it off rather than fixing it.
+- **Polish on the v2.1 structure** (wording, spacing, colour, a label; Geoffrey's point-and-fix list at the venue): **fix until 18:00 Saturday.**
+  - Never a new view, a moved section or a new feature.
+  - Each batch gets the full gate, a dashboard deploy, the visual pass with every shot looked at, and `outbreak-e2e` at the venue.
+  - After 18:00 a polish item is logged in `docs/ui-feedback-log.md`, not built.
+- **Anything else** (a new idea, a structural change, a view that is not on the demo path): **log it only.** The dry-spell scenario is off the demo path; if it breaks, flag it off rather than fixing it.
 
 | #   | Found by | View or step | What happened | Demo path? | Action (fix now or logged) | Status |
 | --- | -------- | ------------ | ------------- | ---------- | -------------------------- | ------ |
@@ -83,7 +87,7 @@ At the end of the day: the three most common concerns, and whether any of them c
 
 ## 5. Pitch rehearsal slots (stopwatch)
 
-Run the full 3-minute pitch with `docs/demo-ops.md` (the two-presenter run), on the real devices, with a third person holding the stopwatch and calling the time at 1:00, 2:00 and 2:45. Record every rehearsal on a phone; the best clean run of each step becomes a backup recording.
+Run the full 3-minute pitch with the Sunday final script in `docs/demo-ops.md`, on the real devices, with a third person holding the stopwatch and calling the time at 1:00, 2:00 and 2:45. Record every rehearsal on a phone; the best clean run of each step becomes a backup recording.
 
 | Slot  | Who watches  | Total time | Step that overran | Diagnosis wait (s) | Cut or change for next run |
 | ----- | ------------ | ---------- | ----------------- | ------------------ | -------------------------- |
@@ -95,9 +99,8 @@ Run the full 3-minute pitch with `docs/demo-ops.md` (the two-presenter run), on 
 
 **Cut order if a run goes over 3:00:**
 
-1. The Evidence panel step.
-2. The Outgrower View visit lists (say one line instead).
-3. Shorten the close.
+1. The Outgrower View (2:10–2:50): say one line instead of three.
+2. Shorten the opening (0:00–0:20).
 
 Never cut the officer verification: it is the moat.
 

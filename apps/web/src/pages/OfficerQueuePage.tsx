@@ -62,7 +62,13 @@ export function OfficerQueuePage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-        <Panel eyebrow={tab === 'review' ? 'AI could not identify' : 'Verify to upgrade the alert'}>
+        <Panel
+          eyebrow={
+            tab === 'review'
+              ? 'AI could not identify, or was unsure'
+              : 'Verify to upgrade the alert'
+          }
+        >
           {observations === null && <SkeletonRows rows={6} label="Loading the queue" />}
           {observations && shown.length === 0 && <Muted>Nothing waiting here.</Muted>}
           <ul className="flex max-h-[70vh] flex-col gap-0.5 overflow-y-auto">

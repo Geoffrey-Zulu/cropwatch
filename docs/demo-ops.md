@@ -7,7 +7,7 @@ The checklist and the timed run for the live Phytos demo at the GreenCode final 
 - API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
 - Printed one-page version of the morning checklist: [`morning-checklist.pdf`](morning-checklist.pdf) (source `morning-checklist.html`). Saturday's test plan: [`hackathon-backlog.md`](hackathon-backlog.md).
 
-## Before the day (D9 freeze, Wed 29 Oct)
+## Before the day (freeze tag freeze-2026-10-30)
 
 ### Officer accounts (Geoffrey)
 
@@ -109,27 +109,69 @@ Good: `all checks passed`, including the advice check (every chemical option pas
 
 ### 6. Devices
 
-- **Presenter's phone:** the Phytos app installed from https://crop-watch01-capture.web.app; camera and location allowed; on mobile data, not only wifi; battery above 80%.
+- **Presenter's phone:** the Phytos app installed from https://crop-watch01-capture.web.app; camera and location allowed; on 4G mobile data, not the venue wifi; battery above 80%.
 - **The leaf:** a tomato leaf with **leaf mines**. Photograph the mines, close up, in daylight. **Not fruit**: on 26 Oct a fruit photo of Tuta damage came back as early blight with high confidence, while the leaf photo was right every time.
-- **Dashboard laptop:** signed in as the agronomist, on the national map, focus "Lusaka and Chongwe".
+- **Dashboard laptop:** signed in as the agronomist, on the national map, focus "Lusaka and Chongwe", bell drawer closed.
 - **Kit:** hotspot charged; backup recordings on the desktop.
 
-## The run: 3 minutes
+## The run: Sunday 3-minute final script
 
-Two presenters: P1 on the phone, P2 on the dashboard (projected). Times are from the start of the pitch.
+Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer); **P2** narrates at the dashboard (projected).
 
-| Time      | Who | What happens                                                                                                                                                                                          | Say (short)                                                                                                  |
-| --------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 0:00–0:20 | P1  | The problem.                                                                                                                                                                                          | Pests reach a district before anyone sees the pattern.                                                       |
-| 0:20–0:30 | P2  | National map on screen ("Where is it bad right now?"), DEMO badge visible.                                                                                                                            | "Three weeks of simulated history. One report is about to be real."                                          |
-| 0:30–0:55 | P1  | Phytos opens on the camera. Photograph the leaf mines, choose Tomato, Send. Diagnosis then advice in about 7–10 s.                                                                                    | "AI assessment, in words. Advice only from Zambian and FAO guides; chemicals only after the register check." |
-| 0:55–1:15 | P2  | The report lands; the cluster ring appears; Lusaka goes from Elevated to High; the bell counts it. Open the bell: the alert is a **model risk signal**, "Not yet verified". The judge's phone buzzes. | "Five reports within 10 km: a prototype signal, labelled as not yet verified."                               |
-| 1:15–1:35 | P2  | Officer queue: confirm the presenter's report. The verified counter ticks; open the bell: the alert is now a **verified cluster alert**.                                                              | "An officer confirms it. Every correction becomes a test case. The model does not learn on its own."         |
-| 1:35–1:55 | P2  | Outgrower View → **Prioritise field officers** → visit lists; open one farm with **View**.                                                                                                            | "Which farms each field officer visits first. Camp level only: no farm locations."                           |
-| 1:55–2:10 | P2  | (Cut first if late.) The presenter's report: in the queue, **Full report**, then **Why this advice?**                                                                                                 | "Every answer shows what it rests on."                                                                       |
-| 2:10–3:00 | P1  | Close: who pays, what is next, the team.                                                                                                                                                              | "One farmer can report a problem. Phytos lets a district see it in time."                                    |
+### Pre-stage (morning checklist)
 
-If the diagnosis says an officer will review, verify it in the officer queue straight away: the verification completes the cluster (the alert then arrives as a verified cluster alert). If anything stalls for more than 10 s, play that step's recording.
+- `MIN_INSTANCES=1` (step 1: `bash infra/scale.sh 1`).
+- Re-arm `--live-demo` at the venue pin (step 2).
+- ONE warm-up report fired end-to-end and cleaned (step 3, `outbreak-e2e`).
+- Demo phone on 4G, not the venue wifi.
+- Officer session already signed in on the laptop.
+- Bell drawer closed.
+- National map view up.
+- Backup recordings one click away.
+
+### Script
+
+**0:00–0:20 · P2** (map on screen):
+
+> "Last season, fall armyworm reached thousands of Zambian farms before anyone saw the pattern. A farmer sees one sick plant. An officer sees one farm. Nobody sees the outbreak coming."
+
+**0:20–0:50 · P1** raises the leaf, photographs it in the Phytos app, taps Send, holds the phone down. **P2** bridge (covers the 8–12 s pipeline):
+
+> "That farmer just used Phytos free, on any phone — no app store. The AI reads the photo, and the advice it returns only ever cites the Ministry's, FAO's and CABI's own guides. It cannot name a chemical that isn't on the registered list — a database controls that, not the AI."
+
+**0:50–1:30** · The report lands on the map; the cluster ring completes; the district flips High; the SMS buzzes (P1 holds the phone to the mic). **P2:**
+
+> "And here is what no farmer can see. His report just completed a cluster. The district went High, and that SMS says 'not yet verified by an officer' — because Phytos never treats an AI guess as truth."
+
+**1:30–2:10 · P1** moves to the laptop as the officer: opens the report from the queue, confirms. **P2:**
+
+> "A trained officer just took responsibility — watch the alert upgrade to a verified cluster alert, and the verified counter tick. Every correction becomes a test case that future models must pass."
+
+**2:10–2:50 · P2** switches to the Outgrower View:
+
+> "This company finances 1,240 smallholder farmers. Phytos just told it which camps need attention and which farms each field officer visits first. Farmers use Phytos free. Companies that lend farmers inputs pay — because every outbreak caught early is a loan that gets repaid."
+
+**2:50–3:00 · P2**, back on the national map:
+
+> "One farmer can report a problem. Phytos lets an entire country see it coming. We're Team Phytos."
+
+### Failure rules
+
+- **Wifi or API dies:** P2 says "let me show you this morning's run" and plays the backup recording. No apology; keep narrating.
+- **Diagnosis slow:** P1 stays silent; P2 extends the bridge with the safety line.
+- **SMS doesn't buzz:** P2 points at the alert in the bell drawer instead and moves on.
+
+### Stage notes from the build (checked 30 Oct)
+
+- **Finding the report (1:30).** The queue opens on **Routed to an officer**. A report the AI identified with confidence is not there: it is the top row (newest first) of the second tab, **In a cluster, not verified**. P1: Officer queue → **In a cluster, not verified** → top row → **Confirm as an expert**. If the diagnosis came back unsure, the report is the top row of the first tab instead.
+- **The upgrade (1:30).** The verified counter is in the header. The alert's new class shows in the bell drawer: open the bell to show "Verified cluster alert".
+- **The SMS (0:50).**
+  - It reads "Phytos DEMO alert (Act now): Tuta absoluta (tomato leafminer) near Lusaka. … Not yet verified by an officer. …".
+  - It is sent only once the Africa's Talking secrets are deployed (checklist step 4). Every check so far was log-only.
+  - Without the secrets, the buzz has to come from the Phytos app. Turn on "Send alerts for Lusaka to this phone" on the app's home screen on the phone held to the mic. This has not been tried on the demo phone yet. If it doesn't buzz, the failure rule applies.
+- **Timing.** The checks at the venue on 29 Oct gave a diagnosis in about 3 s, report to alert in 8 s, and report to dispatch in 8 to 12 s. The 0:20–0:50 bridge covers it.
+- **The Outgrower View (2:10).** The camps and one line per field officer show on load, with no button to press. The company and its 1,240 farmers are simulated, and the DEMO badge is on screen.
+- **Officer sign-in.** It needs the officer accounts (Before the day).
 
 ## After the demo
 
