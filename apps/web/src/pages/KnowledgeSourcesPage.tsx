@@ -134,7 +134,7 @@ export function KnowledgeSourcesPage() {
                     </td>
                     <td className="py-2.5 text-right">
                       <span
-                        className={`chip ${STATUS[r.status].className}`}
+                        className={`chip whitespace-nowrap ${STATUS[r.status].className}`}
                         title={STATUS[r.status].note}
                       >
                         {STATUS[r.status].label}

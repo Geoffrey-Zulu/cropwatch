@@ -244,11 +244,16 @@ export function FieldMap({
       const islands = avoid.map(r => rect(r.current, g * 0.5)).filter(Boolean) as NonNullable<
         ReturnType<typeof rect>
       >[]
+      // Clear of the islands, allowing a sliver (1% of the outline) to tuck under a shadow, so
+      // a narrow screen gets a readable country rather than a tiny one.
+      const tolerance = (vertices.length / 2) * 0.01
       const clear = (s: number, ox: number, oy: number) => {
+        let hits = 0
         for (let i = 0; i < vertices.length; i += 2) {
           const X = vertices[i] * s + ox
           const Y = vertices[i + 1] * s + oy
-          for (const r of islands) if (X > r.l && X < r.r && Y > r.t && Y < r.b) return false
+          for (const r of islands)
+            if (X > r.l && X < r.r && Y > r.t && Y < r.b && ++hits > tolerance) return false
         }
         return true
       }
@@ -256,8 +261,8 @@ export function FieldMap({
         // Zambia hugs the watch panel and the foot; the largest size whose land touches no island.
         const ZR = country[2] + 42
         const hi = Math.min((x1 - g) / (ZR - country[0]), (yB - yT) / (country[3] - country[1]))
-        let s = hi * 0.5
-        for (let t = hi; t > hi * 0.5; t *= 0.985)
+        let s = hi * 0.4
+        for (let t = hi; t > hi * 0.4; t *= 0.985)
           if (clear(t, x1 - ZR * t, yB - country[3] * t)) {
             s = t
             break

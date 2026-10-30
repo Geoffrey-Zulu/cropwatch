@@ -207,7 +207,7 @@ export function NationalMapPage({
             label="Reports this week"
             sub={`${thisWeek >= lastWeek ? '↑' : '↓'} ${Math.abs(thisWeek - lastWeek)} ${
               thisWeek >= lastWeek ? 'more' : 'fewer'
-            } than last week (${lastWeek})`}
+            } than last\u00a0week\u00a0(${lastWeek})`}
           >
             <Spark days={daily} />
           </Ledger>
@@ -255,7 +255,7 @@ export function NationalMapPage({
     <aside
       ref={watchPanel}
       aria-label="Districts to watch"
-      className="island flex flex-col overflow-hidden pt-[1.55rem] lg:absolute lg:bottom-[1.6rem] lg:right-[1.6rem] lg:top-[1.6rem] lg:z-[6] lg:w-[25rem]"
+      className="island flex flex-col overflow-hidden pt-[1.55rem] lg:absolute lg:bottom-[1.6rem] lg:right-[1.6rem] lg:top-[1.6rem] lg:z-[6] lg:w-[21rem] min-[1400px]:w-[25rem]"
     >
       <div className="px-[1.65rem] pb-4">
         <h2 className="serif text-title font-semibold">Districts to watch</h2>
@@ -308,7 +308,7 @@ export function NationalMapPage({
     <section
       ref={legend}
       aria-label="Map key"
-      className="island px-[1.1rem] pb-4 pt-[0.95rem] lg:absolute lg:bottom-[1.6rem] lg:right-[calc(25rem+3.2rem)] lg:z-[5] lg:w-[15.2rem]"
+      className="island px-[1.1rem] pb-4 pt-[0.95rem] lg:absolute lg:bottom-[1.6rem] lg:right-[calc(21rem+3.2rem)] lg:z-[5] lg:w-[15.2rem] min-[1400px]:right-[calc(25rem+3.2rem)]"
     >
       <div className={`flex items-center justify-between ${keyOpen ? 'mb-[0.6rem]' : ''}`}>
         <h3 className="text-[0.95rem] font-bold">Map key</h3>
@@ -404,7 +404,7 @@ export function NationalMapPage({
   const creditLine = (
     <p
       ref={credit}
-      className="text-[0.72rem] leading-[1.4] text-fg-2 lg:absolute lg:bottom-[1.5rem] lg:left-[calc(1.6rem+3.1rem+1rem)] lg:z-[5] lg:whitespace-nowrap"
+      className="text-[0.72rem] leading-[1.4] text-fg-2 lg:on-map lg:absolute lg:bottom-[1.5rem] lg:left-[calc(1.6rem+3.1rem+1rem)] lg:z-[5] lg:whitespace-nowrap"
     >
       Boundaries: geoBoundaries, GRID3 and Office of the Surveyor General (CC BY 4.0)
     </p>
@@ -413,7 +413,7 @@ export function NationalMapPage({
   const demoPill = (
     <div
       ref={demo}
-      className="absolute z-[5] max-lg:left-3 max-lg:top-3 lg:right-[calc(25rem+3.2rem)] lg:top-[1.36rem]"
+      className="absolute z-[5] max-lg:left-3 max-lg:top-3 lg:right-[calc(21rem+3.2rem)] lg:top-[1.36rem] min-[1400px]:right-[calc(25rem+3.2rem)]"
     >
       <DemoBadge rows={shown} />
     </div>
@@ -461,7 +461,10 @@ export function NationalMapPage({
         ref={intro}
         className="absolute left-[1.6rem] top-[1.35rem] z-[5] flex items-center gap-6"
       >
-        <h1 className="serif whitespace-nowrap text-display font-semibold" style={SERIF_TITLE}>
+        <h1
+          className="serif on-map relative whitespace-nowrap text-display font-semibold"
+          style={SERIF_TITLE}
+        >
           National map
         </h1>
         {toggle}

@@ -122,6 +122,21 @@
       'WONK' 0,
       'opsz' 72;
   }
+  /* Text set straight on the map (the title, the credit) sits on a soft patch of canvas, so a
+     zoomed map's dots and labels never run through the letters. Unseen on the national view. */
+  .on-map {
+    isolation: isolate;
+  }
+  .on-map::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem -0.9rem;
+    z-index: -1;
+    border-radius: 9999px;
+    background: var(--canvas-1);
+    filter: blur(10px);
+    opacity: 0.94;
+  }
   .btn-primary {
     @apply inline-flex h-10 items-center justify-center gap-2 rounded-pill bg-signal px-5 font-body text-label font-semibold text-signal-ink transition-[filter] duration-200 ease-out hover:brightness-110 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
   }

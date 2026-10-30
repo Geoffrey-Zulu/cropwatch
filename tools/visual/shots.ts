@@ -64,13 +64,30 @@ const VIEWS: View[] = [
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
   { name: 'dashboard-map', app: 'dashboard', route: 'map', extra: PROJECTOR },
   {
-    name: 'dashboard-map-legend',
+    name: 'dashboard-map-eastern',
     app: 'dashboard',
     route: 'map',
-    // The legend sits behind the (i) button on the map (polish 30 Oct).
+    // The region toggle flies to Eastern Province (mockup A, with the motion from B).
     prepare: async page => {
-      await page.getByRole('button', { name: 'Map legend' }).click({ force: true })
-      await page.waitForTimeout(300)
+      await page.getByRole('button', { name: 'Eastern Province' }).click({ force: true })
+      await page.waitForTimeout(900)
+    },
+  },
+  {
+    name: 'dashboard-map-district',
+    app: 'dashboard',
+    route: 'map',
+    // A district pressed on the map: it flies there, is outlined, and its panel slides in;
+    // Chipangali shares Chipata's risk signal and says so. The click goes to the shape itself:
+    // on a phone the Chipata cluster ring covers it, and a tap there opens the cluster instead.
+    prepare: async page => {
+      await page
+        .locator(
+          'svg[aria-label^="Zambia"] path:has(title:text-is("Chipangali · shares its risk signal with Chipata"))'
+        )
+        .first()
+        .dispatchEvent('click')
+      await page.waitForTimeout(900)
     },
   },
   { name: 'dashboard-alerts', app: 'dashboard', route: 'alerts' },
@@ -200,7 +217,8 @@ async function check(page: Page, width: number, budget: boolean) {
         for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke]) {
           const c = v && v !== 'none' ? rgb(v) : null
           const h = c ? hue(c) : null
-          if (h !== null) hues.add(h)
+          // Mockup A's field greens (accent, land, coastline) span 60 to 150 degrees: one family.
+          if (h !== null) hues.add(h >= 2 && h <= 4 ? 2 : h)
         }
       }
       if (measure && boxes > 8) issues.push(`${boxes} bordered boxes in view (decision 3 allows 8)`)
