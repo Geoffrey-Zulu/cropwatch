@@ -6,6 +6,9 @@
 #   bash infra/deploy.sh
 #
 # MIN_INSTANCES=1 bash infra/deploy.sh keeps one warm instance (demo days; ~US$2/day).
+# HOSTING=0 bash infra/deploy.sh ships the API and the rules only: neither production site is
+# rebuilt or redeployed (31 Oct: production stays on the stable UI while the rebuild runs on
+# the "rebuild" preview channels).
 # The PWA's web-push (VAPID) public key lives in apps/capture/src/lib/firebaseConfig.ts.
 # Account and project pinning, and the helpers, live in infra/lib.sh.
 set -euo pipefail
@@ -37,8 +40,11 @@ ALERTS_SUB="cropwatch-alerts-dispatch"
 # A new key: gcloud secrets versions add africastalking-api-key --data-file=-, then re-deploy.
 # AT_SENDER_ID (optional): an approved alphanumeric sender ID; empty uses AT's default sender.
 AT_SENDER_ID="${AT_SENDER_ID:-}"
-# Browser origins: the dashboard and the capture PWA (Firebase Hosting), plus local Vite for each.
-CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,https://${CAPTURE_SITE}.web.app,https://${CAPTURE_SITE}.firebaseapp.com,http://localhost:5173,http://localhost:5174"
+HOSTING="${HOSTING:-1}"
+# Browser origins: the dashboard and the capture PWA (Firebase Hosting), plus local Vite for each,
+# plus the "rebuild" preview channels (their URLs are fixed for the channel's life, to 6 Nov).
+PREVIEW_ORIGINS="https://${PROJECT_ID}--rebuild-we2jq4zo.web.app,https://${CAPTURE_SITE}--rebuild-dmzdlrt4.web.app"
+CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,https://${CAPTURE_SITE}.web.app,https://${CAPTURE_SITE}.firebaseapp.com,http://localhost:5173,http://localhost:5174,${PREVIEW_ORIGINS}"
 
 # -----------------------------------------------------------------------------
 step "Preflight"
@@ -172,6 +178,17 @@ fi
 step "Smoke test"
 health="$(curl -sS --fail-with-body "${URL}/api/v1/health")" || die "health check failed: ${health}"
 ok "${URL}/api/v1/health → ${health}"
+
+# -----------------------------------------------------------------------------
+if [[ "$HOSTING" == "0" ]]; then
+  step "Rules only (HOSTING=0: the production sites are left as they are)"
+  firebase deploy --only firestore,storage \
+    --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
+  ok "rules and indexes deployed"
+  echo
+  echo "Deployed ${SERVICE} (${TAG}) to ${REGION}: ${URL}/api/v1 (hosting skipped)"
+  exit 0
+fi
 
 # -----------------------------------------------------------------------------
 step "Capture PWA → Firebase Hosting site ${CAPTURE_SITE}"

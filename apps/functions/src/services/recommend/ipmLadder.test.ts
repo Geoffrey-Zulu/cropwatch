@@ -77,6 +77,11 @@ describe('buildRecommendation', () => {
     ])
   })
 
+  it('never calls the listed products "registered" (guide-derived rows are on the list too)', () => {
+    expect(CHEMICAL_LAST_RESORT).not.toMatch(/registered/i)
+    expect(CHEMICAL_LAST_RESORT).toMatch(/products from our checked list, at the label dose shown/)
+  })
+
   it('drops uncited steps and never uses retrieved chemical text (doses come from labels)', () => {
     const outcome = build()
     if (outcome.kind !== 'recommendation') throw new Error(outcome.kind)
