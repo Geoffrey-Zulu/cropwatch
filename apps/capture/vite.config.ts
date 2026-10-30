@@ -3,8 +3,10 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Phytos day exposure (design-system/phytos/MASTER.md): the browser chrome matches the header.
-const GROUND = '#F0EDE2'
+// Field-airy (design-system/phytos/MASTER.md): the browser chrome matches the white header, the
+// splash screen the haze.
+const HEADER = '#FFFFFF'
+const GROUND = '#F4F3EC'
 
 export default defineConfig({
   server: { port: 5174 },
@@ -19,8 +21,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       injectManifest: {
-        // The shell, and only the Latin font files: other subsets load on demand if ever needed.
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}', '**/*-latin-wght-normal-*.woff2'],
+        // The shell, and only the Latin font files (Figtree is a wght file, Fraunces a full-axes
+        // one): other subsets load on demand if ever needed.
+        globPatterns: [
+          '**/*.{js,css,html,svg,png,webmanifest}',
+          '**/*-latin-{wght,full}-normal-*.woff2',
+        ],
       },
       manifest: {
         id: '/',
@@ -34,7 +40,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         background_color: GROUND,
-        theme_color: GROUND,
+        theme_color: HEADER,
         categories: ['agriculture', 'utilities'],
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

@@ -35,7 +35,7 @@ export function LocationRow({
         id="district"
         value={district}
         onChange={event => onDistrict(event.target.value)}
-        className="min-h-14 w-full appearance-none rounded-card border-1.5 border-hairline-strong bg-panel px-3 font-body text-body font-semibold text-fg"
+        className="min-h-14 w-full appearance-none rounded-control border border-hairline-strong bg-panel pl-4 pr-11 font-body text-body font-semibold text-fg"
       >
         <option value="" disabled>
           Choose a district

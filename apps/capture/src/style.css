@@ -1,6 +1,7 @@
 @import '@repo/ui/theme/phytos.css';
-@import '@fontsource-variable/bricolage-grotesque/wght.css';
-@import '@fontsource-variable/instrument-sans/wght.css';
+@import '@fontsource-variable/figtree';
+@import '@fontsource-variable/fraunces/full.css';
+/* Plex Mono marks doses and ids only. */
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
@@ -8,6 +9,81 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Field-airy reskin (31 Oct; design-system/phytos/MASTER.md): the capture app takes the visual
+   language of dashboard mockup A (apps/web/public/mockups/a-field-airy.html). A's tokens first,
+   then the Field Signal names the components use, re-pointed at them, so the shared theme file
+   stays untouched for the dashboard. */
+:root {
+  /* ground: dry-season haze */
+  --canvas-1: #f4f3ec;
+  --canvas-2: #e6e5da;
+  --land: #d6e2c4;
+  --island: #ffffff;
+
+  /* ink */
+  --ink: #1b2920; /* 14.9:1 on white */
+  --ink-2: #55645a; /* 6.0:1 on white */
+  --ink-3: #7c887f; /* non-text only */
+  --rule: #e8ece4;
+  --hover: #f4f6f1;
+  /* Form control borders: 3:1 on white (WCAG 1.4.11). */
+  --control-line: #8a958b;
+
+  /* one accent: field green */
+  --accent: #2d5b39; /* 7.9:1 white on it */
+  --accent-press: #244a2e;
+  --accent-tint: #eaf1e3;
+
+  /* risk keeps its meaning: maize for Elevated (hatched), brick for High */
+  --elev: #eec14a;
+  --elev-stripe: #b98516;
+  --elev-text: #7f5605; /* 5.7:1 on the maize tint */
+  --elev-tint: #fbf1d3;
+  --high-fill: #a23b21;
+  --high-text-a: #9a3720; /* 6.6:1 on white */
+
+  --shadow:
+    0 0 0 1px rgb(27 41 32 / 0.035), 0 1px 2px rgb(27 41 32 / 0.05),
+    0 8px 18px -6px rgb(27 41 32 / 0.08), 0 26px 52px -14px rgb(27 41 32 / 0.16);
+  --shadow-sm:
+    0 0 0 1px rgb(27 41 32 / 0.04), 0 1px 2px rgb(27 41 32 / 0.06),
+    0 8px 18px -8px rgb(27 41 32 / 0.18);
+  --shadow-header: 0 1px 0 rgb(27 41 32 / 0.06), 0 10px 26px -18px rgb(27 41 32 / 0.3);
+  /* The canvas wider than a phone: haze-1 at the centre, haze-2 at the edges. */
+  --haze: radial-gradient(
+    90% 70% at 50% 30%,
+    var(--canvas-1) 0%,
+    var(--canvas-1) 45%,
+    var(--canvas-2) 100%
+  );
+
+  /* The Field Signal names, re-pointed (packages/ui/theme/tailwind-preset.js reads these). */
+  --ground: var(--canvas-1);
+  --panel: var(--island);
+  --well: #edf0e8;
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --signal: var(--accent);
+  --signal-ink: #ffffff;
+  --signal-text: var(--accent);
+  --signal-tint: var(--accent-tint);
+  --leaf: var(--accent);
+  --attention: var(--elev);
+  --attention-text: var(--elev-text);
+  --attention-tint: var(--elev-tint);
+  --high: var(--high-fill);
+  --high-ink: #ffffff;
+  --high-text: var(--high-text-a);
+  --hairline: var(--rule);
+  --hairline-strong: var(--control-line);
+  --chip: var(--accent);
+  --chip-fg: #ffffff;
+  --raise: var(--shadow);
+  --hatch: repeating-linear-gradient(135deg, rgb(27 41 32 / 0.075) 0 3px, transparent 3px 7px);
+
+  color-scheme: light;
+}
 
 @layer base {
   html {
@@ -18,9 +94,31 @@
     @apply bg-ground font-body text-body text-fg antialiased;
     min-height: 100dvh;
   }
+  /* Wider than a phone, the column floats on A's haze. */
+  @media (min-width: 640px) {
+    body {
+      background: var(--haze) fixed var(--canvas-1);
+    }
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p,
+  li {
+    text-wrap: pretty;
+  }
   :focus-visible {
-    outline: 3px solid var(--leaf);
+    outline: 3px solid var(--accent);
     outline-offset: 2px;
+  }
+  /* The district picker draws its own chevron (appearance: none). */
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2355645A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem;
   }
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -34,16 +132,62 @@
 }
 
 @layer components {
-  /* The one primary action: chartreuse with dark text, full width, 56 px. Until the action can
-     run it stays quiet, so the chartreuse only appears when there is something to do. */
+  /* A white island on the haze: A's soft layered shadow, no border. */
+  .island {
+    @apply rounded-card bg-panel shadow-island;
+  }
+  /* The one primary action: a field-green pill with white text, full width, 56 px. Until the
+     action can run it stays quiet, so the green only appears when there is something to do. */
   .btn-primary {
-    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-card bg-signal px-5 font-display text-title font-bold text-signal-ink transition-[filter,background-color] duration-150 ease-snap active:brightness-95 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
+    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-signal px-6 font-body text-[18px] font-semibold leading-6 text-signal-ink transition-[background-color,box-shadow,transform] duration-300 ease-out active:scale-[0.985] active:bg-[var(--accent-press)] disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2 disabled:shadow-none disabled:active:scale-100;
+    box-shadow:
+      0 1px 2px rgb(27 41 32 / 0.12),
+      0 10px 22px -10px rgb(45 91 57 / 0.6);
   }
+  /* A secondary action: a white pill, its words in field green. */
   .btn-quiet {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-card border-1.5 border-hairline-strong bg-panel px-4 font-body text-label font-semibold text-fg transition-colors duration-150 ease-snap active:bg-well;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-panel px-5 font-body text-label font-semibold text-signal-text shadow-island-sm transition-colors duration-300 ease-out hover:bg-[var(--hover)] active:bg-well;
   }
-  /* Instrument readout: kickers and labels in mono, uppercase, letterspaced. */
+  /* A kicker: sentence case, quiet ink. */
   .eyebrow {
-    @apply font-mono text-eyebrow font-medium uppercase text-fg-2;
+    @apply font-body text-eyebrow font-semibold text-fg-2;
+  }
+  /* A's DEMO pill: hatched white, an ink ring, uppercase. */
+  .demo-pill {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1.5 pl-2.5 pr-3 font-body text-[12px] font-bold uppercase leading-4 tracking-[0.07em] text-fg;
+    background: var(--hatch), #ffffff;
+    box-shadow:
+      var(--shadow-sm),
+      inset 0 0 0 1.5px rgb(27 41 32 / 0.6);
+  }
+  /* Risk swatches, as on A's map key: brick solid, maize hatched, Low a fallow field. */
+  .sw {
+    @apply inline-block h-3.5 w-3.5 shrink-0 rounded-[0.28rem];
+  }
+  .sw-high {
+    background: var(--high-fill);
+  }
+  .sw-elev {
+    background: repeating-linear-gradient(135deg, var(--elev-stripe) 0 2px, var(--elev) 2px 5px);
+  }
+  .sw-low {
+    background: var(--land);
+    box-shadow: inset 0 0 0 1px rgb(27 41 32 / 0.12);
+  }
+  /* The fixed action bar: the page fades into the canvas behind the button, no hard edge. The
+     fade is the canvas itself (the haze, fixed like the body's), masked in from the top. */
+  .action-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--canvas-1);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 1.75rem);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 1.75rem);
+  }
+  @media (min-width: 640px) {
+    .action-bar::before {
+      background: var(--haze) fixed var(--canvas-1);
+    }
   }
 }

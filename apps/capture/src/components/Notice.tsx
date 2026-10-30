@@ -6,7 +6,7 @@ export function Notice({ children, action }: { children: ReactNode; action?: Rea
   return (
     <div
       role="alert"
-      className="flex flex-col gap-3 rounded-card border border-attention-text border-l-4 bg-attention-tint p-4 text-fg"
+      className="flex flex-col gap-3 rounded-card bg-attention-tint p-4 text-fg shadow-island-sm"
     >
       <p className="flex gap-2 text-body font-semibold">
         <TriangleAlert
