@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phytos mockups</title>
+    <meta name="robots" content="noindex" />
+    <style>
+      :root {
+        --ground: #f6f6f4;
+        --panel: #ffffff;
+        --ink: #17191c;
+        --ink-2: #5c616a;
+        --rule: #e4e6e9;
+        --accent: #2160c4;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+      h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
+      .lead { color: var(--ink-2); margin: 0 0 28px; max-width: 60ch; }
+      ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      a.card {
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        background: var(--panel);
+        border-radius: 14px;
+        color: inherit;
+        text-decoration: none;
+        box-shadow: 0 1px 2px rgb(23 25 28 / 0.06), 0 6px 20px rgb(23 25 28 / 0.06);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      a.card:hover, a.card:focus-visible {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgb(23 25 28 / 0.08), 0 12px 32px rgb(23 25 28 / 0.1);
+        outline: none;
+      }
+      a.card:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
+      .letter {
+        width: 56px; height: 56px; border-radius: 12px;
+        display: grid; place-items: center;
+        font-weight: 700; font-size: 24px; color: #fff;
+      }
+      .a .letter { background: #5f7f1c; }
+      .b .letter { background: #0d1117; }
+      .c .letter { background: #2160c4; }
+      .name { font-weight: 650; font-size: 18px; }
+      .what { color: var(--ink-2); font-size: 15px; }
+      .open { color: var(--accent); font-weight: 600; white-space: nowrap; }
+      .notes { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 14px; }
+      .notes p { margin: 0 0 8px; }
+      @media (max-width: 520px) {
+        a.card { grid-template-columns: 44px 1fr; }
+        .letter { width: 44px; height: 44px; font-size: 20px; }
+        .open { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Phytos: three directions for the National map</h1>
+      <p class="lead">
+        Static mockups of the same page with the same data, for choosing the direction the whole
+        dashboard is rebuilt to. Open each on the laptop, the projector and your phone.
+      </p>
+      <ol>
+        <li>
+          <a class="card a" href="a-field-airy.html">
+            <span class="letter" aria-hidden="true">A</span>
+            <span><span class="name">Field-airy</span><br /><span class="what">The map is the page: full canvas, white floating panels, calm and light.</span></span>
+            <span class="open">Open</span>
+          </a>
+        </li>
+        <li>
+          <a class="card b" href="b-ops-console.html">
+            <span class="letter" aria-hidden="true">B</span>
+            <span><span class="name">Ops console</span><br /><span class="what">Dense and dark: panels, tabular figures, daily charts and an alert log.</span></span>
+            <span class="open">Open</span>
+          </a>
+        </li>
+        <li>
+          <a class="card c" href="c-modern-product.html">
+            <span class="letter" aria-hidden="true">C</span>
+            <span><span class="name">Modern product</span><br /><span class="what">Bold type, one strong brand colour, depth and polish.</span></span>
+            <span class="open">Open</span>
+          </a>
+        </li>
+      </ol>
+      <div class="notes">
+        <p>Every figure, district and alert comes from the live demo system after the seed realism pass (exported 30 Oct). All of it is simulated demo data.</p>
+        <p>These are pictures of a page, not the app: controls are drawn, not wired. The chosen mockup becomes the contract for the rebuild.</p>
+      </div>
+    </main>
+  </body>
+</html>
