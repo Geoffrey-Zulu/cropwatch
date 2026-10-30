@@ -8,8 +8,9 @@ import { Muted, Panel } from '../components/Panel'
 import type { Officer } from '../hooks/useAuth'
 import type { DashCluster, DashObservation, LiveData } from '../hooks/useLive'
 import { hrefFor } from '../hooks/useRoute'
-import { ago, confidenceText, reportNumber, REVIEW_REASON_TEXT, SEVERITY_TEXT } from '../lib/copy'
+import { ago, reportNumber, REVIEW_REASON_TEXT } from '../lib/copy'
 import { PhotoSection } from '../sections/PhotoSection'
+import { AssessmentFacts, DetailBlock, ReportFacts } from '../sections/ReportDetailSection'
 import { VerifySection } from '../sections/VerifySection'
 
 const NEEDS_REVIEW = (o: DashObservation) => o.status === 'awaiting_expert_review'
@@ -110,7 +111,7 @@ export function OfficerQueuePage({
         {selected ? (
           <Panel
             eyebrow={`Report ${reportNumber(selected.id)}`}
-            title={`${CROP_LABELS[selected.crop]} · ${selected.district}`}
+            title={`${CROP_LABELS[selected.crop]} · ${selected.suspectedIssue && selected.suspectedIssue !== 'unknown' ? ISSUE_LABELS[selected.suspectedIssue] : 'Not identified'}`}
             actions={
               <a
                 href={hrefFor({
@@ -124,20 +125,19 @@ export function OfficerQueuePage({
               </a>
             }
           >
-            <div className="grid gap-4 xl:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <PhotoSection path={selected.photoPaths[0] ?? null} sim={selected.sim} />
-                <p className="text-label">
-                  {selected.band
-                    ? `${selected.suspectedIssue ? ISSUE_LABELS[selected.suspectedIssue] : 'Unknown'} · ${confidenceText(selected.band)}`
-                    : 'Not assessed yet'}
-                  {selected.severity && ` · ${SEVERITY_TEXT[selected.severity]}`}
-                </p>
-                {selected.description && (
-                  <p className="text-label text-fg-2">Farmer says: {selected.description}</p>
-                )}
+            <div className="flex flex-col gap-5">
+              <ReportFacts observation={selected} columns="grid-cols-2 xl:grid-cols-4" />
+              <div className="grid gap-5 sm:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_minmax(0,1fr)]">
+                <DetailBlock label="Photo">
+                  <PhotoSection path={selected.photoPaths[0] ?? null} sim={selected.sim} />
+                </DetailBlock>
+                <DetailBlock label="Assessment">
+                  <AssessmentFacts observation={selected} />
+                </DetailBlock>
+                <DetailBlock label="Verify" className="sm:col-span-2 xl:col-span-1">
+                  <VerifySection key={selected.id} observation={selected} officer={officer} />
+                </DetailBlock>
               </div>
-              <VerifySection key={selected.id} observation={selected} officer={officer} />
             </div>
           </Panel>
         ) : (

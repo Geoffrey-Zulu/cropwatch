@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { alertUncertainty, ALERT_CLASS_LABELS, ALERT_CLASSES } from '@repo/shared'
+import {
+  alertUncertainty,
+  ALERT_CLASS_LABELS,
+  ALERT_CLASSES,
+  ISSUE_LABELS,
+  riskV0,
+} from '@repo/shared'
 import { hrefFor, parseRoute, type Route } from '../hooks/useRoute'
 import type { DashObservation } from '../hooks/useLive'
 import { queueRows } from '../pages/OfficerQueuePage'
@@ -110,5 +116,40 @@ describe('copy', () => {
   it('says verification is evaluation data, never that the model learns', () => {
     expect(copy.EVALUATION_NOTE).toMatch(/test case/)
     expect(copy.EVALUATION_NOTE).toMatch(/does not learn/)
+  })
+})
+
+describe('compactFactors (Districts to watch)', () => {
+  const activity = (over: Partial<Parameters<typeof riskV0>[0]>) =>
+    riskV0({ district: 'Lusaka', reportsThisWeek: 17, reportsLastWeek: 13, clusters: [], ...over })
+
+  it('reads the biggest cluster back into one line', () => {
+    const { factors } = activity({
+      clusters: [
+        { issueLabel: ISSUE_LABELS.fall_armyworm, size: 9, newLast24h: 1 },
+        { issueLabel: ISSUE_LABELS.tuta_absoluta, size: 5, newLast24h: 0 },
+      ],
+    })
+    expect(copy.compactFactors(factors)).toBe(
+      '9 FAW reports · 10 km cluster · +1 in 24 h · 2 clusters'
+    )
+  })
+
+  it('leaves out the 24 h change when nothing is new', () => {
+    const { factors } = activity({
+      clusters: [{ issueLabel: ISSUE_LABELS.tuta_absoluta, size: 5, newLast24h: 0 }],
+    })
+    expect(copy.compactFactors(factors)).toBe('5 Tuta reports · 10 km cluster')
+  })
+
+  it('falls back to the week when there is no cluster', () => {
+    expect(copy.compactFactors(activity({}).factors)).toBe('17 this week · +31% on last week')
+    expect(copy.compactFactors(activity({ reportsLastWeek: 0 }).factors)).toBe(
+      '17 this week · none the week before'
+    )
+  })
+
+  it('shows a sentence it does not know as it is', () => {
+    expect(copy.compactFactors(['Something new'])).toBe('Something new')
   })
 })

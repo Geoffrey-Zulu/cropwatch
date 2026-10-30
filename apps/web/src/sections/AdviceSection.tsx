@@ -1,10 +1,11 @@
 import { PRODUCT_SOURCE_LABELS, withoutEmDash, type Recommendation } from '@repo/shared'
 import { Muted } from '../components/Panel'
 import { SkeletonRows } from '../components/Skeleton'
-import { TIER_NAMES } from '../lib/copy'
+import { SourceChips } from '../components/SourceChip'
 
-// The advice the farmer received: IPM steps in order, chemicals last (label doses verbatim),
-// and the guides it cites.
+// The advice the farmer received: IPM steps as a compact numbered list, chemicals last with
+// their doses verbatim from the product list (CLAUDE.md invariant 1), and every guide it cites
+// as a chip that opens the original document.
 export function AdviceSection({
   recommendation,
 }: {
@@ -16,10 +17,10 @@ export function AdviceSection({
   const last = recommendation.ipm_steps.length - 1
   return (
     <div className="flex flex-col gap-3">
-      <ol className="flex flex-col gap-2">
+      <ol className="flex flex-col gap-1.5">
         {recommendation.ipm_steps.map((step, i) => (
-          <li key={step} className="flex gap-3 text-label">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-well text-caption font-semibold text-fg-2">
+          <li key={step} className="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-2 text-label">
+            <span className="mt-px inline-flex h-5 w-5 items-center justify-center rounded-full bg-well text-[11px] font-semibold tabular-nums text-fg-2">
               {i === last ? 'C' : i + 1}
             </span>
             <span>{withoutEmDash(step)}</span>
@@ -27,7 +28,7 @@ export function AdviceSection({
         ))}
       </ol>
       {recommendation.chemical_options.map(c => (
-        <div key={c.registration_no} className="rounded-card bg-well p-3 text-label">
+        <div key={c.registration_no} className="rounded-card bg-well px-3 py-2 text-label">
           <strong className="font-semibold">{c.trade_name}</strong> ({c.active_ingredient})
           <span className="block font-mono text-caption">
             {c.source === 'plantwise_pmdg'
@@ -37,17 +38,8 @@ export function AdviceSection({
         </div>
       ))}
       <div>
-        <p className="eyebrow mb-1">Cited guides</p>
-        <ul className="flex flex-col gap-0.5">
-          {recommendation.rag_sources.map(s => (
-            <li key={s.uri} className="text-label">
-              {s.title}
-              <span className="chip ml-1.5 border-hairline-strong text-fg-2">
-                {TIER_NAMES[s.tier] ?? 'Source'}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <p className="mb-1.5 text-caption text-fg-2">Sources</p>
+        <SourceChips sources={recommendation.rag_sources} />
       </div>
     </div>
   )

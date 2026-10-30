@@ -63,6 +63,16 @@ const VIEWS: View[] = [
   { name: 'capture-5-result-officer', app: 'capture', route: 'officer' },
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
   { name: 'dashboard-map', app: 'dashboard', route: 'map', extra: PROJECTOR },
+  {
+    name: 'dashboard-map-legend',
+    app: 'dashboard',
+    route: 'map',
+    // The legend sits behind the (i) button on the map (polish 30 Oct).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Map legend' }).click({ force: true })
+      await page.waitForTimeout(300)
+    },
+  },
   { name: 'dashboard-alerts', app: 'dashboard', route: 'alerts' },
   { name: 'dashboard-outbreak', app: 'dashboard', route: 'outbreak' },
   { name: 'dashboard-observation', app: 'dashboard', route: 'observation' },

@@ -33,3 +33,21 @@ export function LevelIcon({ level }: { level: RiskLevel }) {
     return <span aria-hidden className="h-4 w-4 shrink-0 rounded-full border-2 border-attention" />
   return <span aria-hidden className="mx-1 h-2 w-2 shrink-0 rounded-full bg-hairline-strong" />
 }
+
+const PILL: Record<RiskLevel, string> = {
+  HIGH: 'bg-high text-high-ink',
+  ELEVATED: 'bg-attention-tint text-attention-text',
+  LOW: 'bg-well text-fg-2',
+}
+
+// The level at the end of a district row (polish 30 Oct): a small pill, right-aligned, so a
+// column of them scans. High is filled, Elevated tinted; the word is always there.
+export function LevelPill({ level }: { level: RiskLevel }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-caption font-semibold ${PILL[level]}`}
+    >
+      {LEVEL_TEXT[level]}
+    </span>
+  )
+}

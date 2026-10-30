@@ -4,9 +4,11 @@ import { useMemo, useState } from 'react'
 import { CROP_LABELS, WEATHER_SOURCE } from '@repo/shared'
 import { DemoBadge } from '../components/DemoBadge'
 import { Disclosure, PageHeader } from '../components/PageHeader'
-import { Bar, Loading, SkeletonRows, SkeletonStats } from '../components/Skeleton'
+import { Bar, Loading, SkeletonRows } from '../components/Skeleton'
+import { SkeletonStatCards, StatCards } from '../components/StatCards'
 import type { DashObservation } from '../hooks/useLive'
 import { useNow } from '../hooks/useNow'
+import { ISSUE_SHORT } from '../lib/copy'
 import { fetchRainOutlook } from '../lib/rainOutlook'
 import {
   campScenarios,
@@ -15,7 +17,6 @@ import {
   SCENARIO_WINDOW_DAYS,
   STAGE_TABLE,
   UNKNOWN_STAGE_NOTE,
-  verifiedText,
   type Band,
   type CampScenario,
   type Concern,
@@ -114,37 +115,31 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
         )}
       </div>
 
-      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-        {observations && !fetching ? (
-          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
-            {[
-              [count('closer'), 'camps for closer monitoring'],
-              [count('watch'), 'camps to watch'],
-              [rows.length, `camps with reports in ${SCENARIO_WINDOW_DAYS} days`],
-            ].map(([value, label]) => (
-              <div key={label} className="flex items-baseline gap-2">
-                <dt className="sr-only">{label}</dt>
-                <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-                <span aria-hidden className="text-fg-2">
-                  {label}
-                </span>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <SkeletonStats count={3} />
-        )}
-        <DemoBadge rows={rows} />
-      </div>
+      {observations && !fetching ? (
+        <StatCards
+          stats={[
+            { label: 'Camps for closer monitoring', value: count('closer') },
+            { label: 'Camps to watch', value: count('watch') },
+            { label: `Camps with reports, ${SCENARIO_WINDOW_DAYS} days`, value: rows.length },
+          ]}
+        />
+      ) : (
+        <SkeletonStatCards count={3} />
+      )}
 
-      <section aria-labelledby="ranked" className="max-w-4xl">
-        <h2 id="ranked" className="text-section font-semibold text-fg">
-          Camps, ranked
-        </h2>
-        <p className="text-caption text-fg-2">
-          An ordering of where to look first, from the rules below: not a likelihood, and no yield
-          or loss estimate. Camp and district level only.
-        </p>
+      <section aria-labelledby="ranked">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+          <div>
+            <h2 id="ranked" className="text-section font-semibold text-fg">
+              Camps, ranked
+            </h2>
+            <p className="text-caption text-fg-2">
+              Where to look first, from the rules below. Not a likelihood; no yield or loss
+              estimate. Camp and district level only.
+            </p>
+          </div>
+          <DemoBadge rows={rows} />
+        </div>
         {(observations === null || fetching) && <SkeletonRows rows={6} label="Loading camps" />}
         {!fetching && observations && rows.length === 0 && (
           <p className="py-4 text-label text-fg-2">No reports in the last 14 days.</p>
@@ -161,10 +156,12 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
             {BAND.closer.label} <span className="font-normal text-fg-2">· {closer.length}</span>
           </h3>
         )}
-        <CampRows rows={closer.slice(0, FIRST)} start={1} drySpell={drySpell} />
+        {closer.length > 0 && (
+          <CampTable rows={closer.slice(0, FIRST)} start={1} drySpell={drySpell} />
+        )}
         {closer.length > FIRST && (
           <Disclosure summary="More camps for closer monitoring" hint={closer.length - FIRST}>
-            <CampRows rows={closer.slice(FIRST)} start={FIRST + 1} drySpell={drySpell} />
+            <CampTable rows={closer.slice(FIRST)} start={FIRST + 1} drySpell={drySpell} />
           </Disclosure>
         )}
         {/* Watch and routine fold away; closer monitoring is the answer. */}
@@ -179,7 +176,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
                 summary={group.band === 'watch' ? 'Camps to watch' : 'Routine camps'}
                 hint={group.rows.length}
               >
-                <CampRows rows={group.rows} start={group.start} drySpell={drySpell} />
+                <CampTable rows={group.rows} start={group.start} drySpell={drySpell} />
               </Disclosure>
             )
         )}
@@ -276,12 +273,6 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
   )
 }
 
-function rainText(c: CampScenario, drySpell: boolean) {
-  if (drySpell) return 'Dry spell (scenario)'
-  if (c.rainMm === null) return 'Forecast unavailable'
-  return `${c.dry ? 'Dry' : 'Not dry'}: ${c.rainMm} mm forecast`
-}
-
 const CONCERN_DOT: Record<Concern, string> = {
   high: 'bg-high',
   moderate: 'bg-attention',
@@ -289,9 +280,26 @@ const CONCERN_DOT: Record<Concern, string> = {
   none: 'bg-hairline',
 }
 
-// Two lines a row: the camp, then one secondary line in full: crop-stage concern as a dot and
-// words, the rain, the verified reports. The band is the group the row sits in, not a chip.
-function CampRows({
+const RANK_COLUMNS = [
+  { label: '#', className: 'w-9' },
+  { label: 'Camp', className: '' },
+  { label: 'Crop', className: 'w-28 max-md:hidden' },
+  { label: 'Reports', className: 'w-20 text-right max-md:hidden' },
+  { label: 'Crop stage', className: 'w-56 max-md:w-40' },
+  { label: 'Rain, next 14 days', className: 'w-40 max-md:hidden' },
+  { label: 'Verified', className: 'w-36 max-md:hidden' },
+]
+
+function rainCell(c: CampScenario, drySpell: boolean) {
+  if (drySpell) return 'Dry spell'
+  if (c.rainMm === null) return 'Unavailable'
+  return `${c.rainMm} mm${c.dry ? ' · dry' : ''}`
+}
+
+// One row a camp, every input that ranked it in its own column (polish 30 Oct): the crop-stage
+// concern as a dot and words, the rain, the verified reports. Phones keep the camp and the stage.
+// The band is the group the table sits in, not a chip.
+function CampTable({
   rows,
   start,
   drySpell,
@@ -301,45 +309,60 @@ function CampRows({
   drySpell: boolean
 }) {
   return (
-    <ol className="flex flex-col">
-      {rows.map((c, i) => (
-        <li key={`${c.districtSlug}|${c.camp}`} className="py-3">
-          <div className="flex items-start gap-2">
-            <span className="w-5 shrink-0 pt-0.5 font-mono text-caption text-fg-2">
-              {start + i}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <div className="overflow-x-auto" data-visual-scroll>
+      <table className="w-full table-fixed text-left text-label">
+        <thead>
+          <tr className="border-b border-hairline">
+            {RANK_COLUMNS.map(col => (
+              <th key={col.label} className={`th py-2 pr-4 ${col.className}`}>
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c, i) => (
+            <tr
+              key={`${c.districtSlug}|${c.camp}`}
+              className="border-b border-hairline align-top last:border-b-0"
+            >
+              <td className="py-2 pr-4 font-mono text-caption tabular-nums text-fg-2">
+                {start + i}
+              </td>
+              <td className="py-2 pr-4">
                 <span className="font-semibold text-fg">{c.camp}</span>
-              </div>
-              {/* One secondary line: the camp, then every input that ranked it. */}
-              <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-label text-fg-2">
-                <span>
-                  {c.district} · {c.crops.map(crop => CROP_LABELS[crop]).join(', ')} · {c.reports}{' '}
-                  {c.reports === 1 ? 'report' : 'reports'}
-                </span>
-                {c.stageRow && (
-                  <>
-                    <span aria-hidden>·</span>
+                <span className="block text-caption text-fg-2">{c.district}</span>
+              </td>
+              <td className="py-2 pr-4 max-md:hidden">
+                {c.crops.map(crop => CROP_LABELS[crop]).join(', ')}
+              </td>
+              <td className="py-2 pr-4 text-right tabular-nums max-md:hidden">{c.reports}</td>
+              <td className="py-2 pr-4" title={c.stageRow?.watch}>
+                {c.stageRow ? (
+                  <span className="inline-flex items-baseline gap-1.5">
                     <span
                       aria-hidden
-                      className={`h-2 w-2 rounded-full ${CONCERN_DOT[c.concern]}`}
+                      className={`h-2 w-2 shrink-0 self-center rounded-full ${CONCERN_DOT[c.concern]}`}
                     />
-                    <span className="text-fg" title={c.stageRow.watch}>
+                    <span>
                       {c.stageUnknown ? 'Stage not recorded' : c.stageRow.stage}
-                      {c.concern !== 'none' ? ` (${c.concern})` : ''}
+                      {c.concern !== 'none' && <span className="text-fg-2"> · {c.concern}</span>}
                     </span>
-                  </>
+                  </span>
+                ) : (
+                  <span className="text-fg-2">Not recorded</span>
                 )}
-                <span>· {rainText(c, drySpell)}</span>
-                {c.verified.map(v => (
-                  <span key={v.issue}>· {verifiedText(v)}</span>
-                ))}
-              </p>
-            </div>
-          </div>
-        </li>
-      ))}
-    </ol>
+              </td>
+              <td className="py-2 pr-4 tabular-nums max-md:hidden">{rainCell(c, drySpell)}</td>
+              <td className="py-2 pr-4 tabular-nums max-md:hidden">
+                {c.verified.length
+                  ? c.verified.map(v => `${v.count} ${ISSUE_SHORT[v.issue]}`).join(', ')
+                  : 'None'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

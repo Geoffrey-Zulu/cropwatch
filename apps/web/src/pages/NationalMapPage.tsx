@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
 import { ISSUE_LABELS, RISK_ORDER } from '@repo/shared'
 import { DemoBadge } from '../components/DemoBadge'
-import { LevelDot } from '../components/LevelTag'
+import { LevelPill } from '../components/LevelTag'
 import { PageHeader } from '../components/PageHeader'
-import { SkeletonRows, SkeletonStats } from '../components/Skeleton'
+import { SkeletonRows } from '../components/Skeleton'
+import { newThisWeek, SkeletonStatCards, StatCards, weekDelta } from '../components/StatCards'
 import { ZambiaMap } from '../components/ZambiaMap'
 import type { LiveData } from '../hooks/useLive'
 import { useNow } from '../hooks/useNow'
 import { useDrawerLinks } from '../hooks/useRoute'
-import { ago, reportNumber, shortDate } from '../lib/copy'
+import { ago, compactFactors, reportNumber, shortDate } from '../lib/copy'
 
 const DAY = 86_400_000
 const WINDOW_DAYS = 14
@@ -37,7 +38,7 @@ const FOCUS = {
 >
 
 // The national map answers one question: where is it bad right now? The map, the districts
-// to watch beside it and four numbers above it; alerts live behind the header bell and detail
+// to watch beside it and four live figures above it; alerts live behind the header bell and detail
 // opens in drawers (patterns-v2.md).
 export function NationalMapPage({ observations, clusters, risk }: LiveData) {
   const [focus, setFocus] = useState<keyof typeof FOCUS>('zambia')
@@ -62,8 +63,14 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
         ),
     [risk]
   )
-  const awaiting = recent.filter(o => o.status === 'awaiting_expert_review').length
+  const awaiting = recent.filter(o => o.status === 'awaiting_expert_review')
   const high = (risk ?? []).filter(r => r.level === 'HIGH').length
+  // Week on week, from the reports themselves: this week is the last 7 days.
+  const weekAgo = now - 7 * DAY
+  const thisWeek = recent.filter(o => Date.parse(o.createdAt) > weekAgo).length
+  const lastWeek = recent.length - thisWeek
+  const newClusters = (clusters ?? []).filter(c => Date.parse(c.firstDetectedAt) > weekAgo).length
+  const newAwaiting = awaiting.filter(o => Date.parse(o.createdAt) > weekAgo).length
   const shown = [...recent, ...(clusters ?? []), ...(risk ?? [])]
 
   return (
@@ -71,23 +78,28 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
       <PageHeader title="National map" />
 
       {observations && clusters && risk ? (
-        <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
-          {[
-            [clusters.length, 'active clusters'],
-            [high, 'districts at High'],
-            [awaiting, 'waiting for an officer'],
-          ].map(([value, label]) => (
-            <div key={label} className="flex items-baseline gap-2">
-              <dt className="sr-only">{label}</dt>
-              <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-              <span aria-hidden className="text-fg-2">
-                {label}
-              </span>
-            </div>
-          ))}
-        </dl>
+        <StatCards
+          stats={[
+            {
+              label: 'Reports this week',
+              value: thisWeek,
+              delta: weekDelta(thisWeek, lastWeek),
+            },
+            {
+              label: 'Active clusters',
+              value: clusters.length,
+              delta: newThisWeek(newClusters),
+            },
+            { label: 'Districts at High', value: high },
+            {
+              label: 'Waiting for an officer',
+              value: awaiting.length,
+              delta: newThisWeek(newAwaiting),
+            },
+          ]}
+        />
       ) : (
-        <SkeletonStats />
+        <SkeletonStatCards />
       )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -149,27 +161,35 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
           {risk && watch.length === 0 && (
             <p className="py-4 text-label text-fg-2">No district is above Low.</p>
           )}
-          <ul className="mt-2 flex flex-col">
+          {/* A table to scan: district and level on one line, its factors in one compact line
+              below; open a row for every factor in full (CLAUDE.md invariant 2). */}
+          {watch.length > 0 && (
+            <div className="mt-3 flex justify-between border-b border-hairline pb-1.5">
+              <span className="th">District</span>
+              <span className="th">Signal</span>
+            </div>
+          )}
+          <ul className="flex flex-col">
             {(allDistricts ? watch : watch.slice(0, RAIL_FIRST)).map(r => {
               const isOpen = district === r.districtSlug
               return (
-                <li key={r.districtSlug}>
+                <li key={r.districtSlug} className="border-b border-hairline">
                   <button
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setDistrict(isOpen ? null : r.districtSlug)}
-                    className={`-mx-2 block w-[calc(100%+1rem)] rounded-card px-2 py-2 text-left hover:bg-well ${isOpen ? 'bg-signal-tint' : ''}`}
+                    className={`-mx-2 grid w-[calc(100%+1rem)] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 rounded-card px-2 py-2.5 text-left hover:bg-well ${isOpen ? 'bg-signal-tint' : ''}`}
                   >
-                    <span className="flex items-baseline justify-between gap-3">
-                      <span className="font-semibold text-fg">{r.district}</span>
-                      <LevelDot level={r.level} />
+                    <span className="font-semibold text-fg">{r.district}</span>
+                    <LevelPill level={r.level} />
+                    <span className="col-span-2 text-caption tabular-nums text-fg-2">
+                      {compactFactors(r.factors)}
                     </span>
-                    <span className="mt-0.5 block text-caption text-fg-2">{r.factors[0]}</span>
                   </button>
                   {isOpen && (
-                    <div className="pb-2 pl-0 pt-1">
+                    <div className="pb-3 pt-1">
                       <ul className="flex flex-col gap-1 text-caption text-fg">
-                        {r.factors.slice(1).map(f => (
+                        {r.factors.map(f => (
                           <li key={f}>{f}</li>
                         ))}
                       </ul>

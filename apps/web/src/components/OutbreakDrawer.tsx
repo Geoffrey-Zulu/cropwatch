@@ -25,7 +25,8 @@ import { DemoBadge } from './DemoBadge'
 import { Drawer } from './Drawer'
 import { LevelDot } from './LevelTag'
 import { Disclosure } from './PageHeader'
-import { SkeletonRows } from './Skeleton'
+import { Bar, SkeletonRows } from './Skeleton'
+import { StatCards } from './StatCards'
 
 const DAY = 86_400_000
 
@@ -76,7 +77,20 @@ export function OutbreakDrawerView({
 
   if (!cluster)
     return (
-      <Drawer kicker="Outbreak" title="Opening the outbreak" closeHref={close()}>
+      <Drawer
+        kicker="Outbreak"
+        title={
+          cluster === null ? (
+            'Outbreak not found'
+          ) : (
+            <>
+              <span className="sr-only">Opening the outbreak</span>
+              <Bar className="h-6 w-64" />
+            </>
+          )
+        }
+        closeHref={close()}
+      >
         {cluster === null ? (
           <p className="text-label text-fg-2">This cluster no longer exists.</p>
         ) : (
@@ -94,18 +108,17 @@ export function OutbreakDrawerView({
       aside={<DemoBadge rows={[cluster, ...members]} />}
       closeHref={close()}
     >
-      <dl className="grid grid-cols-3 gap-4">
-        {[
-          [cluster.size, `reports within ${cluster.radiusKm} km`],
-          [cluster.verifiedMembers, 'verified by an officer'],
-          [cluster.newLast24h, 'new in 24 hours'],
-        ].map(([value, label]) => (
-          <div key={label}>
-            <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-            <dt className="text-caption text-fg-2">{label}</dt>
-          </div>
-        ))}
-      </dl>
+      <StatCards
+        columns="grid-cols-2"
+        stats={[
+          {
+            label: `Reports within ${cluster.radiusKm} km`,
+            value: cluster.size,
+            delta: cluster.newLast24h ? `↑${cluster.newLast24h} in 24 h` : 'None new in 24 h',
+          },
+          { label: 'Verified by an officer', value: cluster.verifiedMembers },
+        ]}
+      />
 
       <section className="mt-6" aria-labelledby="raised">
         <h3 id="raised" className="text-section font-semibold text-fg">

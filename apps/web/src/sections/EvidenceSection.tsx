@@ -1,4 +1,4 @@
-import { ExternalLink, ShieldCheck, ShieldX } from 'lucide-react'
+import { ShieldCheck, ShieldX } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   ISSUE_LABELS,
@@ -8,15 +8,16 @@ import {
 } from '@repo/shared'
 import { Muted, Panel } from '../components/Panel'
 import { SkeletonRows } from '../components/Skeleton'
+import { SourceChips } from '../components/SourceChip'
 import {
   confidenceText,
   REJECTION_TEXT,
   REVIEW_REASON_TEXT,
   STATUS_TEXT,
-  TIER_NAMES,
   VERIFICATION_TEXT,
 } from '../lib/copy'
 import { trpc } from '../lib/trpc'
+import { Facts } from './ReportDetailSection'
 
 // What the diagnosis and the advice rested on, all of it already logged by the API: the
 // sources retrieved (with tiers), the register check (passed and refused, and why), and the
@@ -52,95 +53,66 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function Tier({ tier }: { tier: number }) {
-  return (
-    <span className="chip ml-1.5 border-hairline-strong text-fg-2">
-      Tier {tier} · {TIER_NAMES[tier] ?? 'Source'}
-    </span>
-  )
-}
-
 function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
   const { diagnosis, retrieval, regulatory } = evidence
   return (
     <div className="flex flex-col gap-3">
-      <Block title="Escalation">
-        <ul className="flex flex-col gap-0.5 text-label">
-          <li>Status: {STATUS_TEXT[evidence.status]}</li>
-          <li>
-            Verification: {VERIFICATION_TEXT[evidence.verification_state]}
-            {evidence.verified_issue && ` as ${ISSUE_LABELS[evidence.verified_issue]}`}
-          </li>
-          {diagnosis?.needs_expert_review ? (
-            <li className="font-semibold text-fg">
-              Routed to an officer:{' '}
-              {diagnosis.expert_review_reason
-                ? REVIEW_REASON_TEXT[diagnosis.expert_review_reason]
-                : 'review requested'}
-            </li>
-          ) : (
-            diagnosis && <li>Not routed: the AI assessment met the bar for advice.</li>
-          )}
-        </ul>
-      </Block>
-
-      <Block title="AI assessment">
-        {diagnosis ? (
-          <ul className="flex flex-col gap-0.5 text-label">
-            <li>
-              {ISSUE_LABELS[diagnosis.suspected_issue]} ·{' '}
-              {confidenceText(diagnosis.confidence_band)}
-            </li>
-            <li className="font-mono text-caption text-fg-2">
-              {diagnosis.model_id} · prompt {diagnosis.prompt_version}
-              {diagnosis.attempts ? ` · ${diagnosis.attempts} attempt(s)` : ''}
-            </li>
-          </ul>
-        ) : (
-          <Muted>Not assessed yet.</Muted>
-        )}
+      <Block title="Escalation and model">
+        <Facts
+          facts={[
+            { label: 'Status', value: STATUS_TEXT[evidence.status] },
+            {
+              label: 'Verification',
+              value: `${VERIFICATION_TEXT[evidence.verification_state]}${evidence.verified_issue ? ` as ${ISSUE_LABELS[evidence.verified_issue]}` : ''}`,
+            },
+            {
+              label: 'Routed to an officer',
+              wide: true,
+              value: diagnosis?.needs_expert_review
+                ? diagnosis.expert_review_reason
+                  ? REVIEW_REASON_TEXT[diagnosis.expert_review_reason]
+                  : 'Review requested'
+                : diagnosis
+                  ? 'No: the AI assessment met the bar for advice'
+                  : 'Not assessed yet',
+            },
+            ...(diagnosis
+              ? [
+                  {
+                    label: 'AI assessment',
+                    value: `${ISSUE_LABELS[diagnosis.suspected_issue]} · ${confidenceText(diagnosis.confidence_band).replace('AI assessment: ', '')}`,
+                  },
+                  {
+                    label: 'Model and prompt',
+                    value: (
+                      <span className="font-mono text-caption">
+                        {diagnosis.model_id} · {diagnosis.prompt_version}
+                        {diagnosis.attempts ? ` · ${diagnosis.attempts} attempt(s)` : ''}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
       </Block>
 
       <Block title="Sources retrieved">
         {retrieval ? (
           <div className="flex flex-col gap-2">
-            <p className="text-label">
-              {retrieval.retrieved} passages found; {retrieval.excerpts.length} given to the model
-              for the query:
+            <p className="text-label tabular-nums">
+              {retrieval.retrieved} passages found · {retrieval.excerpts.length} given to the model
             </p>
             <p className="rounded-card bg-ground px-2 py-1 font-mono text-caption text-fg-2">
               {retrieval.query}
             </p>
-            <ul className="flex flex-col gap-1">
-              {retrieval.excerpts.map(e => (
-                <li key={`${e.ref}-${e.document_id}`} className="flex items-start gap-2 text-label">
-                  <span className="mt-0.5 rounded-tag border border-hairline-strong px-1 font-mono text-[11px]">
-                    {e.ref}
-                  </span>
-                  <span className="min-w-0">
-                    {e.source_url ? (
-                      <a
-                        href={e.source_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
-                      >
-                        {e.title}
-                        <ExternalLink
-                          size={16}
-
-                          aria-hidden
-                          className="ml-1 inline"
-                        />
-                      </a>
-                    ) : (
-                      <span className="font-semibold">{e.title}</span>
-                    )}
-                    <Tier tier={e.tier} />
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <SourceChips
+              sources={retrieval.excerpts.map(e => ({
+                uri: e.source_url ?? e.document_id,
+                title: e.title,
+                tier: e.tier,
+              }))}
+            />
             {retrieval.dropped.length > 0 && (
               <div>
                 <p className="text-label font-semibold">Steps the checks removed</p>
@@ -160,14 +132,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
             )}
           </div>
         ) : regulatory?.sources.length ? (
-          <ul className="flex flex-col gap-1">
-            {regulatory.sources.map(s => (
-              <li key={s.uri} className="text-label">
-                <span className="font-semibold">{s.title}</span>
-                <Tier tier={s.tier} />
-              </li>
-            ))}
-          </ul>
+          <SourceChips sources={regulatory.sources} />
         ) : (
           <Muted>No retrieval logged for this report.</Muted>
         )}

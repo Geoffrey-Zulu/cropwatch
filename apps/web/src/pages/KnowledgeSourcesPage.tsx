@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { CROP_LABELS, ISSUE_LABELS, type Crop, type Issue } from '@repo/shared'
 import { PageHeader } from '../components/PageHeader'
 import { Muted, Panel } from '../components/Panel'
+import { StatCards } from '../components/StatCards'
 import sources from '../data/knowledge-sources.json'
 import { dateTime, TIER_NAMES } from '../lib/copy'
 
@@ -53,27 +54,18 @@ export function KnowledgeSourcesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Knowledge sources" />
       <p className="-mt-3 max-w-3xl text-label text-fg-2">
-        Advice is written only from passages retrieved from these documents, and every chemical is
-        then checked against the pesticide register. Tier 1 is the Ministry of Agriculture; a lower
-        tier wins where guides disagree. Read only, from the corpus manifest.
+        Advice is written only from passages retrieved from these documents; every chemical is then
+        checked against the product list. Where guides disagree, the lower tier wins.
       </p>
 
-      <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
-        {[
-          [rows.length, 'curated documents'],
-          [counts.retrievable, 'in retrieval, so advice can cite them'],
-          [counts.pending, 'pending from the publisher'],
-          [counts.not_fetched + counts.fetched, 'listed, not yet in retrieval'],
-        ].map(([value, label]) => (
-          <div key={label} className="flex items-baseline gap-2">
-            <dt className="sr-only">{label}</dt>
-            <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-            <span aria-hidden className="text-fg-2">
-              {label}
-            </span>
-          </div>
-        ))}
-      </dl>
+      <StatCards
+        stats={[
+          { label: 'Curated documents', value: rows.length },
+          { label: 'In retrieval: advice can cite them', value: counts.retrievable },
+          { label: 'Pending from the publisher', value: counts.pending },
+          { label: 'Listed, not yet in retrieval', value: counts.not_fetched + counts.fetched },
+        ]}
+      />
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
         {(['all', ...Object.keys(STATUS)] as (Status | 'all')[]).map(s => (
@@ -91,43 +83,67 @@ export function KnowledgeSourcesPage() {
 
       {tiers.map(tier => (
         <Panel key={tier} eyebrow={`Tier ${tier}`} title={TIER_NAMES[tier] ?? 'Other'}>
-          <ul className="flex flex-col gap-1">
-            {shown
-              .filter(r => r.tier === tier)
-              .map(r => (
-                <li key={r.id} className="py-2.5">
-                  <div className="flex flex-wrap items-start gap-2">
-                    <span
-                      className={`chip ${STATUS[r.status].className}`}
-                      title={STATUS[r.status].note}
-                    >
-                      {STATUS[r.status].label}
-                    </span>
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="min-w-0 flex-1 font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
-                    >
-                      {r.title}
-                      <ExternalLink size={16} aria-hidden className="ml-1 inline" />
-                    </a>
-                    {/* Under the title on phones, so the title keeps the width. */}
-                    <span className="text-caption text-fg-2 max-sm:basis-full">
-                      {r.source} · {r.year} · {r.country}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-caption text-fg-2">
-                    {[
-                      ...r.crop.map(c => CROP_LABELS[c as Crop]),
-                      ...r.issue.map(i => ISSUE_LABELS[i as Issue]),
-                    ].join(' · ')}
-                    {r.licence ? ` · Licence: ${r.licence}` : ''}
-                  </p>
-                  {r.note && <p className="text-caption text-fg-2">{r.note}</p>}
-                </li>
-              ))}
-          </ul>
+          {/* One row a document: the title (a link to the original), who published it, what it
+              covers and its status, in aligned columns; phones keep the title and the status. */}
+          <table className="w-full table-fixed text-left text-label">
+            <thead>
+              <tr className="border-b border-hairline">
+                <th className="th py-2 pr-4">Document</th>
+                <th className="th w-56 py-2 pr-4 max-lg:hidden">Publisher</th>
+                <th className="th w-72 py-2 pr-4 max-lg:hidden">Covers</th>
+                <th className="th w-36 py-2 text-right max-sm:w-28">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown
+                .filter(r => r.tier === tier)
+                .map(r => (
+                  <tr key={r.id} className="border-b border-hairline align-top last:border-b-0">
+                    <td className="py-2.5 pr-4">
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
+                      >
+                        {r.title}
+                        <ExternalLink size={16} aria-hidden className="ml-1 inline" />
+                      </a>
+                      <span className="block text-caption text-fg-2 lg:hidden">
+                        {r.source} · {r.year}
+                      </span>
+                      {(r.licence || r.note) && (
+                        <span className="mt-0.5 block text-caption text-fg-2">
+                          {[r.licence && `Licence: ${r.licence}`, r.note]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 text-caption text-fg max-lg:hidden">
+                      {r.source}
+                      <span className="block tabular-nums text-fg-2">
+                        {r.year} · {r.country}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-4 text-caption text-fg-2 max-lg:hidden">
+                      {[
+                        ...r.crop.map(c => CROP_LABELS[c as Crop]),
+                        ...r.issue.map(i => ISSUE_LABELS[i as Issue]),
+                      ].join(' · ')}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <span
+                        className={`chip ${STATUS[r.status].className}`}
+                        title={STATUS[r.status].note}
+                      >
+                        {STATUS[r.status].label}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </Panel>
       ))}
       {shown.length === 0 && <Muted>No documents with this status.</Muted>}

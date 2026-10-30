@@ -1,6 +1,6 @@
 import { geoMercator, geoPath } from 'd3-geo'
 import type { Feature, FeatureCollection, MultiPolygon } from 'geojson'
-import { Maximize2, Minus, Plus } from 'lucide-react'
+import { Info, Maximize2, Minus, Plus } from 'lucide-react'
 import {
   useEffect,
   useMemo,
@@ -143,11 +143,11 @@ export function ZambiaMap({
         }
       )
     } else {
-      // The floating legend sits bottom left: keep the country clear of it.
+      // The legend button sits bottom left: keep the country clear of it.
       p.fitExtent(
         [
           [16, 16],
-          [WIDTH - 16, HEIGHT - (compact ? 16 : 96)],
+          [WIDTH - 16, HEIGHT - (compact ? 16 : 56)],
         ],
         districts
       )
@@ -439,47 +439,110 @@ function MapButton({
   )
 }
 
+// The legend behind an (i) button at the map's bottom-left corner (polish 30 Oct): it opens on
+// hover, and a click pins it open until a second click, Escape or a click elsewhere.
 function MapLegend() {
+  const [hover, setHover] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pinned) return
+    const close = (event: Event) => {
+      if (
+        event instanceof KeyboardEvent
+          ? event.key === 'Escape'
+          : !box.current?.contains(event.target as Node)
+      )
+        setPinned(false)
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [pinned])
+  const open = hover || pinned
   return (
-    <div className="bg-panel px-3 py-2 sm:absolute sm:bottom-3 sm:left-3 sm:max-w-[calc(100%-1.5rem)] sm:rounded-card sm:shadow-raise">
-      <p className="text-caption font-medium text-fg">Risk signal from reports</p>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-fg-2">
-        {(['HIGH', 'ELEVATED', 'LOW'] as const).map(level => (
-          <span key={level} className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="h-2.5 w-3.5 rounded-[2px] border"
-              style={{
-                background: MAP_FILL[level],
-                borderColor: MAP_EDGE[level] ?? MAP.border,
-              }}
-            />
-            {level === 'HIGH' ? 'High' : level === 'ELEVATED' ? 'Elevated' : 'Low'}
-          </span>
-        ))}
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: MAP.report }} />
-          Report
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className="h-2 w-2 rounded-full"
-            style={{ background: MAP.simReport }}
-          />
-          Simulated report
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px] font-bold leading-none"
-            style={{ borderColor: MAP.ring, color: MAP.ringText }}
+    <div
+      ref={box}
+      className="absolute bottom-3 left-3 z-10"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {open && (
+        // Padding, not a margin, so the pointer can cross from the button to the legend.
+        <div className="absolute bottom-full left-0 pb-2">
+          <div
+            id="map-legend"
+            role="region"
+            aria-label="Map legend"
+            className="w-[min(20rem,calc(100vw-4rem))] rounded-card bg-panel px-3 py-2.5 shadow-raise"
           >
-            5
-          </span>
-          Cluster: reports within 10 km
-        </span>
-      </div>
+            <p className="text-caption font-semibold text-fg">Risk signal from reports</p>
+            <p className="text-caption text-fg-2">Not a forecast.</p>
+            <ul className="mt-1.5 flex flex-col gap-1 text-caption text-fg">
+              {(['HIGH', 'ELEVATED', 'LOW'] as const).map(level => (
+                <li key={level} className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className="h-3 w-4 rounded-[2px] border"
+                    style={{
+                      background: MAP_FILL[level],
+                      borderColor: MAP_EDGE[level] ?? MAP.border,
+                    }}
+                  />
+                  {level === 'HIGH' ? 'High' : level === 'ELEVATED' ? 'Elevated' : 'Low'}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-caption font-semibold text-fg">On the map</p>
+            <ul className="mt-1.5 flex flex-col gap-1 text-caption text-fg">
+              <li className="flex items-center gap-2">
+                <span className="flex w-4 justify-center">
+                  <span
+                    aria-hidden
+                    className="h-3 w-3 rounded-full"
+                    style={{ background: MAP.report }}
+                  />
+                </span>
+                Report
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="flex w-4 justify-center">
+                  <span
+                    aria-hidden
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: MAP.simReport }}
+                  />
+                </span>
+                Simulated report
+              </li>
+              <li className="flex items-center gap-2">
+                <span
+                  aria-hidden
+                  className="-ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px] font-bold leading-none"
+                  style={{ borderColor: MAP.ring, color: MAP.ringText }}
+                >
+                  5
+                </span>
+                Cluster: the count of reports within 10 km
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+      <button
+        type="button"
+        aria-label="Map legend"
+        aria-expanded={open}
+        aria-controls="map-legend"
+        title="Map legend"
+        onClick={() => setPinned(p => !p)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-card bg-panel text-fg shadow-raise hover:bg-well"
+      >
+        <Info aria-hidden />
+      </button>
     </div>
   )
 }

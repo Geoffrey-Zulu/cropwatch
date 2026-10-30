@@ -14,6 +14,7 @@ import { LevelDot } from '../components/LevelTag'
 import { PageHeader } from '../components/PageHeader'
 import { Muted } from '../components/Panel'
 import { Bar, Loading, SkeletonRows } from '../components/Skeleton'
+import { SkeletonStatCards, StatCards, weekDelta } from '../components/StatCards'
 import { ZambiaMap } from '../components/ZambiaMap'
 import type { Officer } from '../hooks/useAuth'
 import { useDrawerLinks } from '../hooks/useRoute'
@@ -82,7 +83,7 @@ function OverviewSkeleton() {
     <Loading label="Building the Outgrower View">
       <div className="flex flex-col gap-5">
         <Bar className="h-8 w-72" />
-        <Bar className="h-8 w-full max-w-2xl" />
+        <SkeletonStatCards />
         <SkeletonRows rows={CAMPS_FIRST} label="Loading the camps" />
         <SkeletonRows rows={6} label="Loading the visit lists" />
       </div>
@@ -133,36 +134,22 @@ function Overview({ data }: { data: OutgrowerOverview }) {
     <div className="flex flex-col gap-6">
       <PageHeader title={data.name} />
       <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
-            {[
-              [data.enrolled_farmers.toLocaleString('en-GB'), 'enrolled farmers'],
-              [data.reports, `reports in ${data.window_days} days`],
-              [data.verified_reports, 'verified by an officer'],
-            ].map(([value, label]) => (
-              <div key={label} className="flex items-baseline gap-2">
-                <dt className="sr-only">{label}</dt>
-                <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-                <span aria-hidden className="text-fg-2">
-                  {label}
-                </span>
-              </div>
-            ))}
-            {data.top_issue && (
-              <div className="flex items-baseline gap-2">
-                <dt className="text-fg-2">Rising:</dt>
-                <dd className="font-semibold text-fg">
-                  {data.top_issue.issue_label}{' '}
-                  <span className="font-normal text-fg-2">
-                    ({data.top_issue.this_week} this week, {data.top_issue.last_week} the week
-                    before)
-                  </span>
-                </dd>
-              </div>
-            )}
-          </dl>
-          <DemoBadge rows={rows} />
-        </div>
+        <StatCards
+          stats={[
+            { label: 'Enrolled farmers', value: data.enrolled_farmers.toLocaleString('en-GB') },
+            { label: `Reports, ${data.window_days} days`, value: data.reports },
+            { label: 'Verified by an officer', value: data.verified_reports },
+            ...(data.top_issue
+              ? [
+                  {
+                    label: `${data.top_issue.issue_label} this week`,
+                    value: data.top_issue.this_week,
+                    delta: weekDelta(data.top_issue.this_week, data.top_issue.last_week),
+                  },
+                ]
+              : []),
+          ]}
+        />
         <p className="flex items-center gap-2 text-caption text-fg-2">
           <Lock size={16} aria-hidden />
           Camp and district level only. No farm locations are shown in this view.
@@ -170,14 +157,16 @@ function Overview({ data }: { data: OutgrowerOverview }) {
       </div>
 
       <section aria-labelledby="camps" className="flex flex-col gap-2">
-        <div>
-          <h2 id="camps" className="text-section font-semibold text-fg">
-            Camps needing attention
-          </h2>
-          <p className="text-label text-fg-2">
-            {data.camps.length} camps with reports from member farms in {data.window_days} days,
-            camps with a cluster first.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+          <div>
+            <h2 id="camps" className="text-section font-semibold text-fg">
+              Camps needing attention
+            </h2>
+            <p className="text-label tabular-nums text-fg-2">
+              {data.camps.length} camps with reports in {data.window_days} days · clusters first
+            </p>
+          </div>
+          <DemoBadge rows={rows} />
         </div>
         <CampsTable camps={data.camps} />
       </section>
@@ -188,8 +177,8 @@ function Overview({ data }: { data: OutgrowerOverview }) {
             <h2 id="visits" className="text-section font-semibold text-fg">
               Visit lists
             </h2>
-            <p className="text-label text-fg-2">
-              {visits} farm visits across {data.officers.length} field officers, most urgent first.
+            <p className="text-label tabular-nums text-fg-2">
+              {visits} farm visits · {data.officers.length} field officers · most urgent first
             </p>
           </div>
           {!showLists && (
@@ -214,9 +203,8 @@ function Overview({ data }: { data: OutgrowerOverview }) {
           <OfficerSummary lists={lists} />
         )}
         <p className="text-caption text-fg-2">
-          Priority is an ordering from the reasons shown (cluster membership, damage reported,
-          officer review, district signal), not a likelihood. Loan-exposure and credit views are on
-          the roadmap only; they are not built.
+          Priority orders farms by the reasons shown, not by likelihood. Loan and credit views:
+          roadmap only, not built.
         </p>
       </section>
 
@@ -451,6 +439,9 @@ function VisitDrawer({
   )
 }
 
+// The count columns, right-aligned so the figures line up.
+const NUMERIC = new Set([2, 4, 5, 6])
+
 function CampsTable({ camps }: { camps: OutgrowerOverview['camps'] }) {
   const [all, setAll] = useState(false)
   const shown = all ? camps : camps.slice(0, CAMPS_FIRST)
@@ -470,7 +461,10 @@ function CampsTable({ camps }: { camps: OutgrowerOverview['camps'] }) {
               'In a cluster',
               'With an officer',
             ].map((h, i) => (
-              <th key={h} className={`th py-2 pr-4 ${i > 3 ? 'max-md:hidden' : ''}`}>
+              <th
+                key={h}
+                className={`th py-2 pr-4 ${NUMERIC.has(i) ? 'text-right' : ''} ${i > 3 ? 'max-md:hidden' : ''}`}
+              >
                 {h}
               </th>
             ))}
@@ -486,11 +480,13 @@ function CampsTable({ camps }: { camps: OutgrowerOverview['camps'] }) {
               <td className="py-2 pr-4">
                 {c.district_level ? <LevelDot level={c.district_level} /> : 'None'}
               </td>
-              <td className="py-2 pr-4 tabular-nums">{c.reports}</td>
+              <td className="py-2 pr-4 text-right tabular-nums">{c.reports}</td>
               <td className="py-2 pr-4">{c.top_issue_label ?? 'Not identified'}</td>
-              <td className="py-2 pr-4 tabular-nums max-md:hidden">{c.damaged}</td>
-              <td className="py-2 pr-4 tabular-nums max-md:hidden">{c.in_cluster}</td>
-              <td className="py-2 pr-4 tabular-nums max-md:hidden">{c.awaiting_review}</td>
+              <td className="py-2 pr-4 text-right tabular-nums max-md:hidden">{c.damaged}</td>
+              <td className="py-2 pr-4 text-right tabular-nums max-md:hidden">{c.in_cluster}</td>
+              <td className="py-2 pr-4 text-right tabular-nums max-md:hidden">
+                {c.awaiting_review}
+              </td>
             </tr>
           ))}
         </tbody>
