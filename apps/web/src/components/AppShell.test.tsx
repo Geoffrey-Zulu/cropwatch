@@ -33,6 +33,25 @@ describe('AppShell header (design-system/phytos/patterns.md rule 1)', () => {
     expect(current).toHaveTextContent('National map')
   })
 
+  it('carries the lockup only: no "Command Center" text, no prototype chip, no DEMO badge', () => {
+    shell()
+    expect(screen.getByRole('link', { name: /phytos/i })).toHaveTextContent('Phytos')
+    expect(screen.queryByText(/command center/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/prototype/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/demo data/i)).not.toBeInTheDocument()
+  })
+
+  it('folds the rail open and remembers it for this user', () => {
+    localStorage.clear()
+    shell()
+    fireEvent.click(screen.getByRole('button', { name: /expand the sidebar/i }))
+    expect(screen.getByRole('button', { name: /collapse the sidebar/i })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    )
+    expect(localStorage.getItem('phytos.nav-expanded:agronomist@phytos-demo.test')).toBe('1')
+  })
+
   it('reads initials from the email', () => {
     expect(initials('jane.banda@example.org')).toBe('JB')
     expect(initials('agronomist@phytos-demo.test')).toBe('AG')

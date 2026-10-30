@@ -51,7 +51,7 @@ export function alertUncertainty(
         ? `All ${reports} reports verified by an officer.`
         : `${verified} of ${reports} reports verified by an officer; the rest are AI-assessed.`
     case 'model_risk_signal':
-      return 'Prototype signal from AI-assessed reports. Not yet verified by an officer.'
+      return 'Risk signal from AI-assessed reports. Not yet verified by an officer.'
   }
 }
 

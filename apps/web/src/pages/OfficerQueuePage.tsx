@@ -35,7 +35,7 @@ export function OfficerQueuePage({
   observations,
   clusters,
 }: { selectedId: string | null; officer: Officer } & LiveData) {
-  const [tab, setTab] = useState<'review' | 'cluster'>('review')
+  const [tab, setTab] = useQueueTab()
   const clustered = useMemo(() => new Set((clusters ?? []).flatMap(c => c.members)), [clusters])
   const rows = useMemo(() => queueRows(observations ?? [], clusters), [observations, clusters])
   const review = rows.filter(NEEDS_REVIEW)
@@ -46,19 +46,18 @@ export function OfficerQueuePage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Officer queue"
-        question="Which reports need an officer before anyone acts on them?"
-        aside={<DemoBadge rows={shown} />}
-      />
+      <PageHeader title="Officer queue" />
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Queue">
-        <Tab current={tab === 'review'} onClick={() => setTab('review')}>
-          Routed to an officer ({review.length})
-        </Tab>
-        <Tab current={tab === 'cluster'} onClick={() => setTab('cluster')}>
-          In a cluster, not verified ({inCluster.length})
-        </Tab>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Queue">
+          <Tab current={tab === 'review'} onClick={() => setTab('review')}>
+            Routed to an officer ({review.length})
+          </Tab>
+          <Tab current={tab === 'cluster'} onClick={() => setTab('cluster')}>
+            In a cluster, not verified ({inCluster.length})
+          </Tab>
+        </div>
+        <DemoBadge rows={shown} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
@@ -100,7 +99,7 @@ export function OfficerQueuePage({
                             : ''}
                       </p>
                     </div>
-                    <ChevronRight size={18} strokeWidth={2} aria-hidden className="text-fg" />
+                    <ChevronRight aria-hidden className="text-fg" />
                   </a>
                 </li>
               )
@@ -149,6 +148,32 @@ export function OfficerQueuePage({
       </div>
     </div>
   )
+}
+
+type QueueTab = 'review' | 'cluster'
+
+// The queue opens on the tab last used in this browser, so the demo laptop can be left on
+// "In a cluster, not verified" (docs/demo-ops.md, pre-stage).
+function useQueueTab(): [QueueTab, (tab: QueueTab) => void] {
+  const key = 'phytos.queue-tab'
+  const [tab, setTab] = useState<QueueTab>(() => {
+    try {
+      return window.localStorage.getItem(key) === 'cluster' ? 'cluster' : 'review'
+    } catch {
+      return 'review'
+    }
+  })
+  return [
+    tab,
+    (next: QueueTab) => {
+      setTab(next)
+      try {
+        window.localStorage.setItem(key, next)
+      } catch {
+        // Not remembered; the tab still changes.
+      }
+    },
+  ]
 }
 
 function Tab({

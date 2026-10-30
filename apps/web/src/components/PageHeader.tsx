@@ -1,22 +1,13 @@
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-// Every page answers one question, stated under its title (patterns-v2.md). Anything on the
-// page that does not serve that question belongs in a drawer or nowhere.
-export function PageHeader({
-  title,
-  question,
-  aside,
-}: {
-  title: ReactNode
-  question: string
-  aside?: ReactNode
-}) {
+// A page is its title, then its content (polish 30 Oct: no question line under the title).
+// Each page still answers one question; anything that does not serve it belongs in a drawer.
+export function PageHeader({ title, aside }: { title: ReactNode; aside?: ReactNode }) {
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
       <div className="min-w-0">
         <h1 className="text-display font-semibold text-fg">{title}</h1>
-        <p className="mt-0.5 text-label text-fg-2">{question}</p>
       </div>
       {aside && <div className="flex shrink-0 items-center gap-2">{aside}</div>}
     </header>
@@ -40,7 +31,7 @@ export function Disclosure({
       <summary className="-mx-2 flex cursor-pointer list-none items-center gap-2 rounded-card px-2 py-2 text-section font-semibold text-fg hover:bg-well [&::-webkit-details-marker]:hidden">
         <ChevronRight
           size={16}
-          strokeWidth={2}
+
           aria-hidden
           className="shrink-0 transition-transform group-open:rotate-90"
         />

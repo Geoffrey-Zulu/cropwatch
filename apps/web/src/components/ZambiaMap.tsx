@@ -1,8 +1,17 @@
 import { geoMercator, geoPath } from 'd3-geo'
 import type { Feature, FeatureCollection, MultiPolygon } from 'geojson'
 import { Maximize2, Minus, Plus } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+  type WheelEvent,
+} from 'react'
 import { ISSUE_LABELS, type GeoPoint, type Issue, type RiskLevel } from '@repo/shared'
+import { Bar, Loading } from './Skeleton'
 
 // The map on the console (patterns-v2.md): white land on a light grey ground, grey district
 // lines, Elevated in amber and High in red-gold (the only warm colours), reports as ink dots,
@@ -89,6 +98,7 @@ export function ZambiaMap({
   selected = null,
   compact = false,
   height = 560,
+  badge,
 }: {
   levels: Map<string, RiskLevel>
   points?: MapPoint[]
@@ -104,6 +114,8 @@ export function ZambiaMap({
   compact?: boolean
   // Pixels, or any CSS length ("max(480px, 70vh)") on screens wider than a phone.
   height?: number | string
+  // The DEMO badge, pinned to the map's top-right corner (left of the zoom controls).
+  badge?: ReactNode
 }) {
   const districts = useDistricts()
   const [view, setView] = useState({ x: 0, y: 0, k: 1 })
@@ -239,9 +251,11 @@ export function ZambiaMap({
   return (
     <div className="relative overflow-hidden rounded-card" style={{ background: MAP.sea }}>
       {!districts && (
-        <p className="absolute inset-0 flex items-center justify-center text-label text-fg-2">
-          Loading district boundaries…
-        </p>
+        <div className="absolute inset-0">
+          <Loading label="Loading the map">
+            <Bar className="absolute inset-0 rounded-none" />
+          </Loading>
+        </div>
       )}
       <svg
         ref={svg}
@@ -250,7 +264,7 @@ export function ZambiaMap({
         style={{ ['--map-h' as string]: typeof height === 'number' ? `${height}px` : height }}
         className="aspect-[4/3] w-full touch-none select-none sm:aspect-auto sm:h-[var(--map-h)]"
         role="img"
-        aria-label="Map of Zambia: districts shaded by prototype risk level, with reports and clusters"
+        aria-label="Map of Zambia: districts shaded by risk signal level, with reports and clusters"
         onWheel={onWheel}
         onPointerDown={onDown}
         onPointerMove={onMove}
@@ -368,13 +382,13 @@ export function ZambiaMap({
 
       <div className={`absolute right-3 top-3 hidden flex-col gap-1 ${compact ? '' : 'sm:flex'}`}>
         <MapButton label="Zoom in" onClick={() => zoomAt(1.5)}>
-          <Plus size={18} strokeWidth={2} aria-hidden />
+          <Plus aria-hidden />
         </MapButton>
         <MapButton label="Zoom out" onClick={() => zoomAt(1 / 1.5)}>
-          <Minus size={18} strokeWidth={2} aria-hidden />
+          <Minus aria-hidden />
         </MapButton>
         <MapButton label="Reset view" onClick={() => setView({ x: 0, y: 0, k: 1 })}>
-          <Maximize2 size={16} strokeWidth={2} aria-hidden />
+          <Maximize2 size={16} aria-hidden />
         </MapButton>
       </div>
 
@@ -384,12 +398,17 @@ export function ZambiaMap({
           <p className="meta">
             {hovered.partOf ? `Counted with ${hovered.partOf} · ` : ''}
             {hoverLevel
-              ? `Prototype signal: ${hoverLevel.charAt(0)}${hoverLevel.slice(1).toLowerCase()}`
+              ? `Risk signal: ${hoverLevel.charAt(0)}${hoverLevel.slice(1).toLowerCase()}`
               : 'No reports'}
           </p>
         </div>
       )}
 
+      {badge && (
+        <div className={`absolute right-3 top-3 z-10 ${compact ? '' : 'sm:right-[3.75rem]'}`}>
+          {badge}
+        </div>
+      )}
       {!compact && <MapLegend />}
       <p className="px-3 pb-1 text-[10px] leading-tight text-fg-2 sm:absolute sm:bottom-1 sm:right-2 sm:p-0">
         Boundaries: geoBoundaries, GRID3 and Office of the Surveyor General (CC BY 4.0)
@@ -423,7 +442,7 @@ function MapButton({
 function MapLegend() {
   return (
     <div className="bg-panel px-3 py-2 sm:absolute sm:bottom-3 sm:left-3 sm:max-w-[calc(100%-1.5rem)] sm:rounded-card sm:shadow-raise">
-      <p className="text-caption font-medium text-fg">Prototype risk signal</p>
+      <p className="text-caption font-medium text-fg">Risk signal from reports</p>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-fg-2">
         {(['HIGH', 'ELEVATED', 'LOW'] as const).map(level => (
           <span key={level} className="inline-flex items-center gap-1.5">

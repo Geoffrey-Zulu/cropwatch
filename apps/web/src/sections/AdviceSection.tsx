@@ -1,5 +1,6 @@
 import { PRODUCT_SOURCE_LABELS, withoutEmDash, type Recommendation } from '@repo/shared'
 import { Muted } from '../components/Panel'
+import { SkeletonRows } from '../components/Skeleton'
 import { TIER_NAMES } from '../lib/copy'
 
 // The advice the farmer received: IPM steps in order, chemicals last (label doses verbatim),
@@ -9,7 +10,7 @@ export function AdviceSection({
 }: {
   recommendation: Recommendation | null | undefined
 }) {
-  if (recommendation === undefined) return <Muted>Loading…</Muted>
+  if (recommendation === undefined) return <SkeletonRows rows={4} label="Loading the advice" />
   if (recommendation === null)
     return <Muted>No advice was sent: the report is with an officer.</Muted>
   const last = recommendation.ipm_steps.length - 1

@@ -31,7 +31,7 @@ export function WeatherSection({
     <Panel
       eyebrow="Weather context"
       title={weather.data ? `${weather.data.district}: 14 days back, 14 ahead` : 'Weather'}
-      actions={<CloudSun size={20} strokeWidth={2} aria-hidden className="text-fg" />}
+      actions={<CloudSun aria-hidden className="text-fg" />}
     >
       {weather.isLoading && <SkeletonRows rows={3} label="Loading the forecast" />}
       {weather.error && <Muted>The forecast is not available right now.</Muted>}
@@ -129,9 +129,7 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
             <p className="mt-1 text-label">
               Forecast: {c.observed}. Guide note: {c.guide} ({c.document_title}).
             </p>
-            <p className="text-caption text-fg-2">
-              Prototype threshold, set by Phytos: {c.threshold}.
-            </p>
+            <p className="text-caption text-fg-2">Threshold set by Phytos: {c.threshold}.</p>
           </li>
         ))}
       </ul>
@@ -142,7 +140,7 @@ function WeatherBody({ weather }: { weather: DistrictWeather }) {
         className="inline-flex items-center gap-1 text-caption font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
       >
         {weather.source.licence}
-        <ExternalLink size={12} strokeWidth={2} aria-hidden />
+        <ExternalLink size={16} aria-hidden />
       </a>
     </div>
   )

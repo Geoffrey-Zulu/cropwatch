@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ISSUE_LABELS, KNOWN_ISSUES, OFFICER_ROLES, type Crop, type Issue } from '@repo/shared'
 import type { Officer } from '../hooks/useAuth'
 import type { DashObservation } from '../hooks/useLive'
+import { ButtonSpinner } from '../components/Skeleton'
 import { verifyObservation } from '../lib/api'
 import { EVALUATION_NOTE, VERIFICATION_TEXT } from '../lib/copy'
 
@@ -122,8 +123,8 @@ export function VerifySection({
         disabled={state === 'sending' || !target || target === 'unknown'}
         onClick={() => void submit()}
       >
-        <BadgeCheck size={18} strokeWidth={2} aria-hidden />
-        {state === 'sending' ? 'Saving…' : level}
+        {state === 'sending' ? <ButtonSpinner /> : <BadgeCheck aria-hidden />}
+        {state === 'sending' ? 'Saving' : level}
       </button>
       {message && (
         <p

@@ -3,6 +3,7 @@ import { AlertsDrawer } from './components/AlertsDrawer'
 import { AppShell } from './components/AppShell'
 import { ObservationDrawer } from './components/ObservationDrawer'
 import { OutbreakDrawer } from './components/OutbreakDrawer'
+import { AppSkeleton } from './components/Skeleton'
 import { useAuth } from './hooks/useAuth'
 import { useAlerts, useClusters, useObservations, useRisk } from './hooks/useLive'
 import { useRoute, type Route } from './hooks/useRoute'
@@ -44,7 +45,7 @@ export function App() {
     [observations.rows, clusters.rows]
   )
 
-  if (!ready) return <p className="p-6 text-label text-fg-2">Starting Phytos…</p>
+  if (!ready) return <AppSkeleton />
   if (!officer || officer.role === 'farmer') {
     return <SignInPage signedInAsFarmer={Boolean(officer)} onSignIn={signIn} onSignOut={signOut} />
   }

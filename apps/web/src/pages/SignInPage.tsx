@@ -1,5 +1,7 @@
 import { LogIn } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { PhytosLogo } from '../components/PhytosLogo'
+import { ButtonSpinner } from '../components/Skeleton'
 
 // Officers only: email and password accounts with a role claim (tools/admin set-role).
 export function SignInPage({
@@ -34,14 +36,12 @@ export function SignInPage({
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center gap-2">
-          <span className="rounded-tag bg-chip px-3 py-2 font-display text-[22px] font-extrabold uppercase leading-none tracking-[0.16em] text-chip-fg">
-            Phytos
-          </span>
+        <div className="mb-6">
+          <PhytosLogo size={36} />
         </div>
         <h1 className="font-display text-display font-bold text-fg">Command Center</h1>
         <p className="mt-1 text-body-sm text-fg-2">
-          A prototype for extension officers, agronomists and outgrower field teams in Zambia.
+          For extension officers, agronomists and outgrower field teams in Zambia.
         </p>
 
         {signedInAsFarmer ? (
@@ -83,8 +83,8 @@ export function SignInPage({
               </p>
             )}
             <button type="submit" className="btn-primary mt-1" disabled={busy}>
-              <LogIn size={18} strokeWidth={2} aria-hidden />
-              {busy ? 'Signing in…' : 'Sign in'}
+              {busy ? <ButtonSpinner /> : <LogIn aria-hidden />}
+              {busy ? 'Signing in' : 'Sign in'}
             </button>
           </form>
         )}

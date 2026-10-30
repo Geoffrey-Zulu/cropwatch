@@ -1,7 +1,10 @@
+import { LoaderCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { PhytosLogo } from './PhytosLogo'
 
-// Loading states shaped like what will land (patterns-v2.md): grey bars where the text will be,
-// never a spinner in the middle of content. Bars appear after 250 ms (style.css, .skeleton-bar).
+// The one loading state (patterns-v2.md, polish 30 Oct): shimmer blocks shaped like what will
+// land, never "…" text and never a spinner in the middle of content. Blocks appear after 250 ms
+// (style.css, .skeleton-bar).
 export function Bar({ className = '' }: { className?: string }) {
   return <span aria-hidden className={`skeleton-bar ${className}`} />
 }
@@ -14,8 +17,16 @@ export function Loading({ label, children }: { label: string; children: ReactNod
   )
 }
 
-// A list of rows: a name line and a secondary line, like the rows they stand in for.
-export function SkeletonRows({ rows = 5, label }: { rows?: number; label: string }) {
+// A list of rows like the rows they stand in for: a name line and `lines - 1` secondary lines.
+export function SkeletonRows({
+  rows = 5,
+  lines = 2,
+  label,
+}: {
+  rows?: number
+  lines?: number
+  label: string
+}) {
   const widths = ['w-2/3', 'w-1/2', 'w-3/5', 'w-2/5', 'w-1/2', 'w-3/4']
   return (
     <Loading label={label}>
@@ -23,7 +34,9 @@ export function SkeletonRows({ rows = 5, label }: { rows?: number; label: string
         {Array.from({ length: rows }, (_, i) => (
           <li key={i} className="flex flex-col gap-2 py-3">
             <Bar className={`h-3.5 ${widths[i % widths.length]}`} />
-            <Bar className="h-3 w-5/6" />
+            {Array.from({ length: lines - 1 }, (_, j) => (
+              <Bar key={j} className={`h-3 ${j % 2 ? 'w-1/2' : 'w-5/6'}`} />
+            ))}
           </li>
         ))}
       </ul>
@@ -45,4 +58,34 @@ export function SkeletonStats({ count = 4 }: { count?: number }) {
       </div>
     </Loading>
   )
+}
+
+// The frame while the session starts: the header, the rail and a page.
+export function AppSkeleton() {
+  return (
+    <Loading label="Starting Phytos">
+      <div className="min-h-dvh">
+        <div className="flex h-14 items-center border-b border-hairline bg-panel px-4">
+          <PhytosLogo />
+          <span className="ml-auto flex items-center gap-3">
+            <Bar className="h-4 w-36" />
+            <Bar className="h-8 w-8 rounded-full" />
+          </span>
+        </div>
+        <div className="lg:flex">
+          <div className="hidden bg-well lg:block lg:h-[calc(100dvh-56px)] lg:w-14" />
+          <div className="flex flex-1 flex-col gap-5 px-4 py-6 lg:px-8">
+            <Bar className="h-7 w-56" />
+            <Bar className="h-20 w-full max-w-3xl" />
+            <Bar className="h-[50vh] w-full" />
+          </div>
+        </div>
+      </div>
+    </Loading>
+  )
+}
+
+// The only spinner: inside a button while its action runs, beside the button's own words.
+export function ButtonSpinner() {
+  return <LoaderCircle aria-hidden className="animate-spin" />
 }

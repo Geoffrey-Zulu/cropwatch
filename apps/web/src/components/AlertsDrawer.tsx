@@ -30,12 +30,7 @@ export function AlertsDrawer({ alerts }: { alerts: DashAlert[] | null }) {
   const sorted = [...(alerts ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const group = (level: RiskLevel) => sorted.filter(a => a.level === level)
   return (
-    <Drawer
-      title="Alerts"
-      question="What has been raised, how bad, and how sure?"
-      aside={<DemoBadge rows={alerts ?? []} />}
-      closeHref={close()}
-    >
+    <Drawer title="Alerts" aside={<DemoBadge rows={alerts ?? []} />} closeHref={close()}>
       {alerts === null && <SkeletonRows rows={6} label="Loading alerts" />}
       {alerts && alerts.length === 0 && <p className="py-6 text-label text-fg-2">No alerts.</p>}
       {(['HIGH', 'ELEVATED'] as const).map(level =>
@@ -112,7 +107,7 @@ function AlertList({ alerts }: { alerts: DashAlert[] }) {
                   ))}
                   <p className="text-fg-2">{title}</p>
                   <p className="inline-flex items-center gap-1 text-fg-2">
-                    <ChevronRight size={14} strokeWidth={2} aria-hidden />
+                    <ChevronRight size={16} aria-hidden />
                     {alert.alertClass === 'weather_advisory'
                       ? 'No outbreak: forecast conditions only.'
                       : 'A district signal, not a single outbreak.'}

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { CROP_LABELS, WEATHER_SOURCE } from '@repo/shared'
 import { DemoBadge } from '../components/DemoBadge'
 import { Disclosure, PageHeader } from '../components/PageHeader'
-import { SkeletonRows, SkeletonStats } from '../components/Skeleton'
+import { Bar, Loading, SkeletonRows, SkeletonStats } from '../components/Skeleton'
 import type { DashObservation } from '../hooks/useLive'
 import { useNow } from '../hooks/useNow'
 import { fetchRainOutlook } from '../lib/rainOutlook'
@@ -31,7 +31,7 @@ const BAND: Record<Band, { label: string; className: string }> = {
   routine: { label: 'Routine', className: 'text-fg-2' },
 }
 
-// Scenario (prototype): "If the next 14 days turn dry, which camps need closer monitoring?"
+// Scenario: "If the next 14 days turn dry, which camps need closer monitoring?"
 // Real Open-Meteo forecast (or one canned dry spell) × the crop-stage table × verified reports,
 // every assumption on the page, the answer an ordering of camps with reasons. No free text, no
 // yields. Behind VITE_FEATURE_SCENARIO; it reads only the browser's live reports and Open-Meteo.
@@ -59,23 +59,17 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
       }),
     [observations, forecast.data, drySpell, now]
   )
+  // While the forecast is on its way the ranking is not known yet: shimmer, never "0 camps".
+  const fetching = !drySpell && slugs.length > 0 && forecast.isPending
   const count = (band: Band) => rows.filter(r => r.band === band).length
-  const closer = rows.filter(r => r.band === 'closer')
-  const watch = rows.filter(r => r.band === 'watch')
-  const routine = rows.filter(r => r.band === 'routine')
+  const ranked = fetching ? [] : rows
+  const closer = ranked.filter(r => r.band === 'closer')
+  const watch = ranked.filter(r => r.band === 'watch')
+  const routine = ranked.filter(r => r.band === 'routine')
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Dry-spell scenario"
-        question="If the next 14 days turn dry, which camps need closer monitoring?"
-        aside={
-          <>
-            <span className="chip border-hairline-strong text-fg-2">Prototype</span>
-            <DemoBadge rows={rows} />
-          </>
-        }
-      />
+      <PageHeader title="Dry-spell scenario" />
 
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-card bg-well px-4 py-3">
         <div className="flex items-center gap-3">
@@ -105,36 +99,43 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
             </span>
           </span>
         </div>
-        <p className="meta">
-          {drySpell
-            ? 'Rain: the dry spell'
-            : forecast.isPending && slugs.length > 0
-              ? 'Rain: fetching the forecast…'
+        {fetching ? (
+          <Loading label="Fetching the forecast">
+            <Bar className="h-3.5 w-56" />
+          </Loading>
+        ) : (
+          <p className="meta">
+            {drySpell
+              ? 'Rain: the dry spell'
               : forecast.isError
                 ? 'Rain: forecast unavailable, turn on the dry spell'
                 : `Rain: Open-Meteo forecast for ${forecast.data?.size ?? 0} districts`}
-        </p>
+          </p>
+        )}
       </div>
 
-      {observations ? (
-        <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
-          {[
-            [count('closer'), 'camps for closer monitoring'],
-            [count('watch'), 'camps to watch'],
-            [rows.length, `camps with reports in ${SCENARIO_WINDOW_DAYS} days`],
-          ].map(([value, label]) => (
-            <div key={label} className="flex items-baseline gap-2">
-              <dt className="sr-only">{label}</dt>
-              <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-              <span aria-hidden className="text-fg-2">
-                {label}
-              </span>
-            </div>
-          ))}
-        </dl>
-      ) : (
-        <SkeletonStats count={3} />
-      )}
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+        {observations && !fetching ? (
+          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
+            {[
+              [count('closer'), 'camps for closer monitoring'],
+              [count('watch'), 'camps to watch'],
+              [rows.length, `camps with reports in ${SCENARIO_WINDOW_DAYS} days`],
+            ].map(([value, label]) => (
+              <div key={label} className="flex items-baseline gap-2">
+                <dt className="sr-only">{label}</dt>
+                <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
+                <span aria-hidden className="text-fg-2">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <SkeletonStats count={3} />
+        )}
+        <DemoBadge rows={rows} />
+      </div>
 
       <section aria-labelledby="ranked" className="max-w-4xl">
         <h2 id="ranked" className="text-section font-semibold text-fg">
@@ -144,11 +145,11 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
           An ordering of where to look first, from the rules below: not a likelihood, and no yield
           or loss estimate. Camp and district level only.
         </p>
-        {observations === null && <SkeletonRows rows={6} label="Loading camps" />}
-        {observations && rows.length === 0 && (
+        {(observations === null || fetching) && <SkeletonRows rows={6} label="Loading camps" />}
+        {!fetching && observations && rows.length === 0 && (
           <p className="py-4 text-label text-fg-2">No reports in the last 14 days.</p>
         )}
-        {closer.length + watch.length === 0 && rows.length > 0 && (
+        {!fetching && closer.length + watch.length === 0 && rows.length > 0 && (
           <p className="py-4 text-label text-fg-2">
             {drySpell
               ? 'No camp crosses the rules even with a dry spell.'
@@ -195,7 +196,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
             <li>
               <span className="th block">Dry</span>
               Under {DRY_THRESHOLD_MM} mm of forecast rain over the next 14 days at the district
-              town (a Phytos prototype threshold), or the dry spell when it is on.
+              town (a threshold set by Phytos), or the dry spell when it is on.
             </li>
             <li>
               <span className="th block">Crop stage</span>
@@ -219,7 +220,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
                 className="inline-flex items-center gap-1 underline"
               >
                 {WEATHER_SOURCE.licence}
-                <ExternalLink size={13} strokeWidth={2} aria-hidden />
+                <ExternalLink size={16} aria-hidden />
               </a>
             </li>
           </ul>

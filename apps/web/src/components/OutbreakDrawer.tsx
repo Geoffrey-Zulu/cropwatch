@@ -90,7 +90,6 @@ export function OutbreakDrawerView({
     <Drawer
       kicker={`Outbreak · ${cluster.active ? 'active' : 'closed'} · first seen ${dateTime(cluster.firstDetectedAt)}`}
       title={`${ISSUE_LABELS[cluster.issue]} near ${cluster.district}`}
-      question="How big is this cluster, and how sure are we?"
       back={fromAlerts ? { href: open({ kind: 'alerts' }), label: 'Back to alerts' } : undefined}
       aside={<DemoBadge rows={[cluster, ...members]} />}
       closeHref={close()}
@@ -118,7 +117,7 @@ export function OutbreakDrawerView({
           <div className="mt-2 flex flex-col gap-1">
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="inline-flex items-center gap-1.5 text-label font-medium text-fg">
-                <Icon size={16} strokeWidth={2} aria-hidden />
+                <Icon size={16} aria-hidden />
                 {ALERT_CLASS_LABELS[alert.alertClass]}
               </span>
               <LevelDot level={alert.level} />
@@ -186,7 +185,7 @@ export function OutbreakDrawerView({
                   </span>
                   <ChevronRight
                     size={16}
-                    strokeWidth={2}
+
                     aria-hidden
                     className="mt-1 shrink-0 text-fg-2"
                   />

@@ -51,7 +51,7 @@ export function KnowledgeSourcesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Knowledge sources" question="What does the advice rest on?" />
+      <PageHeader title="Knowledge sources" />
       <p className="-mt-3 max-w-3xl text-label text-fg-2">
         Advice is written only from passages retrieved from these documents, and every chemical is
         then checked against the pesticide register. Tier 1 is the Ministry of Agriculture; a lower
@@ -110,7 +110,7 @@ export function KnowledgeSourcesPage() {
                       className="min-w-0 flex-1 font-semibold text-fg underline decoration-hairline-strong underline-offset-2"
                     >
                       {r.title}
-                      <ExternalLink size={12} strokeWidth={2} aria-hidden className="ml-1 inline" />
+                      <ExternalLink size={16} aria-hidden className="ml-1 inline" />
                     </a>
                     {/* Under the title on phones, so the title keeps the width. */}
                     <span className="text-caption text-fg-2 max-sm:basis-full">

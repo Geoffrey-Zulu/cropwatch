@@ -8,7 +8,6 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
 export function Drawer({
   kicker,
   title,
-  question,
   aside,
   back,
   closeHref,
@@ -17,8 +16,6 @@ export function Drawer({
   // One quiet line above the title: what this is, and when.
   kicker?: ReactNode
   title: ReactNode
-  // The one question this drawer answers.
-  question?: string
   aside?: ReactNode
   back?: { href: string; label: string }
   closeHref: string
@@ -56,7 +53,7 @@ export function Drawer({
               href={back.href}
               className="-ml-1 mb-2 inline-flex items-center gap-0.5 text-label font-medium text-signal-text hover:underline"
             >
-              <ChevronLeft size={16} strokeWidth={2} aria-hidden />
+              <ChevronLeft size={16} aria-hidden />
               {back.label}
             </a>
           )}
@@ -74,14 +71,13 @@ export function Drawer({
           >
             {title}
           </h2>
-          {question && <p className="mt-0.5 text-caption text-fg-2">{question}</p>}
         </div>
         <a
           href={closeHref}
           aria-label="Close"
           className="-mr-2 -mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-card text-fg-2 hover:bg-well hover:text-fg"
         >
-          <X size={20} strokeWidth={2} aria-hidden />
+          <X aria-hidden />
         </a>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8">{children}</div>

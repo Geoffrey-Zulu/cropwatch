@@ -82,7 +82,7 @@ function OverviewSkeleton() {
     <Loading label="Building the Outgrower View">
       <div className="flex flex-col gap-5">
         <Bar className="h-8 w-72" />
-        <Bar className="h-4 w-96" />
+        <Bar className="h-8 w-full max-w-2xl" />
         <SkeletonRows rows={CAMPS_FIRST} label="Loading the camps" />
         <SkeletonRows rows={6} label="Loading the visit lists" />
       </div>
@@ -131,40 +131,40 @@ function Overview({ data }: { data: OutgrowerOverview }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title={data.name}
-        question="Which farms should each field officer visit first?"
-        aside={<DemoBadge rows={rows} />}
-      />
+      <PageHeader title={data.name} />
       <div className="flex flex-col gap-2">
-        <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
-          {[
-            [data.enrolled_farmers.toLocaleString('en-GB'), 'enrolled farmers'],
-            [data.reports, `reports in ${data.window_days} days`],
-            [data.verified_reports, 'verified by an officer'],
-          ].map(([value, label]) => (
-            <div key={label} className="flex items-baseline gap-2">
-              <dt className="sr-only">{label}</dt>
-              <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
-              <span aria-hidden className="text-fg-2">
-                {label}
-              </span>
-            </div>
-          ))}
-          {data.top_issue && (
-            <div className="flex items-baseline gap-2">
-              <dt className="text-fg-2">Rising:</dt>
-              <dd className="font-semibold text-fg">
-                {data.top_issue.issue_label}{' '}
-                <span className="font-normal text-fg-2">
-                  ({data.top_issue.this_week} this week, {data.top_issue.last_week} the week before)
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
+            {[
+              [data.enrolled_farmers.toLocaleString('en-GB'), 'enrolled farmers'],
+              [data.reports, `reports in ${data.window_days} days`],
+              [data.verified_reports, 'verified by an officer'],
+            ].map(([value, label]) => (
+              <div key={label} className="flex items-baseline gap-2">
+                <dt className="sr-only">{label}</dt>
+                <dd className="text-stat font-semibold tabular-nums text-fg">{value}</dd>
+                <span aria-hidden className="text-fg-2">
+                  {label}
                 </span>
-              </dd>
-            </div>
-          )}
-        </dl>
+              </div>
+            ))}
+            {data.top_issue && (
+              <div className="flex items-baseline gap-2">
+                <dt className="text-fg-2">Rising:</dt>
+                <dd className="font-semibold text-fg">
+                  {data.top_issue.issue_label}{' '}
+                  <span className="font-normal text-fg-2">
+                    ({data.top_issue.this_week} this week, {data.top_issue.last_week} the week
+                    before)
+                  </span>
+                </dd>
+              </div>
+            )}
+          </dl>
+          <DemoBadge rows={rows} />
+        </div>
         <p className="flex items-center gap-2 text-caption text-fg-2">
-          <Lock size={14} strokeWidth={2} aria-hidden />
+          <Lock size={16} aria-hidden />
           Camp and district level only. No farm locations are shown in this view.
         </p>
       </div>
@@ -199,7 +199,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
               aria-expanded={showLists}
               onClick={() => setPrioritised(true)}
             >
-              <ListChecks size={18} strokeWidth={2} aria-hidden />
+              <ListChecks aria-hidden />
               Prioritise field officers
             </button>
           )}
@@ -268,7 +268,7 @@ function OfficerSummary({ lists }: { lists: OfficerList[] }) {
                   className="inline-flex items-center justify-self-end text-label font-medium text-signal-text hover:underline"
                 >
                   View
-                  <ChevronRight size={14} strokeWidth={2} aria-hidden />
+                  <ChevronRight size={16} aria-hidden />
                 </a>
               )}
             </div>
@@ -329,7 +329,7 @@ function VisitRows({ visits, start }: { visits: Visit[]; start: number }) {
               <span className="meta">{ago(v.last_report_at)}</span>
               <span className="inline-flex items-center text-label font-medium text-signal-text">
                 View
-                <ChevronRight size={14} strokeWidth={2} aria-hidden />
+                <ChevronRight size={16} aria-hidden />
               </span>
             </span>
           </a>
@@ -359,7 +359,6 @@ function VisitDrawer({
     <Drawer
       kicker={`Visit · ${officer}`}
       title={v.farm_label}
-      question="Why this farm, and what has it reported?"
       aside={<DemoBadge rows={[v]} />}
       closeHref={closeHref}
     >

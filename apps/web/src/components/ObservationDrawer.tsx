@@ -102,7 +102,6 @@ export function ObservationDrawerView({
     <Drawer
       kicker={`Report ${reportNumber(o.id)} · ${dateTime(o.createdAt)} · ${STATUS_TEXT[o.status]}`}
       title={`${CROP_LABELS[o.crop]} · ${o.issue && o.issue !== 'unknown' ? ISSUE_LABELS[o.issue] : 'Not identified yet'}`}
-      question="What did the farmer report, and what did they get back?"
       aside={<DemoBadge rows={[o]} />}
       closeHref={close()}
     >

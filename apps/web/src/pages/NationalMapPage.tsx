@@ -68,11 +68,7 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader
-        title="National map"
-        question="Where is it bad right now?"
-        aside={<DemoBadge rows={shown} />}
-      />
+      <PageHeader title="National map" />
 
       {observations && clusters && risk ? (
         <dl className="flex flex-wrap gap-x-8 gap-y-2 text-label">
@@ -121,6 +117,7 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
             focus={FOCUS[focus].box as [[number, number], [number, number]] | null}
             // The projector view (v2.1): most of the screen height.
             height="max(480px, 70vh)"
+            badge={<DemoBadge rows={shown} className="bg-panel shadow-raise" />}
             selected={district}
             points={recent.map(o => ({
               id: o.id,
@@ -147,9 +144,7 @@ export function NationalMapPage({ observations, clusters, risk }: LiveData) {
           <h2 id="watch" className="text-section font-semibold text-fg">
             Districts to watch
           </h2>
-          <p className="text-caption text-fg-2">
-            Prototype risk signal from reports, not a forecast.
-          </p>
+          <p className="text-caption text-fg-2">Risk signal from reports, not a forecast.</p>
           {risk === null && <SkeletonRows rows={6} label="Loading districts" />}
           {risk && watch.length === 0 && (
             <p className="py-4 text-label text-fg-2">No district is above Low.</p>

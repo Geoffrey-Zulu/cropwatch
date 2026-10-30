@@ -64,22 +64,36 @@
   .field {
     @apply h-9 w-full rounded-card border border-hairline-strong bg-panel px-3 font-body text-label text-fg placeholder:text-fg-2;
   }
-  /* Skeleton bars appear only after 250 ms, so fast loads never flash (patterns-v2.md §5). */
+  /* The one loading state (polish 30 Oct): blocks shaped like what will land, with a slow
+     shimmer; never "…" text, and a spinner only inside a button mid-action. Blocks appear only
+     after 250 ms, so fast loads never flash (patterns-v2.md §5). */
   .skeleton-bar {
-    @apply block rounded bg-skeleton;
+    @apply block rounded;
+    background-image: linear-gradient(
+      90deg,
+      var(--skeleton) 0%,
+      var(--skeleton) 35%,
+      #f8f9fa 50%,
+      var(--skeleton) 65%,
+      var(--skeleton) 100%
+    );
+    background-size: 300% 100%;
     opacity: 0;
     animation:
       skeleton-in 1ms 250ms forwards,
-      skeleton-pulse 1.5s 250ms ease-in-out infinite;
+      skeleton-shimmer 1.6s 250ms linear infinite;
   }
   @keyframes skeleton-in {
     to {
       opacity: 1;
     }
   }
-  @keyframes skeleton-pulse {
-    50% {
-      filter: brightness(0.96);
+  @keyframes skeleton-shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0 0;
     }
   }
 }

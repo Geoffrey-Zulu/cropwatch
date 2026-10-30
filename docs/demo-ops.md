@@ -116,7 +116,7 @@ Good: `all checks passed`, including the advice check (every chemical option pas
 
 ## The run: Sunday 3-minute final script
 
-Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer); **P2** narrates at the dashboard (projected).
+Agreed 30 Oct, with the wording revised the same day so every line matches the build. Two presenters: **P1** on the phone (the farmer, then the officer); **P2** narrates at the dashboard (projected).
 
 ### Pre-stage (morning checklist)
 
@@ -125,6 +125,7 @@ Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer
 - ONE warm-up report fired end-to-end and cleaned (step 3, `outbreak-e2e`).
 - Demo phone on 4G, not the venue wifi.
 - Officer session already signed in on the laptop.
+- Queue pre-opened on the **In a cluster, not verified** tab: open Officer queue, pick that tab, then go back to the national map. The queue remembers the tab in this browser, so it opens there at 1:30.
 - Bell drawer closed.
 - National map view up.
 - Backup recordings one click away.
@@ -133,11 +134,11 @@ Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer
 
 **0:00–0:20 · P2** (map on screen):
 
-> "Last season, fall armyworm reached thousands of Zambian farms before anyone saw the pattern. A farmer sees one sick plant. An officer sees one farm. Nobody sees the outbreak coming."
+> "Last season, fall armyworm reached thousands of Zambian farms before anyone saw the pattern. A farmer sees one sick plant. An officer sees one farm. Nobody sees the outbreak early."
 
 **0:20–0:50 · P1** raises the leaf, photographs it in the Phytos app, taps Send, holds the phone down. **P2** bridge (covers the 8–12 s pipeline):
 
-> "That farmer just used Phytos free, on any phone — no app store. The AI reads the photo, and the advice it returns only ever cites the Ministry's, FAO's and CABI's own guides. It cannot name a chemical that isn't on the registered list — a database controls that, not the AI."
+> "That farmer just used Phytos free, on any phone — no app store. The AI reads the photo, and the advice it returns only cites published guides: the Ministry, ZARI, FAO, CABI. It cannot name a chemical that isn't on our checked product list — a database controls that, not the AI."
 
 **0:50–1:30** · The report lands on the map; the cluster ring completes; the district flips High; the SMS buzzes (P1 holds the phone to the mic). **P2:**
 
@@ -145,15 +146,15 @@ Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer
 
 **1:30–2:10 · P1** moves to the laptop as the officer: opens the report from the queue, confirms. **P2:**
 
-> "A trained officer just took responsibility — watch the alert upgrade to a verified cluster alert, and the verified counter tick. Every correction becomes a test case that future models must pass."
+> "A trained officer just took responsibility — watch the alert upgrade to a verified cluster alert, and the verified counter tick. Every correction becomes a test case for the next prompt or model version."
 
 **2:10–2:50 · P2** switches to the Outgrower View:
 
-> "This company finances 1,240 smallholder farmers. Phytos just told it which camps need attention and which farms each field officer visits first. Farmers use Phytos free. Companies that lend farmers inputs pay — because every outbreak caught early is a loan that gets repaid."
+> "This demo outgrower finances 1,240 smallholder farmers. Phytos just told it which camps need attention and which farms each field officer visits first. Farmers use Phytos free. Companies that lend farmers inputs pay — because when outbreaks are caught early, more of those loans get repaid."
 
 **2:50–3:00 · P2**, back on the national map:
 
-> "One farmer can report a problem. Phytos lets an entire country see it coming. We're Team Phytos."
+> "One farmer can report a problem. Phytos lets an entire country see it early. We're Team Phytos."
 
 ### Failure rules
 
@@ -163,7 +164,7 @@ Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer
 
 ### Stage notes from the build (checked 30 Oct)
 
-- **Finding the report (1:30).** The queue opens on **Routed to an officer**. A report the AI identified with confidence is not there: it is the top row (newest first) of the second tab, **In a cluster, not verified**. P1: Officer queue → **In a cluster, not verified** → top row → **Confirm as an expert**. If the diagnosis came back unsure, the report is the top row of the first tab instead.
+- **Finding the report (1:30).** A report the AI identified with confidence is the top row (newest first) of **In a cluster, not verified**. The queue opens on the tab last used in the browser, so the pre-stage leaves it there. P1: Officer queue → top row → **Confirm as an expert**. If the diagnosis came back unsure, the report is the top row of the first tab, **Routed to an officer**, instead.
 - **The upgrade (1:30).** The verified counter is in the header. The alert's new class shows in the bell drawer: open the bell to show "Verified cluster alert".
 - **The SMS (0:50).**
   - It reads "Phytos DEMO alert (Act now): Tuta absoluta (tomato leafminer) near Lusaka. … Not yet verified by an officer. …".

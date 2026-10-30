@@ -1,6 +1,7 @@
 import { getDownloadURL, ref } from 'firebase/storage'
 import { ImageOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Bar, Loading } from '../components/Skeleton'
 import { storage } from '../lib/firebase'
 
 // The report's photo. Command Center roles may read any report photo (infra/storage.rules).
@@ -28,16 +29,16 @@ export function PhotoSection({ path, sim }: { path: string | null; sim: boolean 
         className="aspect-[4/3] w-full rounded-card object-cover"
       />
     )
+  if (path && !current)
+    return (
+      <Loading label="Loading the photo">
+        <Bar className="aspect-[4/3] w-full rounded-card" />
+      </Loading>
+    )
   return (
     <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card border border-dashed border-hairline-strong bg-ground text-center text-label text-fg-2">
-      <ImageOff size={24} strokeWidth={2} aria-hidden />
-      {sim
-        ? 'Simulated report: no photo'
-        : !path
-          ? 'No photo'
-          : current
-            ? 'The photo could not be loaded'
-            : 'Loading the photo…'}
+      <ImageOff aria-hidden />
+      {sim ? 'Simulated report: no photo' : !path ? 'No photo' : 'The photo could not be loaded'}
     </div>
   )
 }

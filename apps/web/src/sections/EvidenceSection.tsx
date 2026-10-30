@@ -127,8 +127,8 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                       >
                         {e.title}
                         <ExternalLink
-                          size={12}
-                          strokeWidth={2}
+                          size={16}
+
                           aria-hidden
                           className="ml-1 inline"
                         />
@@ -182,7 +182,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                   <li key={p.registration_no} className="flex gap-2 text-label">
                     <ShieldCheck
                       size={16}
-                      strokeWidth={2}
+
                       aria-hidden
                       className="mt-0.5 shrink-0 text-signal-text"
                     />
@@ -211,7 +211,7 @@ function EvidenceBody({ evidence }: { evidence: ObservationEvidence }) {
                   <li key={r.candidate} className="flex gap-2 text-label">
                     <ShieldX
                       size={16}
-                      strokeWidth={2}
+
                       aria-hidden
                       className="mt-0.5 shrink-0 text-fg-2"
                     />
