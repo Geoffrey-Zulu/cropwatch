@@ -23,18 +23,22 @@ import type { DashboardServices } from './types'
 const DAY = 86_400_000
 const WINDOW_DAYS = 14
 
-// "sim-farmer-chipata-012" → "Farm CHI-012"; a live reporter's uid → "Farm 7F3K".
-export function farmLabel(reporterId: string) {
+// "sim-farmer-chipata-012" → "Farm CHI-012"; a live reporter's uid → "Farm 7F3K". With the
+// farmer's name on their profile (display_name): "Esther Banda · CHI-012".
+export function farmLabel(reporterId: string, name?: string) {
   const sim = /^sim-farmer-([a-z-]+)-(\d+)$/.exec(reporterId)
-  if (sim) return `Farm ${sim[1].replace(/-/g, '').slice(0, 3).toUpperCase()}-${sim[2]}`
-  return `Farm ${reporterId.slice(0, 4).toUpperCase()}`
+  const code = sim
+    ? `${sim[1].replace(/-/g, '').slice(0, 3).toUpperCase()}-${sim[2]}`
+    : reporterId.slice(0, 4).toUpperCase()
+  return name ? `${name} · ${code}` : `Farm ${code}`
 }
 
-// "sim-officer-01" → "Field officer 01".
-export const officerLabel = (uid: string) =>
-  /^sim-officer-(\d+)$/.exec(uid)?.[1]
+// The officer's name from their profile, else "sim-officer-01" → "Field officer 01".
+export const officerLabel = (uid: string, name?: string) =>
+  name ??
+  (/^sim-officer-(\d+)$/.exec(uid)?.[1]
     ? `Field officer ${uid.slice(-2)}`
-    : `Field officer ${uid.slice(0, 4).toUpperCase()}`
+    : `Field officer ${uid.slice(0, 4).toUpperCase()}`)
 
 // As the dashboard and capture app show it: the id's first four characters; a simulated id
 // ("sim-faw-eastern-0031") reads as its storyline and serial, "FAW-0031".
@@ -236,7 +240,24 @@ export function firestoreDashboard({
         })
       )
 
-      return outgrowerOverview({ orgId, org, officers, reports, clustered, levels, now: at })
+      // Names for the officers and member farms, where their profiles carry one.
+      const names = new Map(
+        userSnap.docs.flatMap(d => {
+          const name = d.get('display_name')
+          return typeof name === 'string' && name ? [[d.id, name] as const] : []
+        })
+      )
+
+      return outgrowerOverview({
+        orgId,
+        org,
+        officers,
+        reports,
+        clustered,
+        levels,
+        names,
+        now: at,
+      })
     },
 
     async weather(districtSlug) {
@@ -272,6 +293,7 @@ export function outgrowerOverview({
   reports: all,
   clustered,
   levels,
+  names = new Map(),
   now: at,
 }: {
   orgId: string
@@ -280,6 +302,8 @@ export function outgrowerOverview({
   reports: OrgObservation[]
   clustered: Set<string>
   levels: Map<string, RiskLevel>
+  // Profile display names by user id (officers and farmers); labels fall back without one.
+  names?: Map<string, string>
   now: number
 }): OutgrowerOverview {
   const since = at - WINDOW_DAYS * DAY
@@ -335,7 +359,8 @@ export function outgrowerOverview({
           : 3
     visits.push({
       report_number: reportNumber(r.id),
-      farm_label: r.reporterRole === 'farmer' ? farmLabel(farm) : 'Officer field report',
+      farm_label:
+        r.reporterRole === 'farmer' ? farmLabel(farm, names.get(farm)) : 'Officer field report',
       camp: campOf(r),
       district: r.district,
       crop: r.crop as Visit['crop'],
@@ -439,7 +464,7 @@ export function outgrowerOverview({
       ),
     officers: officers.map(o => ({
       officer_id: o.id,
-      label: officerLabel(o.id),
+      label: officerLabel(o.id, names.get(o.id)),
       district: o.district,
       visits: assigned.get(o.id)!,
     })),

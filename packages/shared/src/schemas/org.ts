@@ -23,6 +23,9 @@ export const UserProfileSchema = z.object({
   district: z.string().min(1),
   province: ProvinceSchema,
   channel: ReportingChannelSchema,
+  // The name the Outgrower View shows for a field officer or a member farm. Optional: without
+  // it the view falls back to "Field officer 01" or "Farm CHI-012".
+  display_name: z.string().min(1).max(80).optional(),
   sim: z.boolean(),
 })
 export type UserProfile = z.infer<typeof UserProfileSchema>

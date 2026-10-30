@@ -109,4 +109,9 @@ describe('outgrowerOverview', () => {
     expect(farmLabel('k3J9xQ2mW8pL5vR1tY7u')).toBe('Farm K3J9')
     expect(officerLabel('sim-officer-01')).toBe('Field officer 01')
   })
+
+  it('uses the names on officer and farmer profiles when they have one', () => {
+    expect(farmLabel('sim-farmer-chipata-012', 'Esther Banda')).toBe('Esther Banda · CHI-012')
+    expect(officerLabel('sim-officer-01', 'Chisomo Phiri')).toBe('Chisomo Phiri')
+  })
 })

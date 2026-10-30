@@ -24,6 +24,7 @@ import {
 } from '@repo/shared'
 import type { ClusterPoint } from './cluster'
 import { createRandom, offset, type Random } from './random'
+import { AGRONOMIST_NAME, campFor, OFFICER_NAMES, personName } from './names'
 import { cannedRecommendation } from './recommendations'
 
 // Simulated demo data (technicaldoc §12). Every row is sim: true (CLAUDE.md invariant 5),
@@ -90,6 +91,13 @@ const ISSUES: Record<KnownIssue | 'unknown', IssueSpec> = {
       'holes in the leaves and sawdust in the funnel',
       'small caterpillars inside the whorl',
       'leaves eaten from the middle',
+      'worms in almost every plant on the lower side of the field',
+      'started last week after the first rains, now spreading',
+      'I put ash in the funnel but they are still eating',
+      'the young maize looks torn, like it was cut with scissors',
+      'caterpillars with a Y mark on the head',
+      'about half the field has holes in the top leaves',
+      'my neighbour has the same worms',
     ],
     severity: [8, 60],
     confusedWith: 'unknown',
@@ -105,6 +113,12 @@ const ISSUES: Record<KnownIssue | 'unknown', IssueSpec> = {
       'tunnels in the leaves',
       'fruits have small holes',
       'leaves drying from the top',
+      'white trails inside the leaves',
+      'small holes in the green tomatoes, rotting inside',
+      'the whole plot is affected since Monday',
+      'small moths flying at night near the tomatoes',
+      'I sprayed last week but new mines keep coming',
+      'leaves look burnt and papery',
     ],
     severity: [10, 70],
     confusedWith: 'unknown',
@@ -116,49 +130,96 @@ const ISSUES: Record<KnownIssue | 'unknown', IssueSpec> = {
       'white growth under leaves in the morning',
       'lesions spreading after rain',
     ],
-    descriptions: ['dark patches spreading fast after rain', 'plants collapsing within days'],
+    descriptions: [
+      'dark patches spreading fast after rain',
+      'plants collapsing within days',
+      'black stems and leaves after the rains',
+      'fruit turning brown with a greasy look',
+      'white powder under the leaves in the morning',
+      'half the plants died in four days',
+      'the whole row went black overnight',
+    ],
     severity: [15, 80],
     confusedWith: 'early_blight',
   },
   early_blight: {
     crop: 'tomato',
     symptoms: ['concentric brown rings on older leaves', 'yellowing around lesions'],
-    descriptions: ['brown rings on the old leaves', 'lower leaves turning yellow'],
+    descriptions: [
+      'brown rings on the old leaves',
+      'lower leaves turning yellow',
+      'round brown spots like a target',
+      'spots start at the bottom and move up',
+      'leaves falling off the lower stems',
+      'the plants are still fruiting but the leaves are spotted',
+    ],
     severity: [5, 45],
     confusedWith: 'late_blight',
   },
   diamondback_moth: {
     crop: 'cabbage',
     symptoms: ['small irregular holes', 'window-pane feeding', 'small green larvae under leaves'],
-    descriptions: ['leaves full of small holes', 'green worms under the leaves'],
+    descriptions: [
+      'leaves full of small holes',
+      'green worms under the leaves',
+      'tiny green caterpillars that drop on a thread',
+      'cabbage heads have holes, buyers are refusing them',
+      'leaves look like windows, thin and clear',
+      'I sprayed twice and they are back',
+    ],
     severity: [5, 50],
     confusedWith: 'unknown',
   },
   cassava_mosaic: {
     crop: 'cassava',
     symptoms: ['yellow-green mosaic on leaves', 'distorted, curled leaflets'],
-    descriptions: ['yellow patchy leaves', 'leaves twisted and small'],
+    descriptions: [
+      'yellow patchy leaves',
+      'leaves twisted and small',
+      'yellow and green patches, plants not growing',
+      'new leaves curled and narrow',
+      'the cuttings from my neighbour all look like this',
+      'plants very short compared to last season',
+    ],
     severity: [10, 60],
     confusedWith: 'cassava_brown_streak',
   },
   cassava_brown_streak: {
     crop: 'cassava',
     symptoms: ['yellow feathery chlorosis along veins', 'brown streaks on stems'],
-    descriptions: ['yellow lines on the leaves', 'roots rotting inside'],
+    descriptions: [
+      'yellow lines on the leaves',
+      'roots rotting inside',
+      'brown streaks inside the roots when I cut them',
+      'tubers hard and brown, cannot sell them',
+      'yellow along the veins of the old leaves',
+    ],
     severity: [10, 50],
     confusedWith: 'cassava_mosaic',
   },
   maize_lethal_necrosis: {
     crop: 'maize',
     symptoms: ['chlorotic mottling', 'drying from the leaf margins', 'dead heart'],
-    descriptions: ['whole plants drying', 'yellow streaks, then the plant dies'],
+    descriptions: [
+      'whole plants drying',
+      'yellow streaks, then the plant dies',
+      'leaves drying from the edges',
+      'the top of the plant is dead',
+      'cobs very small and empty',
+    ],
     severity: [20, 80],
     confusedWith: 'unknown',
   },
   unknown: {
     crop: 'soybean',
     symptoms: ['general yellowing', 'stunted growth'],
-    descriptions: ['plants look sick', 'not growing well'],
+    descriptions: [
+      'plants look sick',
+      'not growing well',
+      'leaves going pale yellow',
+      'some plants short and yellow in patches',
+      'the field looks tired after the rains',
+    ],
     severity: [5, 40],
     confusedWith: 'unknown',
   },
@@ -241,6 +302,7 @@ export function generateSeed({
         district: d.name,
         province: d.province,
         channel: 'app',
+        display_name: OFFICER_NAMES[i],
         sim: true,
       })
       return { id, district: d.slug }
@@ -252,6 +314,7 @@ export function generateSeed({
     district: 'Lusaka',
     province: 'Lusaka',
     channel: 'app',
+    display_name: AGRONOMIST_NAME,
     sim: true,
   })
 
@@ -274,6 +337,8 @@ export function generateSeed({
           ['sms', 0.2],
           ['ussd', 0.1],
         ] as const),
+        // Its own stream, keyed by the id, so names never shift where reports fall.
+        display_name: personName(createRandom(SEED ^ hash(farmerId)), d.province),
         sim: true,
       })
     }
@@ -486,13 +551,13 @@ function materialize(plan: Plan, anchorMs: number): SeedObservation {
     district: plan.district.name,
     district_slug: plan.district.slug,
     province: plan.district.province,
-    camp: r.chance(0.7) ? `${plan.district.name} Camp ${r.pick(['A', 'B', 'C', 'D'])}` : null,
+    camp: r.chance(0.7) ? campFor(r, plan.district) : null,
     crop: spec.crop,
     planting_date: iso(createdMs - daysSincePlanting * 86_400_000).slice(0, 10),
     growth_stage: stage,
     // Simulated rows have no photos, like SMS and USSD reports.
     photo_paths: [],
-    farmer_description: r.chance(0.6) ? r.pick(spec.descriptions) : null,
+    farmer_description: r.chance(0.75) ? r.pick(spec.descriptions) : null,
     status: recommendation ? 'complete' : 'awaiting_expert_review',
     diagnosis: {
       suspected_issue: suspected,
