@@ -38,7 +38,7 @@ Record each step of the run below on the real devices, once it passes, and keep 
 
 If the wifi or the API fails on stage, play the matching recording and keep talking.
 
-**Made on 30 Oct (automated, one genuine live run):** `Desktop/Phytos backup recordings 2026-10-30/` holds recordings 1, 2, 4, 5 and 6 of the stable version, with a README and the run's log. They were recorded by `tools/visual/record-demo.ts` driving the live capture app (phone size) and dashboard (laptop size) through one real report at the venue pin, which was then retracted. Recording 3 (the SMS on a phone) still has to be filmed on the phone. To re-make them (for example after a UI change):
+**Made on 30 Oct (automated, genuine live runs):** `Desktop/Phytos backup recordings 2026-10-30 seeded/` holds recordings 1, 2, 4, 5 and 6 of the current stable version (tag `stable-2026-10-30c`: Zambian names, library photos); `Desktop/Phytos backup recordings 2026-10-30/` holds the same set made earlier, before the seed realism pass, with a README and the run's log. They were recorded by `tools/visual/record-demo.ts` driving the live capture app (phone size) and dashboard (laptop size) through one real report at the venue pin, which was then retracted. Recording 3 (the SMS on a phone) still has to be filmed on the phone. To re-make them (for example after a UI change):
 
 ```bash
 PHYTOS_RECORD_EMAIL=<officer email> PHYTOS_RECORD_PASSWORD=<password> pnpm --filter @repo/visual record-demo --out <folder> --photo path/to/leaf-mines.jpg
