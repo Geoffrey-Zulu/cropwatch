@@ -119,7 +119,11 @@ export function restV1(services: RestServices) {
         ? fail(c, 404, { error: 'not_found' })
         : fail(c, 403, { error: 'forbidden' })
     }
-    if (result.recommend) void startProcessing(id.data)
+    // Every verify re-runs the pipeline, not only when the advice must change: its outbreak step
+    // re-counts the cluster's verified reports, so the cluster's alert becomes a verified cluster
+    // alert when an officer confirms the AI's own issue (found 30 Oct: it never upgraded).
+    // Diagnosis and recommendation act only in their own status, so otherwise they do nothing.
+    void startProcessing(id.data)
     return c.json(result.record.view)
   })
 

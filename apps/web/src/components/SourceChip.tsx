@@ -29,15 +29,17 @@ export function SourceChip({ uri, title, tier }: { uri: string; title: string; t
   )
 }
 
-// Every citation of a piece of advice, as a wrapping row of chips.
+// Every document a piece of advice cites, as a wrapping row of chips: one chip a document,
+// however many of its passages were retrieved.
 export function SourceChips({
   sources,
 }: {
   sources: readonly { uri: string; title: string; tier: number }[]
 }) {
+  const documents = sources.filter((s, i) => sources.findIndex(o => o.uri === s.uri) === i)
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {sources.map(s => (
+      {documents.map(s => (
         <li key={s.uri} className="max-w-full">
           <SourceChip {...s} />
         </li>

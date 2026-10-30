@@ -7,7 +7,8 @@
     "shots": "tsx shots.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
-    "sheet": "tsx sheet.ts"
+    "sheet": "tsx sheet.ts",
+    "record-demo": "tsx record-demo.ts"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",

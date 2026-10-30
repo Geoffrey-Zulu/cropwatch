@@ -381,7 +381,7 @@ describe('POST /api/v1/observations/{id}/verify', () => {
     ).toBe(404)
   })
 
-  it('confirming the same issue keeps the recommendation and moves up the ladder', async () => {
+  it('confirming the same issue keeps the recommendation, moves up the ladder and re-runs the outbreak check', async () => {
     store.docs.set(OBS_ID, diagnosed('complete', 'fall_armyworm', { recommendation_id: 'rec1' }))
     const res = await verify(OFFICER_SAME_ORG, {
       verified_issue: 'fall_armyworm',
@@ -394,7 +394,9 @@ describe('POST /api/v1/observations/{id}/verify', () => {
       verified_issue: 'fall_armyworm',
     })
     expect(store.docs.get(OBS_ID)!.recommendation_id).toBe('rec1')
-    expect(services.process).not.toHaveBeenCalled()
+    // The pipeline runs so the cluster counts this report as verified (its alert upgrades);
+    // the recommendation step leaves a complete report alone.
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 
   it('a correction re-triggers the recommendation (complete → recommending)', async () => {
@@ -422,7 +424,8 @@ describe('POST /api/v1/observations/{id}/verify', () => {
     const res = await verify(AGRONOMIST, { verified_issue: 'unknown' })
     expect(await res.json()).toMatchObject({ status: 'awaiting_expert_review' })
     expect(store.docs.get(OBS_ID)!.recommendation_id).toBeNull()
-    expect(services.process).not.toHaveBeenCalled()
+    // Re-run like every verify; no step writes advice for a report awaiting review.
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 
   it('never moves down the ladder', async () => {
