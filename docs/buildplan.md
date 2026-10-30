@@ -601,3 +601,20 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | `pnpm` gate | Green (398 tests)                                                                                                                                                                                                                               |
 | Demo check  | Passed after each deploy (8.4 s, 11.4 s report → dispatched). One run lost its network mid-cleanup. Its test report was retracted by hand, and the venue cluster it had completed was removed, so the arming stays clean (4 qualifying reports) |
 | Visual pass | Every view at laptop and phone, plus the map at projector sizes and the open legend; every shot looked at                                                                                                                                       |
+
+**30 Oct evening: Geoffrey's call, a full UI rebuild, mockup first (CLAUDE.md, UI window)**
+
+1. **Backup recordings** on the stable version: one genuine live run recorded automatically (`tools/visual/record-demo.ts`), then retracted. Two sets are on the desktop: before and after the seed pass. Recording them found a demo-path bug: confirming the AI's own issue never re-ran the outbreak check, so the 1:30 "verified cluster alert" upgrade could not happen. Fixed (every verify re-runs the idempotent pipeline; API `cropwatch-api-00012-7ph`) and checked live: the venue alert upgraded about 6 s after Verify.
+2. **Seed realism pass:**
+   - Zambian camp names (real localities), officer and farmer names (the Outgrower View shows them; API `cropwatch-api-00013-khk`);
+   - 5 to 10 farmer descriptions per issue;
+   - 26 openly licensed library photos on simulated reports, each captioned on the dashboard as not from the farm, with its credit.
+   - Demo check passed after each reseed; the venue was re-armed.
+3. **Three static National map mockups** at https://crop-watch01.web.app/mockups/ (A field-airy, B ops console, C modern product): `docs/ui-review/2026-10-30-mockups/`.
+4. **Fallback for Sunday 09:00:** tag `stable-2026-10-30c`.
+
+| Check       | Result                                                                        |
+| ----------- | ----------------------------------------------------------------------------- |
+| `pnpm` gate | Green (399 tests)                                                             |
+| Demo check  | Passed after every deploy and reseed (9.4 s to 15.8 s report → dispatched)    |
+| Live verify | The venue alert reads "Verified cluster alert · 1 of 5 verified" after Verify |
