@@ -575,3 +575,29 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | Visual pass             | All views at laptop and phone, the map at 1280 and 1920: `docs/ui-review/2026-10-30-freeze/`                                                                                                                                                                                           |
 | Deployed                | Dashboard Hosting; the API is unchanged since increment 2 (`cropwatch-api-00010-f44`)                                                                                                                                                                                                  |
 | **Still with the team** | **Officer accounts; the human runs and backup recordings; Africa's Talking secrets (SMS is log-only); Geoffrey's spot-check of the 13 PMDG rows**                                                                                                                                      |
+
+**Polish batch, 30 Oct (on the v2.1 structure; no view, section or navigation moved)**
+
+- The final script's wording now matches the build (six lines revised). The pre-stage gains "queue pre-opened on _In a cluster, not verified_": the queue now remembers its tab in the browser.
+- **Batch 1, the chrome:**
+  - shimmer skeletons, with a spinner only in a busy button;
+  - Lucide icons at 20 px and 1.5 px;
+  - the rail folds open, remembered per user;
+  - the header has the logo lockup, the verified count, the bell and the avatar;
+  - the DEMO pill sits on the data, not the chrome;
+  - "Prototype" is out of the UI copy (the API's alert push text too, `cropwatch-api-00011-c8d`);
+  - no question lines under titles.
+  - Review: `docs/ui-review/2026-10-30-polish/batch-1/`.
+- **Batch 2, the content:**
+  - stat cards with week-on-week change lines;
+  - the map legend behind (i);
+  - Districts to watch as an aligned list with level pills and one compact factor line;
+  - the report detail as a facts grid plus labelled blocks, with every citation a chip that opens the original;
+  - tables on the Outgrower, scenario and sources pages.
+  - Review: `docs/ui-review/2026-10-30-polish/batch-2/`.
+
+| Check       | Result                                                                                                                                                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate | Green (398 tests)                                                                                                                                                                                                                               |
+| Demo check  | Passed after each deploy (8.4 s, 11.4 s report → dispatched). One run lost its network mid-cleanup. Its test report was retracted by hand, and the venue cluster it had completed was removed, so the arming stays clean (4 qualifying reports) |
+| Visual pass | Every view at laptop and phone, plus the map at projector sizes and the open legend; every shot looked at                                                                                                                                       |

@@ -320,6 +320,49 @@ The v2 structure is the keeper. These four changes amend the decisions above; no
 
 **Post-event:** the map as a full canvas, with panels floating over it, is on the roadmap in `docs/hackathon-backlog.md`.
 
+## Polish (30 Oct, Geoffrey's batch on the v2.1 structure)
+
+No view, section or navigation moved. These rules replace the earlier ones where they differ.
+
+**Chrome**
+
+- **Header.** The Phytos lockup alone on the left: the app icon's leaf on the ink chip, without its gold marker (amber is for risk), and "Phytos" in Bricolage. On the right: the verified count, the bell, the initials avatar. No "Command Center", no prototype chip.
+- **Rail.** It folds between 56 px icons with tooltips and a 224 px labelled panel. The chevron control sits at the rail's foot. The state is remembered per user in the browser.
+- **Icons.** Lucide only, from one provider: 20 px for navigation and actions, 16 px inline with text, and a 1.5 px stroke at any size (`absoluteStrokeWidth`).
+- **Loading.** Shimmer blocks shaped like what lands, after 250 ms. No "…" text anywhere in the console. A spinner appears only inside a button while its action runs.
+- **Titles.** A page or drawer is its title, then its content. The question each view answers is no longer printed under the title.
+- **DEMO DATA · SIMULATED.** A quiet grey pill with the hatch swatch, on the data it marks:
+  - the map's top-right corner;
+  - the right of the queue tabs;
+  - the heading row of the Outgrower camps table and of the scenario's ranked camps;
+  - drawer headers.
+
+  It is never in the chrome. Every view that shows a simulated row still shows it (invariant 5).
+
+- **Copy.** "Prototype" is gone from UI copy. Risk is "Risk signal from reports, not a forecast"; thresholds are "set by Phytos".
+
+**Content**
+
+- **Stat cards replace the stat strip.** Each card has a grey label on top, a large tabular figure that settles in again when it changes, and a change line where the data has one:
+  - "↑17 on last week";
+  - "↑6 new this week";
+  - "↑2 in 24 h".
+
+  Cards are filled, not bordered.
+
+- **Map legend.** It sits behind an (i) button at the map's bottom-left. It opens on hover and pins open on click; Escape or a click elsewhere closes it.
+- **Districts to watch.** An aligned list:
+  - the district and a level pill (High filled, Elevated tinted) on one line;
+  - one compact line of its factors below, read back from Risk Model v0's own sentences ("9 FAW reports · 10 km cluster · +1 in 24 h").
+
+  Open a row for every factor in full.
+
+- **Report detail (drawer and queue).** Key facts as a definition grid: Crop, District, Sent, Stage. Then labelled blocks: Photo, Assessment, Advice, Evidence (behind "Why this advice?"), and Verify.
+  - IPM steps are a compact numbered list.
+  - Doses stay verbatim in mono.
+  - Every citation is a chip (publisher and title) that opens the original document in a new tab.
+- **Tables over sentences.** The Outgrower camps table has right-aligned counts. The scenario's ranked camps and the knowledge sources are tables. Phones keep the first columns.
+
 ## Not observed
 
 - **OneSoil.** The web app behind its login. Its UI comes from 2024 help-centre screenshots; its tokens come from the login page CSS. The app's loading states beyond the flat grey screen were not seen, and there is no live measurement of the light app.

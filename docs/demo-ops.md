@@ -23,7 +23,7 @@ The dashboard needs officer accounts; creating them grants roles, so Geoffrey ru
    pnpm --filter @repo/admin-tools set-role --email <field officer email> --role field_officer --org demo-outgrower
    ```
 
-3. Sign in on the laptop at https://crop-watch01.web.app. Good: the national map, the verified counter in the header, and the **DEMO DATA · SIMULATED** badge.
+3. Sign in on the laptop at https://crop-watch01.web.app. Good: the national map, the verified counter in the header, and the **DEMO DATA · SIMULATED** pill on the map's top-right corner.
 
 ### Backup recordings of every step
 
