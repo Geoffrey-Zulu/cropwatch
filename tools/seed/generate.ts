@@ -8,6 +8,8 @@ import {
   ObservationSchema,
   OrgSchema,
   severityBand,
+  SIM_PHOTOS,
+  simPhotoPath,
   UserProfileSchema,
   VERIFICATION_WEIGHTS,
   type Crop,
@@ -485,6 +487,14 @@ export function generateSeed({
 
 const iso = (ms: number) => new Date(Math.round(ms / 1000) * 1000).toISOString()
 
+// Its own stream, keyed by the report, so adding photos never moves anything else.
+function libraryPhoto(plan: Plan) {
+  const photos = SIM_PHOTOS.filter(p => p.issue === plan.issue)
+  if (photos.length === 0) return []
+  const pick = createRandom(SEED ^ hash(`${plan.id}:photo`)).pick(photos)
+  return [simPhotoPath(pick.id)]
+}
+
 function materialize(plan: Plan, anchorMs: number): SeedObservation {
   const r: Random = createRandom(SEED ^ hash(plan.id))
   const spec = ISSUES[plan.issue]
@@ -555,8 +565,9 @@ function materialize(plan: Plan, anchorMs: number): SeedObservation {
     crop: spec.crop,
     planting_date: iso(createdMs - daysSincePlanting * 86_400_000).slice(0, 10),
     growth_stage: stage,
-    // Simulated rows have no photos, like SMS and USSD reports.
-    photo_paths: [],
+    // A library photo of the issue the report really has (credited on the dashboard as not the
+    // farm's own); none where the library has no photo of that issue.
+    photo_paths: libraryPhoto(plan),
     farmer_description: r.chance(0.75) ? r.pick(spec.descriptions) : null,
     status: recommendation ? 'complete' : 'awaiting_expert_review',
     diagnosis: {

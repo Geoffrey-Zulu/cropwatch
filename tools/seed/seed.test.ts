@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { distanceKm, findDistrict, toObservationRow } from '@repo/shared'
+import { distanceKm, findDistrict, simPhotoFor, toObservationRow } from '@repo/shared'
 import { clusters, qualifying, type ClusterPoint } from './cluster'
 import { clusterPoints, generateSeed, SIM_STAMP, type SeedData } from './generate'
 
@@ -29,7 +29,7 @@ describe('determinism', () => {
 })
 
 describe('simulated data', () => {
-  it('is all sim: true, sim- ids, stamped sim-seed, no photos', () => {
+  it('is all sim: true, sim- ids, stamped sim-seed, photos only from the credited library', () => {
     expect(seed.org.data.sim).toBe(true)
     expect(seed.users.every(u => u.profile.sim && u.id.startsWith('sim-'))).toBe(true)
     for (const { id, observation, internal } of seed.observations) {
@@ -37,8 +37,18 @@ describe('simulated data', () => {
       expect(observation.sim).toBe(true)
       expect(observation.diagnosis).toMatchObject(SIM_STAMP)
       expect(internal).toMatchObject(SIM_STAMP)
-      expect(observation.photo_paths).toEqual([])
+      // At most one photo, always a credited library photo; where an officer has recorded the
+      // real issue, the photo shows that issue (the AI may have been wrong, the photo is not).
+      expect(observation.photo_paths.length).toBeLessThanOrEqual(1)
+      for (const path of observation.photo_paths) {
+        const photo = simPhotoFor(path)
+        expect(photo).not.toBeNull()
+        if (observation.verified_issue) expect(photo!.issue).toBe(observation.verified_issue)
+      }
     }
+    // Most simulated reports are clickable with a photo; cassava mosaic has none in the library.
+    const withPhoto = seed.observations.filter(o => o.observation.photo_paths.length > 0).length
+    expect(withPhoto / seed.observations.length).toBeGreaterThan(0.75)
   })
 
   it('has about 500 observations across the storylines', () => {

@@ -149,6 +149,25 @@ const content = {
     waiting_for_officer: awaiting.length,
     waiting_new_this_week: awaiting.filter(o => ms(o.created_at) > now - 7 * DAY).length,
   },
+  // Reports per day for the last 14 days (oldest first), all issues and by issue, for charts.
+  daily: (() => {
+    const days = Array.from({ length: 14 }, (_, i) => {
+      const end = now - (13 - i) * DAY
+      const inDay = recent.filter(o => ms(o.created_at) > end - DAY && ms(o.created_at) <= end)
+      const by = (issue: string) => inDay.filter(o => issueOf(o) === issue).length
+      return {
+        date: new Date(end).toISOString().slice(0, 10),
+        all: inDay.length,
+        fall_armyworm: by('fall_armyworm'),
+        tuta_absoluta: by('tuta_absoluta'),
+        other: inDay.length - by('fall_armyworm') - by('tuta_absoluta'),
+        verified: inDay.filter(o =>
+          ['FIELD_VERIFIED', 'EXPERT_CONFIRMED'].includes(String(o.verification_state))
+        ).length,
+      }
+    })
+    return days
+  })(),
   districts_to_watch: watch.map(r => ({
     district: r.district,
     slug: r.id,
