@@ -169,7 +169,12 @@ Agreed 30 Oct. Two presenters: **P1** on the phone (the farmer, then the officer
   - It reads "Phytos DEMO alert (Act now): Tuta absoluta (tomato leafminer) near Lusaka. … Not yet verified by an officer. …".
   - It is sent only once the Africa's Talking secrets are deployed (checklist step 4). Every check so far was log-only.
   - Without the secrets, the buzz has to come from the Phytos app. Turn on "Send alerts for Lusaka to this phone" on the app's home screen on the phone held to the mic. This has not been tried on the demo phone yet. If it doesn't buzz, the failure rule applies.
-- **Timing.** The checks at the venue on 29 Oct gave a diagnosis in about 3 s, report to alert in 8 s, and report to dispatch in 8 to 12 s. The 0:20–0:50 bridge covers it.
+- **"The district went High" (0:50).**
+  - A new 5-report cluster makes the district High only while reports also surge: at least +50% on the week before (Risk Model v0); otherwise it is Elevated.
+  - On 29 Oct, the day the demo was armed, the check ended High (+133% on last week). On 30 Oct, a day later, Lusaka ended Elevated.
+  - Re-arm on the pitch morning (checklist step 2), then look for `risk/lusaka has a level and factors  (HIGH)` in step 3's output.
+  - If it says Elevated, P2 says "the district went to Elevated", not High.
+- **Timing.** The checks at the venue on 29 and 30 Oct gave a diagnosis in about 3 s, report to alert in 8 to 9 s, and report to dispatch in 8 to 13 s. The 0:20–0:50 bridge covers it.
 - **The Outgrower View (2:10).** The camps and one line per field officer show on load, with no button to press. The company and its 1,240 farmers are simulated, and the DEMO badge is on screen.
 - **Officer sign-in.** It needs the officer accounts (Before the day).
 

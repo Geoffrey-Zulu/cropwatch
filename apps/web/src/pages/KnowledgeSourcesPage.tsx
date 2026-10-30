@@ -112,7 +112,8 @@ export function KnowledgeSourcesPage() {
                       {r.title}
                       <ExternalLink size={12} strokeWidth={2} aria-hidden className="ml-1 inline" />
                     </a>
-                    <span className="text-caption text-fg-2">
+                    {/* Under the title on phones, so the title keeps the width. */}
+                    <span className="text-caption text-fg-2 max-sm:basis-full">
                       {r.source} · {r.year} · {r.country}
                     </span>
                   </div>
