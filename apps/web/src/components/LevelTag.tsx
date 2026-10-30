@@ -1,17 +1,25 @@
 import type { RiskLevel } from '@repo/shared'
 import { LEVEL_TEXT } from '../lib/copy'
 
-const DOT: Record<RiskLevel, string> = {
-  HIGH: 'bg-high',
-  ELEVATED: 'bg-attention',
-  LOW: 'bg-hairline-strong',
+const SWATCH: Record<RiskLevel, string> = {
+  HIGH: 'swatch-high',
+  ELEVATED: 'swatch-elevated',
+  LOW: 'swatch-low',
+}
+const WORD: Record<RiskLevel, string> = {
+  HIGH: 'text-high-text',
+  ELEVATED: 'text-attention-text',
+  LOW: 'text-fg-2',
 }
 
-// The level inside tables and lists: a dot and the word, never a filled pill (patterns.md rule 7).
+// The level inside tables and lists (mockup A): the field swatch (High solid brick, Elevated
+// hatched maize, Low fallow) and the word in its colour, so it reads without colour too.
 export function LevelDot({ level }: { level: RiskLevel }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-label text-fg">
-      <span aria-hidden className={`h-2 w-2 rounded-full ${DOT[level]}`} />
+    <span
+      className={`inline-flex items-center gap-[0.4rem] whitespace-nowrap text-label font-[650] ${WORD[level]}`}
+    >
+      <span aria-hidden className={`swatch ${SWATCH[level]}`} />
       {LEVEL_TEXT[level]}
     </span>
   )
@@ -24,30 +32,22 @@ export function LevelIcon({ level }: { level: RiskLevel }) {
     return (
       <span
         aria-hidden
-        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-high text-[11px] font-bold leading-none text-high-ink"
+        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-high text-[0.7rem] font-bold leading-none text-high-ink"
       >
         !
       </span>
     )
   if (level === 'ELEVATED')
-    return <span aria-hidden className="h-4 w-4 shrink-0 rounded-full border-2 border-attention" />
+    return (
+      <span
+        aria-hidden
+        className="h-4 w-4 shrink-0 rounded-full border-2 border-[var(--attention-stripe)]"
+      />
+    )
   return <span aria-hidden className="mx-1 h-2 w-2 shrink-0 rounded-full bg-hairline-strong" />
 }
 
-const PILL: Record<RiskLevel, string> = {
-  HIGH: 'bg-high text-high-ink',
-  ELEVATED: 'bg-attention-tint text-attention-text',
-  LOW: 'bg-well text-fg-2',
-}
-
-// The level at the end of a district row (polish 30 Oct): a small pill, right-aligned, so a
-// column of them scans. High is filled, Elevated tinted; the word is always there.
+// The level at the end of a row: the same swatch and word, right-aligned in a list.
 export function LevelPill({ level }: { level: RiskLevel }) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-caption font-semibold ${PILL[level]}`}
-    >
-      {LEVEL_TEXT[level]}
-    </span>
-  )
+  return <LevelDot level={level} />
 }

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
-// A section: a quiet line, a title, optional actions, then content. No box: whitespace and the
-// title do the grouping (patterns-v2.md decision 3).
+// A section in mockup A's language: a white island with soft layered shadows, a quiet line and a
+// Fraunces title, optional actions, then content.
 export function Panel({
   eyebrow,
   title,
@@ -16,12 +16,18 @@ export function Panel({
   className?: string
 }) {
   return (
-    <section className={className}>
+    <section
+      className={`island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem] ${className}`}
+    >
       {(eyebrow || title || actions) && (
-        <header className="mb-3 flex items-start justify-between gap-4">
+        <header className="mb-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-            {title && <h2 className="text-section font-semibold text-fg">{title}</h2>}
+            {title && (
+              <h2 className="serif mt-0.5 text-[1.35rem] font-semibold leading-[1.15] text-fg">
+                {title}
+              </h2>
+            )}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </header>

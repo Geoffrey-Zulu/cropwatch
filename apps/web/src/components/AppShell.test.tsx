@@ -29,8 +29,10 @@ describe('AppShell header (design-system/phytos/patterns.md rule 1)', () => {
 
   it('marks the current page and keeps nav labels in sentence case', () => {
     shell()
-    const current = screen.getByRole('link', { current: 'page' })
-    expect(current).toHaveTextContent('National map')
+    // The pages are listed twice: in the header on wide screens, as a strip on phones.
+    const current = screen.getAllByRole('link', { current: 'page' })
+    expect(current).toHaveLength(2)
+    for (const link of current) expect(link).toHaveTextContent('National map')
   })
 
   it('carries the lockup only: no "Command Center" text, no prototype chip, no DEMO badge', () => {
@@ -41,15 +43,10 @@ describe('AppShell header (design-system/phytos/patterns.md rule 1)', () => {
     expect(screen.queryByText(/demo data/i)).not.toBeInTheDocument()
   })
 
-  it('folds the rail open and remembers it for this user', () => {
-    localStorage.clear()
+  it('shows the queue count beside its page', () => {
     shell()
-    fireEvent.click(screen.getByRole('button', { name: /expand the sidebar/i }))
-    expect(screen.getByRole('button', { name: /collapse the sidebar/i })).toHaveAttribute(
-      'aria-expanded',
-      'true'
-    )
-    expect(localStorage.getItem('phytos.nav-expanded:agronomist@phytos-demo.test')).toBe('1')
+    const queue = screen.getAllByRole('link', { name: /officer queue/i })[0]
+    expect(queue).toHaveTextContent('82')
   })
 
   it('reads initials from the email', () => {

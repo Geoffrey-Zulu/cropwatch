@@ -67,7 +67,7 @@ export function KnowledgeSourcesPage() {
         ]}
       />
 
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
+      <div className="toggle-group self-start" role="group" aria-label="Filter by status">
         {(['all', ...Object.keys(STATUS)] as (Status | 'all')[]).map(s => (
           <button
             key={s}

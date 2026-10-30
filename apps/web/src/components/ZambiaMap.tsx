@@ -18,25 +18,25 @@ import { Bar, Loading } from './Skeleton'
 // clusters and the selected district in the one accent. It is the projector view (v2.1): fills
 // strong and dots large enough to read from the back of a room. No glow: projectors wash it out.
 const MAP = {
-  sea: '#F4F5F6',
-  land: '#FFFFFF',
-  border: '#D3D7DC',
+  sea: '#F4F3EC',
+  land: '#D6E2C4',
+  border: '#FFFFFF',
   hover: '#17191C',
   report: '#17191C',
   simReport: '#4D535B',
-  ring: '#2160C4',
-  ringText: '#1B4F8F',
-  ringFill: '#2160C41A',
+  ring: '#1B2920',
+  ringText: '#1B2920',
+  ringFill: '#FFFFFF33',
 }
 const MAP_FILL: Record<RiskLevel, string> = {
-  HIGH: '#C8612A',
-  ELEVATED: '#E5B451',
-  LOW: '#F8F9FA',
+  HIGH: '#A23B21',
+  ELEVATED: '#EEC14A',
+  LOW: '#D6E2C4',
 }
 // Elevated and High also get a darker outline in their own hue, so they read without colour too.
 const MAP_EDGE: Partial<Record<RiskLevel, string>> = {
-  HIGH: '#7A3109',
-  ELEVATED: '#8F6511',
+  HIGH: '#6E2410',
+  ELEVATED: '#B98516',
 }
 // Report dot radii at the national view, in map units.
 const DOT = { report: 6.8, sim: 4.4 }

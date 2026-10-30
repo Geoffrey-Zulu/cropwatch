@@ -34,12 +34,17 @@ export function SignInPage({
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="canvas flex min-h-dvh items-center justify-center px-4">
+      <div className="island w-full max-w-[26rem] px-7 py-8 md:px-9 md:py-10">
         <div className="mb-6">
-          <PhytosLogo size={36} />
+          <PhytosLogo large />
         </div>
-        <h1 className="font-display text-display font-bold text-fg">Command Center</h1>
+        <h1
+          className="serif text-title font-semibold text-fg"
+          style={{ fontVariationSettings: '"SOFT" 100, "WONK" 0, "opsz" 72' }}
+        >
+          Command Center
+        </h1>
         <p className="mt-1 text-body-sm text-fg-2">
           For extension officers, agronomists and outgrower field teams in Zambia.
         </p>

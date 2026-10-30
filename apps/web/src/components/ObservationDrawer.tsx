@@ -89,7 +89,7 @@ export function ObservationDrawerView({
     <Drawer
       kicker={`Report ${reportNumber(o.id)} · ${STATUS_TEXT[o.status]}`}
       title={`${CROP_LABELS[o.crop]} · ${o.issue && o.issue !== 'unknown' ? ISSUE_LABELS[o.issue] : 'Not identified yet'}`}
-      aside={<DemoBadge rows={[o]} />}
+      aside={<DemoBadge small rows={[o]} />}
       closeHref={close()}
     >
       <div className="flex flex-col gap-5">

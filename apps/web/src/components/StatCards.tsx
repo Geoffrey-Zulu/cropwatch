@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { CountUp } from '../hooks/useCountUp'
 import { Bar, Loading } from './Skeleton'
 
 export interface Stat {
@@ -8,9 +9,10 @@ export interface Stat {
   delta?: string | null
 }
 
-// The figures above a page (polish 30 Oct): a card each, a small grey label on top and a large
-// tabular number that settles in again when it changes, so they read as live figures. No border:
-// a quiet fill groups each one (patterns-v2.md decision 3).
+const FIGURE = { fontVariationSettings: '"SOFT" 100, "WONK" 0, "opsz" 72' }
+
+// The figures above a page, as mockup A's ledger island: one white island, a Fraunces figure
+// that counts up when it changes, its label and its change line, cells divided by hairlines.
 export function StatCards({
   stats,
   columns = 'grid-cols-2 lg:grid-cols-4',
@@ -19,21 +21,23 @@ export function StatCards({
   columns?: string
 }) {
   return (
-    <dl className={`grid gap-3 ${columns}`}>
+    <dl className={`island grid overflow-hidden ${columns}`}>
       {stats.map(s => (
-        <div key={s.label} className="min-w-0 rounded-card bg-well px-4 py-3">
-          <dt className="text-caption font-medium text-fg-2">{s.label}</dt>
-          <dd className="mt-1 flex flex-wrap items-baseline gap-x-2">
-            <span
-              key={String(s.value)}
-              className="animate-tag text-stat font-semibold tabular-nums text-fg"
-            >
-              {s.value}
-            </span>
-            {s.delta && (
-              <span className="text-caption font-medium tabular-nums text-fg-2">{s.delta}</span>
-            )}
+        <div
+          key={s.label}
+          className="min-w-0 px-[1.45rem] py-[1.05rem] shadow-[inset_1px_0_0_var(--hairline),inset_0_1px_0_var(--hairline)]"
+        >
+          <dd className="serif text-stat font-semibold tabular-nums text-fg" style={FIGURE}>
+            {typeof s.value === 'number' ? <CountUp value={s.value} /> : s.value}
           </dd>
+          <dt className="mt-[0.35rem] text-[0.93rem] font-semibold leading-[1.3] text-fg">
+            {s.label}
+          </dt>
+          {s.delta && (
+            <p className="mt-[0.12rem] text-[0.84rem] leading-[1.3] tabular-nums text-fg-2">
+              {s.delta}
+            </p>
+          )}
         </div>
       ))}
     </dl>
@@ -43,11 +47,11 @@ export function StatCards({
 export function SkeletonStatCards({ count = 4 }: { count?: number }) {
   return (
     <Loading label="Loading figures">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="island grid grid-cols-2 overflow-hidden lg:grid-cols-4">
         {Array.from({ length: count }, (_, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-card bg-well px-4 py-3">
-            <Bar className="h-3 w-24" />
-            <Bar className="h-7 w-14" />
+          <div key={i} className="flex flex-col gap-2 px-[1.45rem] py-[1.05rem]">
+            <Bar className="h-8 w-14" />
+            <Bar className="h-3.5 w-28" />
           </div>
         ))}
       </div>

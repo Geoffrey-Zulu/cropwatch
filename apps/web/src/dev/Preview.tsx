@@ -107,7 +107,7 @@ export function Preview({ route }: { route: string }) {
           newAlerts={live.alerts.length}
           onSignOut={() => undefined}
         >
-          {overMap && <NationalMapPage {...live} />}
+          {overMap && <NationalMapPage {...live} verified={verified} />}
           {page === 'alerts' && <AlertsDrawer alerts={live.alerts} />}
           {page === 'outbreak' && cluster && (
             <OutbreakDrawerView

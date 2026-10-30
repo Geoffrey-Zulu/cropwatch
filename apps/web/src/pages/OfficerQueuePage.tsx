@@ -50,7 +50,7 @@ export function OfficerQueuePage({
       <PageHeader title="Officer queue" />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Queue">
+        <div className="toggle-group" role="tablist" aria-label="Queue">
           <Tab current={tab === 'review'} onClick={() => setTab('review')}>
             Routed to an officer ({review.length})
           </Tab>

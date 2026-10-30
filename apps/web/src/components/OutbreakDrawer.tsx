@@ -105,7 +105,7 @@ export function OutbreakDrawerView({
       kicker={`Outbreak · ${cluster.active ? 'active' : 'closed'} · first seen ${dateTime(cluster.firstDetectedAt)}`}
       title={`${ISSUE_LABELS[cluster.issue]} near ${cluster.district}`}
       back={fromAlerts ? { href: open({ kind: 'alerts' }), label: 'Back to alerts' } : undefined}
-      aside={<DemoBadge rows={[cluster, ...members]} />}
+      aside={<DemoBadge small rows={[cluster, ...members]} />}
       closeHref={close()}
     >
       <StatCards

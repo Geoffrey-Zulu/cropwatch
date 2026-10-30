@@ -72,7 +72,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
     <div className="flex flex-col gap-6">
       <PageHeader title="Dry-spell scenario" />
 
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-card bg-well px-4 py-3">
+      <div className="island flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-[1.45rem] py-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -127,10 +127,13 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
         <SkeletonStatCards count={3} />
       )}
 
-      <section aria-labelledby="ranked">
+      <section
+        aria-labelledby="ranked"
+        className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      >
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
           <div>
-            <h2 id="ranked" className="text-section font-semibold text-fg">
+            <h2 id="ranked" className="serif text-[1.35rem] font-semibold leading-[1.15] text-fg">
               Camps, ranked
             </h2>
             <p className="text-caption text-fg-2">
@@ -182,7 +185,7 @@ export function ScenarioPage({ observations }: { observations: DashObservation[]
         )}
       </section>
 
-      <div className="max-w-4xl">
+      <div className="island max-w-4xl px-[1.45rem] py-2">
         <Disclosure summary="Assumptions and rules" hint="every input, with its source">
           <ul className="flex flex-col gap-3 text-label text-fg">
             <li>

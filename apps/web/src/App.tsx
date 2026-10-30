@@ -78,7 +78,7 @@ export function App() {
       newAlerts={cc ? (newAlerts ?? 0) : null}
       onSignOut={() => void signOut()}
     >
-      {page.page === 'map' && <NationalMapPage {...live} />}
+      {page.page === 'map' && <NationalMapPage {...live} verified={verified} />}
       {page.page === 'queue' && (
         <OfficerQueuePage selectedId={page.id ?? null} officer={officer} {...live} />
       )}

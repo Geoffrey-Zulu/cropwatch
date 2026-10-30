@@ -1,8 +1,7 @@
 import {
   Bell,
   BookOpen,
-  ChevronsLeft,
-  ChevronsRight,
+  CircleCheck,
   ClipboardCheck,
   LogOut,
   Map,
@@ -13,6 +12,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { hrefFor, useDrawerLinks, type Route } from '../hooks/useRoute'
 import { SCENARIO_ENABLED } from '../lib/features'
+import { CountUp } from '../hooks/useCountUp'
 import { PhytosLogo } from './PhytosLogo'
 
 interface NavItem {
@@ -65,12 +65,13 @@ const NAV: NavItem[] = [
   },
 ]
 
-// The Command Center frame (patterns-v2.md, polish 30 Oct): the Phytos lockup alone on the left;
-// the live verified count, the bell and the account avatar (initials, never a raw email in the
-// chrome) on the right. Navigation is a rail on wide screens that folds between 56 px icons
-// with tooltips and a labelled panel, remembered per user in this browser; the current page is
-// a filled icon with a bar. Phones keep a labelled strip. The DEMO badge is not in the chrome:
-// each view shows it on the data it marks (CLAUDE.md invariant 5).
+// The Command Center frame in mockup A's language (Field-airy, chosen 30 Oct): a white header
+// with the Phytos lockup, the pages as pills (the current one field green on its tint), and on
+// the right the live verified count, the bell and the account avatar (initials, never a raw
+// email in the chrome). Phones keep the lockup, bell and avatar in the header and move the pages
+// to a scrolling pill strip under it. The map page is a full-bleed stage; every other page sits
+// on the cream canvas at a readable width. The DEMO badge is never in the chrome: each view
+// shows it on the data it marks (CLAUDE.md invariant 5).
 export function AppShell({
   active,
   commandCenter,
@@ -94,140 +95,64 @@ export function AppShell({
   children: ReactNode
 }) {
   const items = NAV.filter(item => commandCenter || !item.commandCenterOnly)
-  const [expanded, setExpanded] = useNavExpanded(email)
+  const links = (strip: boolean) =>
+    items.map(item => {
+      const current = item.page === active
+      const count = item.page === 'queue' && queue !== null && queue > 0 ? queue : null
+      return (
+        <a
+          key={item.page}
+          href={hrefFor(item.route)}
+          aria-current={current ? 'page' : undefined}
+          className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-pill text-[0.95rem] transition-colors duration-200 ease-out ${
+            strip ? 'px-[0.85rem] py-[0.6rem]' : 'px-[0.85rem] py-2'
+          } ${
+            current
+              ? 'bg-signal-tint font-semibold text-signal-text'
+              : 'font-medium text-fg-2 hover:bg-well hover:text-fg'
+          }`}
+        >
+          {item.label}
+          {count !== null && (
+            <span className="inline-grid h-[1.3rem] min-w-[1.6rem] place-items-center rounded-pill bg-[#EDF0E8] px-1.5 text-[0.78rem] font-bold tabular-nums text-fg">
+              <span className="sr-only">, </span>
+              {count > 999 ? '999+' : count}
+              <span className="sr-only"> waiting</span>
+            </span>
+          )}
+        </a>
+      )
+    })
   return (
-    <div className="min-h-dvh">
-      <header className="sticky top-0 z-30 border-b border-hairline bg-panel">
-        <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
-          <a href="#/" aria-label="Phytos: national map" className="rounded-card px-1 py-1">
+    <div className="flex min-h-dvh flex-col">
+      <div className="sticky top-0 z-30">
+        <header className="relative flex h-[3.75rem] items-center gap-3 bg-panel px-4 shadow-[0_1px_0_rgb(27_41_32/0.06),0_10px_26px_-18px_rgb(27_41_32/0.3)] md:gap-8 md:px-[1.6rem]">
+          <a href="#/" aria-label="Phytos: national map" className="shrink-0 rounded-card">
             <PhytosLogo />
           </a>
-          <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <nav aria-label="Pages" className="hidden min-w-0 items-center gap-[0.2rem] lg:flex">
+            {links(false)}
+          </nav>
+          <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-4">
             {verified !== null && <VerifiedCount count={verified} />}
             {newAlerts !== null && <AlertsBell count={newAlerts} />}
             <AccountMenu email={email} role={role} onSignOut={onSignOut} />
           </div>
-        </div>
-      </header>
-
-      <div className="lg:flex">
+        </header>
         <nav
           aria-label="Pages"
-          className={`sticky top-14 z-20 flex gap-0.5 overflow-x-auto bg-well px-2 py-2 lg:h-[calc(100dvh-56px)] lg:shrink-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:py-3 ${
-            expanded ? 'lg:w-56' : 'lg:w-14 lg:items-center'
-          }`}
+          className="flex gap-[0.2rem] overflow-x-auto bg-panel px-3 pb-[0.6rem] pt-[0.55rem] shadow-[0_1px_0_rgb(27_41_32/0.06)] [scrollbar-width:none] lg:hidden"
         >
-          {items.map(item => {
-            const current = item.page === active
-            const count = item.page === 'queue' && queue !== null && queue > 0 ? queue : null
-            return (
-              <a
-                key={item.page}
-                href={hrefFor(item.route)}
-                aria-current={current ? 'page' : undefined}
-                className={`group relative flex shrink-0 items-center gap-2.5 rounded-card px-3 py-1.5 text-label font-medium transition-colors lg:h-10 ${
-                  expanded ? 'lg:w-full' : 'lg:w-10 lg:justify-center lg:p-0'
-                } ${current ? 'text-signal-text' : 'text-fg-2 hover:bg-panel hover:text-fg'}`}
-              >
-                {current && (
-                  <span
-                    aria-hidden
-                    className="absolute bg-signal max-lg:inset-x-3 max-lg:bottom-0 max-lg:h-[3px] max-lg:rounded-full lg:-left-2 lg:inset-y-1.5 lg:w-[3px] lg:rounded-r-full"
-                  />
-                )}
-                <span className="relative inline-flex">
-                  <item.icon
-                    aria-hidden
-                    fill={current ? 'currentColor' : 'none'}
-                    fillOpacity={current ? 0.18 : undefined}
-                  />
-                  {count !== null && !expanded && (
-                    <span
-                      aria-hidden
-                      className="absolute -right-2.5 -top-2 hidden min-w-[18px] rounded-full bg-fg px-1 text-center text-[11px] font-semibold leading-[18px] text-ground lg:block"
-                    >
-                      {count > 99 ? '99+' : count}
-                    </span>
-                  )}
-                </span>
-                <span className={expanded ? 'truncate' : 'lg:sr-only'}>
-                  {item.label}
-                  {count !== null && <span className="sr-only">, {count} waiting</span>}
-                </span>
-                {count !== null && (
-                  <span
-                    aria-hidden
-                    className={`ml-auto text-caption font-medium tabular-nums text-fg-2 ${expanded ? '' : 'lg:hidden'}`}
-                  >
-                    {count}
-                  </span>
-                )}
-                {!expanded && (
-                  <Tooltip>
-                    {item.label}
-                    {count !== null ? ` · ${count} waiting` : ''}
-                  </Tooltip>
-                )}
-              </a>
-            )
-          })}
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            aria-expanded={expanded}
-            aria-label={expanded ? 'Collapse the sidebar' : 'Expand the sidebar'}
-            className={`group relative mt-auto hidden h-10 shrink-0 items-center gap-2.5 rounded-card text-label font-medium text-fg-2 hover:bg-panel hover:text-fg lg:flex ${
-              expanded ? 'w-full px-3' : 'w-10 justify-center'
-            }`}
-          >
-            {expanded ? <ChevronsLeft aria-hidden /> : <ChevronsRight aria-hidden />}
-            {expanded ? <span>Collapse</span> : <Tooltip>Expand the sidebar</Tooltip>}
-          </button>
+          {links(true)}
         </nav>
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
-          {/* The map page is the projector view: it takes a 1080p screen's width too. */}
-          <div className={`mx-auto ${active === 'map' ? 'max-w-[1760px]' : 'max-w-[1320px]'}`}>
-            {children}
-          </div>
-        </main>
       </div>
+      <main
+        className={`canvas min-w-0 flex-1 ${active === 'map' ? '' : 'px-4 py-6 md:px-[1.6rem] md:py-8'}`}
+      >
+        {active === 'map' ? children : <div className="mx-auto max-w-[1320px]">{children}</div>}
+      </main>
     </div>
   )
-}
-
-// The rail's label on hover or keyboard focus, while the rail shows icons only.
-function Tooltip({ children }: { children: ReactNode }) {
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute left-full top-1/2 z-40 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-card bg-fg px-2.5 py-1.5 text-caption font-medium text-ground shadow-raise lg:group-hover:block lg:group-focus-visible:block"
-    >
-      {children}
-    </span>
-  )
-}
-
-// Folded or open, per signed-in user in this browser; a blocked store just means folded.
-function useNavExpanded(email: string): [boolean, (open: boolean) => void] {
-  const key = `phytos.nav-expanded:${email}`
-  const [expanded, setExpanded] = useState(() => {
-    try {
-      return window.localStorage.getItem(key) === '1'
-    } catch {
-      return false
-    }
-  })
-  return [
-    expanded,
-    (open: boolean) => {
-      setExpanded(open)
-      try {
-        window.localStorage.setItem(key, open ? '1' : '0')
-      } catch {
-        // Not remembered; the rail still opens.
-      }
-    },
-  ]
 }
 
 // The alerts live behind the bell (patterns-v2.md): the map page answers one question.
@@ -237,11 +162,11 @@ function AlertsBell({ count }: { count: number }) {
     <a
       href={open({ kind: 'alerts' })}
       aria-label={count ? `Alerts: ${count} in the last 24 hours` : 'Alerts'}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-fg hover:bg-well"
+      className="relative inline-grid h-10 w-10 place-items-center rounded-pill text-fg transition-colors duration-200 ease-out hover:bg-well"
     >
       <Bell aria-hidden />
       {count > 0 && (
-        <span className="absolute right-0 top-0 min-w-[18px] rounded-full bg-fg px-1 text-center text-[11px] font-semibold leading-[18px] text-ground">
+        <span className="absolute right-[0.15rem] top-[0.2rem] h-[1.1rem] min-w-[1.1rem] rounded-pill bg-fg px-[0.3rem] text-center text-[0.7rem] font-bold leading-[1.1rem] text-white shadow-[0_0_0_2px_#fff]">
           {count > 99 ? '99+' : count}
         </span>
       )}
@@ -249,19 +174,21 @@ function AlertsBell({ count }: { count: number }) {
   )
 }
 
-// The live count of officer-verified observations: the moat, ticking as officers verify.
+// The live count of officer-verified observations: the moat, counting up as officers verify.
 function VerifiedCount({ count }: { count: number }) {
   return (
     <div
-      className="flex items-baseline gap-1.5 px-1"
+      className="hidden items-center gap-2 whitespace-nowrap text-[0.95rem] text-fg-2 md:inline-flex"
       aria-live="polite"
       aria-label={`${count} verified observations`}
     >
-      <span key={count} className="animate-tag text-label font-semibold tabular-nums text-fg">
-        {count}
+      <CircleCheck aria-hidden className="h-[1.15rem] w-[1.15rem] text-signal" />
+      <span>
+        <b className="font-bold tabular-nums text-fg">
+          <CountUp value={count} />
+        </b>{' '}
+        verified observations
       </span>
-      <span className="text-caption text-fg-2 sm:hidden">verified</span>
-      <span className="hidden text-caption text-fg-2 sm:inline">verified observations</span>
     </div>
   )
 }
@@ -318,16 +245,16 @@ function AccountMenu({
         aria-expanded={open}
         aria-label={`Account: ${roleName(role)}`}
         onClick={() => setOpen(o => !o)}
-        className="flex items-center rounded-full p-0.5 hover:bg-well"
+        className="flex items-center rounded-pill p-0.5 transition-colors duration-200 ease-out hover:bg-well"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-fg text-caption font-semibold text-ground">
+        <span className="grid h-[2.3rem] w-[2.3rem] place-items-center rounded-pill bg-[#EFE6D1] text-[0.85rem] font-bold tracking-[0.02em] text-[#4A3B1A]">
           {initials(email)}
         </span>
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-40 mt-2 w-64 rounded-card border border-hairline bg-panel p-2 shadow-raise"
+          className="slide-in absolute right-0 top-full z-40 mt-2 w-64 rounded-card bg-panel p-2 shadow-island"
         >
           <div className="px-2 pb-2 pt-1">
             <p className="break-all text-label font-semibold text-fg">{email}</p>

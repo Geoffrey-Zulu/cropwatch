@@ -156,10 +156,13 @@ function Overview({ data }: { data: OutgrowerOverview }) {
         </p>
       </div>
 
-      <section aria-labelledby="camps" className="flex flex-col gap-2">
+      <section
+        aria-labelledby="camps"
+        className="island flex flex-col gap-2 px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      >
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
           <div>
-            <h2 id="camps" className="text-section font-semibold text-fg">
+            <h2 id="camps" className="serif text-[1.35rem] font-semibold leading-[1.15] text-fg">
               Camps needing attention
             </h2>
             <p className="text-label tabular-nums text-fg-2">
@@ -171,10 +174,13 @@ function Overview({ data }: { data: OutgrowerOverview }) {
         <CampsTable camps={data.camps} />
       </section>
 
-      <section aria-labelledby="visits" className="flex flex-col gap-4">
+      <section
+        aria-labelledby="visits"
+        className="island flex flex-col gap-4 px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 id="visits" className="text-section font-semibold text-fg">
+            <h2 id="visits" className="serif text-[1.35rem] font-semibold leading-[1.15] text-fg">
               Visit lists
             </h2>
             <p className="text-label tabular-nums text-fg-2">
@@ -347,7 +353,7 @@ function VisitDrawer({
     <Drawer
       kicker={`Visit · ${officer}`}
       title={v.farm_label}
-      aside={<DemoBadge rows={[v]} />}
+      aside={<DemoBadge small rows={[v]} />}
       closeHref={closeHref}
     >
       <ul className="flex flex-wrap gap-1.5" aria-label="Priority">

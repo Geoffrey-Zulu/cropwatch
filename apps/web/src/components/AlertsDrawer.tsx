@@ -30,7 +30,7 @@ export function AlertsDrawer({ alerts }: { alerts: DashAlert[] | null }) {
   const sorted = [...(alerts ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const group = (level: RiskLevel) => sorted.filter(a => a.level === level)
   return (
-    <Drawer title="Alerts" aside={<DemoBadge rows={alerts ?? []} />} closeHref={close()}>
+    <Drawer title="Alerts" aside={<DemoBadge small rows={alerts ?? []} />} closeHref={close()}>
       {alerts === null && <SkeletonRows rows={6} label="Loading alerts" />}
       {alerts && alerts.length === 0 && <p className="py-6 text-label text-fg-2">No alerts.</p>}
       {(['HIGH', 'ELEVATED'] as const).map(level =>
