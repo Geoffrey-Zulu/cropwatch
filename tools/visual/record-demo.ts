@@ -100,6 +100,30 @@ const bellCount = async (page: Page) => {
   return Number(/(\d+)/.exec(label)?.[1] ?? 0)
 }
 
+// Recording 5 needs no report, so it can be re-made alone: --only-outgrower.
+async function outgrowerStep() {
+  await step(dashboard, '5-outgrower-view', async page => {
+    await page.goto(`${DASHBOARD}/#/outgrower`)
+    await page.getByText('Camps needing attention').waitFor({ timeout: 30_000 })
+    await pause(page, 4000)
+    await glide(page, 500)
+    await pause(page, 1500)
+    await page.getByRole('button', { name: /Prioritise field officers/ }).click()
+    await pause(page, 3000)
+    // A farm's visit link in the page, not the rail's "Outgrower View".
+    await page.locator('main a[href*="visit="]').first().click()
+    await page.getByRole('dialog').waitFor({ timeout: 15_000 })
+    await pause(page, 6000)
+    await page.keyboard.press('Escape')
+    await pause(page, 1500)
+  })
+}
+if (args.includes('--only-outgrower')) {
+  await outgrowerStep()
+  await browser.close()
+  process.exit(0)
+}
+
 // Recording 2 runs while recording 1 happens: the map is watching when the report is sent.
 const mapPage = await dashboard.newPage()
 note('start 2-dashboard-report-lands')
@@ -167,13 +191,25 @@ const reportNumber = obsId.slice(0, 4).toUpperCase()
 await step(dashboard, '4-queue-verify-and-upgrade', async page => {
   await page.goto(`${DASHBOARD}/#/queue`)
   await page.getByRole('heading', { name: 'Officer queue' }).waitFor()
-  await pause(page, 2500)
-  let row = page.getByRole('link', { name: new RegExp(reportNumber) }).first()
-  if (!(await row.count())) {
-    await page.getByRole('tab', { name: /Routed to an officer/ }).click()
-    await pause(page, 1500)
-    row = page.getByRole('link', { name: new RegExp(reportNumber) }).first()
+  // Wait for the reports to load before looking (a slow load once sent the search to the wrong
+  // tab): the report is on the tab the pre-stage left open, else on the other one.
+  const row = page.getByRole('link', { name: new RegExp(reportNumber) }).first()
+  await page
+    .getByRole('tab', { name: /\([1-9]\d*\)/ })
+    .first()
+    .waitFor({ timeout: 30_000 })
+  try {
+    await row.waitFor({ timeout: 8000 })
+  } catch {
+    const other = /In a cluster/.test(
+      (await page.getByRole('tab', { selected: true }).first().textContent()) ?? ''
+    )
+      ? /Routed to an officer/
+      : /In a cluster, not verified/
+    await page.getByRole('tab', { name: other }).click()
+    await row.waitFor({ timeout: 8000 })
   }
+  await pause(page, 2000)
   await row.click()
   await pause(page, 3000)
   const before = await page
@@ -213,19 +249,7 @@ await step(dashboard, '4-queue-verify-and-upgrade', async page => {
   await pause(page, 1500)
 })
 
-await step(dashboard, '5-outgrower-view', async page => {
-  await page.goto(`${DASHBOARD}/#/outgrower`)
-  await page.getByText('Camps needing attention').waitFor({ timeout: 30_000 })
-  await pause(page, 4000)
-  await glide(page, 500)
-  await pause(page, 1500)
-  await page.getByRole('button', { name: /Prioritise field officers/ }).click()
-  await pause(page, 3000)
-  await page.getByRole('link', { name: /View/ }).first().click()
-  await pause(page, 6000)
-  await page.keyboard.press('Escape')
-  await pause(page, 1500)
-})
+await outgrowerStep()
 
 await step(dashboard, '6-report-drawer-why-this-advice', async page => {
   await page.goto(`${DASHBOARD}/#/queue/${obsId}?observation=${obsId}`)

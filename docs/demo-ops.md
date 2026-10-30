@@ -38,6 +38,13 @@ Record each step of the run below on the real devices, once it passes, and keep 
 
 If the wifi or the API fails on stage, play the matching recording and keep talking.
 
+**Made on 30 Oct (automated, one genuine live run):** `Desktop/Phytos backup recordings 2026-10-30/` holds recordings 1, 2, 4, 5 and 6 of the stable version, with a README and the run's log. They were recorded by `tools/visual/record-demo.ts` driving the live capture app (phone size) and dashboard (laptop size) through one real report at the venue pin, which was then retracted. Recording 3 (the SMS on a phone) still has to be filmed on the phone. To re-make them (for example after a UI change):
+
+```bash
+PHYTOS_RECORD_EMAIL=<officer email> PHYTOS_RECORD_PASSWORD=<password> pnpm --filter @repo/visual record-demo --out <folder> --photo path/to/leaf-mines.jpg
+pnpm --filter @repo/admin-tools retract-report --obs <the id it prints> --commit
+```
+
 ## Morning-of checklist
 
 ### 1. Warm the API
@@ -164,8 +171,9 @@ Agreed 30 Oct, with the wording revised the same day so every line matches the b
 
 ### Stage notes from the build (checked 30 Oct)
 
-- **Finding the report (1:30).** A report the AI identified with confidence is the top row (newest first) of **In a cluster, not verified**. The queue opens on the tab last used in the browser, so the pre-stage leaves it there. P1: Officer queue → top row → **Confirm as an expert**. If the diagnosis came back unsure, the report is the top row of the first tab, **Routed to an officer**, instead.
-- **The upgrade (1:30).** The verified counter is in the header. The alert's new class shows in the bell drawer: open the bell to show "Verified cluster alert".
+- **Finding the report (1:30).** A report the AI identified with confidence is the top row (newest first) of **In a cluster, not verified**. The queue opens on the tab last used in the browser, so the pre-stage leaves it there. P1: Officer queue → top row → **Verify in the field** (an extension officer account such as david@phytos.com) or **Confirm as an expert** (an agronomist account). If the diagnosis came back unsure, the report is the top row of the first tab, **Routed to an officer**, instead.
+- **The upgrade (1:30).** The verified counter is in the header. The alert's new class shows in the bell drawer: open the bell to show "Verified cluster alert". On 30 Oct the venue alert read "Elevated · Verified cluster alert · 1 of 5 verified", under Elevated, about 6 s after Verify.
+  - Fixed on 30 Oct (API `cropwatch-api-00012-7ph`): before, confirming the AI's own issue never re-ran the outbreak check, so the alert did not upgrade. Found while recording the backups. Every verify now re-runs it.
 - **The SMS (0:50).**
   - It reads "Phytos DEMO alert (Act now): Tuta absoluta (tomato leafminer) near Lusaka. … Not yet verified by an officer. …".
   - It is sent only once the Africa's Talking secrets are deployed (checklist step 4). Every check so far was log-only.
