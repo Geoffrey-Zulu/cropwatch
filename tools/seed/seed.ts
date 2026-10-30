@@ -21,6 +21,7 @@ import {
   commit,
   FsGeoPoint,
   FsTimestamp,
+  getDocument,
   loadRows,
   PROJECT_ID,
   query,
@@ -299,7 +300,12 @@ async function writeFirestore(seed: SeedData) {
   for (const collection of ['observations', 'users', 'recommendations']) {
     for (const path of await queryPaths(collection, 'sim', true)) {
       if (!path.startsWith(`${collection}/sim-`)) {
-        throw new Error(`Refusing to touch ${path}: sim == true but not a sim- id`)
+        // Advice the API wrote itself for a simulated report (an officer corrected the issue,
+        // so it was re-recommended) is demo state too; anything else stays refused.
+        const ownedBySim =
+          collection === 'recommendations' &&
+          String((await getDocument(path))?.obs_id ?? '').startsWith('sim-')
+        if (!ownedBySim) throw new Error(`Refusing to touch ${path}: sim == true but not a sim- id`)
       }
       if (keep.has(path)) continue
       stale++

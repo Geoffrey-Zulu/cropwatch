@@ -12,7 +12,8 @@
     "e2e-timing": "tsx e2e-timing.ts",
     "sms-subscribe": "tsx sms-subscribe.ts",
     "outbreak-e2e": "tsx outbreak-e2e.ts",
-    "retract-report": "tsx retract-report.ts"
+    "retract-report": "tsx retract-report.ts",
+    "mockup-data": "tsx mockup-data.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
