@@ -5,7 +5,7 @@ The checklist and the timed run for the live Phytos demo at the GreenCode final 
 - Capture app (presenter's phone): https://crop-watch01-capture.web.app
 - Command Center (laptop): https://crop-watch01.web.app
 - API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
-- Printed one-page version of the morning checklist: [`morning-checklist.pdf`](morning-checklist.pdf) (source `morning-checklist.html`). Saturday's test plan: [`hackathon-backlog.md`](hackathon-backlog.md).
+- The morning ritual for the CEIH demo is below ("Morning ritual (CEIH)"). The printed checklist and the Saturday test plan from before the pivot are in [`archive/`](archive/).
 
 ## CEIH pivot (31 Oct): the dashboard-only demo
 
