@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import {
+  eligibilityLabel,
   establishmentNdvi,
   zmw,
   type EligibilityFactor,
@@ -159,14 +160,18 @@ export function FieldCardView({
           <p className="text-caption text-fg-2">Rules, not a score. Every one is shown.</p>
           <FactorList factors={e.factors} />
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            {/* While an advance is open the chip says so, as the ledger row does: "Not eligible"
+                beside a waiting advance reads as a refusal. The cap shows only when it applies. */}
             <EligibilityChip
               eligible={e.eligible}
-              label={e.eligible ? 'Eligible' : 'Not eligible'}
+              label={e.eligible ? 'Eligible' : open ? eligibilityLabel(e) : 'Not eligible'}
             />
-            <span className="serif text-[1.7rem] font-semibold leading-none tabular-nums text-fg">
-              <span className="mr-1 font-body text-[0.85rem] font-[650] text-fg-2">cap ZMW</span>
-              {e.cap_zmw.toLocaleString('en-GB')}
-            </span>
+            {e.eligible && (
+              <span className="serif text-[1.7rem] font-semibold leading-none tabular-nums text-fg">
+                <span className="mr-1 font-body text-[0.85rem] font-[650] text-fg-2">cap ZMW</span>
+                {e.cap_zmw.toLocaleString('en-GB')}
+              </span>
+            )}
           </div>
           {open ? (
             <p className="mt-3 text-label text-fg-2">

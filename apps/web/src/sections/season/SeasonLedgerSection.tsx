@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronDown, Download } from 'lucide-react'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { zmw, type Portfolio, type SeasonRow } from '@repo/shared'
 import { DemoBadge } from '../../components/DemoBadge'
 import { Sparkline } from '../../components/NdviChart'
@@ -90,6 +90,14 @@ export function SeasonLedgerSection({
   const [camp, setCamp] = useState<string | null>(null)
   const { route, open, close } = useDrawerLinks()
   const opened = route.drawer?.kind === 'contract' ? route.drawer.id : null
+  // An opened row rises to just under the header, so its card (curve, factors) fills the screen.
+  useEffect(() => {
+    if (!opened) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    document
+      .getElementById(`row-${opened}`)
+      ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  }, [opened])
   const rows = useMemo(() => {
     const shown = camp ? p.rows.filter(r => r.camp === camp) : p.rows
     // The storyline farmer and his neighbour first, then by name.
@@ -168,9 +176,10 @@ export function SeasonLedgerSection({
             <Fragment key={r.contract_id}>
               <a
                 role="row"
+                id={`row-${r.contract_id}`}
                 href={isOpen ? close() : open({ kind: 'contract', id: r.contract_id })}
                 aria-expanded={isOpen}
-                className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
+                className={`grid scroll-mt-[4.75rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
                   isOpen ? 'bg-signal-tint' : 'border-b border-hairline hover:bg-well'
                 }`}
               >

@@ -19,24 +19,34 @@ function Busy({ busy, children }: { busy: boolean; children: React.ReactNode }) 
   )
 }
 
-function Figures({ amount, fee }: { amount: number; fee: number }) {
+// The money as the farmer and the credit team read it: the advance, its fee with the rate said,
+// what the advance adds at harvest, and everything owed then against the projected crop.
+export function Figures({ amount, fee, card }: { amount: number; fee: number; card: FieldCard }) {
   return (
-    <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-2 rounded-card bg-ground px-4 py-3 shadow-[inset_0_0_0_1px_var(--hairline)]">
-      <dt className="text-label text-fg">Advance</dt>
-      <dd className="serif text-right text-[1.6rem] font-semibold tabular-nums text-fg">
-        <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
-        {amount.toLocaleString('en-GB')}
-      </dd>
-      <dt className="text-label text-fg">Fee</dt>
-      <dd className="serif text-right text-[1.6rem] font-semibold tabular-nums text-fg">
-        <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
-        {fee.toLocaleString('en-GB')}
-      </dd>
-      <dt className="border-t border-hairline pt-2 text-label text-fg">Deducted at harvest</dt>
-      <dd className="border-t border-hairline pt-2 text-right text-label font-semibold tabular-nums text-fg">
-        {zmw(amount + fee)}
-      </dd>
-    </dl>
+    <div>
+      <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-2 rounded-card bg-ground px-4 py-3 shadow-[inset_0_0_0_1px_var(--hairline)]">
+        <dt className="text-label text-fg">Advance</dt>
+        <dd className="serif text-right text-[1.6rem] font-semibold tabular-nums text-fg">
+          <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
+          {amount.toLocaleString('en-GB')}
+        </dd>
+        <dt className="text-label text-fg">
+          Fee · {Math.round(card.credit.advance_fee_pct * 100)}% flat
+        </dt>
+        <dd className="text-right text-label font-semibold tabular-nums text-fg">{zmw(fee)}</dd>
+        <div role="presentation" className="col-span-2 h-px bg-hairline" />
+        <dt className="whitespace-nowrap text-label text-fg">Deducted at harvest</dt>
+        <dd className="serif text-right text-[1.25rem] font-semibold tabular-nums text-fg">
+          <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
+          {(amount + fee).toLocaleString('en-GB')}
+        </dd>
+      </dl>
+      <p className="mt-2 text-caption leading-[1.4] text-fg-2">
+        With the inputs on loan ({zmw(card.input_loan_zmw)}), {firstName(card.farmer_name)} owes{' '}
+        <span className="font-semibold text-fg">{zmw(card.input_loan_zmw + amount + fee)}</span> at
+        harvest, against a projected crop of {zmw(card.projected_value_zmw)}.
+      </p>
+    </div>
   )
 }
 
@@ -126,7 +136,7 @@ export function RequestAdvanceDialog({
           </>
         }
       >
-        <Figures amount={card.eligibility.cap_zmw} fee={fee} />
+        <Figures amount={card.eligibility.cap_zmw} fee={fee} card={card} />
         <p className="mt-3 text-label text-fg-2">
           {name} gets an SMS with the amount, the fee and a code, and agrees by giving you the code;
           nothing moves before that, and nothing moves without a second person&apos;s approval.
@@ -210,7 +220,7 @@ export function ApproveDialog({
         <p className="text-body text-fg">
           {approve.data.simulated ? 'Simulated transfer' : 'Transfer'} to {approval.card.momo_label}
           , ref <span className="font-mono">{approve.data.tx_ref}</span>. The advance and the fee
-          are on the ledger; {firstName(name)} has an SMS with both.
+          are on the ledger; the message to {firstName(name)} is in the SMS log.
         </p>
       </Dialog>
     )
@@ -236,7 +246,7 @@ export function ApproveDialog({
         </>
       }
     >
-      <Figures amount={approval.amount_zmw} fee={approval.fee_zmw} />
+      <Figures amount={approval.amount_zmw} fee={approval.fee_zmw} card={approval.card} />
       <ul className="mt-3 flex flex-col gap-1.5 text-label text-fg">
         <li>
           Farmer&apos;s code: {approval.otp_ok ? 'confirmed' : 'not yet confirmed'} · requested{' '}

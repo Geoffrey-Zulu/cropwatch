@@ -1,5 +1,6 @@
 import {
   CEIH_SEASON,
+  GEOFENCE_GRACE_M,
   LEDGER_ENTRY_TYPES,
   LEDGER_LABELS,
   MOMO_LABELS,
@@ -35,6 +36,7 @@ import type {
   WeatherTrigger,
 } from '../schemas/ceih'
 import type { Observation } from '../schemas/observation'
+import { checkStillEligible } from './advance'
 import { eligibilityLabel, evaluateEligibility, type RecordObservation } from './eligibility'
 import { maskMsisdn, ndviText, shortDate, zmw } from './format'
 import { polygonRing, ringCentroid } from './geofence'
@@ -372,7 +374,7 @@ function timeline(
       g.geofence_ok === false
         ? ' · outside the field, does not count'
         : g.geofence_ok
-          ? ' · inside the field'
+          ? ` · within ${GEOFENCE_GRACE_M} m of the field`
           : ''
     entries.push({
       at: g.at,
@@ -548,11 +550,17 @@ export function buildApprovals(data: SeasonData, today: string, callerUid: strin
             personLabel(data, uid)
           ),
           caller_is_verifier: a.data.eligibility_snapshot.verifier_ids.includes(callerUid),
+          blocked_today: blockedToday(card.eligibility, a.data.amount_zmw),
           card,
           sim: a.data.sim,
         },
       ]
     })
+}
+
+function blockedToday(eligibility: Eligibility, amountZmw: number) {
+  const check = checkStillEligible(eligibility, amountZmw)
+  return check.ok ? null : check.message
 }
 
 function verifiedIssueOf(data: SeasonData, farmerId: string, today: string) {
@@ -663,7 +671,11 @@ export function buildSmsLog(data: SeasonData): SmsLogView[] {
       id: s.id,
       to_masked: maskMsisdn(s.data.to),
       farmer_name: data.farmers.find(f => f.id === s.data.farmer_id)?.data.name ?? null,
-      message: s.data.message,
+      // A real farmer's code is their consent: staff never read it. The simulated season keeps it,
+      // so the demo can fill it in from the log the room sees (the dashboard masks it on screen).
+      message: s.data.sim
+        ? s.data.message
+        : s.data.message.replace(/code: [0-9]{6}/, 'code: ••••••'),
       purpose: s.data.purpose,
       status: s.data.status,
       at: s.data.at,

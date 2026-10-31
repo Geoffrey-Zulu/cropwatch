@@ -479,6 +479,9 @@ export const ApprovalSchema = z.object({
   verifier_labels: z.array(z.string()),
   // The signed-in user verified evidence this advance rests on: they cannot approve it.
   caller_is_verifier: z.boolean(),
+  // The rules re-run today (checkStillEligible): the reason this advance cannot be approved now,
+  // or null. A request is never approved on its snapshot alone.
+  blocked_today: z.string().nullable().optional(),
   card: FieldCardSchema,
   sim: z.boolean(),
 })

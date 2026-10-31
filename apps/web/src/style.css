@@ -261,7 +261,8 @@
   isolation: isolate;
 }
 .fm .leaflet-container {
-  background: var(--canvas-1);
+  /* A tile still on its way reads as ground, not as a hole. */
+  background: var(--coast);
   font-family: inherit;
 }
 .fm .fm-halo {
@@ -302,16 +303,28 @@
   fill: var(--high);
   stroke: var(--high);
 }
+.fm.fm-lit .fm-shock {
+  fill-opacity: 0.75;
+}
+/* Not seen yet: ink dashes on the white halo, quieter than any state that has been seen. */
 .fm .fm-cloud_gap {
   fill: #fff;
-  stroke: #fff;
+  stroke: var(--fg);
+  stroke-width: 1.5px;
   stroke-dasharray: 5 4;
 }
 .fm.fm-lit .fm-cloud_gap {
   fill-opacity: 0.06;
 }
+/* The storyline field: a solid ink outline and its farmer's name, whatever its state. */
 .fm .fm-hero {
-  stroke-width: 2.8px;
+  stroke: var(--fg);
+  stroke-width: 3px;
+  stroke-dasharray: none;
+}
+.fm-tip.fm-tip-hero {
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
 }
 .fm .fm-draft {
   stroke: #fff;
@@ -380,5 +393,5 @@
   background: var(--high);
 }
 .fm-key-cloud_gap {
-  box-shadow: inset 0 0 0 1.5px var(--fg-2);
+  border: 1.5px dashed var(--fg);
 }

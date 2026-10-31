@@ -25,15 +25,28 @@ import { FieldCardSection } from './FieldCardSection'
 // totals. Drawing a boundary enrols a farm: its hectares come from the outline.
 
 const STATE_LABEL: Record<FieldState, string> = {
-  established: 'Verified from space or on the ground',
-  not_planted: 'Not planted',
-  stress: 'Stress on the field',
+  established: 'Established: seen from space or on a field visit',
+  not_planted: 'No crop seen from space: visit',
+  stress: 'Stress on this field only',
   shock: 'Drought-flagged camp',
   cloud_gap: 'Cloud gap: waiting for a clear pass or a visit',
 }
 const STATE_ORDER: FieldState[] = ['established', 'not_planted', 'stress', 'shock', 'cloud_gap']
 
 type Ring = [number, number][]
+
+// The header line: what the map shows, counted, so the white outlines are explained up front.
+function fieldCounts(fields: FieldsMap['fields']) {
+  const n = (s: FieldState) => fields.filter(f => f.state === s).length
+  return [
+    `${fields.length} fields`,
+    `${n('established')} established`,
+    n('cloud_gap') && `${n('cloud_gap')} under cloud, waiting for a clear pass or a visit`,
+    n('shock') && `${n('shock')} in a drought-flagged camp`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
 const toLatLngs = (ring: Ring) => ring.map(([lng, lat]) => L.latLng(lat, lng))
 const extent = (b: [number, number, number, number]) =>
   L.latLngBounds(L.latLng(b[1], b[0]), L.latLng(b[3], b[2]))
@@ -215,6 +228,14 @@ export function FieldsMapView({
         })
         .on('click', () => !drawing && openRef.current(f.contract_id))
         .addTo(g)
+      // The storyline farmer is named on the map from the first frame.
+      if (f.contract_id === data.hero_contract_id) {
+        const b = L.latLngBounds(latlngs)
+        L.tooltip({ permanent: true, direction: 'top', className: 'fm-tip fm-tip-hero' })
+          .setLatLng(L.latLng(b.getNorth(), b.getCenter().lng))
+          .setContent(f.farmer_name)
+          .addTo(g)
+      }
     }
     if (!data.precise)
       for (const c of data.camps)
@@ -296,9 +317,8 @@ export function FieldsMapView({
           </h2>
           <p className="text-label text-fg-2">
             {data.precise
-              ? `${shown.length} fields`
-              : `${data.camps.reduce((n, c) => n + c.contracts, 0)} farms in ${data.camps.length} camps`}{' '}
-            · verified from space, checked on the ground
+              ? fieldCounts(shown)
+              : `${data.camps.reduce((n, c) => n + c.contracts, 0)} farms in ${data.camps.length} camps · seen from space, checked on the ground`}
           </p>
         </div>
         <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">

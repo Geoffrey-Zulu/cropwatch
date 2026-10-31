@@ -73,6 +73,17 @@ export function checkApprove(advance: AdvanceState, approverId: string): Check {
   return ok
 }
 
+// At approval and again before the money moves, the rules run on the day, not on the request's
+// snapshot: a camp the drought rule has paused since, an open severe issue or a lapsed check stops
+// the money. "One advance a season" is this advance itself, so it is the one rule not re-asked.
+export function checkStillEligible(eligibility: Eligibility, amountZmw: number): Check {
+  const failed = eligibility.factors.find(f => !f.met && f.code !== 'one_advance')
+  if (failed) return refuse('not_eligible', `Not eligible today: ${failed.text}`)
+  if (amountZmw > eligibility.cap_zmw)
+    return refuse('amount_over_cap', `Over today's cap of ${zmw(eligibility.cap_zmw)}`)
+  return ok
+}
+
 // The last gate before money moves: everything above must already hold.
 export function checkDisburse(advance: AdvanceState): Check {
   if (advance.farmer_confirmed?.otp_ok !== true)

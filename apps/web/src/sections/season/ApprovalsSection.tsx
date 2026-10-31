@@ -1,4 +1,11 @@
-import { CircleCheck, Clock, MessageSquare, Satellite, ShieldCheck } from 'lucide-react'
+import {
+  CircleAlert,
+  CircleCheck,
+  Clock,
+  MessageSquare,
+  Satellite,
+  ShieldCheck,
+} from 'lucide-react'
 import { useState } from 'react'
 import { establishmentNdvi, zmw, type Approval, type SmsLogView } from '@repo/shared'
 import { DemoBadge } from '../../components/DemoBadge'
@@ -6,7 +13,7 @@ import { NdviChart } from '../../components/NdviChart'
 import { SkeletonRows } from '../../components/Skeleton'
 import { firstName, seasonDate, seasonTime } from '../../lib/season'
 import { PhotoSection } from '../PhotoSection'
-import { ApproveDialog, DeclineDialog } from './AdvanceDialogs'
+import { ApproveDialog, DeclineDialog, Figures } from './AdvanceDialogs'
 import { FactorList } from './FieldCardSection'
 import { SmsLogSection } from './SmsLogSection'
 
@@ -54,6 +61,9 @@ export function ApprovalsSection({
               <li key={a.advance_id}>
                 <ApprovalCard
                   approval={a}
+                  otpSms={sms?.find(
+                    s => s.purpose === 'otp' && s.farmer_name === a.card.farmer_name
+                  )}
                   onApprove={() => setApproving(a)}
                   onDecline={() => setDeclining(a)}
                 />
@@ -75,10 +85,13 @@ export function ApprovalsSection({
 
 function ApprovalCard({
   approval: a,
+  otpSms,
   onApprove,
   onDecline,
 }: {
   approval: Approval
+  // The message that carried the amount, the fee and the code: what the farmer was really sent.
+  otpSms: SmsLogView | undefined
   onApprove: () => void
   onDecline: () => void
 }) {
@@ -114,7 +127,7 @@ function ApprovalCard({
               <dd
                 className={`font-semibold ${check.geofence_ok ? 'text-signal-text' : 'text-high-text'}`}
               >
-                {check.geofence_ok ? 'Inside the field' : 'Outside the field'}
+                {check.geofence_ok ? 'Within 150 m of the field' : 'Outside the field'}
               </dd>
               <dt className="text-fg-2">Checked</dt>
               <dd className="font-semibold text-fg">
@@ -151,25 +164,12 @@ function ApprovalCard({
       </div>
 
       <div className="min-w-0">
-        <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-2 rounded-card bg-ground px-4 py-3 shadow-[inset_0_0_0_1px_var(--hairline)]">
-          <dt className="text-label text-fg">Advance requested</dt>
-          <dd className="serif text-right text-[1.75rem] font-semibold tabular-nums text-fg">
-            <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
-            {a.amount_zmw.toLocaleString('en-GB')}
-          </dd>
-          <dt className="text-label text-fg">Fee</dt>
-          <dd className="serif text-right text-[1.75rem] font-semibold tabular-nums text-fg">
-            <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
-            {a.fee_zmw.toLocaleString('en-GB')}
-          </dd>
-          <dt className="border-t border-hairline pt-2 text-label text-fg">Deducted at harvest</dt>
-          <dd className="border-t border-hairline pt-2 text-right text-label font-semibold text-fg">
-            {zmw(a.amount_zmw + a.fee_zmw)}
-          </dd>
-        </dl>
-        <p className="mt-3 flex items-center gap-1.5 text-caption font-semibold text-fg-2">
-          <MessageSquare size={14} aria-hidden />
-          {name} saw the amount and the fee by SMS before confirming
+        <Figures amount={a.amount_zmw} fee={a.fee_zmw} card={card} />
+        <p className="mt-3 flex items-start gap-1.5 text-caption font-semibold leading-[1.4] text-fg-2">
+          <MessageSquare size={14} aria-hidden className="mt-0.5 shrink-0" />
+          {otpSms?.status === 'sent'
+            ? `${name} got the amount and the fee by SMS before confirming`
+            : `The SMS with the amount, the fee and the code: logged on screen, not sent (the gateway is off in the demo)`}
         </p>
         {a.otp_ok ? (
           <p className="mt-1.5 flex items-center gap-1.5 text-label font-semibold text-signal-text">
@@ -182,11 +182,17 @@ function ApprovalCard({
             Waiting for {name}&apos;s code
           </p>
         )}
+        {a.blocked_today && (
+          <p className="mt-2 flex items-start gap-1.5 text-label font-semibold leading-[1.4] text-high-text">
+            <CircleAlert size={16} aria-hidden className="mt-0.5 shrink-0" />
+            {a.blocked_today}. The rules are re-run on the day of approval.
+          </p>
+        )}
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
             className="btn-primary"
-            disabled={!a.otp_ok || a.caller_is_verifier}
+            disabled={!a.otp_ok || a.caller_is_verifier || Boolean(a.blocked_today)}
             onClick={onApprove}
           >
             Approve {zmw(a.amount_zmw)}

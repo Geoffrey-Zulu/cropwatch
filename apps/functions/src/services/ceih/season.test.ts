@@ -243,7 +243,9 @@ describe('the CEIH season service', () => {
     const card = await service.fieldCard(david, ORG, 'c-given')
     expect(card.eligibility.eligible).toBe(true)
     expect(card.eligibility.cap_zmw).toBe(840)
-    expect(card.eligibility.factors.map(f => f.text)).toContain('Cap 15% of ZMW 5,600 = ZMW 840')
+    expect(card.eligibility.factors.map(f => f.text)).toContain(
+      'Cap 15% of the projected crop value ZMW 5,600 (0.5 ha × 1.4 t/ha × ZMW 8,000/t) = ZMW 840, under the ZMW 2,500 ceiling'
+    )
     expect(
       card.eligibility.factors.some(f =>
         f.text.startsWith('Field verified 12 Jan by Officer M. Banda, stage V4')
@@ -326,6 +328,30 @@ describe('the CEIH season service', () => {
     }
     expect((await refusal(service.disburse(david, ORG, advance_id))).message).toMatch(
       /not confirmed/
+    )
+    expect(data.ledger.filter(l => l.data.type === 'advance')).toHaveLength(0)
+  })
+
+  it('approval re-runs the rules on the day: a camp paused since the request cannot be paid', async () => {
+    const { data, service, codeFromSms } = setup()
+    await service.groundCheck(david, ORG)
+    const { advance_id } = await service.requestAdvance(banda, ORG, 'c-given')
+    await service.confirmAdvance(banda, ORG, advance_id, codeFromSms())
+    // The drought rule flags his camp after he confirmed.
+    const contract = data.contracts.find(c => c.id === 'c-given')!
+    contract.data = {
+      ...contract.data,
+      shock_flag: {
+        type: 'drought',
+        camp: 'Chikuni',
+        triggered_at: '2027-01-12T09:00:00.000Z',
+        evidence_ref: 't-test',
+      },
+    }
+    const [card] = await service.approvals(david, ORG)
+    expect(card.blocked_today).toMatch(/^Not eligible today: Drought flag on Chikuni/)
+    expect((await refusal(service.approveAdvance(david, ORG, advance_id))).message).toMatch(
+      /^Not eligible today: Drought flag/
     )
     expect(data.ledger.filter(l => l.data.type === 'advance')).toHaveLength(0)
   })

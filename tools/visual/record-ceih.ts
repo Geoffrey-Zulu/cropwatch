@@ -57,8 +57,13 @@ async function frame(p: Page, target: ReturnType<Page['locator']>) {
   const box = await target.boundingBox()
   if (box) await p.evaluate(y => window.scrollBy(0, y - 110), box.y)
 }
+// DEMO CONTROLS is a pill pinned at the bottom right; its panel opens upward over the page.
 const controls = async (p: Page) => {
   if (!(await p.getByRole('button', { name: /Go to June/ }).isVisible()))
+    await p.getByText('DEMO CONTROLS').click()
+}
+const closeControls = async (p: Page) => {
+  if (await p.getByRole('button', { name: /Go to June/ }).isVisible())
     await p.getByText('DEMO CONTROLS').click()
 }
 
@@ -95,13 +100,15 @@ await beat('2-given-cloud-gap', async p => {
     .first()
     .click()
   await p.getByText('Greenness from space').waitFor({ timeout: 20_000 })
-  await p.getByText('Greenness from space').scrollIntoViewIfNeeded()
+  // The opened row rises under the header by itself; let it land.
+  await p.waitForTimeout(700)
 })
 await beat('3-ground-check-eligible', async p => {
+  // The flip happens in view: the pinned controls sit over the page, not at its foot.
   await controls(p)
   await p.getByRole('button', { name: /ground check lands/i }).click()
   await p.getByRole('button', { name: /Request advance for Given/ }).waitFor({ timeout: 20_000 })
-  await p.getByRole('button', { name: /Request advance for Given/ }).scrollIntoViewIfNeeded()
+  await closeControls(p)
 })
 await beat('4a-request-amount-and-fee', async p => {
   await p.getByRole('button', { name: /Request advance for Given/ }).click()
@@ -118,7 +125,7 @@ await beat('4c-confirmed', async p => {
 await beat('5-approval-card', async p => {
   await p.getByRole('link', { name: 'Open approvals' }).click()
   await p.getByRole('button', { name: 'Approve ZMW 840' }).first().waitFor({ timeout: 20_000 })
-  await p.getByRole('button', { name: 'Approve ZMW 840' }).first().scrollIntoViewIfNeeded()
+  await frame(p, p.getByRole('heading', { name: 'Approvals' }))
 })
 await beat('6a-approve', async p => {
   await p.getByRole('button', { name: 'Approve ZMW 840' }).first().click()
@@ -128,34 +135,46 @@ await beat('6b-sent', async p => {
   await p.getByRole('button', { name: 'Approve and send' }).click()
   await p.getByText('ZMW 840 sent').waitFor({ timeout: 30_000 })
 })
-await beat('6c-sms-log', async p => {
+await beat('6c-ledger-rows', async p => {
+  // "Sent" ends on the ledger, not on a message: Given's statement carries the two new rows.
   await p.getByRole('button', { name: 'Done' }).click()
+  await p.getByRole('tab', { name: 'Reconciliation' }).click()
   await p
-    .getByText(/ZMW 840 sent to your Airtel Money/)
-    .first()
-    .waitFor({ timeout: 20_000 })
-  await frame(p, p.getByRole('heading', { name: 'SMS log' }))
-})
-await beat('7-march-drought', async p => {
-  await controls(p)
-  await p.getByRole('button', { name: /Go to March/ }).click()
-  await p.getByText('Mar 2027').first().waitFor({ timeout: 30_000 })
-  await p.goto(`${base}/#/outgrower/reconciliation`)
-  await p
-    .getByText(/drought trigger/)
+    .getByText(/Advance fee/)
     .first()
     .waitFor({ timeout: 30_000 })
-  await frame(p, p.getByText('Hamangaba', { exact: true }).first())
+  await frame(p, p.getByText(/Mweemba's statement/).first())
+})
+await beat('7-june-drought-flag', async p => {
+  // From January straight to June: the season runs March's drought rule on the way.
+  await controls(p)
+  await p.getByRole('button', { name: /Go to June/ }).click()
+  await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
+  await closeControls(p)
+  await p
+    .getByText(/drought trigger/i)
+    .first()
+    .waitFor({ timeout: 30_000 })
+  await frame(p, p.getByText(/drought trigger/i).first())
 })
 await beat(
   '8-june-statement',
   async p => {
-    await controls(p)
-    await p.getByRole('button', { name: /Go to June/ }).click()
-    await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
     await p.getByRole('button', { name: 'Record delivery' }).click()
     await p.getByText('Net due to Given').waitFor({ timeout: 30_000 })
     await p.getByText('Net due to Given').scrollIntoViewIfNeeded()
+  },
+  5000
+)
+await beat(
+  '9-fields-map-season',
+  async p => {
+    // The close: the season on one map, the drought camp in brick.
+    await p.mouse.move(12, 140)
+    await p.getByRole('tab', { name: 'Fields map' }).click()
+    await p.locator('.fm-lit').waitFor({ timeout: 30_000 })
+    await p.getByRole('button', { name: 'Hamangaba', exact: true }).click()
+    await p.waitForTimeout(1500)
   },
   5000
 )

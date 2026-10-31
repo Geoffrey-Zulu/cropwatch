@@ -58,6 +58,9 @@ function given(overrides: Partial<EligibilityInput> = {}): EligibilityInput {
       status: 'active',
       crop: 'soybean',
       projected_value_zmw: 5600,
+      contracted_ha: 0.5,
+      projected_yield_t_ha: 1.4,
+      contract_price_zmw_t: 8000,
       shock_flag: null,
       season: '2026/27',
       camp: 'Chikuni',
@@ -100,7 +103,9 @@ describe('eligibility (spec W3, §6.1 and §6.5)', () => {
     const texts = e.factors.map(f => f.text)
     expect(texts).toContain('Field verified 12 Jan by Officer M. Banda, stage V4')
     expect(texts).toContain('No open severe issues')
-    expect(texts).toContain('Cap 15% of ZMW 5,600 = ZMW 840')
+    expect(texts).toContain(
+      'Cap 15% of the projected crop value ZMW 5,600 (0.5 ha × 1.4 t/ha × ZMW 8,000/t) = ZMW 840, under the ZMW 2,500 ceiling'
+    )
     expect(eligibilityLabel(e)).toBe('Eligible · cap ZMW 840')
   })
 
@@ -237,7 +242,7 @@ describe('eligibility (spec W3, §6.1 and §6.5)', () => {
     )
     expect(e.cap_zmw).toBe(2500)
     expect(e.factors.find(f => f.code === 'cap')!.text).toBe(
-      'Cap 15% of ZMW 20,000 = ZMW 3,000, held at the ZMW 2,500 ceiling'
+      'Cap 15% of the projected crop value ZMW 20,000 (0.5 ha × 1.4 t/ha × ZMW 8,000/t) = ZMW 3,000, held at the ZMW 2,500 ceiling'
     )
   })
 

@@ -2,6 +2,7 @@ import { createHash, randomInt } from 'node:crypto'
 import {
   ADVANCE_APPROVER_ROLES,
   checkApprove,
+  checkStillEligible,
   checkConfirm,
   checkDisburse,
   checkRequest,
@@ -440,6 +441,11 @@ export function seasonService({
       const advance = advanceIn(data, advanceId)
       const check = checkApprove(advance.data, caller.uid)
       if (!check.ok) throw new SeasonError('refused', check.message)
+      const still = checkStillEligible(
+        eligibilityFor(data, advance.data.contract_id, today),
+        advance.data.amount_zmw
+      )
+      if (!still.ok) throw new SeasonError('refused', still.message)
       const next: Advance = {
         ...advance.data,
         state: 'approved',
@@ -457,6 +463,11 @@ export function seasonService({
       const advance = advanceIn(data, advanceId)
       const check = checkDisburse(advance.data)
       if (!check.ok) throw new SeasonError('refused', check.message)
+      const still = checkStillEligible(
+        eligibilityFor(data, advance.data.contract_id, today),
+        advance.data.amount_zmw
+      )
+      if (!still.ok) throw new SeasonError('refused', still.message)
       const { farmer } = contractOf(data, advance.data.contract_id)
       const result = await money.disburse(
         farmer.data.phone_msisdn,

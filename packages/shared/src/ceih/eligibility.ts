@@ -48,7 +48,15 @@ export interface EligibilityInput {
   now: string
   contract: Pick<
     Contract,
-    'status' | 'crop' | 'projected_value_zmw' | 'shock_flag' | 'season' | 'camp'
+    | 'status'
+    | 'crop'
+    | 'projected_value_zmw'
+    | 'contracted_ha'
+    | 'projected_yield_t_ha'
+    | 'contract_price_zmw_t'
+    | 'shock_flag'
+    | 'season'
+    | 'camp'
   >
   farmer: Pick<Farmer, 'consent' | 'momo_verified' | 'momo_provider' | 'history'>
   // Passes the system had by `now` (visiblePasses).
@@ -176,15 +184,17 @@ export function evaluateEligibility(input: EligibilityInput): Eligibility {
   )
 
   // The cap.
+  // The cap, with where the projected crop value comes from, so the farmer gate can be answered.
   const cap = capFor(contract.projected_value_zmw, credit)
   const raw = Math.floor(contract.projected_value_zmw * credit.cap_pct)
+  const value = `the projected crop value ${zmw(contract.projected_value_zmw)} (${contract.contracted_ha} ha × ${contract.projected_yield_t_ha} t/ha × ${zmw(contract.contract_price_zmw_t)}/t)`
   factors.push(
     factor(
       'cap',
       true,
       raw > credit.hard_ceiling_zmw
-        ? `Cap ${percent(credit.cap_pct)} of ${zmw(contract.projected_value_zmw)} = ${zmw(raw)}, held at the ${zmw(credit.hard_ceiling_zmw)} ceiling`
-        : `Cap ${percent(credit.cap_pct)} of ${zmw(contract.projected_value_zmw)} = ${zmw(cap)}`
+        ? `Cap ${percent(credit.cap_pct)} of ${value} = ${zmw(raw)}, held at the ${zmw(credit.hard_ceiling_zmw)} ceiling`
+        : `Cap ${percent(credit.cap_pct)} of ${value} = ${zmw(cap)}, under the ${zmw(credit.hard_ceiling_zmw)} ceiling`
     )
   )
 

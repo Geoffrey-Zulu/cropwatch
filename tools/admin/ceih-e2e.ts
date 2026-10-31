@@ -221,7 +221,10 @@ try {
     'factor: field verified by Officer M. Banda, stage V4'
   )
   check(
-    c1.eligibility.factors.some(f => f.text === 'Cap 15% of ZMW 5,600 = ZMW 840'),
+    // Either wording: the fallback builds say "of ZMW 5,600", this one names the crop value.
+    c1.eligibility.factors.some(f =>
+      /^Cap 15% of (the projected crop value )?ZMW 5,600.* = ZMW 840/.test(f.text)
+    ),
     'factor: Cap 15% of ZMW 5,600 = ZMW 840'
   )
   check(

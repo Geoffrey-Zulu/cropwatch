@@ -155,13 +155,15 @@ function SeasonTabs({
         <>
           {/* On the Fields map the map is the page: the figures follow it. */}
           {tab === 'fields' && <FieldsMapSection orgId={orgId} commandCenter={commandCenter} />}
-          <PortfolioHeader portfolio={p} />
+          {/* Keyed by tab: the figures count up again on every cut, as the storyline does. */}
+          <PortfolioHeader key={tab} portfolio={p} />
           {tab === 'season' && <SeasonLedgerSection portfolio={p} commandCenter={commandCenter} />}
           {tab === 'approvals' && (
             <ApprovalsSection orgId={orgId} approvals={approvals.data} sms={sms.data} />
           )}
           {tab === 'reconciliation' && <ReconciliationSection portfolio={p} />}
-          {commandCenter && p.sim && <DemoControls portfolio={p} />}
+          {/* Not over the Fields map: the pinned pill would cover the imagery credit. */}
+          {commandCenter && p.sim && tab !== 'fields' && <DemoControls portfolio={p} />}
         </>
       )}
     </div>
