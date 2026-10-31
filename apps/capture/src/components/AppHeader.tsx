@@ -12,7 +12,7 @@ export function AppHeader({
   onReports?: () => void
 }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-hairline bg-ground text-fg">
+    <header className="sticky top-0 z-20 border-b border-hairline bg-ground pt-[env(safe-area-inset-top)] text-fg">
       <div className="mx-auto flex h-14 max-w-md items-center gap-3 px-4">
         {onBack && (
           <button

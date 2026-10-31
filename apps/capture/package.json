@@ -8,11 +8,18 @@
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.sw.json && vite build",
     "preview": "vite preview",
     "icons": "node scripts/icons.mjs",
+    "ios:add": "cap add ios",
+    "ios:sync": "pnpm build && cap sync ios",
+    "ios:open": "cap open ios",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.sw.json",
     "test": "vitest run"
   },
   "dependencies": {
+    "@capacitor/camera": "8.2.6",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/geolocation": "8.2.4",
+    "@capacitor/ios": "8.6.0",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/figtree": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
@@ -29,6 +36,7 @@
     "workbox-routing": "^7.4.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.6.0",
     "@repo/config": "workspace:*",
     "@repo/eslint-config": "workspace:*",
     "@testing-library/jest-dom": "^7.0.1",

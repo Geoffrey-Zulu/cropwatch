@@ -92,5 +92,18 @@ server/dist
 public/dist
 *.pem
 
+# Native outputs and Apple signing material
+apps/capture/ios/App/App/public/
+apps/capture/ios/App/App/capacitor.config.json
+apps/capture/ios/App/App/capacitor.plugins.json
+apps/capture/ios/App/Pods/
+apps/capture/ios/App/.build/
+apps/capture/ios/App/**/xcuserdata/
+apps/capture/ios/App/**/xcuserstate
+*.p12
+*.mobileprovision
+*.ipa
+*.xcarchive/
+
 # Dashboard preview fixtures (generated from the seed, dev only)
 apps/web/src/dev/fixtures.local.json

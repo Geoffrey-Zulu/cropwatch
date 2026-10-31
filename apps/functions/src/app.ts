@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { bodyLimit } from 'hono/body-limit'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 import { appRouter } from './trpc/router'
 import { bearerToken } from './auth'
@@ -21,6 +22,16 @@ export interface AppOptions {
 
 export function createApp({ corsOrigins, services, logRequests = false }: AppOptions) {
   const app = new Hono()
+
+  // Photos upload to Storage, never to this JSON API. Bound memory before parsing or Zod.
+  app.use(
+    '*',
+    bodyLimit({
+      maxSize: 64 * 1024,
+      onError: c =>
+        c.json({ error: 'validation_failed', message: 'Request body exceeds 64 KiB' }, 413),
+    })
+  )
 
   if (logRequests) app.use(logger())
 

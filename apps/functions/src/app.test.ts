@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   AlertListSchema,
+  ErrorResponseSchema,
   CreateObservationRequestSchema,
   type Issue,
   type Observation,
@@ -104,7 +105,13 @@ function memoryStore(): ObservationStore & { docs: Map<string, Observation> } {
     async verify(caller, obsId, request) {
       const observation = docs.get(obsId)
       if (!observation) return { kind: 'not_found' }
-      if (!canVerifyObservation(caller, { orgId: observation.org_id })) return { kind: 'forbidden' }
+      if (
+        !canVerifyObservation(caller, {
+          orgId: observation.org_id,
+          verificationState: observation.verification_state,
+        })
+      )
+        return { kind: 'forbidden' }
       const verified = applyVerification(caller, observation, request)
       docs.set(obsId, verified.observation)
       return {
@@ -163,6 +170,16 @@ const post = (path: string, caller: Caller | null, body: unknown) =>
 const get = (path: string, caller: Caller | null) => app.request(path, as(caller))
 
 describe('health', () => {
+  it('rejects oversized JSON before validation or paid processing', async () => {
+    const res = await post('/api/v1/observations', FARMER, {
+      ...createBody(),
+      farmer_description: 'x'.repeat(70 * 1024),
+    })
+    expect(res.status).toBe(413)
+    expect(ErrorResponseSchema.parse(await res.json()).error).toBe('validation_failed')
+    expect(services.process).not.toHaveBeenCalled()
+    expect(store.docs.size).toBe(0)
+  })
   it('answers at the root and in the contract', async () => {
     expect((await app.request('/health')).status).toBe(200)
     const res = await app.request('/api/v1/health')
@@ -428,16 +445,30 @@ describe('POST /api/v1/observations/{id}/verify', () => {
     expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 
-  it('never moves down the ladder', async () => {
+  it('refuses field officer changes to expert-confirmed reports', async () => {
     store.docs.set(
       OBS_ID,
       diagnosed('complete', 'fall_armyworm', {
         recommendation_id: 'rec1',
         verification_state: 'EXPERT_CONFIRMED',
+        verified_issue: 'fall_armyworm',
+        verified_by: AGRONOMIST.uid,
       })
     )
-    const res = await verify(OFFICER_SAME_ORG, { verified_issue: 'fall_armyworm' })
-    expect((await res.json()).verification_state).toBe('EXPERT_CONFIRMED')
+    for (const issue of ['fall_armyworm', 'early_blight', 'unknown']) {
+      const res = await verify(OFFICER_SAME_ORG, { verified_issue: issue })
+      expect(res.status).toBe(403)
+    }
+    expect(store.docs.get(OBS_ID)).toMatchObject({
+      verification_state: 'EXPERT_CONFIRMED',
+      verified_issue: 'fall_armyworm',
+      verified_by: AGRONOMIST.uid,
+      recommendation_id: 'rec1',
+    })
+    expect(services.process).not.toHaveBeenCalled()
+    const correction = await verify(AGRONOMIST, { verified_issue: 'early_blight' })
+    expect(correction.status).toBe(200)
+    expect((await correction.json()).verified_issue).toBe('early_blight')
   })
 })
 

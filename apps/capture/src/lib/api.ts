@@ -4,6 +4,8 @@ import {
   type CreateObservationRequest,
   type ObservationView,
 } from '@repo/shared'
+import { CapacitorHttp } from '@capacitor/core'
+import { isNativeApp } from './native'
 
 // The frozen REST v1 contract (packages/shared/src/contracts/openapi.json), used exactly as the
 // mobile app uses it. No new endpoints.
@@ -20,6 +22,21 @@ export class ApiError extends Error {
 }
 
 async function call(path: string, idToken: string, init: RequestInit = {}) {
+  // Native transport does not need a browser CORS exception on the existing Cloud Run API.
+  if (isNativeApp()) {
+    const response = await CapacitorHttp.request({
+      url: `${API_URL}${path}`,
+      method: init.method ?? 'GET',
+      headers: { authorization: `Bearer ${idToken}`, 'content-type': 'application/json' },
+      ...(typeof init.body === 'string' ? { data: JSON.parse(init.body) } : {}),
+      connectTimeout: 15_000,
+      readTimeout: 30_000,
+    })
+    if (response.status < 200 || response.status >= 300) {
+      throw new ApiError(response.status, response.data?.message ?? `HTTP ${response.status}`)
+    }
+    return response.data as unknown
+  }
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: { authorization: `Bearer ${idToken}`, 'content-type': 'application/json' },

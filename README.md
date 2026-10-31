@@ -1,4 +1,18 @@
-# The Hytel Way: Monorepo Stack
+# CropWatch / Phytos
+
+Crop-health reporting, cited advice, outbreak surveillance and officer priorities for Zambia.
+
+The working product is based on upstream `d9-dashboard-v2`. Upstream `main` still contains an earlier implementation. This fork's audit and iOS work lives on `codex/cropwatch-audit-ios`.
+
+- [Full audit and functionality comparison with SKACE](docs/SKACE_COMPARISON_AUDIT.md)
+- [iPhone app and simulator / signed IPA build instructions](docs/IOS_BUILD.md)
+- [Validation results and remaining release work](docs/AUDIT_VALIDATION.md)
+
+`apps/web` is the officer dashboard, `apps/capture` is the farmer PWA and Capacitor iOS client, and `apps/functions` is the Cloud Run API. `apps/mobile` contains Flutter setup documentation only. Existing Firebase configuration still points to the original `crop-watch01` backend.
+
+The original template documentation follows.
+
+## The Hytel Way: Monorepo Stack
 
 A production-ready monorepo template featuring React, TypeScript, Tailwind CSS, Shadcn UI, tRPC, and TanStack Query. Built with pnpm and Turborepo for optimal developer experience.
 

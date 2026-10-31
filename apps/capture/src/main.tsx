@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App'
 import './style.css'
+import { isNativeApp } from './lib/native'
 
 const root = createRoot(document.getElementById('root')!)
 const render = (node: ReactNode) => root.render(<StrictMode>{node}</StrictMode>)
@@ -20,6 +21,6 @@ if (import.meta.env.DEV && preview) {
 } else {
   // The service worker caches the app shell (so the app opens with no signal) and receives
   // alert pushes. New versions activate on the next launch.
-  registerSW({ immediate: true })
+  if (!isNativeApp()) registerSW({ immediate: true })
   render(<App />)
 }

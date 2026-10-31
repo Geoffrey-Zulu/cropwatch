@@ -1,10 +1,11 @@
 import { Camera, Images, RotateCcw } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { isNativeApp, nativePhoto } from '../lib/native'
 
 type CameraState = 'starting' | 'live' | 'unavailable'
 
 const cameraSupported = () =>
-  typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+  !isNativeApp() && typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 
 // The app opens on the camera: a live rear-camera viewfinder (getUserMedia needs no tap to
 // start, unlike the file picker). Where there is no camera access, or it is refused, the file
@@ -24,6 +25,19 @@ export function CameraCapture({
   const [state, setState] = useState<CameraState>(() =>
     cameraSupported() ? 'starting' : 'unavailable'
   )
+  const [nativeError, setNativeError] = useState<string | null>(null)
+  const [picking, setPicking] = useState(false)
+  async function pickNative(source: 'camera' | 'photos') {
+    setPicking(true)
+    setNativeError(null)
+    try {
+      onPhoto(await nativePhoto(source))
+    } catch {
+      setNativeError('No photo selected. You can try the camera or choose a photo.')
+    } finally {
+      setPicking(false)
+    }
+  }
   const unavailable = state === 'unavailable'
   const preview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo])
   // Release the previous photo's memory when it is replaced or the view goes away.
@@ -110,7 +124,8 @@ export function CameraCapture({
       ) : unavailable ? (
         <button
           type="button"
-          onClick={() => fallback.current?.click()}
+          onClick={() => (isNativeApp() ? void pickNative('camera') : fallback.current?.click())}
+          disabled={picking}
           className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-card border-1.5 border-dashed border-hairline-strong bg-panel px-6 text-center transition-colors duration-150 active:bg-well"
         >
           <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-signal text-signal-ink">
@@ -163,6 +178,22 @@ export function CameraCapture({
             <span aria-hidden className="w-[92px]" />
           </div>
         </div>
+      )}
+      {isNativeApp() && !photo && (
+        <button
+          type="button"
+          className="btn-quiet mt-3 w-full"
+          disabled={picking}
+          onClick={() => void pickNative('photos')}
+        >
+          <Images size={20} aria-hidden />
+          Choose an existing photo
+        </button>
+      )}
+      {nativeError && (
+        <p role="alert" className="mt-3 text-label text-fg-2">
+          {nativeError}
+        </p>
       )}
     </div>
   )

@@ -30,3 +30,6 @@ tools/corpus/zambia
 tools/corpus/international
 tools/corpus/research
 tools/regulatory/faw-annex-candidate.csv
+
+# Generated Capacitor project files
+apps/capture/ios

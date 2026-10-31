@@ -2,6 +2,7 @@ import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { useCallback, useEffect, useState } from 'react'
 import { app, db } from '../lib/firebase'
 import { webPushPublicKey } from '../lib/firebaseConfig'
+import { isNativeApp } from '../lib/native'
 
 // Messaging loads only where push can work, so other browsers never download it.
 const messagingModule = () => import('firebase/messaging')
@@ -53,6 +54,7 @@ export function usePush(uid: string | undefined, districtSlug: string | null) {
     let cancelled = false
     void (async () => {
       const supported =
+        !isNativeApp() &&
         !!VAPID_KEY &&
         'Notification' in window &&
         'serviceWorker' in navigator &&

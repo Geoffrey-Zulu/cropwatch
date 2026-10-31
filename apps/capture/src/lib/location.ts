@@ -1,4 +1,5 @@
 import { DISTRICTS, distanceKm, type District } from '@repo/shared'
+import { isNativeApp, nativePosition } from './native'
 
 export interface Point {
   latitude: number
@@ -21,6 +22,7 @@ export function nearestDistrict(point: Point): District {
 }
 
 export function currentPosition(timeoutMs = 15_000) {
+  if (isNativeApp()) return nativePosition(timeoutMs)
   return new Promise<Point>((resolve, reject) => {
     if (!('geolocation' in navigator)) {
       reject(new Error('No GPS on this device'))

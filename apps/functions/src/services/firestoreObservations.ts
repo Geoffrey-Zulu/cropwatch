@@ -82,7 +82,12 @@ export function firestoreObservations(db: Firestore): ObservationStore {
         const snap = await tx.get(ref)
         if (!snap.exists) return { kind: 'not_found' as const }
         const observation = fromFirestore(snap.data()) as Observation
-        if (!canVerifyObservation(caller, { orgId: observation.org_id })) {
+        if (
+          !canVerifyObservation(caller, {
+            orgId: observation.org_id,
+            verificationState: observation.verification_state,
+          })
+        ) {
           return { kind: 'forbidden' as const }
         }
         const verified = applyVerification(caller, observation, request)
@@ -96,7 +101,7 @@ export function firestoreObservations(db: Firestore): ObservationStore {
           recommendation_id,
         })
         // Who verified what, and why: internal, never in the contract view.
-        tx.set(ref.collection('internal').doc('verification'), {
+        const verification = {
           verified_by: caller.uid,
           role: caller.role,
           verified_issue,
@@ -104,7 +109,10 @@ export function firestoreObservations(db: Firestore): ObservationStore {
             observation.verified_issue ?? observation.diagnosis?.suspected_issue ?? null,
           notes: request.notes ?? null,
           verified_at: toTimestamp(now),
-        })
+        }
+        const audit = ref.collection('internal').doc('verification')
+        tx.set(audit, verification)
+        tx.create(audit.collection('history').doc(), verification)
         return { kind: 'verified' as const, verified }
       })
       if (result.kind !== 'verified') return result
