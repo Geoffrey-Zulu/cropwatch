@@ -14,6 +14,11 @@ import { firestoreRecommender, registeredProducts } from './services/firestoreRe
 import { geminiDiagnosisModel, geminiJsonModel } from './services/gemini'
 import { firestoreAlerts } from './services/alerts/alertReader'
 import { firestoreDashboard } from './services/dashboard/firestoreDashboard'
+import { firestoreLinker } from './services/ceih/link'
+import { simulatedProvider } from './services/ceih/mobileMoney'
+import { firestoreEnrol } from './services/ceih/enrol'
+import { seasonService } from './services/ceih/season'
+import { firestoreSeasonStore } from './services/ceih/store'
 import { openMeteo } from './services/weather/openMeteo'
 import { fcmPush, firestoreDispatcher } from './services/alerts/dispatch'
 import { pubsubPublisher } from './services/alerts/pubsub'
@@ -89,6 +94,10 @@ const sms = env.sms
     })
   : smsLogOnly
 
+// CEIH: the agribusiness's own money funds the advance; the demo moves it on the simulated
+// provider (spec §3.5).
+const season = seasonService({ store: firestoreSeasonStore(db), sms, money: simulatedProvider })
+
 const app = createApp({
   corsOrigins: env.corsOrigins,
   logRequests: true,
@@ -115,7 +124,9 @@ const app = createApp({
     ),
     alerts: firestoreAlerts(db),
     dispatch: firestoreDispatcher({ db, push: fcmPush(messaging), sms }),
-    dashboard: firestoreDashboard({ db, index: loadIndex, weather }),
+    dashboard: { ...firestoreDashboard({ db, index: loadIndex, weather }), season },
+    linkObservation: firestoreLinker(db),
+    ceih: { season, enrol: firestoreEnrol(db, sms) },
   },
 })
 

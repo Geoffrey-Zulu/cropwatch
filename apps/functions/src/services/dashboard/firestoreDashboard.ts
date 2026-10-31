@@ -87,7 +87,7 @@ export function firestoreDashboard({
   index: () => Promise<KnowledgeIndex>
   weather: FetchWeather
   now?: () => number
-}): DashboardServices {
+}): Omit<DashboardServices, 'season'> {
   return {
     async evidence(obsId) {
       const ref = db.collection('observations').doc(obsId)

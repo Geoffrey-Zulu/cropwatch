@@ -14,6 +14,7 @@ import {
   toObservationView,
 } from './services/observationModel'
 import type { ObservationStore } from './services/firestoreObservations'
+import type { DashboardServices } from './services/dashboard/types'
 
 const FARMER: Caller = { uid: 'farmerUid0001', role: 'farmer', orgId: 'org1' }
 const OTHER_FARMER: Caller = { uid: 'farmerUid0002', role: 'farmer', orgId: null }
@@ -146,6 +147,7 @@ beforeEach(() => {
       evidence: vi.fn(async () => EVIDENCE),
       outgrower: vi.fn(async () => OVERVIEW),
       weather: vi.fn(async () => null),
+      season: {} as DashboardServices['season'],
     },
   }
   app = createApp({ corsOrigins: ['http://localhost:5173'], services })

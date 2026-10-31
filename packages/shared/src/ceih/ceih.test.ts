@@ -422,13 +422,14 @@ describe('ledger (§6.3)', () => {
     )
   })
   it('the statement SMS lists every line', () => {
-    const text = statementMessage({
-      farmerName: 'Given Mweemba',
-      lines: rows,
-      netZmw: 2968,
-      simulated: true,
-    })
-    for (const part of ['ZMW 1,950', 'ZMW 840', 'ZMW 42', 'ZMW 5,800', 'Net to you ZMW 2,968']) {
+    const text = statementMessage({ farmerName: 'Given Mweemba', lines: rows, netZmw: 2968 })
+    for (const part of [
+      'ZMW 1,950',
+      'ZMW 840',
+      'ZMW 42',
+      'ZMW 5,800',
+      'Net due to you ZMW 2,968',
+    ]) {
       expect(text).toContain(part)
     }
   })

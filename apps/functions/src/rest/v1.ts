@@ -16,6 +16,7 @@ import type { ListAlerts } from '../services/alerts/alertReader'
 import type { ObservationStore } from '../services/firestoreObservations'
 import type { ProcessObservation } from '../services/pipeline'
 import { canReadObservation, type Caller } from '../services/observationModel'
+import { mountCeih, type CeihRestServices } from './ceih'
 
 export interface RestServices {
   version: string
@@ -24,6 +25,10 @@ export interface RestServices {
   process: ProcessObservation
   alerts: ListAlerts
   now?: () => Date
+  // CEIH (31 Oct): the geofence link for new reports, and the season routes. Optional, so the
+  // outbreak path runs without them.
+  linkObservation?: (obsId: string) => Promise<void>
+  ceih?: CeihRestServices
 }
 
 type Env = { Variables: { caller: Caller } }
@@ -85,6 +90,9 @@ export function restV1(services: RestServices) {
     if (result.status === 'diagnosing' || result.status === 'recommending') {
       void startProcessing(request.obs_id)
     }
+    // A report inside a contracted field lands on that farmer's record; never holds the reply up.
+    if (result.kind === 'created' && services.linkObservation)
+      void services.linkObservation(request.obs_id)
     return c.json(
       { obs_id: request.obs_id, status: result.status },
       result.kind === 'created' ? 201 : 200
@@ -137,6 +145,8 @@ export function restV1(services: RestServices) {
     const slug = findDistrict(parsed.data.district)?.slug ?? districtSlug(parsed.data.district)
     return c.json({ alerts: await services.alerts(slug) })
   })
+
+  if (services.ceih) mountCeih(app, services.ceih, requireCaller)
 
   return app
 }

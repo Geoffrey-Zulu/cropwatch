@@ -40,7 +40,6 @@ import {
   SatelliteMetricsSchema,
   UserProfileSchema,
   addDays,
-  balance,
   type Advance,
   type CeihDemoState,
   type Contract,
@@ -662,7 +661,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     }
   })
 
-  // June: deliveries for every planted field but Given's (his is entered live), and the payouts.
+  // June: deliveries for every planted field but Given's (his is entered live).
   const deliveries: CeihSeed['deliveries'] = []
   farmers.forEach((f, i) => {
     if (['given', 'neighbour', 'not_planted'].includes(f.archetype)) return
@@ -708,19 +707,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
       id,
       `${(weight / 1000).toFixed(2)} t grade ${grade} at ${price_zmw_t} a tonne`
     )
-    const owed = balance(
-      ledger.filter(l => l.data.contract_id === contracts[i].id).map(l => l.data)
-    )
-    if (owed < 0)
-      entry(
-        i,
-        'payout',
-        addMinutes(when, 30),
-        -owed,
-        `SIM-PAY-${pad(i + 1)}`,
-        'Net payout to mobile money (simulated transfer)',
-        true
-      )
+    // No payout row: paying the net moves money, so it waits for approval (invariant 11).
   })
 
   // Rain: a wet season, with Hamangaba dry from mid-February into March.

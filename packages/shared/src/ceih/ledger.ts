@@ -72,8 +72,8 @@ export function variance(input: {
 export function statementMessage(input: {
   farmerName: string
   lines: Pick<LedgerEntry, 'type' | 'amount_zmw'>[]
+  // What is due to the farmer. Paying it moves money, so it waits for approval (invariant 11).
   netZmw: number
-  simulated: boolean
 }) {
   const parts = input.lines
     .filter(l => l.type !== 'payout')
@@ -81,5 +81,9 @@ export function statementMessage(input: {
       l =>
         `${LEDGER_LABELS[l.type]} ${l.amount_zmw < 0 ? '' : 'less '}${zmw(Math.abs(l.amount_zmw))}`
     )
-  return `Phytos DEMO statement for ${input.farmerName.split(' ')[0]}: ${parts.join('; ')}. Net to you ${zmw(input.netZmw)}${input.simulated ? ' (simulated transfer)' : ''}.`
+  const net =
+    input.netZmw > 0
+      ? `Net due to you ${zmw(input.netZmw)}, paid to your mobile money after approval`
+      : `Still owed ${zmw(-input.netZmw)}, carried to next season`
+  return `Phytos DEMO statement for ${input.farmerName.split(' ')[0]}: ${parts.join('; ')}. ${net}.`
 }
