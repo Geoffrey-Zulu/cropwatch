@@ -9,11 +9,18 @@ Phytos (Team Phytos; formerly CropWatch): early-warning and crop-health intellig
 3. `model_confidence` is internal. UI shows qualitative bands ("AI assessment: high confidence"), never percentages, never the word "probability".
 4. Low confidence (< 0.6) or `suspected_issue == "unknown"` → `needs_expert_review: true` and the officer queue. Never guess.
 5. Every synthetic row carries `sim: true`; any view displaying a sim row renders the `DemoBadge` ("DEMO DATA · SIMULATED").
-6. Farmer-level data: consented, access-controlled; precise locations never appear in Outgrower/commercial views — aggregates and camp/district level only.
+6. **(Amended 31 Oct, CEIH.)** Farmer-level data is visible to the farmer's own contracting agribusiness under recorded contract consent (`consent.scope == "org_contract"`). Precise locations remain hidden from any other organisation, from insurers and from exports; those receive camp/district aggregates only.
 7. Use the Google Gen AI SDK (`google-genai`). Never `vertexai.generative_models` (deprecated).
 8. "Where to buy" lists ALL registered options for the issue, renders only after the recommendation, never sponsor-filtered.
 9. Never imply auto-learning. Officer-verified observations are evaluation data: "every correction becomes a test case". Never claim the model learns or improves from corrections.
 10. Every alert shows its class (weather advisory / verified cluster alert / model risk signal) with its uncertainty wording (`alertUncertainty` in `packages/shared`). "Verified" means at least one report in it was verified by an officer, nothing less.
+11. **(New 31 Oct, CEIH; numbered 9 in the spec.)** Phytos never moves money without (a) farmer OTP confirmation after seeing amount and fee, (b) a human approval by a user who did not perform the verification, and (c) a ledger entry. No exceptions for the demo.
+12. **(New 31 Oct, CEIH; numbered 10 in the spec.)** Eligibility and shock decisions are rule-based with stored, displayed factors. No model decides who gets money. Satellite signals are thresholds on NDVI against calendar and camp median, with every pass stored; no "AI crop health score".
+
+**CEIH pivot (31 Oct, mentor decision; `docs/ceih-workflows-mvp.md`, sequenced by `docs/ceih-overnight-plan.md`, which wins where they disagree).**
+
+- Technicaldoc §3 ("Earth Engine is architecture, not MVP critical path") is superseded for the demo fields by the CEIH spec §3.6, and technicaldoc §11 item 4 ("no loan-exposure figures") by spec §3.4: exposure figures are now the point, always under the DEMO badge while simulated.
+- Invariant 2 (no numeric probabilities) is untouched. NDVI values, ZMW amounts, hectares and dates are measurements and amounts, not probabilities; they display as figures. No scores, no percentages of confidence, anywhere.
 
 ## Environment
 

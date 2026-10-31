@@ -618,3 +618,19 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | `pnpm` gate | Green (399 tests)                                                             |
 | Demo check  | Passed after every deploy and reseed (9.4 s to 15.8 s report → dispatched)    |
 | Live verify | The venue alert reads "Verified cluster alert · 1 of 5 verified" after Verify |
+
+### D10 · Sat 31 Oct evening to Sun 1 Nov: the CEIH pivot
+
+Mentor decision, Saturday evening: Phytos becomes the verification and ledger layer for an agribusiness's season (Crop verification, Eligibility, Instant disbursement, Harvest reconciliation). The spec is `docs/ceih-workflows-mvp.md`; `docs/ceih-overnight-plan.md` sequences it and wins where they disagree. The demo is the dashboard only, composed from the field-airy kit. Work is on branch `ceih`.
+
+**Step 0: safety, branch, CLAUDE.md**
+
+- The `tools/regulatory` spot-check files were already committed in `bf521b0`; git saw only OneDrive timestamp noise. `Claude outputs/` (personal PDFs) is gitignored.
+- **Fallback tag `stable-2026-10-31`** (pushed) is the field-airy rebuild, `fc64f26`, which passed the gate, the demo check and the visual pass on the `rebuild` preview channel. **Production is not cut over:** the production deploy needs Geoffrey's permission, so crop-watch01.web.app still serves the `stable-2026-10-30c` UI. The API is shared, so the demo check covers both.
+- Branch `ceih` from `fc64f26`.
+- CLAUDE.md: invariant 6 amended as written; the two new invariants are **11 and 12** (the spec numbers them 9 and 10, which would have overwritten the live "no auto-learning" and "alert class" rules); the technicaldoc supersessions and the invariant 2 note.
+
+| Check                 | Result                                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Demo check (live API) | Passed: Lusaka HIGH, report → dispatched 8.1 s, cleaned up                                                  |
+| Production cutover    | **Waiting on Geoffrey's permission** (`bash infra/deploy.sh` from `stable-2026-10-31`, then the demo check) |
