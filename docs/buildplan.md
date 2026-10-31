@@ -634,3 +634,30 @@ Mentor decision, Saturday evening: Phytos becomes the verification and ledger la
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | Demo check (live API) | Passed: Lusaka HIGH, report → dispatched 8.1 s, cleaned up                                                  |
 | Production cutover    | **Waiting on Geoffrey's permission** (`bash infra/deploy.sh` from `stable-2026-10-31`, then the demo check) |
+
+**Checkpoint (mentors, Saturday evening):** a static, lettered preview of the CEIH dashboard (`apps/web/public/mockups/d-ceih.html`: Overview, C, E, I, H, farmer channel) on the `ceih-preview` channel only. Shots in `docs/ui-review/2026-10-31-ceih-preview/`.
+
+**Phase 1: data model, constants, seed**
+
+- `packages/shared`:
+  - Zod schemas for farmers, contracts, satellite passes, advances (frozen eligibility snapshot), ledger entries, deliveries, weather triggers, the rainfall series, the SMS log, the demo state and the dashboard views (`schemas/ceih.ts`). The views have no field for a pin, a polygon, a full phone number or an OTP.
+  - Observations gain optional `farmer_id`, `geofence_ok`, `source` and `season_at`. The contract change is additive: `openapi.json` regenerated, `ObservationSource` registered as a component.
+  - `constants/ceih.ts`: every threshold and amount a named PLACEHOLDER constant (NDVI 0.35 for soya, camp tolerance 0.08, 21-day window, 2 clear passes, severity 40, cap 15% (10 to 20%), ceiling ZMW 2,500, fee 5%). Role `credit` appended.
+  - Pure rules in `src/ceih/`: geofence (circle of the claimed hectares around the pin, point-in-polygon plus 150 m), NDVI status, the eligibility engine with displayed factors, the advance state machine, the ledger, the shock rule, and the demo's season calendar.
+- **Season calendar:** whole days added to the real date, so January's demo day lands on 12 Jan 2027 while times of day stay real. March and June are jumps of the same offset; every record carries its season date and nothing after "today" is shown.
+- **Satellite passes** are stored as the `passes` array of `satellite_metrics/{contractId}`, not one document a pass: one read a field, every pass kept.
+- **Seed:** `--ceih` (with `--given-pin`, `--demo-phone`) writes 120 soya contracts in Chikuni, Keemba and Hamangaba, with:
+  - 39 weekly passes each;
+  - 21 ground observations on farmer records;
+  - 12 advances (10 sent, 2 waiting for approval);
+  - inputs ledgered;
+  - 113 June deliveries, hidden until June;
+  - a demo rainfall series.
+- **Contract price:** ZMW 8,000 a tonne (PLACEHOLDER), so Given's 0.5 ha at 1.4 t/ha is ZMW 5,600 and his cap ZMW 840.
+- **Ground observations** never go to BigQuery, so the outbreak rules never see them.
+
+| Check        | Result                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate  | Green (typecheck, lint, build, 429 tests; 29 new CEIH tests in shared)                                                                                                                                                                                                                                                                                                     |
+| Seed dry run | Given: "Not eligible: cloud gap, ground check required" (1 clear pass in 21 days, 2 clouded out), cap ZMW 840; with one ground check: eligible at ZMW 840. A satellite-verified farmer: eligible, "Cap 15% of ZMW 15,000 = ZMW 2,250". Joseph: not planted. 42 eligible. Shock rule at 16 Mar: Hamangaba fires (8.7 mm, 37 of 40 fields falling), Chikuni and Keemba quiet |
+| Seed commit  | Collections in Firestore; a second run removed 0 stale documents (idempotent). The venue was re-armed in the same run (armed until 3 Nov 03:05 UTC)                                                                                                                                                                                                                        |

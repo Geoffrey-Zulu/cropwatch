@@ -8,6 +8,7 @@ import {
 } from '@asteasolutions/zod-to-openapi'
 import type { ZodTypeAny } from 'zod'
 import { z } from '../zod'
+import { ObservationSourceSchema } from '../constants/ceih'
 import { CropSchema } from '../constants/crops'
 import { IssueSchema } from '../constants/issues'
 import { ProvinceSchema } from '../constants/provinces'
@@ -69,6 +70,7 @@ const COMPONENTS: Record<string, ZodTypeAny> = {
   InterventionType: InterventionTypeSchema,
   Intervention: InterventionSchema,
   Outcome: OutcomeSchema,
+  ObservationSource: ObservationSourceSchema,
   RiskLevel: RiskLevelSchema,
   AlertType: AlertTypeSchema,
   Alert: AlertViewSchema,

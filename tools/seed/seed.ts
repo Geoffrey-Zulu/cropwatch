@@ -6,6 +6,10 @@
 //   pnpm --filter @repo/seed seed --commit --live-demo [--demo-issue tuta_absoluta]
 //        [--demo-center -15.4167,28.2833] [--demo-district Lusaka]
 //   --anchor <ISO time>   "now" for the data (default: now). Same anchor, same data.
+//   --ceih [--given-pin -16.2385,27.4512] [--demo-phone +260971234567]
+//        also the CEIH season (tools/seed/ceih.ts): 120 contracts, curves, advances, ledger.
+//        --given-pin puts Given's field at the venue for the live capture-app beat; --demo-phone
+//        is Given's number and the only one a real SMS may go to.
 //
 // --live-demo pre-arms the rehearsed sequence: four qualifying reports near the venue, so the
 // presenter's real report is the fifth and completes the cluster. Seed within ~18 h of the pitch.
@@ -33,13 +37,22 @@ import { clusters, CLUSTER_RADIUS_KM, CLUSTER_WINDOW_HOURS, qualifying } from '.
 import { clusterPoints, generateSeed, type LiveDemoOptions, type SeedData } from './generate'
 import { seedOutbreaks } from './outbreaks'
 import { DATASET, ensureAnalyticsTables } from './tables'
+import { summariseCeih, checkCeih, writeCeih } from './ceihWrite'
+import { generateCeih, type CeihSeed } from './ceih'
 
 const TABLE = 'observations'
 
 // Accepts both --name value and --name=value. Unknown flags are an error: a mistyped venue must
 // never silently fall back to the default.
-const VALUE_FLAGS = ['anchor', 'demo-issue', 'demo-center', 'demo-district']
-const SWITCHES = ['commit', 'live-demo']
+const VALUE_FLAGS = [
+  'anchor',
+  'demo-issue',
+  'demo-center',
+  'demo-district',
+  'given-pin',
+  'demo-phone',
+]
+const SWITCHES = ['commit', 'live-demo', 'ceih']
 const values = new Map<string, string>()
 const switches = new Set<string>()
 const argv = process.argv.slice(2).filter(arg => arg !== '--')
@@ -76,7 +89,22 @@ if (switches.has('live-demo')) {
 
 const data = generateSeed({ anchor, liveDemo })
 summarise(data)
-const problems = check(data)
+let ceih: CeihSeed | null = null
+if (switches.has('ceih')) {
+  const pin = values.get('given-pin')?.split(',').map(Number)
+  if (pin && !(pin[0] >= -18.1 && pin[0] <= -8.2 && pin[1] >= 21.9 && pin[1] <= 33.75))
+    throw new Error('--given-pin must be "latitude,longitude" inside Zambia')
+  const phone = values.get('demo-phone') ?? null
+  if (phone && !/^\+260\d{9}$/.test(phone))
+    throw new Error('--demo-phone must be +260 and nine digits')
+  ceih = generateCeih({
+    realNow: anchor,
+    givenPin: pin ? { latitude: pin[0], longitude: pin[1] } : null,
+    demoPhone: phone,
+  })
+  summariseCeih(ceih)
+}
+const problems = [...check(data), ...(ceih ? checkCeih(ceih) : [])]
 if (problems.length) {
   console.error(`\nChecks failed; nothing written:\n  ${problems.join('\n  ')}`)
   process.exit(1)
@@ -85,7 +113,8 @@ if (problems.length) {
 if (!apply) {
   console.log('\nDry run. Re-run with --commit to replace the sim data in Firestore and BigQuery.')
 } else {
-  await writeFirestore(data)
+  await writeFirestore(data, ceih)
+  if (ceih) await writeCeih(ceih)
   await writeBigQuery(data)
   console.log('\nDone.')
 }
@@ -203,22 +232,28 @@ function observationDocument(observation: Observation): { [key: string]: FsValue
 
 // Replaces the sim data: sets every seeded document and deletes sim documents no longer in the
 // seed. Real data is never touched: only sim == true documents with sim- ids are considered.
-async function writeFirestore(seed: SeedData) {
+async function writeFirestore(seed: SeedData, ceih: CeihSeed | null) {
   const writes: Write[] = []
   const keep = new Set<string>()
 
   writes.push({ set: `orgs/${seed.org.id}`, data: seed.org.data })
-  for (const { id, profile } of seed.users) {
+  for (const { id, profile } of [...seed.users, ...(ceih?.users ?? [])]) {
     keep.add(`users/${id}`)
     writes.push({ set: `users/${id}`, data: profile })
   }
-  for (const { id, observation, internal, recommendation } of seed.observations) {
+  // CEIH ground checks are observations too (on the farmer's record), but never BigQuery rows: the
+  // outbreak rules never see them.
+  for (const { id, observation, internal, recommendation } of [
+    ...seed.observations,
+    ...(ceih?.observations ?? []),
+  ]) {
     keep.add(`observations/${id}`)
     writes.push({ set: `observations/${id}`, data: observationDocument(observation) })
-    writes.push({
-      set: `observations/${id}/internal/diagnosis`,
-      data: { ...internal, created_at: new FsTimestamp(internal.created_at) },
-    })
+    if (internal)
+      writes.push({
+        set: `observations/${id}/internal/diagnosis`,
+        data: { ...internal, created_at: new FsTimestamp(internal.created_at) },
+      })
     if (recommendation) {
       keep.add(`recommendations/${recommendation.id}`)
       writes.push({

@@ -397,6 +397,15 @@
           "notes"
         ]
       },
+      "ObservationSource": {
+        "type": "string",
+        "enum": [
+          "officer",
+          "farmer",
+          "satellite_task"
+        ],
+        "description": "Why an observation exists: an officer visit, a farmer report, or a visit the satellite curve asked for."
+      },
       "RiskLevel": {
         "type": "string",
         "enum": [
@@ -777,6 +786,25 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/Outcome"
+              }
+            ]
+          },
+          "farmer_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The contracted farmer whose field this report fell inside (geofence check), or absent."
+          },
+          "geofence_ok": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "true when the report fell inside the farmer field polygon plus a 150 m margin; only then can it count toward an advance."
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObservationSource"
               }
             ]
           },

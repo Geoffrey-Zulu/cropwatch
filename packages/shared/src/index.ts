@@ -15,3 +15,6 @@ export * from './text'
 
 // Weather context (Open-Meteo) for Risk Model v0 and weather advisories
 export * from './weather'
+
+// CEIH: eligibility, advances, ledger, satellite curves and the shock rule (pure)
+export * from './ceih'
