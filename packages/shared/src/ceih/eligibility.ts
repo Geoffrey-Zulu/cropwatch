@@ -120,7 +120,7 @@ export function evaluateEligibility(input: EligibilityInput): Eligibility {
   if (satelliteOk) {
     satelliteText = `Satellite: ${qualifying.length} clear passes, NDVI ${ndviText(latest.ndvi!)}${campLatest != null ? ` vs camp ${ndviText(campLatest)}` : ''}, on calendar`
   } else if (latest?.status_derived === 'not_planted') {
-    satelliteText = `Satellite: flat near bare soil, NDVI ${ndviText(latest.ndvi!)}${campLatest != null ? ` vs camp ${ndviText(campLatest)}` : ''}: not planted`
+    satelliteText = `Satellite: flat near bare soil, NDVI ${ndviText(latest.ndvi!)}${campLatest != null ? ` vs camp ${ndviText(campLatest)}` : ''}: no crop seen, visit`
   } else if (clear.length > 0 && latest.ndvi! < threshold) {
     satelliteText = `Satellite: NDVI ${ndviText(latest.ndvi!)}${campLatest != null ? ` vs camp ${ndviText(campLatest)}` : ''}, below the establishment line of ${ndviText(threshold)}`
   } else if (
@@ -284,7 +284,7 @@ export function eligibilityLabel(e: Eligibility): string {
     .join(' ')
   switch (blocking.code) {
     case 'established':
-      if (establishing.includes('not planted')) return 'Not eligible: no crop seen'
+      if (establishing.includes('no crop seen')) return 'Not eligible: no crop seen'
       if (establishing.includes('waiting for an officer'))
         return 'Not eligible: waiting for verification'
       if (establishing.includes('below the establishment line'))

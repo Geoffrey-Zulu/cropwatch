@@ -1,5 +1,6 @@
 import {
   Banknote,
+  Check,
   CircleCheck,
   CloudOff,
   Package,
@@ -9,8 +10,10 @@ import {
   Sun,
   Truck,
   UserRound,
+  X,
 } from 'lucide-react'
 import { useState } from 'react'
+import { DemoBadge } from '../../components/DemoBadge'
 import {
   eligibilityLabel,
   establishmentNdvi,
@@ -110,6 +113,9 @@ export function FieldCardView({
               {card.curve_source === 'seeded' ? ' · demo curve' : ''}
             </p>
           </div>
+          {/* In the ledger the island's pill scrolls away as the row rises: the curve keeps its
+              own. In the drawer the header carries it. */}
+          {!narrow && <DemoBadge small rows={[card]} />}
         </div>
         <div className="mt-3">
           <NdviChart
@@ -218,10 +224,7 @@ export function FieldCardView({
               />
             </div>
             <p className="mt-2 text-label font-semibold text-fg">
-              {card.neighbour.status_label === 'Not planted'
-                ? 'No crop seen from space'
-                : card.neighbour.status_label}
-              . No advance. Visit task created.
+              {card.neighbour.status_label}. No advance. Visit task created.
             </p>
             <p className="text-caption text-fg-2">{card.neighbour.eligibility_label}</p>
           </section>
@@ -296,12 +299,18 @@ export function FactorList({ factors }: { factors: EligibilityFactor[] }) {
   )
 }
 
+// A tick or a cross, not a dot's colour: the rule that fails must read from the back of a room.
 function Factor({ factor }: { factor: EligibilityFactor }) {
+  const Mark = factor.met ? Check : X
   return (
-    <li className="relative pl-[1.1rem] text-label leading-[1.4] text-fg">
-      <span
+    <li
+      className={`relative pl-[1.35rem] text-label leading-[1.4] text-fg ${factor.met ? '' : 'font-semibold'}`}
+    >
+      <Mark
+        size={15}
+        strokeWidth={2.6}
         aria-hidden
-        className={`absolute left-0 top-[0.5rem] h-[0.4rem] w-[0.4rem] rounded-full ${factor.met ? 'bg-signal' : 'bg-attention-text'}`}
+        className={`absolute left-0 top-[0.2rem] ${factor.met ? 'text-signal' : 'text-high-text'}`}
       />
       <span className="sr-only">{factor.met ? 'Met: ' : 'Not met: '}</span>
       {factor.text}

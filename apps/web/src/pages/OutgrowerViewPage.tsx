@@ -1,5 +1,5 @@
 import { ChevronRight, ListChecks, Lock } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CROP_LABELS,
   findDistrict,
@@ -106,8 +106,20 @@ const TABS: { tab: OutgrowerTab | null; label: string }[] = [
 // The Outgrower View's tabs (CEIH, plan §3). The season's three sit under its portfolio.
 // Page tabs take the tint, so the filled green stays the data filter's alone (mockup A).
 function OutgrowerTabs({ current, waiting }: { current: OutgrowerTab | null; waiting?: number }) {
+  // On a phone the strip scrolls sideways: bring the current tab into it, never cut at the edge.
+  const nav = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const strip = nav.current
+    const tab = strip?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (strip && tab && strip.scrollWidth > strip.clientWidth)
+      strip.scrollLeft = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2
+  }, [current])
   return (
-    <nav className="toggle-group toggle-group-page self-start" aria-label="Outgrower View">
+    <nav
+      ref={nav}
+      className="toggle-group toggle-group-page self-start"
+      aria-label="Outgrower View"
+    >
       {TABS.map(t => (
         <a
           key={t.label}
@@ -166,7 +178,7 @@ function SeasonTabs({
           intro={
             <>
               <h1
-                className="serif relative text-[2.15rem] font-semibold leading-[1.05] tracking-[-0.02em] text-fg md:text-display lg:on-map lg:whitespace-nowrap"
+                className="serif relative text-[2.15rem] font-semibold leading-[1.05] tracking-[-0.02em] text-fg md:text-display lg:whitespace-nowrap lg:text-[2.35rem]"
                 style={{ fontVariationSettings: '"SOFT" 100, "WONK" 0, "opsz" 96' }}
               >
                 {title}
@@ -187,9 +199,12 @@ function SeasonTabs({
       </div>
     )
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-16">
       <PageHeader title={title} />
-      {tabs}
+      {/* The tabs stay in reach under the header: no scrolling back up between beats. */}
+      <div className="min-w-0 max-w-full self-start lg:sticky lg:top-[7.4rem] lg:z-20 xl:top-[4.4rem]">
+        {tabs}
+      </div>
       {!p ? (
         <Loading label="Building the season">
           <div className="flex flex-col gap-5">

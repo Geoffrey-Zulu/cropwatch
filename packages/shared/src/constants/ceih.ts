@@ -154,7 +154,8 @@ export const SATELLITE_STATUSES = [
 export const SatelliteStatusSchema = z.enum(SATELLITE_STATUSES)
 export type SatelliteStatus = z.infer<typeof SatelliteStatusSchema>
 export const SATELLITE_STATUS_LABELS: Record<SatelliteStatus, string> = {
-  not_planted: 'Not planted',
+  // From space it is only "no crop seen": "not planted" is for an officer who has visited.
+  not_planted: 'No crop seen from space',
   established: 'Established, on track',
   field_stress: 'Stress on this field only',
   shared_stress: 'Stress across the camp',

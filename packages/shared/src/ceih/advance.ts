@@ -10,8 +10,9 @@ export function capFor(projectedValueZmw: number, credit: CreditConfig): number 
   return Math.min(Math.floor(projectedValueZmw * credit.cap_pct), credit.hard_ceiling_zmw)
 }
 
+// Whole kwacha, rounded down like the cap: a part kwacha is never charged to the farmer.
 export const feeFor = (amountZmw: number, credit: Pick<CreditConfig, 'advance_fee_pct'>) =>
-  Math.round(amountZmw * credit.advance_fee_pct)
+  Math.floor(amountZmw * credit.advance_fee_pct)
 
 export type AdvanceRefusal =
   | 'not_eligible'

@@ -29,11 +29,12 @@ export function tileOf(lng: number, lat: number, z: number) {
 export function warmTiles(
   extents: [number, number, number, number][],
   zooms = [13, 14, 15, 16, 17],
-  limit = 400
+  limit = 600
 ) {
   const urls: string[] = []
-  for (const [west, south, east, north] of extents) {
-    for (const z of zooms) {
+  // Zoom by zoom across every camp, so the limit never starves the last camp of its tiles.
+  for (const z of zooms) {
+    for (const [west, south, east, north] of extents) {
       const a = tileOf(west, north, z)
       const b = tileOf(east, south, z)
       for (let x = a.x; x <= b.x; x++)

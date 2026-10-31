@@ -130,7 +130,7 @@ function ApprovalCard({
             <>
               <dt className="text-fg-2">Stage</dt>
               <dd className="font-semibold text-fg">{check.stage ?? 'Not recorded'}</dd>
-              <dt className="text-fg-2">Geofence</dt>
+              <dt className="text-fg-2">Photo taken</dt>
               <dd
                 className={`font-semibold ${check.geofence_ok ? 'text-signal-text' : 'text-high-text'}`}
               >
@@ -218,10 +218,18 @@ function ApprovalCard({
             </span>
           ) : (
             <span>
-              <span className="font-semibold text-fg">The verifying officer cannot approve.</span>{' '}
-              {a.verifier_labels.length
-                ? `${a.verifier_labels.join(', ')} verified this field.`
-                : 'The satellite established this field.'}{' '}
+              {a.verifier_labels.length ? (
+                <>
+                  <span className="font-semibold text-fg">
+                    The officer who verified the field cannot approve:
+                  </span>{' '}
+                  {a.verifier_labels.join(', ')}.
+                </>
+              ) : (
+                <span className="font-semibold text-fg">
+                  No field visit: established from space.
+                </span>
+              )}{' '}
               The transfer runs on the simulated provider; the SMS is real when the gateway is on.
             </span>
           )}

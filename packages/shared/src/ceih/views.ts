@@ -3,6 +3,7 @@ import {
   GEOFENCE_GRACE_M,
   LEDGER_ENTRY_TYPES,
   LEDGER_LABELS,
+  MIN_CLEAN_PASSES,
   MOMO_LABELS,
   SATELLITE_STATUS_LABELS,
   VERIFICATION_WINDOW_DAYS,
@@ -207,7 +208,16 @@ function verifiedState(
     }
   if (daysBetween(contract.planting_date, today) < 35)
     return { state: 'too_early', label: 'Too early to see', date: null }
-  return { state: 'cloud_gap', label: 'Cloud gap', date: lastClear?.date ?? null }
+  // Say what space has seen, so the status agrees with the record beside it.
+  const established = e.factors.find(f => f.code === 'established' && !f.met)?.text ?? ''
+  if (established.includes('behind the camp'))
+    return { state: 'cloud_gap', label: 'Behind the camp', date: lastClear?.date ?? null }
+  const seen = clear.filter(p => daysBetween(p.date, today) <= VERIFICATION_WINDOW_DAYS).length
+  return {
+    state: 'cloud_gap',
+    label: seen ? `Cloud gap: ${seen} of ${MIN_CLEAN_PASSES} clear passes` : 'Cloud gap',
+    date: lastClear?.date ?? null,
+  }
 }
 
 export function buildSeasonRow(data: SeasonData, contractId: string, today: string): SeasonRow {
@@ -337,7 +347,8 @@ function timeline(
       at: `${firstEstablished.date}T06:00:00.000Z`,
       kind: 'satellite',
       source: 'satellite',
-      text: `Established, on track · NDVI ${ndviText(firstEstablished.ndvi!)}${firstEstablished.ndvi_camp_median !== null ? ` vs camp ${ndviText(firstEstablished.ndvi_camp_median)}` : ''}`,
+      // "On track", not "established": establishment is the rule's (two clear passes or a visit).
+      text: `On track from space · NDVI ${ndviText(firstEstablished.ndvi!)}${firstEstablished.ndvi_camp_median !== null ? ` vs camp ${ndviText(firstEstablished.ndvi_camp_median)}` : ''}`,
     })
   const recent = passes.filter(p => daysBetween(p.date, today) <= VERIFICATION_WINDOW_DAYS)
   const clouded = recent.filter(p => !p.usable)

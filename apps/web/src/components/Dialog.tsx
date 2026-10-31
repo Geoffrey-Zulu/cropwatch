@@ -44,12 +44,7 @@ export function Dialog({
       >
         <header className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            {(kicker || aside) && (
-              <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                {kicker && <p className="meta">{kicker}</p>}
-                {aside}
-              </div>
-            )}
+            {kicker && <p className="meta mb-1">{kicker}</p>}
             <h2
               ref={heading}
               id={id}
@@ -59,6 +54,8 @@ export function Dialog({
               {title}
             </h2>
           </div>
+          {/* Top right, as on every island: a long kicker never pushes it under. */}
+          {aside && <div className="shrink-0 pt-0.5">{aside}</div>}
           <button
             type="button"
             aria-label="Close"

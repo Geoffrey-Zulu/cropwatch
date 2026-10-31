@@ -265,14 +265,18 @@
   isolation: isolate;
 }
 .fm .leaflet-container {
-  /* A tile still on its way reads as ground, not as a hole. */
-  background: var(--coast);
+  /* A tile still on its way reads as loading: neither a hole nor a field. */
+  background: var(--canvas-2);
   font-family: inherit;
 }
 .fm .fm-halo {
   stroke: #fff;
   stroke-opacity: 0.92;
   stroke-width: 4.5px;
+}
+.fm .fm-halo-hero {
+  stroke-width: 8px;
+  stroke-opacity: 1;
 }
 .fm .fm-field {
   stroke-width: 1.7px;

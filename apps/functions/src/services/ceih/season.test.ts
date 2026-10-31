@@ -356,6 +356,17 @@ describe('the CEIH season service', () => {
     expect(data.ledger.filter(l => l.data.type === 'advance')).toHaveLength(0)
   })
 
+  it('on a real org only its own credit team moves money: a Command Center stand-in cannot', async () => {
+    const { data, service, codeFromSms } = setup()
+    await service.groundCheck(david, ORG)
+    const { advance_id } = await service.requestAdvance(banda, ORG, 'c-given')
+    await service.confirmAdvance(banda, ORG, advance_id, codeFromSms())
+    data.org = { ...data.org, sim: false }
+    expect((await refusal(service.approveAdvance(david, ORG, advance_id))).code).toBe('forbidden')
+    expect((await refusal(service.disburse(david, ORG, advance_id))).code).toBe('forbidden')
+    expect(data.ledger.filter(l => l.data.type === 'advance')).toHaveLength(0)
+  })
+
   it('a decline never moves money and tells the farmer why', async () => {
     const { data, service } = setup()
     await service.groundCheck(david, ORG)

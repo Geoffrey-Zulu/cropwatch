@@ -1,5 +1,5 @@
 import { LoaderCircle, Sun, Truck } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   GRADE_PRICE_FACTOR,
   GRADES,
@@ -48,19 +48,47 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
     { orgId: p.org_id, contractId },
     { enabled: Boolean(contractId), refetchInterval: 6000 }
   )
-  const record = trpc.season.recordDelivery.useMutation({ onSuccess: () => void refresh() })
+  // The payoff in view without a scroll on stage: on opening, the statement (before June) or the
+  // depot's form (June); when June arrives, the form; after a delivery, the net due.
+  const island = useRef<HTMLElement>(null)
+  const heading = useRef<HTMLHeadingElement>(null)
+  const show = (el: Element | null, block: ScrollLogicalPosition = 'start') => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block })
+  }
+  const record = trpc.season.recordDelivery.useMutation({
+    onSuccess: async () => {
+      await refresh()
+      setTimeout(() => show(document.getElementById('net-due'), 'center'), 150)
+    },
+  })
   const s = statement.data
   const kg = Number(weight)
   const price = s ? Math.round(s.contract_price_zmw_t * GRADE_PRICE_FACTOR[grade]) : 0
   const delivered = s?.lines.some(l => l.type === 'delivery') ?? false
   const before = p.phase !== 'june'
+  const landed = useRef(false)
+  const loaded = Boolean(statement.data)
+  useEffect(() => {
+    if (!loaded || landed.current) return
+    landed.current = true
+    show(before ? heading.current : island.current)
+    // Once, when the statement first arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded])
+  const wasBefore = useRef(before)
+  useEffect(() => {
+    if (wasBefore.current && !before) show(island.current)
+    wasBefore.current = before
+  }, [before])
 
   return (
     <section
+      ref={island}
       aria-labelledby="delivery"
-      className="island min-w-0 px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      className="island min-w-0 scroll-mt-[8.5rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div>
           <h2 id="delivery" className="serif text-title font-semibold text-fg">
             Delivery and statement
@@ -99,48 +127,54 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-label font-semibold text-fg">
-          Weight (kg)
-          <input
-            className="field tabular-nums"
-            inputMode="numeric"
-            value={weight}
-            onChange={event => setWeight(event.target.value.replace(/[^\d]/g, ''))}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-label font-semibold text-fg">
-          Moisture (%)
-          <input
-            className="field tabular-nums"
-            inputMode="decimal"
-            value={moisture}
-            onChange={event => setMoisture(event.target.value.replace(/[^\d.]/g, ''))}
-          />
-        </label>
-        <fieldset className="sm:col-span-2">
-          <legend className="text-label font-semibold text-fg">Grade</legend>
-          <div className="toggle-group mt-1" role="group">
-            {GRADES.map(g => (
-              <button
-                key={g}
-                type="button"
-                className="toggle !py-1.5"
-                aria-pressed={grade === g}
-                onClick={() => setGrade(g)}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <p className="text-label text-fg-2 sm:col-span-2">
-          {kg > 0 && price > 0
-            ? `${(kg / 1000).toFixed(2)} t × ZMW ${price.toLocaleString('en-GB')} (grade ${grade}) = ${zmw((kg / 1000) * price)}`
-            : 'Enter the weight to price it'}
-        </p>
+        {/* Before June the depot has nothing to weigh: the form folds to one line and the
+            statement (the ledger so far) moves up into view. */}
+        {!before && (
+          <>
+            <label className="flex flex-col gap-1 text-label font-semibold text-fg">
+              Weight (kg)
+              <input
+                className="field tabular-nums"
+                inputMode="numeric"
+                value={weight}
+                onChange={event => setWeight(event.target.value.replace(/[^\d]/g, ''))}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-label font-semibold text-fg">
+              Moisture (%)
+              <input
+                className="field tabular-nums"
+                inputMode="decimal"
+                value={moisture}
+                onChange={event => setMoisture(event.target.value.replace(/[^\d.]/g, ''))}
+              />
+            </label>
+            <fieldset className="sm:col-span-2">
+              <legend className="text-label font-semibold text-fg">Grade</legend>
+              <div className="toggle-group mt-1" role="group">
+                {GRADES.map(g => (
+                  <button
+                    key={g}
+                    type="button"
+                    className="toggle !py-1.5"
+                    aria-pressed={grade === g}
+                    onClick={() => setGrade(g)}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <p className="text-label text-fg-2 sm:col-span-2">
+              {kg > 0 && price > 0
+                ? `${(kg / 1000).toFixed(2)} t × ZMW ${price.toLocaleString('en-GB')} (grade ${grade}) = ${zmw((kg / 1000) * price)}`
+                : 'Enter the weight to price it'}
+            </p>
+          </>
+        )}
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
           {/* Once delivered the statement is final: no button left to read as an action. */}
-          {!delivered && (
+          {!delivered && !before && (
             <button
               type="submit"
               className="btn-primary"
@@ -168,7 +202,7 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
         )}
       </form>
 
-      <h3 className="mt-6 text-section font-semibold text-fg">
+      <h3 ref={heading} className="mt-6 scroll-mt-[8.5rem] text-section font-semibold text-fg">
         {s ? `${s.farmer_name}'s statement` : 'Statement'}
       </h3>
       {!s ? (
@@ -192,6 +226,8 @@ function StatementTable({ statement: s }: { statement: Statement }) {
                 <span className="text-fg">{l.label}</span>
                 <span className="block text-caption text-fg-2">
                   {seasonDate(l.at)} · {l.note}
+                  {/* The transfer's reference, so the row can be traced to the "sent" receipt. */}
+                  {l.type === 'advance' && l.ref.startsWith('SIM-') ? ` · ref ${l.ref}` : ''}
                   {l.simulated && !l.note.includes('simulated') ? ' · simulated' : ''}
                 </span>
               </td>
@@ -200,7 +236,7 @@ function StatementTable({ statement: s }: { statement: Statement }) {
               </td>
             </tr>
           ))}
-          <tr className="border-t-[1.5px] border-fg">
+          <tr id="net-due" className="border-t-[1.5px] border-fg">
             <td className="pt-3 font-semibold text-fg">
               {net >= 0 ? `Net due to ${s.farmer_name.split(' ')[0]}` : 'Still owed by the farmer'}
               <span className="block text-caption font-normal text-fg-2">
@@ -247,7 +283,7 @@ function VarianceList({ data }: { data: Reconciliation | undefined }) {
       aria-labelledby="variance"
       className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div>
           <h2 id="variance" className="serif text-title font-semibold text-fg">
             Delivered against projected
@@ -259,7 +295,7 @@ function VarianceList({ data }: { data: Reconciliation | undefined }) {
       {!data ? (
         <SkeletonRows rows={4} lines={2} label="Loading the deliveries" />
       ) : data.rows.length === 0 ? (
-        <p className="mt-3 text-label text-fg-2">No deliveries yet: they come in from late May.</p>
+        <p className="mt-3 text-label text-fg-2">No deliveries yet: they open in June.</p>
       ) : (
         <ul className="mt-3 flex flex-col">
           {(all ? data.rows : data.rows.slice(0, 8)).map(r => (
@@ -304,7 +340,7 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
       className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
       {/* Brick, as the Fields map paints a drought-flagged camp. */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div>
           <h2 className="serif flex items-center gap-2 text-title font-semibold text-fg">
             <span aria-hidden className="swatch swatch-high" />

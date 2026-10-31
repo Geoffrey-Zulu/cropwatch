@@ -197,7 +197,9 @@ Good: `all checks passed`, including the advice check (every chemical option pas
 - **Dashboard laptop:** signed in as the agronomist, on the national map, focus "Lusaka and Chongwe", bell drawer closed.
 - **Kit:** hotspot charged; backup recordings on the desktop.
 
-## The run: Sunday 3-minute final script
+## Fallback only: the 30 Oct outbreak script
+
+**Not the demo.** The CEIH run is "Storyline v3" at the top of this page, and its timed rehearsal script is in [`morning-report.md`](morning-report.md). This script is the fallback if the CEIH build cannot be shown (present `stable-2026-10-31`).
 
 Agreed 30 Oct, with the wording revised the same day so every line matches the build. Two presenters: **P1** on the phone (the farmer, then the officer); **P2** narrates at the dashboard (projected).
 

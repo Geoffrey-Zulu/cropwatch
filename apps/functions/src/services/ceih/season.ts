@@ -152,6 +152,13 @@ export function canSeeFields(caller: Caller, orgId: string, simulated: boolean) 
   return simulated && COMMAND_CENTER_ROLES.includes(caller.role)
 }
 
+// A Command Center account stands in for the credit team on a simulated season only. On a real
+// org, only that agribusiness's own credit team moves its money or records its deliveries.
+function assertOwnCreditTeam(caller: Caller, simulated: boolean) {
+  if (caller.role !== 'credit' && !simulated)
+    throw new SeasonError('forbidden', "Only this agribusiness's credit team can do this.")
+}
+
 function canApprove(caller: Caller, orgId: string) {
   return (
     ADVANCE_APPROVER_ROLES.includes(caller.role) &&
@@ -438,6 +445,7 @@ export function seasonService({
       if (!canApprove(caller, orgId))
         throw new SeasonError('forbidden', 'Only the credit team can approve advances.')
       const { data, today } = await load(caller, orgId)
+      assertOwnCreditTeam(caller, data.org.sim)
       const advance = advanceIn(data, advanceId)
       const check = checkApprove(advance.data, caller.uid)
       if (!check.ok) throw new SeasonError('refused', check.message)
@@ -460,6 +468,7 @@ export function seasonService({
       if (!canApprove(caller, orgId))
         throw new SeasonError('forbidden', 'Only the credit team can send advances.')
       const { data, today } = await load(caller, orgId)
+      assertOwnCreditTeam(caller, data.org.sim)
       const advance = advanceIn(data, advanceId)
       const check = checkDisburse(advance.data)
       if (!check.ok) throw new SeasonError('refused', check.message)
@@ -535,6 +544,7 @@ export function seasonService({
       if (!canApprove(caller, orgId))
         throw new SeasonError('forbidden', 'Only the credit team can decline advances.')
       const { data, today } = await load(caller, orgId)
+      assertOwnCreditTeam(caller, data.org.sim)
       const advance = advanceIn(data, advanceId)
       if (!['requested', 'farmer_confirmed'].includes(advance.data.state))
         throw new SeasonError('refused', 'This advance is no longer waiting.')
@@ -564,6 +574,7 @@ export function seasonService({
           'Only the credit team or the depot can record deliveries.'
         )
       const { data, today } = await load(caller, orgId)
+      assertOwnCreditTeam(caller, data.org.sim)
       const { contract, farmer } = contractOf(data, input.contract_id)
       if (data.deliveries.some(d => d.data.contract_id === contract.id && d.data.at <= today))
         throw new SeasonError('refused', 'This contract already has its delivery.')

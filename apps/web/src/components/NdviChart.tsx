@@ -111,6 +111,7 @@ export function NdviChart({
     if (first >= start) months.push(first)
   }
   const last = [...points].reverse().find(p => p.ndvi !== null)
+  const lone = new Set(field.filter(run => run.length === 1).map(run => run[0].date))
   const planting = at(plantingDate)
   const todayX = x(at(today))
   const textSize = compact ? 10.5 : 11.5
@@ -264,20 +265,22 @@ export function NdviChart({
             strokeLinejoin="round"
           />
         ))}
-        {!compact &&
-          points
-            .filter(p => p.ndvi !== null)
-            .map(p => (
-              <circle
-                key={p.date}
-                cx={x(p.ms)}
-                cy={y(p.ndvi!)}
-                r={3.2}
-                fill="var(--signal)"
-                stroke="#fff"
-                strokeWidth={1.4}
-              />
-            ))}
+        {/* Compact keeps the dots that carry meaning: the latest reading, and a pass alone between
+            clouds (a one-point run draws no line, so without its dot it would vanish). */}
+        {points
+          .filter(p => p.ndvi !== null)
+          .filter(p => !compact || p === last || lone.has(p.date))
+          .map(p => (
+            <circle
+              key={p.date}
+              cx={x(p.ms)}
+              cy={y(p.ndvi!)}
+              r={compact ? 2.8 : 3.2}
+              fill="var(--signal)"
+              stroke="#fff"
+              strokeWidth={1.4}
+            />
+          ))}
         {last && (
           <text
             {...HALO}
@@ -343,7 +346,7 @@ export function NdviChart({
 // One line a row: the field's NDVI at its last passes, broken where clouded out.
 export function Sparkline({ values, label }: { values: (number | null)[]; label: string }) {
   const w = 96
-  const h = 26
+  const h = 30
   const step = values.length > 1 ? (w - 4) / (values.length - 1) : 0
   const y = (v: number) => h - 3 - (v / 0.85) * (h - 6)
   const segments = runs(
@@ -365,7 +368,7 @@ export function Sparkline({ values, label }: { values: (number | null)[]; label:
             key={run[0].i}
             cx={2 + run[0].i * step}
             cy={y(run[0].v!)}
-            r={1.8}
+            r={2.6}
             fill="var(--signal)"
           />
         ) : (
@@ -374,7 +377,7 @@ export function Sparkline({ values, label }: { values: (number | null)[]; label:
             points={run.map(p => `${(2 + p.i * step).toFixed(1)},${y(p.v!).toFixed(1)}`).join(' ')}
             fill="none"
             stroke="var(--signal)"
-            strokeWidth={2}
+            strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
           />

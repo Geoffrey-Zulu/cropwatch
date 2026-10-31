@@ -291,6 +291,8 @@ describe('advances (spec W4, invariant 11, §6.2 and §6.4)', () => {
   it('cap and fee', () => {
     expect(capFor(5600, CREDIT)).toBe(840)
     expect(feeFor(840, CREDIT)).toBe(42)
+    // 5% of 2,350 is 117.50: never rounded up against the farmer.
+    expect(feeFor(2350, CREDIT)).toBe(117)
   })
 
   it('a request must be eligible and within the cap', () => {

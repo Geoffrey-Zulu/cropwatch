@@ -48,7 +48,8 @@ function fieldCounts(fields: FieldsMap['fields']) {
   const n = (s: FieldState) => fields.filter(f => f.state === s).length
   return [
     `${fields.length} fields`,
-    `${n('established')} established`,
+    // A zero says nothing ("0 established" in a drought camp reads as "never came up").
+    n('established') && `${n('established')} established`,
     n('cloud_gap') && `${n('cloud_gap')} under cloud, waiting for a clear pass or a visit`,
     n('shock') && `${n('shock')} in a drought-flagged camp`,
   ]
@@ -238,9 +239,15 @@ export function FieldsMapView({
     const g = layer.current
     if (!g) return
     g.clearLayers()
-    for (const f of data.fields) {
+    // The storyline field last, so no neighbour's halo paints over its outline.
+    const isHero = (f: FieldsMap['fields'][number]) => f.contract_id === data.hero_contract_id
+    for (const f of [...data.fields].sort((a, b) => Number(isHero(a)) - Number(isHero(b)))) {
       const latlngs = toLatLngs(f.ring)
-      L.polygon(latlngs, { className: 'fm-halo', interactive: false, fill: false }).addTo(g)
+      L.polygon(latlngs, {
+        className: isHero(f) ? 'fm-halo fm-halo-hero' : 'fm-halo',
+        interactive: false,
+        fill: false,
+      }).addTo(g)
       L.polygon(latlngs, {
         className: `fm-field fm-${f.state}${f.contract_id === data.hero_contract_id ? ' fm-hero' : ''}`,
       })
@@ -251,10 +258,16 @@ export function FieldsMapView({
         .on('click', () => !drawing && openRef.current(f.contract_id))
         .addTo(g)
       // The storyline farmer is named on the map from the first frame.
-      if (f.contract_id === data.hero_contract_id) {
+      if (isHero(f)) {
+        // On his own west edge, pointing in: above the field it would sit over a neighbour's.
         const b = L.latLngBounds(latlngs)
-        L.tooltip({ permanent: true, direction: 'top', className: 'fm-tip fm-tip-hero' })
-          .setLatLng(L.latLng(b.getNorth(), b.getCenter().lng))
+        L.tooltip({
+          permanent: true,
+          direction: 'left',
+          offset: [-6, 0],
+          className: 'fm-tip fm-tip-hero',
+        })
+          .setLatLng(L.latLng(b.getCenter().lat, b.getWest()))
           .setContent(f.farmer_name)
           .addTo(g)
       }
@@ -336,7 +349,7 @@ export function FieldsMapView({
       className="relative lg:h-[calc(100dvh-3.75rem)] lg:min-h-[36rem] lg:overflow-hidden"
     >
       {intro && (
-        <div className="flex flex-col gap-4 px-4 pt-6 md:px-[1.6rem] md:pt-8 lg:absolute lg:left-[1.6rem] lg:top-[1.35rem] lg:z-[5] lg:flex-row lg:items-center lg:gap-6 lg:p-0">
+        <div className="flex flex-col gap-4 px-4 pt-6 md:px-[1.6rem] md:pt-8 lg:island lg:absolute lg:left-[1.6rem] lg:top-[1.35rem] lg:z-[5] lg:flex-row lg:items-center lg:gap-5 lg:py-2 lg:pl-6 lg:pr-2">
           {intro}
         </div>
       )}
@@ -442,18 +455,26 @@ export function FieldsMapView({
           </div>
         )}
       </div>
-      <ul
-        className="island mx-4 mt-3 flex flex-col gap-1 px-3.5 py-2.5 text-caption text-fg md:mx-[1.6rem] lg:absolute lg:bottom-[1.6rem] lg:left-[1.6rem] lg:z-[5] lg:m-0 lg:max-w-[calc(100%-3.2rem)]"
-        aria-label="Key"
+      <section
+        aria-labelledby="fields-key"
+        className="island mx-4 mt-3 px-4 pb-3 pt-2.5 text-caption text-fg md:mx-[1.6rem] lg:absolute lg:bottom-[1.6rem] lg:left-[1.6rem] lg:z-[5] lg:m-0 lg:w-[22rem] lg:max-w-[calc(100%-3.2rem)]"
       >
-        {counts.map(([state, n]) => (
-          <li key={state} className="flex items-center gap-2">
-            <span aria-hidden className={`fm-key fm-key-${state}`} />
-            {STATE_LABEL[state]}
-            {data.precise && <span className="tabular-nums text-fg-2">· {n}</span>}
-          </li>
-        ))}
-      </ul>
+        <h3 id="fields-key" className="mb-1.5 text-[0.95rem] font-bold text-fg">
+          Map key
+        </h3>
+        <ul className="flex flex-col gap-1">
+          {counts.map(([state, n]) => (
+            <li
+              key={state}
+              className="grid grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2"
+            >
+              <span aria-hidden className={`fm-key fm-key-${state}`} />
+              {STATE_LABEL[state]}
+              {data.precise && <span className="text-right tabular-nums text-fg-2">{n}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
       {enrolling && (
         <EnrolDialog
           orgId={data.org_id}

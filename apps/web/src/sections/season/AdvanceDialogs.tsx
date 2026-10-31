@@ -1,6 +1,6 @@
 import { LoaderCircle, MessageSquare, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
-import { zmw, type Approval, type FieldCard } from '@repo/shared'
+import { feeFor, zmw, type Approval, type FieldCard } from '@repo/shared'
 import { DemoBadge } from '../../components/DemoBadge'
 import { Dialog } from '../../components/Dialog'
 import { firstName, seasonTime, useSeasonRefresh } from '../../lib/season'
@@ -33,7 +33,10 @@ export function Figures({ amount, fee, card }: { amount: number; fee: number; ca
         <dt className="text-label text-fg">
           Fee · {Math.round(card.credit.advance_fee_pct * 100)}% flat
         </dt>
-        <dd className="text-right text-label font-semibold tabular-nums text-fg">{zmw(fee)}</dd>
+        <dd className="text-right text-label font-semibold tabular-nums text-fg">
+          <span className="mr-1 text-[0.8rem] font-[650] text-fg-2">ZMW</span>
+          {fee.toLocaleString('en-GB')}
+        </dd>
         <div role="presentation" className="col-span-2 h-px bg-hairline" />
         <dt className="whitespace-nowrap text-label text-fg">Deducted at harvest</dt>
         <dd className="serif text-right text-[1.25rem] font-semibold tabular-nums text-fg">
@@ -63,7 +66,7 @@ export function RequestAdvanceDialog({
 }) {
   const refresh = useSeasonRefresh()
   const name = firstName(card.farmer_name)
-  const fee = Math.round(card.eligibility.cap_zmw * card.credit.advance_fee_pct)
+  const fee = feeFor(card.eligibility.cap_zmw, card.credit)
   const existing = card.advance?.state === 'requested' ? card.advance.advance_id : null
   const [advanceId, setAdvanceId] = useState<string | null>(existing)
   const [code, setCode] = useState('')
@@ -149,7 +152,11 @@ export function RequestAdvanceDialog({
     <Dialog
       aside={<DemoBadge small rows={[card]} />}
       title={`${name}'s code`}
-      kicker="Sent by SMS with the amount and the fee"
+      kicker={
+        sent?.status === 'sent'
+          ? 'Sent by SMS with the amount and the fee'
+          : 'The SMS with the amount and the fee: logged on screen, the gateway is off'
+      }
       onClose={onClose}
       footer={
         <>
