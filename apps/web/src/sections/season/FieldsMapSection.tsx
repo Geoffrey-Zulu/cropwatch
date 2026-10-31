@@ -194,7 +194,8 @@ export function FieldsMapView({
     if (!m || !all) return
     m.fitBounds(all, { animate: false, padding: [24, 24] })
     warmTiles(data.camps.map(c => c.bounds))
-    const t = setTimeout(() => setCamp(heroCamp), 700)
+    // Unless someone has already picked a camp: a press never loses to the opening fly-in.
+    const t = setTimeout(() => setCamp(c => c ?? heroCamp), 700)
     return () => clearTimeout(t)
     // Once per org: the camps' extents do not move.
     // eslint-disable-next-line react-hooks/exhaustive-deps

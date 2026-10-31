@@ -145,11 +145,10 @@ await beat('6c-ledger-rows', async p => {
     .waitFor({ timeout: 30_000 })
   await frame(p, p.getByText(/Mweemba's statement/).first())
 })
-await beat('7-june-drought-flag', async p => {
-  // From January straight to June: the season runs March's drought rule on the way.
+await beat('7a-march-drought', async p => {
   await controls(p)
-  await p.getByRole('button', { name: /Go to June/ }).click()
-  await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
+  await p.getByRole('button', { name: /Go to March/ }).click()
+  await p.getByText('Mar 2027').first().waitFor({ timeout: 30_000 })
   await closeControls(p)
   await p
     .getByText(/drought trigger/i)
@@ -158,23 +157,29 @@ await beat('7-june-drought-flag', async p => {
   await frame(p, p.getByText(/drought trigger/i).first())
 })
 await beat(
-  '8-june-statement',
+  '7b-fields-map-drought',
   async p => {
-    await p.getByRole('button', { name: 'Record delivery' }).click()
-    await p.getByText('Net due to Given').waitFor({ timeout: 30_000 })
-    await p.getByText('Net due to Given').scrollIntoViewIfNeeded()
+    // The drought as a picture: mid-season, Chikuni green, Hamangaba's fields in brick.
+    await p.mouse.move(12, 140)
+    await p.getByRole('tab', { name: 'Fields map' }).click()
+    await p.locator('.fm-lit').waitFor({ timeout: 30_000 })
+    await p.waitForTimeout(900)
+    await p.getByRole('button', { name: 'Hamangaba', exact: true }).click()
+    await p.waitForTimeout(1500)
   },
   5000
 )
 await beat(
-  '9-fields-map-season',
+  '8-june-statement',
   async p => {
-    // The close: the season on one map, the drought camp in brick.
-    await p.mouse.move(12, 140)
-    await p.getByRole('tab', { name: 'Fields map' }).click()
-    await p.locator('.fm-lit').waitFor({ timeout: 30_000 })
-    await p.getByRole('button', { name: 'Hamangaba', exact: true }).click()
-    await p.waitForTimeout(1500)
+    await p.getByRole('tab', { name: 'Reconciliation' }).click()
+    await controls(p)
+    await p.getByRole('button', { name: /Go to June/ }).click()
+    await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
+    await closeControls(p)
+    await p.getByRole('button', { name: 'Record delivery' }).click()
+    await p.getByText('Net due to Given').waitFor({ timeout: 30_000 })
+    await p.getByText('Net due to Given').scrollIntoViewIfNeeded()
   },
   5000
 )

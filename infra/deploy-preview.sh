@@ -97,7 +97,12 @@ ok "deployed ${TAG_URL} (no traffic)"
 step "Smoke test"
 health="$(curl -sS --fail-with-body "${TAG_URL}/api/v1/health")" || die "health check failed: ${health}"
 ok "${TAG_URL}/api/v1/health → ${health}"
-traffic="$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.traffic[0].revisionName,status.traffic[0].percent)')"
+# The revisions that take traffic (tagged previews take none).
+traffic="$(gcloud run services describe "$SERVICE" --region="$REGION" --format=json | node -e '
+  let s = ""; process.stdin.on("data", d => (s += d)).on("end", () => {
+    const live = (JSON.parse(s).status.traffic ?? []).filter(t => (t.percent ?? 0) > 0)
+    console.log(live.map(t => `${t.revisionName} ${t.percent}%`).join(", "))
+  })')"
 ok "production traffic unchanged: ${traffic}"
 
 echo
