@@ -81,6 +81,7 @@ export function AppShell({
   queue,
   newAlerts = null,
   onSignOut,
+  bleed,
   children,
 }: {
   active: Route['page']
@@ -92,8 +93,12 @@ export function AppShell({
   // Alerts raised in the last 24 hours, for the bell; null hides the bell.
   newAlerts?: number | null
   onSignOut: () => void
+  // The page is a map that fills the screen under the header (the national map, the Fields
+  // map): no column, no padding. Defaults to the national map only.
+  bleed?: boolean
   children: ReactNode
 }) {
+  const full = bleed ?? active === 'map'
   const items = NAV.filter(item => commandCenter || !item.commandCenterOnly)
   const links = (strip: boolean) =>
     items.map(item => {
@@ -148,10 +153,8 @@ export function AppShell({
           {links(true)}
         </nav>
       </div>
-      <main
-        className={`canvas min-w-0 flex-1 ${active === 'map' ? '' : 'px-4 py-6 md:px-[1.6rem] md:py-8'}`}
-      >
-        {active === 'map' ? children : <div className="mx-auto max-w-[1320px]">{children}</div>}
+      <main className={`canvas min-w-0 flex-1 ${full ? '' : 'px-4 py-6 md:px-[1.6rem] md:py-8'}`}>
+        {full ? children : <div className="mx-auto max-w-[1320px]">{children}</div>}
       </main>
     </div>
   )

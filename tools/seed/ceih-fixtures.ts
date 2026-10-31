@@ -89,7 +89,7 @@ function january(): SeasonData {
       camp: 'Chikuni',
       crop: 'soybean',
       planting_date: heroContract.data.planting_date,
-      growth_stage: 'V4',
+      growth_stage: 'R1',
       photo_paths: [simPhotoPath('library-unknown-03')],
       farmer_description: 'Ground check: even stand, rows closing, no pest seen.',
       status: 'complete',

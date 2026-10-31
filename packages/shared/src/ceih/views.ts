@@ -187,14 +187,16 @@ function verifiedState(
   if (e.established_by === 'satellite')
     return {
       state: 'satellite',
-      label: ground ? 'Satellite and officer' : 'Satellite',
+      // "Verified" is kept for a field visit: an officer stood in the field. Space only sees.
+      label: ground ? 'Seen from space and a field visit' : 'Seen from space',
       date: lastClear?.date ?? null,
     }
   if (e.established_by === 'officer')
-    return { state: 'officer', label: 'Officer', date: groundDate }
+    return { state: 'officer', label: 'Field visit', date: groundDate }
   const status = latestStatus(passes)
   if (status === 'not_planted')
-    return { state: 'not_planted', label: 'Not planted', date: lastClear?.date ?? null }
+    // Nobody has visited: from space it is only "no crop seen", which sends an officer to look.
+    return { state: 'not_planted', label: 'No crop seen from space', date: lastClear?.date ?? null }
   if (status === 'field_stress')
     return { state: 'field_stress', label: 'Stress on this field', date: lastClear?.date ?? null }
   if (status === 'shared_stress')

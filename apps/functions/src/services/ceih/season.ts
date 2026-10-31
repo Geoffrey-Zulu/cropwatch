@@ -725,7 +725,7 @@ export function seasonService({
         await store.patchObservation(live.id, {
           verification_state: 'FIELD_VERIFIED',
           verified_by: officer,
-          growth_stage: live.data.growth_stage ?? 'V4',
+          growth_stage: live.data.growth_stage ?? 'R1',
         })
         return { obs_id: live.id, live: true }
       }
@@ -746,7 +746,7 @@ export function seasonService({
         camp: hero.data.camp,
         crop: contract.data.crop,
         planting_date: contract.data.planting_date,
-        growth_stage: 'V4',
+        growth_stage: 'R1',
         photo_paths: [simPhotoPath('library-unknown-03')],
         farmer_description: 'Ground check: even stand, rows closing, no pest seen.',
         status: 'complete',

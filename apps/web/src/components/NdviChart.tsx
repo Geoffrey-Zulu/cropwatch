@@ -1,6 +1,15 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { CurvePoint } from '@repo/shared'
 
+// Labels that sit over the plot (the cloud band, the latest value, the dates) get A's map-label
+// halo, so a line or a hatch never strikes through them.
+const HALO = {
+  paintOrder: 'stroke',
+  stroke: 'var(--panel)',
+  strokeWidth: 4,
+  strokeLinejoin: 'round',
+} as const
+
 // The field's greenness from space against its camp's median (CEIH, spec W2): Sentinel-2 NDVI a
 // pass, a clouded pass as a break in the line over a hatched band, the establishment line, the
 // planting date and today. Drawn in real pixels from the container's width, so the text stays
@@ -144,6 +153,7 @@ export function NdviChart({
             />
             {!compact && g.to - g.from > 46 && (
               <text
+                {...HALO}
                 x={(g.from + g.to) / 2}
                 y={pad.top + 12}
                 textAnchor="middle"
@@ -184,7 +194,13 @@ export function NdviChart({
           strokeDasharray="2 4"
         />
         {!compact && (
-          <text x={pad.left + 6} y={y(threshold) - 5} fontSize={textSize} fill="var(--fg-2)">
+          <text
+            {...HALO}
+            x={pad.left + 6}
+            y={y(threshold) - 5}
+            fontSize={textSize}
+            fill="var(--fg-2)"
+          >
             Established at {threshold.toFixed(2)}
           </text>
         )}
@@ -212,6 +228,7 @@ export function NdviChart({
             />
             {!compact && (
               <text
+                {...HALO}
                 x={x(planting) + 5}
                 y={pad.top - 14}
                 fontSize={textSize}
@@ -263,6 +280,7 @@ export function NdviChart({
             ))}
         {last && (
           <text
+            {...HALO}
             x={x(last.ms)}
             y={y(last.ndvi!) - 9}
             textAnchor="end"
@@ -283,6 +301,7 @@ export function NdviChart({
         />
         {!compact && (
           <text
+            {...HALO}
             x={todayX - 4}
             y={pad.top - 14}
             textAnchor="end"

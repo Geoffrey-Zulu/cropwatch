@@ -248,7 +248,7 @@ describe('the CEIH season service', () => {
     )
     expect(
       card.eligibility.factors.some(f =>
-        f.text.startsWith('Field verified 12 Jan by Officer M. Banda, stage V4')
+        f.text.startsWith('Field verified 12 Jan by Officer M. Banda, stage R1')
       )
     ).toBe(true)
 

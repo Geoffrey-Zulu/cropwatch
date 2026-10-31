@@ -104,9 +104,10 @@ const TABS: { tab: OutgrowerTab | null; label: string }[] = [
 ]
 
 // The Outgrower View's tabs (CEIH, plan §3). The season's three sit under its portfolio.
+// Page tabs take the tint, so the filled green stays the data filter's alone (mockup A).
 function OutgrowerTabs({ current, waiting }: { current: OutgrowerTab | null; waiting?: number }) {
   return (
-    <nav className="toggle-group self-start" aria-label="Outgrower View">
+    <nav className="toggle-group toggle-group-page self-start" aria-label="Outgrower View">
       {TABS.map(t => (
         <a
           key={t.label}
@@ -128,6 +129,16 @@ function OutgrowerTabs({ current, waiting }: { current: OutgrowerTab | null; wai
   )
 }
 
+// An org name stored in capitals (the seed's "DEMO OUTGROWER CO.") is set in title case for the
+// page title: capitals at display size outweigh everything else on the page. Others as stored.
+function orgTitle(name: string) {
+  return name === name.toUpperCase()
+    ? name
+        .toLowerCase()
+        .replace(/(^|[\s(])([a-z])/g, (_, gap: string, c: string) => gap + c.toUpperCase())
+    : name
+}
+
 function SeasonTabs({
   orgId,
   tab,
@@ -140,10 +151,45 @@ function SeasonTabs({
   const { portfolio, approvals, sms } = useSeasonQueries(orgId)
   const p = portfolio.data
   if (portfolio.error) return <Muted>The season could not load ({portfolio.error.message}).</Muted>
+  const title = orgTitle(p?.name ?? 'Season')
+  const tabs = (
+    <OutgrowerTabs current={tab} waiting={approvals.data?.filter(a => a.otp_ok).length} />
+  )
+  // The Fields map is the page (mockup A): the map fills the screen under the header, the title
+  // and the tabs float on it, and the figures follow below.
+  if (tab === 'fields')
+    return (
+      <div>
+        <FieldsMapSection
+          orgId={orgId}
+          commandCenter={commandCenter}
+          intro={
+            <>
+              <h1
+                className="serif relative text-[2.15rem] font-semibold leading-[1.05] tracking-[-0.02em] text-fg md:text-display lg:on-map lg:whitespace-nowrap"
+                style={{ fontVariationSettings: '"SOFT" 100, "WONK" 0, "opsz" 96' }}
+              >
+                {title}
+              </h1>
+              {tabs}
+            </>
+          }
+        />
+        <div className="mx-auto max-w-[1320px] px-4 py-6 md:px-[1.6rem] md:py-8">
+          {p ? (
+            <PortfolioHeader key={tab} portfolio={p} />
+          ) : (
+            <Loading label="Building the season">
+              <SkeletonStatCards count={6} />
+            </Loading>
+          )}
+        </div>
+      </div>
+    )
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={p?.name ?? 'Season'} />
-      <OutgrowerTabs current={tab} waiting={approvals.data?.filter(a => a.otp_ok).length} />
+      <PageHeader title={title} />
+      {tabs}
       {!p ? (
         <Loading label="Building the season">
           <div className="flex flex-col gap-5">
@@ -153,8 +199,6 @@ function SeasonTabs({
         </Loading>
       ) : (
         <>
-          {/* On the Fields map the map is the page: the figures follow it. */}
-          {tab === 'fields' && <FieldsMapSection orgId={orgId} commandCenter={commandCenter} />}
           {/* Keyed by tab: the figures count up again on every cut, as the storyline does. */}
           <PortfolioHeader key={tab} portfolio={p} />
           {tab === 'season' && <SeasonLedgerSection portfolio={p} commandCenter={commandCenter} />}
@@ -162,8 +206,9 @@ function SeasonTabs({
             <ApprovalsSection orgId={orgId} approvals={approvals.data} sms={sms.data} />
           )}
           {tab === 'reconciliation' && <ReconciliationSection portfolio={p} />}
-          {/* Not over the Fields map: the pinned pill would cover the imagery credit. */}
-          {commandCenter && p.sim && tab !== 'fields' && <DemoControls portfolio={p} />}
+          {/* Not on the Fields map, which has its own page above: the pill would cover the
+              imagery credit. */}
+          {commandCenter && p.sim && <DemoControls portfolio={p} />}
         </>
       )}
     </div>

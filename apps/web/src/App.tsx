@@ -77,6 +77,7 @@ export function App() {
       queue={cc ? queue : null}
       newAlerts={cc ? (newAlerts ?? 0) : null}
       onSignOut={() => void signOut()}
+      bleed={page.page === 'map' || (page.page === 'outgrower' && page.tab === 'fields')}
     >
       {page.page === 'map' && <NationalMapPage {...live} verified={verified} />}
       {page.page === 'queue' && (

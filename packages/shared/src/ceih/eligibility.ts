@@ -284,7 +284,7 @@ export function eligibilityLabel(e: Eligibility): string {
     .join(' ')
   switch (blocking.code) {
     case 'established':
-      if (establishing.includes('not planted')) return 'Not eligible: not planted'
+      if (establishing.includes('not planted')) return 'Not eligible: no crop seen'
       if (establishing.includes('waiting for an officer'))
         return 'Not eligible: waiting for verification'
       if (establishing.includes('below the establishment line'))

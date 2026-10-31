@@ -17,7 +17,7 @@ import { ApproveDialog, DeclineDialog, Figures } from './AdvanceDialogs'
 import { FactorList } from './FieldCardSection'
 import { SmsLogSection } from './SmsLogSection'
 
-// Tab 2 (plan §3): the queue of advances, each card the farmer's Verified Season Record, then the
+// Tab 2 (plan §3): the queue of advances, each card the farmer's season record, then the
 // money. Approve is the credit team's, and never the officer who verified the field's
 // (maker-checker); the transfer runs on the simulated provider and says so.
 export function ApprovalsSection({
@@ -119,6 +119,13 @@ function ApprovalCard({
           <dd className="font-semibold text-fg">
             {card.camp}, {card.district}
           </dd>
+          {!check && (
+            <>
+              {/* Said, not left to inference: this advance rests on greenness alone. */}
+              <dt className="text-fg-2">Field visit</dt>
+              <dd className="font-semibold text-fg">None this season</dd>
+            </>
+          )}
           {check && (
             <>
               <dt className="text-fg-2">Stage</dt>
@@ -142,8 +149,7 @@ function ApprovalCard({
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-section font-semibold text-fg">Verified Season Record</h3>
-          <DemoBadge small rows={[a]} />
+          <h3 className="text-section font-semibold text-fg">Greenness from space</h3>
         </div>
         <div className="mt-2">
           <NdviChart

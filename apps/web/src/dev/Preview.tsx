@@ -154,6 +154,7 @@ export function Preview({ route }: { route: string }) {
           queue={queueRows(live.observations, live.clusters).length}
           newAlerts={live.alerts.length}
           onSignOut={() => undefined}
+          bleed={overMap || page === 'fields'}
         >
           {overMap && <NationalMapPage {...live} verified={verified} />}
           {page === 'alerts' && <AlertsDrawer alerts={live.alerts} />}

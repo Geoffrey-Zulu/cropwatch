@@ -191,7 +191,7 @@ describe('eligibility (spec W3, §6.1 and §6.5)', () => {
       { ...pass('2027-01-06', 0.14), status_derived: 'not_planted' as const },
     ]
     expect(eligibilityLabel(evaluateEligibility(given({ passes: flat })))).toBe(
-      'Not eligible: not planted'
+      'Not eligible: no crop seen'
     )
   })
 

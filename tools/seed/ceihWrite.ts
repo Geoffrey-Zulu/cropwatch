@@ -143,7 +143,7 @@ export function checkCeih(seed: CeihSeed): string[] {
         at: seed.today,
         verification_state: 'FIELD_VERIFIED',
         verified_by: seed.state.data.ground_officer_id!,
-        growth_stage: 'V4',
+        growth_stage: 'R1',
         geofence_ok: true,
         issue: null,
         severity_pct: null,
@@ -157,7 +157,7 @@ export function checkCeih(seed: CeihSeed): string[] {
     problems.push('ceih: a ground check does not make Given eligible at ZMW 840')
 
   const neighbour = eligibilityOf(seed, 1)
-  if (eligibilityLabel(neighbour) !== 'Not eligible: not planted')
+  if (eligibilityLabel(neighbour) !== 'Not eligible: no crop seen')
     problems.push(`ceih: Joseph reads "${eligibilityLabel(neighbour)}"`)
   if (latestStatus(visiblePasses(seed.metrics[1].data.passes, seed.today)) !== 'not_planted')
     problems.push("ceih: Joseph's curve does not read not planted")

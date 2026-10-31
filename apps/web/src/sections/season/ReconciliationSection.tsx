@@ -23,7 +23,7 @@ export function ReconciliationSection({ portfolio: p }: { portfolio: Portfolio }
     { refetchInterval: 6000 }
   )
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
       <DeliveryAndStatement portfolio={p} />
       <div className="flex min-w-0 flex-col gap-6">
         {reconciliation.data?.claim_packs.map(pack => (
@@ -139,18 +139,21 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
             : 'Enter the weight to price it'}
         </p>
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={record.isPending || delivered || before || !(kg > 0)}
-          >
-            {record.isPending ? (
-              <LoaderCircle size={18} aria-hidden className="animate-spin" />
-            ) : (
-              <Truck size={18} aria-hidden />
-            )}
-            Record delivery
-          </button>
+          {/* Once delivered the statement is final: no button left to read as an action. */}
+          {!delivered && (
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={record.isPending || before || !(kg > 0)}
+            >
+              {record.isPending ? (
+                <LoaderCircle size={18} aria-hidden className="animate-spin" />
+              ) : (
+                <Truck size={18} aria-hidden />
+              )}
+              Record delivery
+            </button>
+          )}
           {before && (
             <span className="text-caption text-fg-2">
               Deliveries open in June (season day {seasonDate(p.today)})
@@ -237,6 +240,8 @@ const KIND: Record<VarianceKind, { label: string; className: string }> = {
 }
 
 function VarianceList({ data }: { data: Reconciliation | undefined }) {
+  // Never cut silently: the first eight, then every row on request.
+  const [all, setAll] = useState(false)
   return (
     <section
       aria-labelledby="variance"
@@ -257,7 +262,7 @@ function VarianceList({ data }: { data: Reconciliation | undefined }) {
         <p className="mt-3 text-label text-fg-2">No deliveries yet: they come in from late May.</p>
       ) : (
         <ul className="mt-3 flex flex-col">
-          {data.rows.slice(0, 8).map(r => (
+          {(all ? data.rows : data.rows.slice(0, 8)).map(r => (
             <li key={r.contract_id} className="border-b border-hairline py-2.5 last:border-b-0">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-label font-semibold text-fg">
@@ -270,9 +275,22 @@ function VarianceList({ data }: { data: Reconciliation | undefined }) {
                 </span>
               </div>
               <p className="mt-0.5 text-caption text-fg-2">{r.variance.text}</p>
+              {/* The book in kwacha after this delivery: net_zmw > 0 is owed to the farmer. */}
+              <p className="mt-0.5 text-caption font-semibold tabular-nums text-fg">
+                {r.net_zmw > 0
+                  ? `Net due to the farmer ${zmw(r.net_zmw)}`
+                  : r.net_zmw < 0
+                    ? `Still owes ${zmw(-r.net_zmw)}`
+                    : 'Settled'}
+              </p>
             </li>
           ))}
         </ul>
+      )}
+      {data && data.rows.length > 8 && (
+        <button type="button" className="btn-quiet mt-3" onClick={() => setAll(v => !v)}>
+          {all ? 'Show the first 8' : `Show all ${data.rows.length}`}
+        </button>
       )}
     </section>
   )
@@ -285,21 +303,22 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
       aria-label={`Claim pack, ${pack.camp}`}
       className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
+      {/* Brick, as the Fields map paints a drought-flagged camp. */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="flex items-center gap-2 text-section font-semibold text-fg">
-            <span aria-hidden className="swatch swatch-elevated" />
-            {pack.camp}
-          </p>
-          <p className="mt-0.5 text-label font-semibold text-attention-text">
-            drought trigger · insurance payout SIMULATED
+          <h2 className="serif flex items-center gap-2 text-title font-semibold text-fg">
+            <span aria-hidden className="swatch swatch-high" />
+            {pack.camp}: drought trigger
+          </h2>
+          <p className="mt-0.5 flex items-center gap-1.5 text-label font-semibold text-high-text">
+            <Sun size={16} aria-hidden className="shrink-0" />
+            Claim pack for an insurer · the payout is simulated
           </p>
         </div>
         <DemoBadge small rows={[pack]} />
       </div>
-      <ul className="mt-3 flex flex-col gap-1.5 text-label text-fg">
-        <li className="flex gap-2">
-          <Sun size={16} aria-hidden className="mt-0.5 shrink-0 text-attention-text" />
+      <ul className="mt-3 flex flex-col gap-1.5 text-label text-fg [&>li]:relative [&>li]:pl-4 [&>li]:before:absolute [&>li]:before:left-0 [&>li]:before:top-[0.55rem] [&>li]:before:h-[0.36rem] [&>li]:before:w-[0.36rem] [&>li]:before:rounded-full [&>li]:before:bg-high [&>li]:before:content-['']">
+        <li>
           Rain over 30 days: {t.value} mm, below the {t.threshold} mm rule
         </li>
         <li>
@@ -313,7 +332,7 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
         <li>Claim pack ready for an insurer: camp, contracts, verified records, trigger data</li>
       </ul>
       <p className="mt-3 text-caption text-fg-2">
-        Rain: {pack.rainfall_source}. Greenness: Sentinel-2 camp median.
+        Rain: {pack.rainfall_source}. Greenness: Sentinel-2 camp median (demo curves).
       </p>
     </section>
   )

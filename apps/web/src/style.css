@@ -171,6 +171,10 @@
   .toggle[aria-selected='true'] {
     @apply bg-signal font-semibold text-signal-ink hover:bg-signal hover:text-signal-ink;
   }
+  /* Page tabs: the nav's tint (A's .nav a[aria-current]), so a page has one filled toggle. */
+  .toggle-group-page .toggle[aria-selected='true'] {
+    @apply bg-signal-tint text-signal-text hover:bg-signal-tint hover:text-signal-text;
+  }
   .field {
     @apply h-10 w-full rounded-card border border-[rgb(27_41_32/0.2)] bg-panel px-3 font-body text-label text-fg placeholder:text-fg-2;
   }

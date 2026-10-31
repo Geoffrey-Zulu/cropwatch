@@ -216,9 +216,10 @@ try {
   check(c1.eligibility.cap_zmw === 840, 'cap ZMW 840', `${c1.eligibility.cap_zmw}`)
   check(
     c1.eligibility.factors.some(f =>
-      /^Field verified .* by Officer M\. Banda, stage V4$/.test(f.text)
+      // R1 since 1 Nov (55 days after planting); the fallback builds say V4.
+      /^Field verified .* by Officer M\. Banda, stage (R1|V4)$/.test(f.text)
     ),
-    'factor: field verified by Officer M. Banda, stage V4'
+    'factor: field verified by Officer M. Banda, stage R1'
   )
   check(
     // Either wording: the fallback builds say "of ZMW 5,600", this one names the crop value.

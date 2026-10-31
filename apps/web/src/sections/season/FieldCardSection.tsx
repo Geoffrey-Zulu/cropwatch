@@ -19,7 +19,6 @@ import {
   type FieldCard,
   type TimelineEntry,
 } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { NdviChart } from '../../components/NdviChart'
 import { Bar, Loading } from '../../components/Skeleton'
 import { firstName, seasonDate } from '../../lib/season'
@@ -111,7 +110,6 @@ export function FieldCardView({
               {card.curve_source === 'seeded' ? ' · demo curve' : ''}
             </p>
           </div>
-          <DemoBadge small rows={[card]} />
         </div>
         <div className="mt-3">
           <NdviChart
@@ -123,7 +121,7 @@ export function FieldCardView({
           />
         </div>
 
-        <h3 className="mt-6 text-section font-semibold text-fg">Verified Season Record</h3>
+        <h3 className="mt-6 text-section font-semibold text-fg">Season record</h3>
         <p className="text-caption text-fg-2">Every entry with its source</p>
         <ol className="mt-2 flex flex-col">
           {card.timeline.map((t, i) => {
@@ -220,7 +218,10 @@ export function FieldCardView({
               />
             </div>
             <p className="mt-2 text-label font-semibold text-fg">
-              {card.neighbour.status_label}. No advance. Visit task created.
+              {card.neighbour.status_label === 'Not planted'
+                ? 'No crop seen from space'
+                : card.neighbour.status_label}
+              . No advance. Visit task created.
             </p>
             <p className="text-caption text-fg-2">{card.neighbour.eligibility_label}</p>
           </section>
@@ -257,6 +258,15 @@ const RECORD: EligibilityFactor['code'][] = [
   'shock',
   'one_advance',
 ]
+// Named in the folded line, so "every one is shown" holds before it is opened.
+const RECORD_NAME: Partial<Record<EligibilityFactor['code'], string>> = {
+  contract: 'contract',
+  consent: 'consent',
+  momo: 'mobile money number',
+  history: 'history',
+  shock: 'camp flag',
+  one_advance: 'one advance',
+}
 
 export function FactorList({ factors }: { factors: EligibilityFactor[] }) {
   const head = factors.filter(f => !RECORD.includes(f.code) || !f.met)
@@ -271,7 +281,9 @@ export function FactorList({ factors }: { factors: EligibilityFactor[] }) {
       {record.length > 0 && (
         <details className="group mt-2">
           <summary className="cursor-pointer list-none text-caption font-medium text-fg-2 hover:text-fg [&::-webkit-details-marker]:hidden">
-            {record.length} record checks, all met
+            + {record.length} record checks met:{' '}
+            {record.map(f => RECORD_NAME[f.code] ?? f.code).join(', ')}{' '}
+            <span className="font-semibold text-signal-text group-open:hidden">(show)</span>
           </summary>
           <ul className="mt-1.5 flex flex-col gap-1.5">
             {record.map(f => (

@@ -160,7 +160,7 @@ export function SeasonLedgerSection({
           role="row"
           className="hidden grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] gap-x-4 border-b border-hairline px-3 pb-2 lg:grid"
         >
-          {['Farmer', 'Camp', 'Verified', 'Eligible', 'Advance', 'Exposure', 'NDVI'].map(h => (
+          {['Farmer', 'Camp', 'Field status', 'Eligible', 'Advance', 'Exposure', 'NDVI'].map(h => (
             <span
               key={h}
               role="columnheader"

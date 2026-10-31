@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Check, LoaderCircle, PenLine, Undo2, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   polygonAreaHa,
   zmw,
@@ -35,6 +35,14 @@ const STATE_ORDER: FieldState[] = ['established', 'not_planted', 'stress', 'shoc
 
 type Ring = [number, number][]
 
+// Wide: the map is the page, with the title, the tabs and the controls floating over its top left
+// and the key at its bottom left. A fly-in lands the fields clear of them.
+const wide = () => window.matchMedia('(min-width: 1024px)').matches
+const clear = (): L.FitBoundsOptions =>
+  wide()
+    ? { paddingTopLeft: L.point(32, 236), paddingBottomRight: L.point(32, 32) }
+    : { padding: L.point(16, 16) }
+
 // The header line: what the map shows, counted, so the white outlines are explained up front.
 function fieldCounts(fields: FieldsMap['fields']) {
   const n = (s: FieldState) => fields.filter(f => f.state === s).length
@@ -54,9 +62,13 @@ const extent = (b: [number, number, number, number]) =>
 export function FieldsMapSection({
   orgId,
   commandCenter,
+  intro,
 }: {
   orgId: string
   commandCenter: boolean
+  // The page's title and tabs: they float on the map on a wide screen, and stack above it on a
+  // phone (mockup A's .intro).
+  intro?: ReactNode
 }) {
   const query = trpc.season.fields.useQuery({ orgId }, { refetchInterval: 6000, staleTime: 2000 })
   const { route, open, close } = useDrawerLinks()
@@ -79,6 +91,7 @@ export function FieldsMapSection({
     <>
       <FieldsMapView
         data={data}
+        intro={intro}
         onOpen={id => (window.location.hash = open({ kind: 'contract', id }))}
       />
       {openedField && (
@@ -102,9 +115,11 @@ export function FieldsMapSection({
 
 export function FieldsMapView({
   data,
+  intro,
   onOpen,
 }: {
   data: FieldsMap
+  intro?: ReactNode
   onOpen: (contractId: string) => void
 }) {
   const el = useRef<HTMLDivElement>(null)
@@ -147,6 +162,12 @@ export function FieldsMapView({
     const fit = () => {
       const box = wrap.current
       if (!box) return
+      // On a wide screen the map is the page and the stage sets its size.
+      if (wide()) {
+        box.style.height = ''
+        m.invalidateSize(false)
+        return
+      }
       const top = box.getBoundingClientRect().top + window.scrollY
       box.style.height = `${Math.round(Math.min(832, Math.max(384, window.innerHeight - top - 16)))}px`
       m.invalidateSize(false)
@@ -192,7 +213,7 @@ export function FieldsMapView({
   useEffect(() => {
     const m = map.current
     if (!m || !all) return
-    m.fitBounds(all, { animate: false, padding: [24, 24] })
+    m.fitBounds(all, { animate: false, ...clear() })
     warmTiles(data.camps.map(c => c.bounds))
     // Unless someone has already picked a camp: a press never loses to the opening fly-in.
     const t = setTimeout(() => setCamp(c => c ?? heroCamp), 700)
@@ -208,7 +229,7 @@ export function FieldsMapView({
     const bounds = target ? extent(target.bounds) : all
     if (!bounds) return
     wrap.current?.classList.remove('fm-lit')
-    m.flyToBounds(bounds, { duration: 0.4, padding: [16, 16] })
+    m.flyToBounds(bounds, { duration: 0.4, ...clear() })
     m.once('moveend', () => wrap.current?.classList.add('fm-lit'))
   }, [camp, all, data.camps])
 
@@ -310,8 +331,16 @@ export function FieldsMapView({
   const counts = STATE_ORDER.map(s => [s, shown.filter(f => f.state === s).length] as const)
 
   return (
-    <section aria-labelledby="fields-map" className="island overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3 px-[1.2rem] pb-3 pt-[1.2rem] md:px-[1.65rem] md:pt-[1.45rem]">
+    <section
+      aria-labelledby="fields-map"
+      className="relative lg:h-[calc(100dvh-3.75rem)] lg:min-h-[36rem] lg:overflow-hidden"
+    >
+      {intro && (
+        <div className="flex flex-col gap-4 px-4 pt-6 md:px-[1.6rem] md:pt-8 lg:absolute lg:left-[1.6rem] lg:top-[1.35rem] lg:z-[5] lg:flex-row lg:items-center lg:gap-6 lg:p-0">
+          {intro}
+        </div>
+      )}
+      <div className="island mx-4 mt-4 flex flex-col gap-2.5 px-[1.2rem] py-[1rem] md:mx-[1.6rem] lg:absolute lg:left-[1.6rem] lg:top-[5.9rem] lg:z-[5] lg:m-0 lg:max-w-[calc(100%-3.2rem)] lg:px-[1.35rem]">
         <div>
           <h2 id="fields-map" className="serif text-title font-semibold text-fg">
             Fields map
@@ -346,7 +375,10 @@ export function FieldsMapView({
         </div>
       </div>
 
-      <div ref={wrap} className="fm relative h-[calc(100dvh-15.5rem)] max-h-[52rem] min-h-[24rem]">
+      <div
+        ref={wrap}
+        className="fm relative mx-4 mt-4 h-[70dvh] overflow-hidden rounded-island shadow-island-sm md:mx-[1.6rem] lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:rounded-none lg:shadow-none"
+      >
         <div
           ref={el}
           className="absolute inset-0 bg-[var(--canvas-1)]"
@@ -368,18 +400,6 @@ export function FieldsMapView({
           </defs>
         </svg>
 
-        <ul
-          className="island absolute bottom-3 left-3 z-[500] flex max-w-[calc(100%-1.5rem)] flex-col gap-1 px-3.5 py-2.5 text-caption text-fg"
-          aria-label="Key"
-        >
-          {counts.map(([state, n]) => (
-            <li key={state} className="flex items-center gap-2">
-              <span aria-hidden className={`fm-key fm-key-${state}`} />
-              {STATE_LABEL[state]}
-              {data.precise && <span className="tabular-nums text-fg-2">· {n}</span>}
-            </li>
-          ))}
-        </ul>
         {imagery === 'none' && (
           <p className="island absolute left-3 top-3 z-[500] px-3 py-1.5 text-caption text-fg-2">
             Imagery could not load: fields on the plain map
@@ -422,6 +442,18 @@ export function FieldsMapView({
           </div>
         )}
       </div>
+      <ul
+        className="island mx-4 mt-3 flex flex-col gap-1 px-3.5 py-2.5 text-caption text-fg md:mx-[1.6rem] lg:absolute lg:bottom-[1.6rem] lg:left-[1.6rem] lg:z-[5] lg:m-0 lg:max-w-[calc(100%-3.2rem)]"
+        aria-label="Key"
+      >
+        {counts.map(([state, n]) => (
+          <li key={state} className="flex items-center gap-2">
+            <span aria-hidden className={`fm-key fm-key-${state}`} />
+            {STATE_LABEL[state]}
+            {data.precise && <span className="tabular-nums text-fg-2">· {n}</span>}
+          </li>
+        ))}
+      </ul>
       {enrolling && (
         <EnrolDialog
           orgId={data.org_id}
