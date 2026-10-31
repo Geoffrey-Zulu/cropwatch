@@ -32,3 +32,11 @@ Initial scan: 16 findings (6 high / 7 moderate / 3 low), plus upstream's already
 - Capacitor sync succeeded with camera 8.2.6 and geolocation 8.2.4, using Capacitor 8.6.0. Native project permission descriptions are present. Node script and Bash build-script syntax checks passed.
 - The Tailwind declaration in the dashboard was aligned with capture's existing 3.4.19 version; this resolves the inherited dependency-consistency failure without changing the resolved Tailwind release.
 - The iOS workflow is manual and exports an artifact only. It does not deploy the original backend, send alerts, upload to App Store Connect or publish an app. Remote compilation results are available in the fork's **Build Phytos iOS** Actions runs; a device IPA still requires signing credentials.
+
+## Verified remote iOS compile
+
+[Mac build 41187727166](https://github.com/germansniper3/cropwatch/actions/runs/41187727166) **succeeded**, including frozen install, type checking, lint, tests, Xcode simulator compilation and artifact upload, for commit `38a6d4d`. Artifact: `Phytos-iOS-simulator` (3,896,059 bytes). This independently validates the project with Apple's toolchain; it does not test iPhone hardware or signing.
+
+The normal [CI run 41187727380](https://github.com/germansniper3/cropwatch/actions/runs/41187727380) failed specifically at **Audit dependencies**, as expected from the remaining Zod advisory. That failure was not suppressed.
+
+The workflow also has an `unsigned-ipa` mode, which compiles for physical iOS devices and exports an unsigned package without Apple credentials. Such a package must be signed before installation. Signed App Store/ad hoc modes continue to require the certificate and profile described in `IOS_BUILD.md`.

@@ -4,11 +4,11 @@ cd "$(dirname "$0")/.."
 
 MODE="${1:-simulator}"
 case "$MODE" in
-  simulator|app-store-connect|release-testing) ;;
+  simulator|unsigned-ipa|app-store-connect|release-testing) ;;
   *) echo "Unsupported build mode: $MODE" >&2; exit 1 ;;
 esac
 
-if [[ "$MODE" != simulator ]]; then
+if [[ "$MODE" != simulator && "$MODE" != unsigned-ipa ]]; then
   for variable in IOS_CERTIFICATE_P12_BASE64 IOS_CERTIFICATE_PASSWORD IOS_PROVISION_PROFILE_BASE64 IOS_TEAM_ID; do
     if [[ -z "${!variable:-}" ]]; then
       echo "Missing signing secret: $variable. Use simulator mode until signing is configured." >&2
@@ -36,6 +36,17 @@ if [[ "$MODE" == simulator ]]; then
   ditto -c -k --sequesterRsrc --keepParent \
     "$OUTPUT/DerivedData/Build/Products/Debug-iphonesimulator/App.app" \
     "$OUTPUT/Phytos-simulator.zip"
+  exit 0
+fi
+
+if [[ "$MODE" == unsigned-ipa ]]; then
+  xcodebuild -project "$PROJECT" -scheme App -configuration Release \
+    -destination 'generic/platform=iOS' -derivedDataPath "$OUTPUT/DeviceDerivedData" \
+    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+  mkdir -p "$OUTPUT/Payload" "$OUTPUT/export"
+  ditto "$OUTPUT/DeviceDerivedData/Build/Products/Release-iphoneos/App.app" "$OUTPUT/Payload/App.app"
+  ditto -c -k --norsrc --keepParent "$OUTPUT/Payload" "$OUTPUT/export/Phytos-unsigned.ipa"
+  echo 'Unsigned device IPA exported. It must be signed before installation on an iPhone.'
   exit 0
 fi
 

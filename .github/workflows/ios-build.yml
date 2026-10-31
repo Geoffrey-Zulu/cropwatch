@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Simulator needs no signing; IPA modes need Apple distribution secrets
+        description: Simulator or unsigned IPA need no secrets; signed exports need Apple credentials
         type: choice
         default: simulator
         options:
           - simulator
+          - unsigned-ipa
           - app-store-connect
           - release-testing
 
