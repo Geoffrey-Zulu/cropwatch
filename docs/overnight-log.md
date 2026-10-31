@@ -117,3 +117,47 @@ Reviewers: a judge seeing the demo cold, a Zambian agribusiness credit manager, 
   - old outbreak check: dispatched in 5.3 s, Lusaka HIGH;
   - the full storyline v3 recorded, 14 beats, no page errors: `Desktop/Phytos CEIH recording 2026-11-01 night1 production 1280/`.
 - **Tag `ceih-night-1`:** commit `1407e4a`, revision `00020-wnp`. Production green throughout.
+
+## Cycle 2 (00:59 to 01:25): the map as the page, and the field officer's words
+
+**Built** (commit `b353297`):
+
+1. **The Fields map is the page, as in mockup A:**
+   - the map fills the screen under the header;
+   - "Demo Outgrower Co." and the tabs float on it;
+   - the controls and the key are islands;
+   - the fly-in lands the fields clear of the islands;
+   - on a phone it stacks, with the key below the map.
+2. **Page tabs take the nav's tint**, so a page has one filled toggle (the camp filter). Org names stored in capitals are title-cased for the page title only; the stored name and the SMS text are unchanged.
+3. **The field officer's words:**
+   - The ledger column is "Field status": "Seen from space", "Field visit", "No crop seen from space", "Cloud gap". The word "verified" is kept for a field visit.
+   - The chip is "Not eligible: no crop seen".
+   - Joseph reads "No crop seen from space. No advance. Visit task created."
+   - Given's ground check records stage R1, which agrees with 55 days after an 18 Nov planting, where V4 contradicted his curve. The demo check accepts R1 or V4, so the fallback builds still pass.
+4. **Design review fixes:**
+   - one DEMO pill per island (the chart and per-approval pills dropped; each island and drawer keeps its own);
+   - "Season record" in sentence case;
+   - the folded record checks are named;
+   - chart labels get a halo;
+   - the reconciliation grid no longer stretches;
+   - the delivery button goes once the statement is final.
+5. **The drought claim pack is brick**, matching the map's colour for the camp: titled "Hamangaba: drought trigger", "Claim pack for an insurer · the payout is simulated", and the greenness source says "(demo curves)".
+6. **Credit manager fixes:**
+   - shortfall rows show the money ("Still owes ZMW 1,666", "Net due to the farmer ZMW 2,444");
+   - the list never cuts silently ("Show all 114");
+   - satellite-only approvals say "Field visit: none this season".
+
+**Checks:**
+
+- **Gate:** typecheck, lint, build and every test pass.
+- **Preview `night2`** (revision `00023-tas`; dashboard https://crop-watch01--ceih-night2-e7c7utir.web.app):
+  - demo check: beats 1 to 6 in 11.7 s;
+  - old outbreak check: dispatched in 6.3 s, Lusaka HIGH;
+  - the full storyline recorded, 14 beats, no page errors; every changed frame looked at.
+- **Visual pass** of the changed views at laptop, phone and projector sizes in `docs/ui-review/2026-11-01-night2/`: no issues. A stray tooltip in the field-drawer shot comes from the pass's synthetic click (no pointer position); it does not happen with a real click.
+- **Production deploy (01:20 to 01:25):** clean, exit 0. API `00022-ln7`, dashboard bundle `index-DS1t20V0.js`.
+- **Checks on production, all green:**
+  - demo check: beats 1 to 6 in 12.3 s;
+  - old outbreak check: dispatched in 6.1 s, Lusaka HIGH;
+  - the storyline recorded with no page errors: `Desktop/Phytos CEIH recording 2026-11-01 night2 production 1280/`.
+- **Tag `ceih-night-2`:** commit `b353297`. Re-armed.
