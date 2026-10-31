@@ -128,8 +128,8 @@ const VIEWS: View[] = [
     extra: PROJECTOR,
     // Imagery from Esri: wait for the fly into Chikuni and the tiles.
     prepare: async page => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(5000)
+      await page.locator('.fm-lit').waitFor({ timeout: 20_000 })
+      await page.waitForTimeout(6000)
     },
   },
   {
@@ -143,6 +143,19 @@ const VIEWS: View[] = [
       await page.locator('.fm-hero').dispatchEvent('click')
       await page.getByText('Greenness from space').waitFor()
       await page.waitForTimeout(1500)
+    },
+  },
+  {
+    name: 'dashboard-fields-map-shock',
+    app: 'dashboard',
+    route: 'fields?june',
+    extra: PROJECTOR,
+    // After the drought rule: Hamangaba's fields in brick.
+    prepare: async page => {
+      await page.waitForTimeout(3000)
+      await page.getByRole('button', { name: 'Hamangaba', exact: true }).click()
+      // Not networkidle: the tile prefetch keeps the network busy.
+      await page.waitForTimeout(5000)
     },
   },
   { name: 'dashboard-season-ledger', app: 'dashboard', route: 'season', extra: PROJECTOR },

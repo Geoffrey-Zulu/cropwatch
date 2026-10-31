@@ -70,8 +70,8 @@ const officer: Officer = {
 }
 
 // tRPC answered from the fixtures: the batch link's fetch never leaves the browser.
-function mockFetch(data: Fixtures, page: string): typeof fetch {
-  const state = page === 'reconciliation' ? data.season?.june : data.season?.january
+function mockFetch(data: Fixtures, page: string, june: boolean): typeof fetch {
+  const state = june ? data.season?.june : data.season?.january
   const hero = data.season?.hero ?? ''
   const answers: Record<string, (input: { contractId?: string } | undefined) => unknown> = {
     'outgrower.overview': () => data.outgrower,
@@ -108,7 +108,11 @@ export function Preview({ route }: { route: string }) {
     const page = route.split('?')[0].split('/')[0] || 'map'
     const client = trpc.createClient({
       links: [
-        httpBatchLink({ url: 'http://preview.local/trpc', fetch: mockFetch(fixtures, page) }),
+        httpBatchLink({
+          url: 'http://preview.local/trpc',
+          // June: reconciliation, or any season tab with ?june (the Fields map after the drought rule).
+          fetch: mockFetch(fixtures, page, page === 'reconciliation' || route.includes('?june')),
+        }),
       ],
     })
     return { queryClient, client }
