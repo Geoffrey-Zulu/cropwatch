@@ -129,7 +129,19 @@ export function FieldsMapView({
     layer.current = L.layerGroup().addTo(m)
     drawLayer.current = L.layerGroup().addTo(m)
     map.current = m
+    // The map is the page: it fills the screen below its header, legend included, at any
+    // projector resolution (the header wraps differently at each width).
+    const fit = () => {
+      const box = wrap.current
+      if (!box) return
+      const top = box.getBoundingClientRect().top + window.scrollY
+      box.style.height = `${Math.round(Math.min(832, Math.max(384, window.innerHeight - top - 16)))}px`
+      m.invalidateSize(false)
+    }
+    fit()
+    window.addEventListener('resize', fit)
     return () => {
+      window.removeEventListener('resize', fit)
       m.remove()
       map.current = null
     }

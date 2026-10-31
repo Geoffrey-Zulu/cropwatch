@@ -5,8 +5,8 @@
 //
 //   PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e
 //        [--api https://…run.app] [--keep] [--warm] [--no-fields]
-//   --warm: the pre-pitch warm-up only (reads: the ledger, Given's field card, and through REST
-//   his eligibility and his satellite curve). Changes nothing.
+//   --warm: the pre-pitch warm-up only (reads: the Fields map and one imagery tile, the ledger,
+//   Given's field card, and through REST his eligibility and his satellite curve). Changes nothing.
 import { getDocument, queryPaths, commit, type Write } from '@repo/tools-gcp'
 
 const WEB_API_KEY = 'AIzaSyB6brxOl9sgWsf7X059B1rZvLiWXCPDTqU' // public client config
@@ -109,8 +109,31 @@ interface Statement {
   lines: { type: string; amount_zmw: number; simulated: boolean }[]
 }
 
+// One Esri imagery tile over a camp at zoom 16: the venue network reaches the Fields map's imagery.
+async function esriTile(center: { latitude: number; longitude: number }) {
+  const z = 16
+  const n = 2 ** z
+  const rad = (center.latitude * Math.PI) / 180
+  const x = Math.floor(((center.longitude + 180) / 360) * n)
+  const y = Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n)
+  const tile = await fetch(
+    `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`
+  )
+  check(
+    tile.ok && (tile.headers.get('content-type') ?? '').startsWith('image/'),
+    'the Fields map loads imagery (Esri tile over Chikuni)',
+    `HTTP ${tile.status}`
+  )
+}
+
 if (warm) {
   const t = Date.now()
+  if (!noFields) {
+    const map = await call<FieldsMapView>('season.fields', { orgId: ORG })
+    const chikuni = map.camps.find(c => c.camp === 'Chikuni')
+    check(map.precise && chikuni?.not_planted === 2, 'Fields map: Chikuni armed, two grey holes')
+    if (chikuni) await esriTile(chikuni.center)
+  }
   const p = await call<Portfolio>('season.portfolio', { orgId: ORG })
   const heroId = p.hero_contract_id!
   const hero = p.rows.find(r => r.contract_id === heroId)!
@@ -151,21 +174,7 @@ try {
       `${chikuni?.not_planted}`
     )
     check((chikuni?.established ?? 0) >= 20, 'Chikuni: mostly green', `${chikuni?.established}`)
-    if (chikuni) {
-      const z = 16
-      const n = 2 ** z
-      const rad = (chikuni.center.latitude * Math.PI) / 180
-      const x = Math.floor(((chikuni.center.longitude + 180) / 360) * n)
-      const y = Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n)
-      const tile = await fetch(
-        `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`
-      )
-      check(
-        tile.ok && (tile.headers.get('content-type') ?? '').startsWith('image/'),
-        'the Fields map loads imagery (Esri tile over Chikuni)',
-        `HTTP ${tile.status}`
-      )
-    }
+    if (chikuni) await esriTile(chikuni.center)
   }
   console.log('\nBeat 1: the season ledger')
   const p0 = await call<Portfolio>('season.portfolio', { orgId: ORG })
