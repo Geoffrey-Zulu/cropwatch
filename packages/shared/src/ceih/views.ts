@@ -1,5 +1,6 @@
 import {
   CEIH_SEASON,
+  LEDGER_ENTRY_TYPES,
   LEDGER_LABELS,
   MOMO_LABELS,
   SATELLITE_STATUS_LABELS,
@@ -569,8 +570,11 @@ export function buildStatement(
   const contract = data.contracts.find(c => c.id === contractId)
   if (!contract) return null
   const farmer = data.farmers.find(f => f.id === contract.data.farmer_id)!
-  const rows = visibleRows(byContract(data.ledger, contractId), today).sort((a, b) =>
-    a.data.at.localeCompare(b.data.at)
+  // By date, and at the same moment in the ledger's own order (the advance before its fee).
+  const rows = visibleRows(byContract(data.ledger, contractId), today).sort(
+    (a, b) =>
+      a.data.at.localeCompare(b.data.at) ||
+      LEDGER_ENTRY_TYPES.indexOf(a.data.type) - LEDGER_ENTRY_TYPES.indexOf(b.data.type)
   )
   const delivered = visibleRows(byContract(data.deliveries, contractId), today)
   const deliveredT = delivered.length

@@ -16,6 +16,7 @@ import {
   buildStatement,
   eligibilityFor,
   evaluateShock,
+  medianDate,
   feeFor,
   geohash,
   otpMessage,
@@ -214,6 +215,7 @@ function june(): SeasonData {
     const members = data.contracts.filter(c => c.data.camp === camp)
     const shock = evaluateShock({
       today: march,
+      plantingDate: medianDate(members.map(c => c.data.planting_date)),
       rain: data.rainfall.find(r => r.data.camp === camp)!.data.days,
       fields: members.map(c =>
         visiblePasses(data.metrics.find(m => m.id === c.id)!.data.passes, march)

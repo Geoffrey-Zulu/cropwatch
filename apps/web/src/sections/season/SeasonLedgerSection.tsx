@@ -22,7 +22,7 @@ export function PortfolioHeader({ portfolio: p }: { portfolio: Portfolio }) {
     <div className="flex flex-col gap-2">
       <StatCards
         countFromZero
-        columns="grid-cols-1 min-[440px]:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6"
+        columns="grid-cols-1 min-[440px]:grid-cols-2 md:grid-cols-3"
         stats={[
           {
             label: 'Contracts',

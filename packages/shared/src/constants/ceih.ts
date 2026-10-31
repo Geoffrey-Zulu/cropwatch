@@ -122,6 +122,11 @@ export const SHOCK_YIELD_SHARE = 0.5
 export const SHOCK_RAIN_30D_MM = 60
 export const SHOCK_FALLING_SHARE = 0.6
 export const SHOCK_LOOKBACK_DAYS = 30
+// The rule watches the growing season only, from establishment to before the crop matures: a dry
+// harvest month with every field senescing is the season ending, not a shock. Days after the
+// camp's median planting date. PLACEHOLDER until an agronomist sets them.
+export const SHOCK_SEASON_FROM_DAYS = 30
+export const SHOCK_SEASON_TO_DAYS = 125
 
 // ---------------------------------------------------------------- Sources and states
 

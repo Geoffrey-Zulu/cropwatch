@@ -682,3 +682,30 @@ Mentor decision, Saturday evening: Phytos becomes the verification and ledger la
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `pnpm` gate             | Green (typecheck, lint, build, 435 tests)                                                                                                                                                                                                                                                                                                                                      |
 | §6 acceptance in Vitest | Factors on every call; no advance reaches disbursement without `otp_ok` and an approver outside `verifier_ids` (including a tampered "approved" record); every movement a ledger row and the statement summed from rows; the SMS before confirmation carries amount and fee; geofence-false and unusable passes never count; views carry no pin, polygon, full number or score |
+
+**Phase 3: the dashboard**
+
+- **The Outgrower View** grows Season ledger, Approvals and Reconciliation under a portfolio header (Fraunces figures counting up from 0 on open). Field visits keeps its old content, and its "loan and credit views: roadmap only" line is gone.
+  - **Season ledger:** the roster, with camp filter and CSV export (farmer level for the org, no locations). Each row opens into the field card:
+    - the NDVI chart (field against the camp median, cloud gaps as breaks over hatched bands, the 0.35 line, planting and today);
+    - the Verified Season Record by source;
+    - the eligibility factors;
+    - the neighbour who never planted;
+    - request an advance on the farmer's behalf: amount and fee first, then the farmer's code, with "use the code from the SMS log" as a demo-only button.
+  - **Approvals:** cards with the photo, stage, geofence and verifier, the factors frozen at request, amount and fee, and the SMS the farmer saw. Approve is disabled for the verifying officer, with the reason in words. The approve dialog restates amount, fee, the code and the simulated provider. Decline asks for a reason, which goes to the farmer.
+  - **Reconciliation:**
+    - the delivery form, priced at the grade;
+    - the statement from ledger rows, with the net due waiting for approval;
+    - shortfalls, unexplained first, with shock-explained and verified problems;
+    - the claim pack, marked "insurance payout SIMULATED".
+  - **Kit:** composed from the field-airy kit. New components are the NDVI chart (drawn in pixels from its width) and a light-scrim dialog; no new colours. Demo controls fold away under a DEMO pill: ground check, March, June, back to January.
+- **Shared view builders:** moved to `packages/shared/src/ceih/views.ts`, so the API and the preview fixtures (`tools/seed/ceih-fixtures.ts`) build the same views.
+- **Demo check:** `pnpm --filter @repo/admin-tools ceih-e2e [--api …]` walks beats 1 to 6 through the dashboard's tRPC routes as a Command Center account, then deletes what it made.
+- **Found live and fixed:** the drought rule fired on every camp at harvest, because a dry June with maturing fields satisfies both sources. It now watches the growing season only: 30 to 125 days after the camp's median planting (PLACEHOLDER).
+
+| Check                                    | Result                                                                                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate                              | Green                                                                                                                                      |
+| Visual pass                              | The three tabs and the approval dialog at laptop, phone, 1280 and 1920: no issues, every shot looked at. `docs/ui-review/2026-10-31-ceih/` |
+| `ceih-e2e`, local API on the live season | 24 checks, all passed; cleaned up                                                                                                          |
+| The storyline live in the dashboard      | Beats 1 to 8 played signed in as David on live data (local API); shots in the review folder; re-armed after                                |

@@ -3,10 +3,12 @@ import {
   SHOCK_FALLING_SHARE,
   SHOCK_LOOKBACK_DAYS,
   SHOCK_RAIN_30D_MM,
+  SHOCK_SEASON_FROM_DAYS,
+  SHOCK_SEASON_TO_DAYS,
 } from '../constants/ceih'
 import type { SatellitePass } from '../schemas/ceih'
 import { ndviText } from './format'
-import { addDays } from './season'
+import { addDays, daysBetween } from './season'
 
 // The shock trigger (spec W5): one rule a camp, two independent sources that must agree. Rain
 // over the last 30 days below the threshold AND the camp median NDVI falling across most fields.
@@ -27,11 +29,19 @@ export interface ShockEvaluation {
   factors: string[]
 }
 
+// The middle planting date of a camp's contracts.
+export function medianDate(dates: string[]): string {
+  const sorted = [...dates].sort()
+  return sorted[Math.floor((sorted.length - 1) / 2)] ?? ''
+}
+
 export function evaluateShock(input: {
   today: string
   rain: { date: string; rain_mm: number }[]
   // Each field's passes up to today.
   fields: Pass[][]
+  // The camp's median planting date: the rule only watches the growing season.
+  plantingDate: string
 }): ShockEvaluation {
   const window_end = input.today.slice(0, 10)
   const window_start = addDays(window_end, -SHOCK_LOOKBACK_DAYS + 1)
@@ -55,13 +65,15 @@ export function evaluateShock(input: {
     }
   }
   const fields_total = input.fields.length
+  const age = daysBetween(input.plantingDate, window_end)
+  const inSeason = age >= SHOCK_SEASON_FROM_DAYS && age <= SHOCK_SEASON_TO_DAYS
   const dry = rain_30d < SHOCK_RAIN_30D_MM
   const falling = fields_total > 0 && fields_falling / fields_total >= SHOCK_FALLING_SHARE
   const medianFell =
     median_start !== null && median_end !== null && median_end <= median_start - NDVI_DROP
 
   return {
-    fired: dry && falling && medianFell,
+    fired: inSeason && dry && falling && medianFell,
     window_start,
     window_end,
     rain_30d,
@@ -71,6 +83,11 @@ export function evaluateShock(input: {
     fields_falling,
     fields_total,
     factors: [
+      ...(inSeason
+        ? []
+        : [
+            `Outside the growing season (${Math.round(age)} days after planting): the rule watches days ${SHOCK_SEASON_FROM_DAYS} to ${SHOCK_SEASON_TO_DAYS}`,
+          ]),
       `Rain over 30 days: ${rain_30d} mm, ${dry ? 'below' : 'above'} the ${SHOCK_RAIN_30D_MM} mm rule`,
       median_start !== null && median_end !== null
         ? `Camp median NDVI ${ndviText(median_start)} to ${ndviText(median_end)} · ${fields_falling} of ${fields_total} fields falling`

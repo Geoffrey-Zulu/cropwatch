@@ -4,6 +4,7 @@ import {
   eligibilityLabel,
   evaluateEligibility,
   evaluateShock,
+  medianDate,
   latestStatus,
   SEASON_PHASE_DATES,
   visiblePasses,
@@ -103,6 +104,9 @@ function shockAt(seed: CeihSeed, camp: string, date: string) {
   return evaluateShock({
     today: date,
     rain: seed.rainfall.find(r => r.data.camp === camp)!.data.days,
+    plantingDate: medianDate(
+      seed.contracts.filter(c => c.data.camp === camp).map(c => c.data.planting_date)
+    ),
     fields: seed.metrics
       .filter(m => m.data.camp === camp)
       .map(m => visiblePasses(m.data.passes, date)),
@@ -176,6 +180,8 @@ export function checkCeih(seed: CeihSeed): string[] {
     const march = shockAt(seed, camp, SEASON_PHASE_DATES.march).fired
     if (march !== (camp === 'Hamangaba'))
       problems.push(`ceih: shock in March for ${camp}: ${march}`)
+    if (shockAt(seed, camp, SEASON_PHASE_DATES.june).fired)
+      problems.push(`ceih: shock at harvest for ${camp}`)
     if (shockAt(seed, camp, SEASON_PHASE_DATES.january).fired)
       problems.push(`ceih: shock in January for ${camp}`)
   }

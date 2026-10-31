@@ -8,6 +8,8 @@ import {
   COMMAND_CENTER_ROLES,
   disbursedMessage,
   evaluateShock,
+  medianDate,
+  SEASON_PHASE_DATES,
   feeFor,
   geofenceOk,
   LEDGER_LABELS,
@@ -95,7 +97,12 @@ export interface SeasonService {
   ): Promise<{ tx_ref: string | null; simulated: boolean }>
   declineAdvance(caller: Caller, orgId: string, advanceId: string, reason: string): Promise<void>
   recordDelivery(caller: Caller, orgId: string, input: DeliveryInput): Promise<Statement>
-  evaluateTriggers(caller: Caller, orgId: string): Promise<{ camp: string; fired: boolean }[]>
+  // asOf: a season day other than today (the demo's jump to June runs March's rule first).
+  evaluateTriggers(
+    caller: Caller,
+    orgId: string,
+    asOf?: string
+  ): Promise<{ camp: string; fired: boolean }[]>
   // Demo controls (Command Center, simulated orgs only).
   setPhase(caller: Caller, orgId: string, phase: SeasonPhase): Promise<{ today: string }>
   groundCheck(caller: Caller, orgId: string): Promise<{ obs_id: string; live: boolean }>
@@ -479,10 +486,12 @@ export function seasonService({
       return buildStatement(fresh!, contract.id, today)!
     },
 
-    async evaluateTriggers(caller, orgId) {
+    async evaluateTriggers(caller, orgId, asOf) {
       if (!COMMAND_CENTER_ROLES.includes(caller.role) && !canApprove(caller, orgId))
         throw new SeasonError('forbidden', 'Not allowed to evaluate the shock rule.')
-      const { data, today } = await load(caller, orgId)
+      const loaded = await load(caller, orgId)
+      const { data } = loaded
+      const today = asOf ?? loaded.today
       const camps = [...new Set(data.contracts.map(c => c.data.camp))]
       const results: { camp: string; fired: boolean }[] = []
       for (const camp of camps) {
@@ -497,6 +506,7 @@ export function seasonService({
           fields: members.map(c =>
             visiblePasses(data.metrics.find(m => m.id === c.id)?.data.passes ?? [], today)
           ),
+          plantingDate: medianDate(members.map(c => c.data.planting_date)),
         })
         const id = store.newId('weather_triggers')
         const unflagged = members.filter(
@@ -536,12 +546,15 @@ export function seasonService({
     },
 
     async setPhase(caller, orgId, phase) {
-      await demoOnly(caller, orgId)
+      const { data } = await demoOnly(caller, orgId)
       const offset_days = offsetForPhase(phase, realNow())
+      // March brings the drought rule round. Jumping straight to June runs it as of March's day
+      // first; in June itself it stays quiet (the rule watches the growing season only).
+      if (phase === 'june' && !data.triggers.some(t => t.data.fired))
+        await service.evaluateTriggers(caller, orgId, `${SEASON_PHASE_DATES.march}T09:00:00.000Z`)
       await store.setState(orgId, { phase, offset_days })
       const today = seasonNow(realNow(), offset_days)
-      // March brings the drought rule round; June too, so a skipped March still flags it.
-      if (phase !== 'january') await service.evaluateTriggers(caller, orgId)
+      if (phase === 'march') await service.evaluateTriggers(caller, orgId)
       return { today }
     },
 

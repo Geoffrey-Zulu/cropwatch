@@ -528,12 +528,41 @@ describe('shock trigger (spec W5)', () => {
   ]
   it('fires only when rain and the camp curve agree', () => {
     const fields = Array.from({ length: 10 }, () => falling(0.6, 0.4))
-    const fired = evaluateShock({ today: '2027-03-16', rain: dry, fields })
+    const fired = evaluateShock({
+      today: '2027-03-16',
+      rain: dry,
+      fields,
+      plantingDate: '2026-11-18',
+    })
     expect(fired).toMatchObject({ fired: true, rain_30d: 30, fields_falling: 10, fields_total: 10 })
     const wet = dry.map(d => ({ ...d, rain_mm: 6 }))
-    expect(evaluateShock({ today: '2027-03-16', rain: wet, fields }).fired).toBe(false)
+    expect(
+      evaluateShock({ today: '2027-03-16', rain: wet, fields, plantingDate: '2026-11-18' }).fired
+    ).toBe(false)
     const green = Array.from({ length: 10 }, () => falling(0.5, 0.55))
-    expect(evaluateShock({ today: '2027-03-16', rain: dry, fields: green }).fired).toBe(false)
+    expect(
+      evaluateShock({ today: '2027-03-16', rain: dry, fields: green, plantingDate: '2026-11-18' })
+        .fired
+    ).toBe(false)
+  })
+  it('never fires at harvest: a dry June with every field maturing is the season ending', () => {
+    const june = Array.from({ length: 30 }, (_, i) => ({
+      date: addDays('2027-06-10', -i),
+      rain_mm: 0,
+    }))
+    const maturing = Array.from({ length: 10 }, () => [
+      pass('2027-05-15', 0.6, 0.6),
+      pass('2027-05-29', 0.45, 0.45),
+      pass('2027-06-05', 0.3, 0.3),
+    ])
+    const harvest = evaluateShock({
+      today: '2027-06-10',
+      rain: june,
+      fields: maturing,
+      plantingDate: '2026-11-18',
+    })
+    expect(harvest.fired).toBe(false)
+    expect(harvest.factors[0]).toMatch(/^Outside the growing season/)
   })
 })
 
