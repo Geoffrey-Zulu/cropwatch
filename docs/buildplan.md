@@ -709,3 +709,25 @@ Mentor decision, Saturday evening: Phytos becomes the verification and ledger la
 | Visual pass                              | The three tabs and the approval dialog at laptop, phone, 1280 and 1920: no issues, every shot looked at. `docs/ui-review/2026-10-31-ceih/` |
 | `ceih-e2e`, local API on the live season | 24 checks, all passed; cleaned up                                                                                                          |
 | The storyline live in the dashboard      | Beats 1 to 8 played signed in as David on live data (local API); shots in the review folder; re-armed after                                |
+
+**Phase 4: arming and deploy**
+
+- **Arming:** `seed --ceih --live-demo …` arms both paths in one run:
+  - Given is one ground check short;
+  - 2 advances wait for approval;
+  - Hamangaba is armed, not fired;
+  - the venue cluster is armed for the fallback.
+- **Deploy:** the production deploy (`infra/deploy.sh`) needs Geoffrey's go, so the build went out on a preview instead with `infra/deploy-preview.sh` (new, idempotent):
+  - the API as a tagged Cloud Run revision with no traffic (`cropwatch-api-00015-xop`, tag `ceih`, MIN_INSTANCES 1);
+  - the dashboard and the capture app on the `ceih-preview` channel, built against that revision.
+  - Production traffic stayed on `cropwatch-api-00014-88d` at 100%, and the production sites are unchanged.
+- **Warm-up:** `ceih-e2e --warm` (REST eligibility and satellite, Given armed).
+- **Recording:** the backup is `record-ceih` (a clean profile at 1280×800, all eight beats, a frame a beat), saved to `Desktop/Phytos CEIH recording 2026-10-31/`.
+- **Runbook:** CEIH section in `docs/demo-ops.md`.
+
+| Check                                                          | Result                                                                 |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `ceih-e2e` on the deployed revision                            | 24 checks, all passed; beats 1 to 6 in 9.6 s; cleaned up               |
+| Old path on the same revision (`outbreak-e2e`)                 | All passed: report → dispatched 8.0 s, Lusaka HIGH                     |
+| The storyline on the deployed preview, clean profile, 1280×800 | Beats 1 to 8, no page errors, each beat 0.1 to 4.5 s; frames looked at |
+| Production                                                     | Untouched; cutover waits for Geoffrey                                  |

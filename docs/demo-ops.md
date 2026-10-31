@@ -7,6 +7,45 @@ The checklist and the timed run for the live Phytos demo at the GreenCode final 
 - API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
 - Printed one-page version of the morning checklist: [`morning-checklist.pdf`](morning-checklist.pdf) (source `morning-checklist.html`). Saturday's test plan: [`hackathon-backlog.md`](hackathon-backlog.md).
 
+## CEIH pivot (31 Oct): the dashboard-only demo
+
+Plan: [`ceih-overnight-plan.md`](ceih-overnight-plan.md) (storyline v2, §4). The demo is the dashboard: Outgrower View → Season ledger, Approvals, Reconciliation. The old path below stays as the fallback and passes on the same API.
+
+**Where it runs (until the cutover, production is untouched):**
+
+| What                                                   | URL                                                                        |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Dashboard (CEIH build)                                 | https://crop-watch01--ceih-preview-2d9ec7jj.web.app → `#/outgrower/season` |
+| Capture app against the CEIH API (optional live photo) | https://crop-watch01-capture--ceih-preview-hnb6j9io.web.app                |
+| API, tagged revision, no traffic                       | https://ceih---cropwatch-api-7d3oc7ppba-ew.a.run.app                       |
+| Static preview for mentors                             | https://crop-watch01--ceih-preview-2d9ec7jj.web.app/mockups/d-ceih.html    |
+
+The preview is redeployed with `bash infra/deploy-preview.sh` (API revision tag `ceih`, MIN_INSTANCES 1, channel `ceih-preview`; production traffic and sites unchanged). Sign in as a Command Center account (david@phytos.com): it stands in for the credit team, and it is not the officer who verifies the field, so it may approve.
+
+**Morning ritual (CEIH):**
+
+1. Re-arm both paths in one run: `pnpm --filter @repo/seed seed --live-demo --demo-issue tuta_absoluta --demo-center=-15.388311,28.346069 --demo-district Lusaka --ceih --commit`. Good: "Firestore CEIH: 120 farmers and contracts …; season day 2027-01-1x". Add `--demo-phone +2609…` to let Given's SMS reach the judge's phone once the Africa's Talking secrets exist; add `--given-pin <venue lat,lng>` only for the live capture-app beat (his field must be where the photo is taken).
+2. Demo check: `PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e --api https://ceih---cropwatch-api-7d3oc7ppba-ew.a.run.app`. Good: "All checks passed", beats 1 to 6 in about 10 s, "Cleaned up … the season is armed again". Then the old path: `API_URL=<that API>/api/v1 pnpm --filter @repo/admin-tools outbreak-e2e …` (step 3 below).
+3. Warm-up just before the pitch: the same `ceih-e2e … --warm` (the ledger, Given's card, REST eligibility and satellite; changes nothing).
+4. Open the dashboard in a clean browser profile at the projector's resolution, signed in, on `#/outgrower/season`.
+
+**Storyline v2, what to press:**
+
+| Beat | On screen                                                                 | Press                                                                                                                                  |
+| ---- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Season ledger, the portfolio counting up                                  | Open `#/outgrower/season`                                                                                                              |
+| 2    | Given: "Not eligible: cloud gap, ground check required"                   | His row (first) opens the field card                                                                                                   |
+| 3    | Eligible · cap ZMW 840, the factors; Joseph beside him: not planted       | DEMO CONTROLS → "The field officer's ground check lands" (or the capture-app photo inside his field, then the same button verifies it) |
+| 4    | Amount and fee before anything is sent; the code in the SMS log           | "Request advance for Given" → "Send to Given" → "Use the code from the SMS log (demo)" → Confirm                                       |
+| 5    | The approval card: record, factors, the fee he saw, maker-checker         | "Open approvals"                                                                                                                       |
+| 6    | "ZMW 840 sent to your Airtel Money (simulated transfer…)"; the ledger row | "Approve ZMW 840" → "Approve and send" → Done                                                                                          |
+| 7    | Hamangaba: drought trigger · insurance payout SIMULATED                   | DEMO CONTROLS → "Go to March: drought rule", then the Reconciliation tab                                                               |
+| 8    | Given's statement, every line, net due ZMW 2,928                          | DEMO CONTROLS → "Go to June: harvest" → "Record delivery" (720 kg, grade A, prefilled)                                                 |
+
+Each beat answers in about 1 to 4.5 s on the deployed revision (recorded 31 Oct). The backup recording of all eight beats at 1280×800, with a frame a beat: `Desktop/Phytos CEIH recording 2026-10-31/` (`pnpm --filter @repo/visual record-ceih --out <folder>`; re-arm after recording).
+
+**Cutover (Geoffrey's go):** `bash infra/deploy.sh` from the `ceih` branch moves production (API traffic and both sites) to this build; then the morning ritual against the production URLs. **Fallback until Sunday 09:00:** if beats 1 to 6 are not green on the deployed build, present `stable-2026-10-31` (field-airy, the outbreak story) with its recordings and tell the CEIH story on slides.
+
 ## Before the day (freeze tag freeze-2026-10-30)
 
 ### Officer accounts (Geoffrey)

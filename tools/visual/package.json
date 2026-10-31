@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "shots": "tsx shots.ts",
+    "record-ceih": "tsx record-ceih.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
     "sheet": "tsx sheet.ts",

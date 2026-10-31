@@ -4,7 +4,9 @@
 // (Given's ground check, advance, ledger rows and SMS log) so the armed season stays armed.
 //
 //   PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e
-//        [--api https://…run.app] [--keep]
+//        [--api https://…run.app] [--keep] [--warm]
+//   --warm: the pre-pitch warm-up only (reads: the ledger, Given's field card, and through REST
+//   his eligibility and his satellite curve). Changes nothing.
 import { getDocument, queryPaths, commit, type Write } from '@repo/tools-gcp'
 
 const WEB_API_KEY = 'AIzaSyB6brxOl9sgWsf7X059B1rZvLiWXCPDTqU' // public client config
@@ -17,6 +19,7 @@ const flag = (name: string) => {
 const BASE =
   flag('api') ?? process.env.API_BASE ?? 'https://cropwatch-api-24960589333.europe-west1.run.app'
 const keep = argv.includes('--keep')
+const warm = argv.includes('--warm')
 const email = process.env.PHYTOS_RECORD_EMAIL
 const password = process.env.PHYTOS_RECORD_PASSWORD
 if (!email || !password)
@@ -91,6 +94,30 @@ interface Approval {
 }
 interface Statement {
   lines: { type: string; amount_zmw: number; simulated: boolean }[]
+}
+
+if (warm) {
+  const t = Date.now()
+  const p = await call<Portfolio>('season.portfolio', { orgId: ORG })
+  const heroId = p.hero_contract_id!
+  const hero = p.rows.find(r => r.contract_id === heroId)!
+  await call<Card>('season.fieldCard', { orgId: ORG, contractId: heroId })
+  const rest = (path: string) =>
+    fetch(`${BASE}/api/v1${path}?org_id=${ORG}`, {
+      headers: { authorization: `Bearer ${idToken}` },
+    })
+  const eligibility = await rest(`/farmers/${hero.farmer_id}/eligibility`)
+  const satellite = await rest(`/contracts/${heroId}/satellite`)
+  check(eligibility.ok, 'GET /farmers/{id}/eligibility', `HTTP ${eligibility.status}`)
+  check(satellite.ok, 'GET /contracts/{id}/satellite', `HTTP ${satellite.status}`)
+  check(
+    hero.eligibility_label.startsWith('Not eligible: cloud gap'),
+    `${hero.farmer_name} armed`,
+    hero.eligibility_label
+  )
+  console.log(`
+Warm in ${((Date.now() - t) / 1000).toFixed(1)} s.`)
+  process.exit(failures ? 1 : 0)
 }
 
 const started = new Date().toISOString()
