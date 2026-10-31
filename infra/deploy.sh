@@ -126,7 +126,10 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS};BQ_DATASET=${BQ_DATASET};ALERTS_TOPIC=${ALERTS_TOPIC};AT_SENDER_ID=${AT_SENDER_ID}" \
   "${SECRETS_FLAG[@]}" \
   --format=none
-ok "deployed ${URL}"
+# A preview tag (deploy-preview.sh) pins the traffic split, and a new revision then gets none:
+# send all traffic to this revision explicitly. The preview tags stay.
+gcloud run services update-traffic "$SERVICE" --region="$REGION" --to-latest --format=none
+ok "deployed ${URL} (all traffic on the new revision)"
 
 # -----------------------------------------------------------------------------
 step "Eventarc: ${TRIGGER} (Storage finalize on gs://${BUCKET} → ${SERVICE})"
