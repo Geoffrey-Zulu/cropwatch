@@ -6,12 +6,12 @@ import {
   circlePolygon,
   COMMAND_CENTER_ROLES,
   ContractSchema,
+  CreateFarmerRequestSchema,
   CropSchema,
   DateSchema,
   deriveStatuses,
   FarmerSchema,
   fieldRadiusM,
-  GeoPointSchema,
   LedgerEntrySchema,
   MomoProviderSchema,
   MsisdnSchema,
@@ -19,6 +19,7 @@ import {
   OTP_TTL_MINUTES,
   ProvinceSchema,
   SATELLITE_COLLECTION,
+  SatelliteIngestRequestSchema,
   SatelliteMetricsSchema,
   zmw,
   type Contract,
@@ -55,19 +56,6 @@ const officerOf = (caller: Caller, orgId: string) =>
   COMMAND_CENTER_ROLES.includes(caller.role) ||
   ((caller.role === 'field_officer' || caller.role === 'credit') && caller.orgId === orgId)
 
-const CreateFarmerSchema = z.object({
-  name: z.string().trim().min(1).max(80),
-  phone_msisdn: MsisdnSchema,
-  momo_provider: MomoProviderSchema,
-  camp: z.string().trim().min(1).max(80),
-  district: z.string().trim().min(1).max(80),
-  province: ProvinceSchema,
-  field_pin: GeoPointSchema,
-  claimed_ha: z.number().positive().max(500),
-  // The officer read the consent text to the farmer and they agreed.
-  consent: z.literal(true),
-})
-
 const RosterRowSchema = z.object({
   farmer_name: z.string().trim().min(1).max(80),
   phone_msisdn: MsisdnSchema,
@@ -85,22 +73,6 @@ const RosterRowSchema = z.object({
   planting_date: DateSchema,
 })
 
-const IngestSchema = z.object({
-  contract_id: z.string().min(1).max(128),
-  source: z.enum(['earth_engine', 'stac']),
-  passes: z
-    .array(
-      z.object({
-        date: DateSchema,
-        ndvi: z.number().min(-1).max(1).nullable(),
-        ndvi_camp_median: z.number().min(-1).max(1).nullable(),
-        cloud_pct: z.number().min(0).max(100),
-      })
-    )
-    .min(1)
-    .max(400),
-})
-
 // Below this cloud share over the field a pass counts as clear. PLACEHOLDER.
 const USABLE_CLOUD_PCT = 30
 
@@ -113,7 +85,7 @@ export function firestoreEnrol(
     async createFarmer(caller, orgId, body) {
       if (!officerOf(caller, orgId))
         throw new SeasonError('forbidden', 'Field officers of this organisation only.')
-      const input = CreateFarmerSchema.parse(body)
+      const input = CreateFarmerRequestSchema.parse(body)
       const ref = db.collection('farmers').doc()
       await ref.create(
         FarmerSchema.parse({
@@ -270,7 +242,7 @@ export function firestoreEnrol(
     async ingestPasses(caller, orgId, body) {
       if (!COMMAND_CENTER_ROLES.includes(caller.role))
         throw new SeasonError('forbidden', 'The satellite feed is internal.')
-      const input = IngestSchema.parse(body)
+      const input = SatelliteIngestRequestSchema.parse(body)
       const snap = await db.collection('contracts').doc(input.contract_id).get()
       if (!snap.exists || snap.get('org_id') !== orgId)
         throw new SeasonError('not_found', 'No such contract.')

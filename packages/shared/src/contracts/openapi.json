@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Phytos API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "REST v1 for the Phytos mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as \"unknown\", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers."
   },
   "servers": [
@@ -23,6 +23,10 @@
     {
       "name": "alerts",
       "description": "Area alerts from clusters and the prototype risk signal."
+    },
+    {
+      "name": "season",
+      "description": "CEIH: an agribusiness's contracted season. Crop verification from space and the ground, eligibility as displayed rules, advances with the farmer's code and a second person, and the ledger."
     }
   ],
   "components": {
@@ -919,6 +923,486 @@
         "required": [
           "alerts"
         ]
+      },
+      "FarmerCreated": {
+        "type": "object",
+        "properties": {
+          "farmer_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "farmer_id"
+        ]
+      },
+      "CreateFarmerRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "phone_msisdn": {
+            "type": "string",
+            "pattern": "^\\+260\\d{9}$"
+          },
+          "momo_provider": {
+            "type": "string",
+            "enum": [
+              "airtel",
+              "mtn"
+            ]
+          },
+          "camp": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "district": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "province": {
+            "$ref": "#/components/schemas/Province"
+          },
+          "field_pin": {
+            "$ref": "#/components/schemas/GeoPoint"
+          },
+          "claimed_ha": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 500
+          },
+          "consent": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "phone_msisdn",
+          "momo_provider",
+          "camp",
+          "district",
+          "province",
+          "field_pin",
+          "claimed_ha",
+          "consent"
+        ]
+      },
+      "ContractImportResult": {
+        "type": "object",
+        "properties": {
+          "contracts": {
+            "type": "integer"
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "type": "integer"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "reason"
+              ]
+            }
+          }
+        },
+        "required": [
+          "contracts",
+          "rejected"
+        ]
+      },
+      "InputsResult": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "code_sent",
+              "acknowledged"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "InputsRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          }
+        },
+        "description": "Without a code: send the farmer an SMS with the loan amount and a code. With the code the farmer reads out: record the handover and the loan."
+      },
+      "AdvanceRequested": {
+        "type": "object",
+        "properties": {
+          "advance_id": {
+            "type": "string"
+          },
+          "amount_zmw": {
+            "type": "integer"
+          },
+          "fee_zmw": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "advance_id",
+          "amount_zmw",
+          "fee_zmw"
+        ]
+      },
+      "AdvanceRequest": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "amount_zmw": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          }
+        },
+        "required": [
+          "contract_id"
+        ],
+        "description": "amount_zmw defaults to the cap."
+      },
+      "Ok": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "AdvanceConfirm": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "DisbursementResult": {
+        "type": "object",
+        "properties": {
+          "tx_ref": {
+            "type": "string",
+            "nullable": true
+          },
+          "simulated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tx_ref",
+          "simulated"
+        ]
+      },
+      "SatelliteCurve": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_planted",
+              "established",
+              "field_stress",
+              "shared_stress",
+              "no_data"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "seeded",
+              "earth_engine",
+              "stac"
+            ]
+          },
+          "curve": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "ndvi": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "camp_median": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "usable": {
+                  "type": "boolean"
+                },
+                "cloud_pct": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "not_planted",
+                    "established",
+                    "field_stress",
+                    "shared_stress",
+                    "no_data"
+                  ]
+                }
+              },
+              "required": [
+                "date",
+                "ndvi",
+                "camp_median",
+                "usable",
+                "cloud_pct",
+                "status"
+              ]
+            }
+          },
+          "sim": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "contract_id",
+          "status",
+          "source",
+          "curve",
+          "sim"
+        ]
+      },
+      "SatelliteIngestResult": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "string"
+          },
+          "passes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contract_id",
+          "passes"
+        ]
+      },
+      "SatelliteIngestRequest": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "earth_engine",
+              "stac"
+            ]
+          },
+          "passes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "ndvi": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": -1,
+                  "maximum": 1
+                },
+                "ndvi_camp_median": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": -1,
+                  "maximum": 1
+                },
+                "cloud_pct": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "date",
+                "ndvi",
+                "ndvi_camp_median",
+                "cloud_pct"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 400
+          }
+        },
+        "required": [
+          "contract_id",
+          "source",
+          "passes"
+        ]
+      },
+      "TriggerResults": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "camp": {
+              "type": "string"
+            },
+            "fired": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "camp",
+            "fired"
+          ]
+        }
+      },
+      "CampPortfolio": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "season": {
+            "type": "string"
+          },
+          "today": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contracts": {
+            "type": "integer"
+          },
+          "projected_value_zmw": {
+            "type": "integer"
+          },
+          "input_loans_zmw": {
+            "type": "integer"
+          },
+          "advances_out_zmw": {
+            "type": "integer"
+          },
+          "recovered_zmw": {
+            "type": "integer"
+          },
+          "shock_camps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "verified": {
+            "type": "integer"
+          },
+          "eligible": {
+            "type": "integer"
+          },
+          "awaiting_approval": {
+            "type": "integer"
+          },
+          "camps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "camp": {
+                  "type": "string"
+                },
+                "contracts": {
+                  "type": "integer"
+                },
+                "verified": {
+                  "type": "integer"
+                },
+                "eligible": {
+                  "type": "integer"
+                },
+                "exposure_zmw": {
+                  "type": "integer"
+                },
+                "shock": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "camp",
+                "contracts",
+                "verified",
+                "eligible",
+                "exposure_zmw",
+                "shock"
+              ]
+            }
+          },
+          "sim": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "org_id",
+          "name",
+          "season",
+          "today",
+          "contracts",
+          "projected_value_zmw",
+          "input_loans_zmw",
+          "advances_out_zmw",
+          "recovered_zmw",
+          "shock_camps",
+          "verified",
+          "eligible",
+          "awaiting_approval",
+          "camps",
+          "sim"
+        ]
       }
     },
     "parameters": {}
@@ -1401,6 +1885,1641 @@
           },
           "401": {
             "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/farmers": {
+      "post": {
+        "operationId": "createFarmer",
+        "tags": [
+          "season"
+        ],
+        "summary": "Enrol a farmer with consent and a field pin (field officers)",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFarmerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmerCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contracts/import": {
+      "post": {
+        "operationId": "importContracts",
+        "tags": [
+          "season"
+        ],
+        "summary": "Import the season roster as CSV (credit team)",
+        "description": "Columns: farmer_name, phone_msisdn, momo_provider, camp, district, province, latitude, longitude, crop, contracted_ha, projected_yield_t_ha, contract_price_zmw_t, input_loan_zmw, planting_date. Consent is recorded by the officer at the first visit, not by the import.",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractImportResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contracts/{id}/inputs": {
+      "post": {
+        "operationId": "recordInputs",
+        "tags": [
+          "season"
+        ],
+        "summary": "Input handover, acknowledged with the farmer’s code",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InputsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InputsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/farmers/{id}/eligibility": {
+      "get": {
+        "operationId": "getEligibility",
+        "tags": [
+          "season"
+        ],
+        "summary": "Eligibility and cap, with every factor",
+        "description": "Rules, never a score: each factor says whether it holds and why, and which source established the crop.",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eligible": {
+                      "type": "boolean"
+                    },
+                    "cap_zmw": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "factors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "contract",
+                              "consent",
+                              "momo",
+                              "established",
+                              "open_issue",
+                              "history",
+                              "shock",
+                              "one_advance",
+                              "cap"
+                            ]
+                          },
+                          "met": {
+                            "type": "boolean"
+                          },
+                          "text": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "source": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "satellite",
+                              "officer",
+                              "farmer",
+                              "ai"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "met",
+                          "text",
+                          "source"
+                        ]
+                      },
+                      "minItems": 1
+                    },
+                    "established_by": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "satellite",
+                        "officer"
+                      ]
+                    },
+                    "verifier_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "evaluated_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "eligible",
+                    "cap_zmw",
+                    "factors",
+                    "established_by",
+                    "verifier_ids",
+                    "evaluated_at"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/advances": {
+      "post": {
+        "operationId": "requestAdvance",
+        "tags": [
+          "season"
+        ],
+        "summary": "Request an advance on the farmer’s behalf",
+        "description": "The farmer gets an SMS with the amount, the fee and a code before anything can be confirmed.",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvanceRequested"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/advances/{id}/confirm": {
+      "post": {
+        "operationId": "confirmAdvance",
+        "tags": [
+          "season"
+        ],
+        "summary": "The farmer’s code",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceConfirm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/advances/{id}/approve": {
+      "post": {
+        "operationId": "approveAdvance",
+        "tags": [
+          "season"
+        ],
+        "summary": "Approve and send (credit team; never the verifying officer)",
+        "description": "Maker-checker: refused when the caller verified the field. Sends on the mobile-money provider (simulated in the demo) and writes the ledger rows.",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/advances/{id}/disburse": {
+      "post": {
+        "operationId": "disburseAdvance",
+        "tags": [
+          "season"
+        ],
+        "summary": "Send an approved advance (internal; idempotent)",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries": {
+      "post": {
+        "operationId": "recordDelivery",
+        "tags": [
+          "season"
+        ],
+        "summary": "Record a delivery; the statement follows",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "weight_kg": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 200000
+                  },
+                  "moisture_pct": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 40
+                  },
+                  "grade": {
+                    "type": "string",
+                    "enum": [
+                      "A",
+                      "B",
+                      "C"
+                    ]
+                  }
+                },
+                "required": [
+                  "contract_id",
+                  "weight_kg",
+                  "moisture_pct",
+                  "grade"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contract_id": {
+                      "type": "string"
+                    },
+                    "farmer_name": {
+                      "type": "string"
+                    },
+                    "camp": {
+                      "type": "string"
+                    },
+                    "lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "input_loan",
+                              "advance",
+                              "advance_fee",
+                              "delivery",
+                              "insurance_payout",
+                              "payout"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "amount_zmw": {
+                            "type": "integer"
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "simulated": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "at",
+                          "type",
+                          "label",
+                          "amount_zmw",
+                          "ref",
+                          "note",
+                          "simulated"
+                        ]
+                      }
+                    },
+                    "balance_zmw": {
+                      "type": "integer"
+                    },
+                    "delivered_t": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "projected_t": {
+                      "type": "number"
+                    },
+                    "contract_price_zmw_t": {
+                      "type": "integer"
+                    },
+                    "variance": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "shock",
+                            "verified_issue",
+                            "unexplained"
+                          ]
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "text"
+                      ]
+                    },
+                    "settled": {
+                      "type": "boolean"
+                    },
+                    "sim": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "contract_id",
+                    "farmer_name",
+                    "camp",
+                    "lines",
+                    "balance_zmw",
+                    "delivered_t",
+                    "projected_t",
+                    "contract_price_zmw_t",
+                    "variance",
+                    "settled",
+                    "sim"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contracts/{id}/statement": {
+      "get": {
+        "operationId": "getStatement",
+        "tags": [
+          "season"
+        ],
+        "summary": "The statement: every ledger line and the balance",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contract_id": {
+                      "type": "string"
+                    },
+                    "farmer_name": {
+                      "type": "string"
+                    },
+                    "camp": {
+                      "type": "string"
+                    },
+                    "lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "input_loan",
+                              "advance",
+                              "advance_fee",
+                              "delivery",
+                              "insurance_payout",
+                              "payout"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "amount_zmw": {
+                            "type": "integer"
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "simulated": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "at",
+                          "type",
+                          "label",
+                          "amount_zmw",
+                          "ref",
+                          "note",
+                          "simulated"
+                        ]
+                      }
+                    },
+                    "balance_zmw": {
+                      "type": "integer"
+                    },
+                    "delivered_t": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "projected_t": {
+                      "type": "number"
+                    },
+                    "contract_price_zmw_t": {
+                      "type": "integer"
+                    },
+                    "variance": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "shock",
+                            "verified_issue",
+                            "unexplained"
+                          ]
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "text"
+                      ]
+                    },
+                    "settled": {
+                      "type": "boolean"
+                    },
+                    "sim": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "contract_id",
+                    "farmer_name",
+                    "camp",
+                    "lines",
+                    "balance_zmw",
+                    "delivered_t",
+                    "projected_t",
+                    "contract_price_zmw_t",
+                    "variance",
+                    "settled",
+                    "sim"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contracts/{id}/satellite": {
+      "get": {
+        "operationId": "getSatellite",
+        "tags": [
+          "season"
+        ],
+        "summary": "The field’s NDVI curve against its camp median",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SatelliteCurve"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/satellite/ingest": {
+      "post": {
+        "operationId": "ingestSatellite",
+        "tags": [
+          "season"
+        ],
+        "summary": "Store a field’s passes from a Sentinel-2 pull (internal)",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SatelliteIngestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SatelliteIngestResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "validation_failed: the request did not match the schema (see issues).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conflict: a season rule refused the action (the message says which).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/triggers/evaluate": {
+      "post": {
+        "operationId": "evaluateTriggers",
+        "tags": [
+          "season"
+        ],
+        "summary": "Run the drought rule on every camp (internal)",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriggerResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/{id}/portfolio": {
+      "get": {
+        "operationId": "getPortfolio",
+        "tags": [
+          "season"
+        ],
+        "summary": "The season at camp level: no farmer rows, no locations",
+        "security": [
+          {
+            "firebaseIdToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "The agribusiness. Defaults to the caller's own org; a Command Center account must name it."
+            },
+            "required": false,
+            "name": "org_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampPortfolio"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized: missing or invalid Firebase ID token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: signed in, but not allowed to act on this resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found",
             "content": {
               "application/json": {
                 "schema": {

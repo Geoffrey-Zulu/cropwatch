@@ -1,6 +1,12 @@
 import type { Context, Hono, MiddlewareHandler } from 'hono'
 import { z } from 'zod'
-import { DeliveryInputSchema, type ErrorResponse } from '@repo/shared'
+import {
+  AdvanceConfirmSchema,
+  AdvanceRequestSchema,
+  DeliveryInputSchema,
+  InputsRequestSchema,
+  type ErrorResponse,
+} from '@repo/shared'
 import type { Caller } from '../services/observationModel'
 import type { EnrolService } from '../services/ceih/enrol'
 import { SeasonError, type SeasonService } from '../services/ceih/season'
@@ -63,14 +69,7 @@ export function mountCeih(
         caller,
         orgId,
         c.req.param('id'),
-        z
-          .object({
-            code: z
-              .string()
-              .regex(/^\d{6}$/)
-              .optional(),
-          })
-          .parse((await body(c)) ?? {}).code
+        InputsRequestSchema.parse((await body(c)) ?? {}).code
       )
     )
   )
@@ -79,18 +78,13 @@ export function mountCeih(
   )
   app.post('/advances', requireCaller, c =>
     handle(c, async (caller, orgId) => {
-      const input = z
-        .object({
-          contract_id: z.string().min(1).max(128),
-          amount_zmw: z.number().int().positive().optional(),
-        })
-        .parse(await body(c))
+      const input = AdvanceRequestSchema.parse(await body(c))
       return season.requestAdvance(caller, orgId, input.contract_id, input.amount_zmw)
     })
   )
   app.post('/advances/:id/confirm', requireCaller, c =>
     handle(c, async (caller, orgId) => {
-      const { code } = z.object({ code: z.string().regex(/^\d{6}$/) }).parse(await body(c))
+      const { code } = AdvanceConfirmSchema.parse(await body(c))
       return season.confirmAdvance(caller, orgId, c.req.param('id'), code)
     })
   )
