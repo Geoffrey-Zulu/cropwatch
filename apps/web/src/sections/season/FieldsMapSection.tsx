@@ -148,9 +148,14 @@ export function FieldsMapView({
       crossOrigin: false,
     })
       .on('tileload', () => loaded++)
-      .on('tileerror', () => {
+      .on('tileerror', ({ tile, coords }: L.TileErrorEvent) => {
         failed++
         if (failed >= 4 && loaded === 0) setImagery(imagery === 'esri' ? 'eox' : 'none')
+        // A busy venue network drops the odd tile: ask once more rather than leave a hole.
+        else if (!tile.dataset.retried) {
+          tile.dataset.retried = '1'
+          setTimeout(() => (tile.src = tiles.getTileUrl(coords)), 1200)
+        }
       })
       .addTo(m)
     return () => {
