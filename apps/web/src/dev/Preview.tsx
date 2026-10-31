@@ -11,6 +11,7 @@ import type { User } from 'firebase/auth'
 import { useState } from 'react'
 import type {
   Approval,
+  FieldsMap,
   DistrictWeather,
   FieldCard,
   ObservationEvidence,
@@ -47,6 +48,7 @@ interface Fixtures {
 
 interface SeasonFixture {
   portfolio: Portfolio
+  fields: FieldsMap
   approvals: Approval[]
   smsLog: SmsLogView[]
   reconciliation: Reconciliation
@@ -54,7 +56,7 @@ interface SeasonFixture {
   statements: Record<string, Statement>
 }
 
-const SEASON_PAGES = ['season', 'approvals', 'reconciliation'] as const
+const SEASON_PAGES = ['fields', 'season', 'approvals', 'reconciliation'] as const
 
 const found = import.meta.glob('./fixtures.local.json', { eager: true, import: 'default' })
 const fixtures = Object.values(found)[0] as Fixtures | undefined
@@ -76,6 +78,7 @@ function mockFetch(data: Fixtures, page: string): typeof fetch {
     'weather.district': () => data.weather,
     'evidence.observation': () => data.evidence,
     'season.portfolio': () => state?.portfolio,
+    'season.fields': () => state?.fields,
     'season.approvals': () => state?.approvals,
     'season.smsLog': () => state?.smsLog,
     'season.reconciliation': () => state?.reconciliation,

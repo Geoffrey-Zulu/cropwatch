@@ -25,7 +25,7 @@ export type Route = (
 ) & { drawer?: Drawer }
 
 // The Outgrower View's tabs (CEIH): the field visits are the tab with no name.
-export const OUTGROWER_TABS = ['season', 'approvals', 'reconciliation'] as const
+export const OUTGROWER_TABS = ['fields', 'season', 'approvals', 'reconciliation'] as const
 export type OutgrowerTab = (typeof OUTGROWER_TABS)[number]
 
 const DRAWERS = ['outbreak', 'observation', 'visit', 'contract'] as const

@@ -21,6 +21,8 @@ import {
   type CeihDemoState,
   type Contract,
   type Delivery,
+  type Farmer,
+  type SatelliteMetrics,
   type LedgerEntry,
   type Observation,
   type ShockFlag,
@@ -46,7 +48,16 @@ export interface SeasonStore {
     next: Advance,
     ledger: LedgerEntry[]
   ): Promise<boolean>
-  newId(collection: 'advances' | 'deliveries' | 'weather_triggers' | 'observations'): string
+  newId(
+    collection:
+      'advances' | 'deliveries' | 'weather_triggers' | 'observations' | 'farmers' | 'contracts'
+  ): string
+  // Draw-to-enrol: the farmer, the contract and the field's curve together.
+  addEnrolment(
+    farmer: { id: string; data: Farmer },
+    contract: { id: string; data: Contract },
+    metrics: SatelliteMetrics
+  ): Promise<void>
   addDelivery(
     id: string,
     delivery: Delivery,
@@ -115,6 +126,18 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
 
     newId(collection) {
       return db.collection(collection).doc().id
+    },
+
+    async addEnrolment(farmer, contract, metrics) {
+      fresh()
+      const batch = db.batch()
+      batch.create(db.collection('farmers').doc(farmer.id), FarmerSchema.parse(farmer.data))
+      batch.create(db.collection('contracts').doc(contract.id), ContractSchema.parse(contract.data))
+      batch.set(
+        db.collection('satellite_metrics').doc(contract.id),
+        SatelliteMetricsSchema.parse(metrics)
+      )
+      await batch.commit()
     },
 
     async addDelivery(id, delivery, ledger, sideSell) {

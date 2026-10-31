@@ -171,6 +171,11 @@ function memoryStore(data: SeasonData) {
       return true
     },
     newId: collection => `${collection}-${++n}`,
+    async addEnrolment(farmer, contract, metrics) {
+      data.farmers.push(farmer)
+      data.contracts.push(contract)
+      data.metrics.push({ id: contract.id, data: metrics })
+    },
     async addDelivery(id, delivery, ledger) {
       data.deliveries.push({ id, data: delivery })
       for (const row of ledger) data.ledger.push({ id: `l-${++n}`, data: row })
@@ -406,5 +411,70 @@ describe('the geofence link for new reports', () => {
     expect(
       (await run({ location: PIN, crop: 'tomato', reporter_role: 'farmer' })).farmer
     ).toBeNull()
+  })
+})
+
+describe('the Fields map', () => {
+  it('shows outlines to the org and a Command Center stand-in on a simulated season only', async () => {
+    const { data, service } = setup()
+    const map = await service.fields(david, ORG)
+    expect(map.precise).toBe(true)
+    expect(map.fields).toHaveLength(1)
+    expect(map.fields[0]).toMatchObject({ contract_id: 'c-given', state: 'cloud_gap' })
+    expect((await service.fields(banda, ORG)).precise).toBe(true)
+    // A real org: a Command Center account gets camp totals, never an outline or a name.
+    data.org.sim = false
+    const real = await service.fields(david, ORG)
+    expect(real.precise).toBe(false)
+    expect(real.fields).toEqual([])
+    expect(real.camps[0]).toMatchObject({ camp: 'Chikuni', contracts: 1, cloud_gap: 1 })
+    expect(JSON.stringify(real)).not.toContain('Given')
+  })
+
+  it('enrols a drawn field: hectares from the outline, the curve following the camp', async () => {
+    const { data, service } = setup()
+    // About 100 m by 100 m: 1 ha.
+    const ring: [number, number][] = [
+      [27.4, -16.13],
+      [27.40093, -16.13],
+      [27.40093, -16.1309],
+      [27.4, -16.1309],
+    ]
+    const made = await service.enrolField(david, ORG, {
+      camp: 'Chikuni',
+      ring,
+      name: 'Mapalo Hangoma',
+      phone_msisdn: '+260971000123',
+      momo_provider: 'mtn',
+      projected_yield_t_ha: 1.5,
+      contract_price_zmw_t: 8000,
+      consent: true,
+    })
+    expect(made.contracted_ha).toBeGreaterThan(0.95)
+    expect(made.contracted_ha).toBeLessThan(1.05)
+    const contract = data.contracts.find(c => c.id === made.contract_id)!.data
+    expect(contract.projected_value_zmw).toBe(Math.round(made.contracted_ha * 1.5 * 8000))
+    expect(JSON.parse(contract.field_polygon).coordinates[0]).toHaveLength(5)
+    expect(data.metrics.find(m => m.id === made.contract_id)!.data.passes).toHaveLength(3)
+    const map = await service.fields(david, ORG)
+    expect(map.fields.map(f => f.farmer_name)).toContain('Mapalo Hangoma')
+    await expect(
+      service.enrolField(david, ORG, {
+        ...{
+          camp: 'Chikuni',
+          name: 'X',
+          phone_msisdn: '+260971000124',
+          momo_provider: 'mtn',
+          projected_yield_t_ha: 1.5,
+          contract_price_zmw_t: 8000,
+          consent: true,
+        },
+        ring: [
+          [27.4, -16.13],
+          [27.40001, -16.13],
+          [27.40001, -16.13001],
+        ],
+      })
+    ).rejects.toThrow(/trace the boundary again/)
   })
 })

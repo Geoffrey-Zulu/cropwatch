@@ -31,10 +31,13 @@ export function FieldCardSection({
   orgId,
   contractId,
   commandCenter,
+  narrow = false,
 }: {
   orgId: string
   contractId: string
   commandCenter: boolean
+  // One column (in a drawer).
+  narrow?: boolean
 }) {
   const card = trpc.season.fieldCard.useQuery(
     { orgId, contractId },
@@ -60,7 +63,9 @@ export function FieldCardSection({
         </div>
       </Loading>
     )
-  return <FieldCardView orgId={orgId} card={card.data} commandCenter={commandCenter} />
+  return (
+    <FieldCardView orgId={orgId} card={card.data} commandCenter={commandCenter} narrow={narrow} />
+  )
 }
 
 const SOURCE_ICON = {
@@ -80,17 +85,21 @@ export function FieldCardView({
   orgId,
   card,
   commandCenter,
+  narrow = false,
 }: {
   orgId: string
   card: FieldCard
   commandCenter: boolean
+  narrow?: boolean
 }) {
   const [requesting, setRequesting] = useState(false)
   const e = card.eligibility
   const advance = card.advance
   const open = advance && !['declined', 'failed'].includes(advance.state)
   return (
-    <div className="grid gap-x-8 gap-y-6 rounded-card bg-panel p-[1.2rem] shadow-[inset_0_0_0_1px_var(--hairline)] md:p-[1.4rem] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+    <div
+      className={`grid gap-x-8 gap-y-6 rounded-card bg-panel p-[1.2rem] shadow-[inset_0_0_0_1px_var(--hairline)] md:p-[1.4rem] ${narrow ? '' : 'lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]'}`}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>

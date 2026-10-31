@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url'
 import {
   buildApprovals,
   buildFieldCard,
+  buildFieldsMap,
   buildPortfolio,
   buildReconciliation,
   buildSmsLog,
@@ -310,6 +311,7 @@ function views(data: SeasonData) {
   ]
   return {
     portfolio: buildPortfolio(data, today),
+    fields: buildFieldsMap(data, today, true),
     approvals: buildApprovals(data, today, 'uid-preview'),
     smsLog: buildSmsLog(data),
     reconciliation: buildReconciliation(data, today),
@@ -324,6 +326,10 @@ const current = existsSync(target)
   ? (JSON.parse(readFileSync(target, 'utf8')) as Record<string, unknown>)
   : {}
 writeFileSync(target, JSON.stringify({ ...current, season }))
+for (const c of season.january.fields.camps)
+  console.log(
+    `  ${c.camp}: ${c.contracts} fields, ${c.established} green, ${c.not_planted} not planted, ${c.stress} stress, ${c.cloud_gap} cloud gap`
+  )
 console.log(
   `wrote season fixtures: January ${season.january.portfolio.eligible} eligible, ${season.january.approvals.length} approvals; June ${season.june.reconciliation.rows.length} deliveries, ${season.june.reconciliation.claim_packs.length} claim pack(s)`
 )

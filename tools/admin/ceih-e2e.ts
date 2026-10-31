@@ -60,6 +60,17 @@ interface Row {
   eligibility_label: string
   eligible: boolean
 }
+interface FieldsMapView {
+  precise: boolean
+  camps: {
+    camp: string
+    center: { latitude: number; longitude: number }
+    contracts: number
+    established: number
+    not_planted: number
+  }[]
+  fields: { contract_id: string; state: string }[]
+}
 interface Portfolio {
   contracts: number
   advances_out_zmw: number
@@ -126,7 +137,34 @@ let heroFarmer = ''
 const t0 = Date.now()
 
 try {
-  console.log(`CEIH demo check against ${BASE}\n\nBeat 1: the season ledger`)
+  console.log(`CEIH demo check against ${BASE}\n\nOpening: the Fields map`)
+  const map = await call<FieldsMapView>('season.fields', { orgId: ORG })
+  check(map.precise, 'this org sees its field outlines')
+  const chikuni = map.camps.find(c => c.camp === 'Chikuni')
+  check(chikuni?.contracts === 40, 'Chikuni: 40 fields', `${chikuni?.contracts}`)
+  check(
+    chikuni?.not_planted === 2,
+    'Chikuni: two grey holes (not planted)',
+    `${chikuni?.not_planted}`
+  )
+  check((chikuni?.established ?? 0) >= 20, 'Chikuni: mostly green', `${chikuni?.established}`)
+  if (chikuni) {
+    const z = 16
+    const n = 2 ** z
+    const rad = (chikuni.center.latitude * Math.PI) / 180
+    const x = Math.floor(((chikuni.center.longitude + 180) / 360) * n)
+    const y = Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n)
+    const tile = await fetch(
+      `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`
+    )
+    check(
+      tile.ok && (tile.headers.get('content-type') ?? '').startsWith('image/'),
+      'the Fields map loads imagery (Esri tile over Chikuni)',
+      `HTTP ${tile.status}`
+    )
+  }
+
+  console.log('\nBeat 1: the season ledger')
   const p0 = await call<Portfolio>('season.portfolio', { orgId: ORG })
   check(p0.contracts === 120, 'portfolio: 120 contracts', `${p0.contracts}`)
   check(p0.sim, 'the season is simulated (DEMO pill)')
@@ -178,6 +216,13 @@ try {
     c1.neighbour?.status_label === 'Not planted',
     'beside him: the neighbour reads Not planted',
     c1.neighbour?.status_label ?? 'none'
+  )
+  const map2 = await call<FieldsMapView>('season.fields', { orgId: ORG })
+  const heroField = map2.fields.find(f => f.contract_id === heroId)
+  check(
+    heroField?.state === 'established',
+    'on the Fields map his field turns green',
+    heroField?.state ?? 'none'
   )
 
   console.log('\nBeat 4: the request, the fee before the code')

@@ -21,6 +21,7 @@ import { useDrawerLinks, useRoute, type OutgrowerTab } from '../hooks/useRoute'
 import { useSeasonQueries } from '../lib/season'
 import { ApprovalsSection } from '../sections/season/ApprovalsSection'
 import { DemoControls } from '../sections/season/DemoControls'
+import { FieldsMapSection } from '../sections/season/FieldsMapSection'
 import { ReconciliationSection } from '../sections/season/ReconciliationSection'
 import { PortfolioHeader, SeasonLedgerSection } from '../sections/season/SeasonLedgerSection'
 import { ago, dateTime, SEVERITY_TEXT, VERIFICATION_TEXT } from '../lib/copy'
@@ -96,6 +97,7 @@ function FieldVisits({ orgId }: { orgId: string }) {
 
 const TABS: { tab: OutgrowerTab | null; label: string }[] = [
   { tab: null, label: 'Field visits' },
+  { tab: 'fields', label: 'Fields map' },
   { tab: 'season', label: 'Season ledger' },
   { tab: 'approvals', label: 'Approvals' },
   { tab: 'reconciliation', label: 'Reconciliation' },
@@ -151,6 +153,8 @@ function SeasonTabs({
         </Loading>
       ) : (
         <>
+          {/* On the Fields map the map is the page: the figures follow it. */}
+          {tab === 'fields' && <FieldsMapSection orgId={orgId} commandCenter={commandCenter} />}
           <PortfolioHeader portfolio={p} />
           {tab === 'season' && <SeasonLedgerSection portfolio={p} commandCenter={commandCenter} />}
           {tab === 'approvals' && (

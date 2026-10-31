@@ -564,4 +564,62 @@ export const DeliveryInputSchema = z.object({
 })
 export type DeliveryInput = z.infer<typeof DeliveryInputSchema>
 
-export { GeoPointSchema as FieldPinSchema }
+// ---------------------------------------------------------------- Fields map
+
+// How a field shows on the imagery: green established, grey not planted, amber hatch for stress,
+// brick for a drought-flagged camp, an outline only while clouds hide it.
+export const FIELD_STATES = ['established', 'not_planted', 'stress', 'shock', 'cloud_gap'] as const
+export const FieldStateSchema = z.enum(FIELD_STATES)
+export type FieldState = z.infer<typeof FieldStateSchema>
+
+const RingSchema = z.array(z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]))
+
+export const FieldsMapSchema = z.object({
+  org_id: z.string(),
+  today: TimestampSchema,
+  // Field outlines are this org's own (invariant 6, amended): false means camp totals only.
+  precise: z.boolean(),
+  camps: z.array(
+    z.object({
+      camp: z.string(),
+      center: GeoPointSchema,
+      // [west, south, east, north], padded: a camp's extent, not a field's.
+      bounds: z.tuple([z.number(), z.number(), z.number(), z.number()]),
+      contracts: z.number().int(),
+      established: z.number().int(),
+      not_planted: z.number().int(),
+      stress: z.number().int(),
+      cloud_gap: z.number().int(),
+      shock: z.boolean(),
+    })
+  ),
+  fields: z.array(
+    z.object({
+      contract_id: z.string(),
+      farmer_name: z.string(),
+      camp: z.string(),
+      state: FieldStateSchema,
+      ring: RingSchema,
+      contracted_ha: z.number(),
+      eligibility_label: z.string(),
+      sim: z.boolean(),
+    })
+  ),
+  hero_contract_id: z.string().nullable(),
+  sim: z.boolean(),
+})
+export type FieldsMap = z.infer<typeof FieldsMapSchema>
+
+// Draw-to-enrol: the boundary traced on the imagery, and the contract terms.
+export const EnrolFieldInputSchema = z.object({
+  camp: z.string().min(1).max(80),
+  ring: RingSchema.min(3).max(200),
+  name: z.string().trim().min(1).max(80),
+  phone_msisdn: MsisdnSchema,
+  momo_provider: MomoProviderSchema,
+  projected_yield_t_ha: z.number().positive().max(20),
+  contract_price_zmw_t: z.number().int().positive().max(100_000),
+  // The officer read the consent text to the farmer and they agreed.
+  consent: z.literal(true),
+})
+export type EnrolFieldInput = z.infer<typeof EnrolFieldInputSchema>

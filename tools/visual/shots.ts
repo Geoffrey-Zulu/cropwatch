@@ -121,6 +121,30 @@ const VIEWS: View[] = [
   },
   { name: 'dashboard-visit', app: 'dashboard', route: 'visit' },
   // CEIH (plan §3): the season's three tabs and the approval, from tools/seed/ceih-fixtures.ts.
+  {
+    name: 'dashboard-fields-map',
+    app: 'dashboard',
+    route: 'fields',
+    extra: PROJECTOR,
+    // Imagery from Esri: wait for the fly into Chikuni and the tiles.
+    prepare: async page => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(5000)
+    },
+  },
+  {
+    name: 'dashboard-fields-map-field',
+    app: 'dashboard',
+    route: 'fields',
+    extra: PROJECTOR,
+    // Given's field pressed: his field card in the drawer.
+    prepare: async page => {
+      await page.waitForTimeout(3000)
+      await page.locator('.fm-hero').dispatchEvent('click')
+      await page.getByText('Greenness from space').waitFor()
+      await page.waitForTimeout(1500)
+    },
+  },
   { name: 'dashboard-season-ledger', app: 'dashboard', route: 'season', extra: PROJECTOR },
   { name: 'dashboard-season-approvals', app: 'dashboard', route: 'approvals', extra: PROJECTOR },
   {

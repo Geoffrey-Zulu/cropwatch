@@ -33,6 +33,15 @@ import {
   type Advance,
   type Approval,
   type DeliveryInput,
+  type EnrolFieldInput,
+  type FieldsMap,
+  buildFieldsMap,
+  CEIH_SEASON,
+  deriveStatuses,
+  medianDate as medianOf,
+  polygonAreaHa,
+  ringCentroid,
+  ringPolygon,
   type Eligibility,
   type FieldCard,
   type LedgerEntry,
@@ -73,6 +82,14 @@ export class SeasonError extends Error {
 export interface SeasonService {
   portfolio(caller: Caller, orgId: string): Promise<Portfolio>
   fieldCard(caller: Caller, orgId: string, contractId: string): Promise<FieldCard>
+  // The Fields map: outlines for this org's own credit team and field officers, camp totals for
+  // anyone else (invariant 6, amended).
+  fields(caller: Caller, orgId: string): Promise<FieldsMap>
+  enrolField(
+    caller: Caller,
+    orgId: string,
+    input: EnrolFieldInput
+  ): Promise<{ farmer_id: string; contract_id: string; contracted_ha: number }>
   eligibility(caller: Caller, orgId: string, farmerId: string): Promise<Eligibility>
   approvals(caller: Caller, orgId: string): Promise<Approval[]>
   statement(caller: Caller, orgId: string, contractId: string): Promise<Statement>
@@ -125,6 +142,15 @@ function canRead(caller: Caller, orgId: string) {
     ((caller.role === 'credit' || caller.role === 'field_officer') && caller.orgId === orgId)
   )
 }
+// Field outlines are precise locations: the org's own credit team and field officers see them.
+// In a simulated season a Command Center account stands in for the credit team (the demo signs
+// in as one), as it does for approvals; the farms are fictional. Real orgs: their own roles only.
+export function canSeeFields(caller: Caller, orgId: string, simulated: boolean) {
+  if ((caller.role === 'credit' || caller.role === 'field_officer') && caller.orgId === orgId)
+    return true
+  return simulated && COMMAND_CENTER_ROLES.includes(caller.role)
+}
+
 function canApprove(caller: Caller, orgId: string) {
   return (
     ADVANCE_APPROVER_ROLES.includes(caller.role) &&
@@ -206,6 +232,109 @@ export function seasonService({
       const card = buildFieldCard(data, contractId, today)
       if (!card) throw new SeasonError('not_found', 'No such contract.')
       return card
+    },
+
+    async fields(caller, orgId) {
+      const { data, today } = await load(caller, orgId)
+      return buildFieldsMap(data, today, canSeeFields(caller, orgId, data.org.sim))
+    },
+
+    async enrolField(caller, orgId, input) {
+      const { data, today } = await load(caller, orgId)
+      if (!canSeeFields(caller, orgId, data.org.sim))
+        throw new SeasonError('forbidden', 'Only this agribusiness can enrol its farms.')
+      const members = data.contracts.filter(c => c.data.camp === input.camp)
+      if (members.length === 0) throw new SeasonError('not_found', 'No such camp.')
+      // The traced boundary is the field: its area is the contract's, computed here, not sent.
+      const ha = Math.round(polygonAreaHa(input.ring) * 100) / 100
+      if (ha < 0.05 || ha > 100)
+        throw new SeasonError('refused', `The traced field is ${ha} ha: trace the boundary again.`)
+      const pin = ringCentroid(input.ring)
+      const polygon = ringPolygon(input.ring)
+      const first = data.farmers.find(f => f.id === members[0].data.farmer_id)!
+      const farmerId = store.newId('farmers')
+      const contractId = store.newId('contracts')
+      const realNowIso = realNow()
+      const planting = medianOf(members.map(c => c.data.planting_date))
+      // The seeded curve starts: the field follows its camp's median, pass by pass (a live
+      // Sentinel-2 pull replaces it through /satellite/ingest).
+      const template = data.metrics.find(m => m.data.camp === input.camp)?.data.passes ?? []
+      const jitter = (date: string) => {
+        let h = 0
+        for (const ch of contractId + date) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+        return ((h % 1000) / 1000 - 0.5) * 0.04
+      }
+      const passes = deriveStatuses(
+        template.map(p => ({
+          ...p,
+          ndvi:
+            p.ndvi_camp_median === null
+              ? null
+              : Math.round((p.ndvi_camp_median + jitter(p.date)) * 100) / 100,
+          usable: p.ndvi_camp_median !== null,
+          cloud_pct: p.ndvi_camp_median === null ? 90 : 4,
+          computed_at: realNowIso,
+          sim: data.org.sim,
+        })),
+        planting,
+        'soybean'
+      )
+      await store.addEnrolment(
+        {
+          id: farmerId,
+          data: {
+            name: input.name,
+            phone_msisdn: input.phone_msisdn,
+            momo_provider: input.momo_provider,
+            momo_verified: false,
+            org_id: orgId,
+            camp: input.camp,
+            district: first.data.district,
+            province: first.data.province,
+            consent: { given_at: today, scope: 'org_contract', officer_id: caller.uid },
+            field_pin: pin,
+            field_polygon: polygon,
+            claimed_ha: ha,
+            history: { seasons: 0, defaults: 0, last_recovery_pct: null },
+            sim: data.org.sim,
+          },
+        },
+        {
+          id: contractId,
+          data: {
+            farmer_id: farmerId,
+            org_id: orgId,
+            season: members[0].data.season || CEIH_SEASON,
+            crop: 'soybean',
+            camp: input.camp,
+            district: members[0].data.district,
+            planting_date: planting,
+            contracted_ha: ha,
+            projected_yield_t_ha: input.projected_yield_t_ha,
+            contract_price_zmw_t: input.contract_price_zmw_t,
+            projected_value_zmw: Math.round(
+              ha * input.projected_yield_t_ha * input.contract_price_zmw_t
+            ),
+            // Inputs go on the ledger when they are handed over and acknowledged (W1), not here.
+            input_loan_zmw: Math.round((ha * 3900) / 10) * 10,
+            inputs_delivered: null,
+            field_polygon: polygon,
+            status: 'active',
+            shock_flag: null,
+            side_sell_suspected: false,
+            sim: data.org.sim,
+          },
+        },
+        {
+          contract_id: contractId,
+          org_id: orgId,
+          camp: input.camp,
+          source: 'seeded',
+          passes,
+          sim: data.org.sim,
+        }
+      )
+      return { farmer_id: farmerId, contract_id: contractId, contracted_ha: ha }
     },
 
     async eligibility(caller, orgId, farmerId) {

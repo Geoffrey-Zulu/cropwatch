@@ -251,3 +251,134 @@
     animation: slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
+
+/* Outside the layers: these class names are built at runtime (fm-${state}), so Tailwind must not
+   purge them. */
+/* The Fields map (Outgrower View): fields over Esri imagery, a light halo under each
+   state-coloured outline so they hold on any ground and on a projector. Fills fade in once the
+   map lands. The map is its own stacking context, so Leaflet's panes never cover a drawer. */
+.fm {
+  isolation: isolate;
+}
+.fm .leaflet-container {
+  background: var(--canvas-1);
+  font-family: inherit;
+}
+.fm .fm-halo {
+  stroke: #fff;
+  stroke-opacity: 0.92;
+  stroke-width: 4.5px;
+}
+.fm .fm-field {
+  stroke-width: 1.7px;
+  fill-opacity: 0;
+  transition: fill-opacity 400ms ease-out;
+}
+.fm.fm-lit .fm-field {
+  fill-opacity: 0.5;
+}
+.fm.fm-lit .fm-field:hover {
+  fill-opacity: 0.72;
+}
+.fm .fm-established {
+  fill: var(--signal);
+  stroke: var(--signal);
+}
+.fm .fm-not_planted {
+  fill: var(--hairline-strong);
+  stroke: var(--fg-2);
+}
+.fm.fm-lit .fm-not_planted {
+  fill-opacity: 0.85;
+}
+.fm .fm-stress {
+  fill: url(#fm-hatch);
+  stroke: var(--attention-stripe);
+}
+.fm.fm-lit .fm-stress {
+  fill-opacity: 0.85;
+}
+.fm .fm-shock {
+  fill: var(--high);
+  stroke: var(--high);
+}
+.fm .fm-cloud_gap {
+  fill: #fff;
+  stroke: #fff;
+  stroke-dasharray: 5 4;
+}
+.fm.fm-lit .fm-cloud_gap {
+  fill-opacity: 0.06;
+}
+.fm .fm-hero {
+  stroke-width: 2.8px;
+}
+.fm .fm-draft {
+  stroke: #fff;
+  stroke-width: 2.5px;
+  stroke-dasharray: 6 4;
+  fill: var(--signal);
+  fill-opacity: 0.3;
+}
+.fm .fm-vertex {
+  stroke: var(--signal);
+  stroke-width: 2px;
+  fill: #fff;
+  fill-opacity: 1;
+}
+.fm .fm-camp {
+  stroke: #fff;
+  stroke-width: 2px;
+  fill: var(--signal);
+  fill-opacity: 0.6;
+}
+.fm .leaflet-bar {
+  border: 0;
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: var(--raise-sm);
+}
+.fm .leaflet-bar a {
+  width: 2.3rem;
+  height: 2.3rem;
+  line-height: 2.3rem;
+  color: var(--fg);
+  border-bottom-color: var(--hairline);
+}
+.fm .leaflet-control-attribution {
+  font-size: 0.72rem;
+  color: var(--fg-2);
+  background: rgb(255 255 255 / 0.88);
+  border-top-left-radius: 0.6rem;
+  padding: 0.1rem 0.5rem;
+}
+.fm-tip {
+  font-family: inherit;
+  font-size: 0.84rem;
+  color: var(--fg);
+  border: 0;
+  border-radius: 0.7rem;
+  box-shadow: var(--raise-sm);
+}
+.fm-key {
+  display: inline-block;
+  width: 1rem;
+  height: 0.8rem;
+  border-radius: 0.22rem;
+  flex: none;
+}
+.fm-key-established {
+  background: var(--signal);
+}
+.fm-key-not_planted {
+  background: var(--hairline-strong);
+}
+.fm-key-stress {
+  background: var(--hatch-elevated);
+}
+.fm-key-shock {
+  background: var(--high);
+}
+.fm-key-cloud_gap {
+  box-shadow: inset 0 0 0 1.5px var(--fg-2);
+}

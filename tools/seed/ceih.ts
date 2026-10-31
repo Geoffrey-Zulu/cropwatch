@@ -11,11 +11,12 @@ import {
   ADVANCE_FEE_PCT,
   CAP_PCT_DEFAULT,
   CEIH_SEASON,
-  circlePolygon,
   daysBetween,
   deriveStatuses,
   evaluateEligibility,
   feeFor,
+  ringCentroid,
+  ringPolygon,
   fieldRadiusM,
   findDistrict,
   geohash,
@@ -82,26 +83,33 @@ export const CREDIT_APPROVER = 'sim-credit-ceih-lungu'
 
 interface Camp {
   name: string
+  // On smallholder farmland in the Esri World Imagery (looked at 31 Oct): the Fields map draws
+  // the camp's fields over the real ground there.
   center: GeoPoint
+  // The grain of the field strips around it, degrees from east.
+  grain: number
   officer: string
   drought: boolean
 }
 export const CAMPS: Camp[] = [
   {
     name: 'Chikuni',
-    center: { latitude: -16.1352, longitude: 27.3951 },
+    center: { latitude: -16.171, longitude: 27.374 },
+    grain: 12,
     officer: BANDA,
     drought: false,
   },
   {
     name: 'Keemba',
-    center: { latitude: -16.3921, longitude: 27.5562 },
+    center: { latitude: -16.384, longitude: 27.5475 },
+    grain: -28,
     officer: MOONO,
     drought: false,
   },
   {
     name: 'Hamangaba',
-    center: { latitude: -16.2183, longitude: 27.6478 },
+    center: { latitude: -16.2137, longitude: 27.6635 },
+    grain: 32,
     officer: MOONO,
     drought: true,
   },
@@ -192,6 +200,19 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     const j = Math.floor(r.next() * (i + 1))
     ;[tokens[i], tokens[j]] = [tokens[j], tokens[i]]
   }
+  // Chikuni has exactly two fields never planted, Joseph's and one more: the Fields map's two
+  // grey holes among the green.
+  const chikuniBare = () => tokens.slice(0, 38).filter(t => t === 'not_planted').length
+  while (chikuniBare() > 1) {
+    const from = tokens.slice(0, 38).lastIndexOf('not_planted')
+    const to = tokens.findIndex((t, k) => k >= 38 && t === 'cloud_gap')
+    ;[tokens[from], tokens[to]] = [tokens[to], tokens[from]]
+  }
+  if (chikuniBare() === 0) {
+    const from = tokens.findIndex((t, k) => k >= 38 && t === 'not_planted')
+    const to = tokens.slice(0, 38).lastIndexOf('cloud_gap')
+    ;[tokens[from], tokens[to]] = [tokens[to], tokens[from]]
+  }
   const roster: { archetype: Archetype; camp: Camp }[] = [
     { archetype: 'given', camp: CAMPS[0] },
     { archetype: 'neighbour', camp: CAMPS[0] },
@@ -205,6 +226,17 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     .map((x, i) => ({ ...x, i }))
     .filter(x => x.camp.name === 'Keemba' && ['eligible', 'cloud_gap'].includes(x.archetype))
   const sideSellers = new Set([keemba[3].i, keemba[11].i])
+
+  // Hectares, then the fields themselves: strips in rows over each camp's farmland.
+  const sizes = createRandom(CEIH_SEED + 1)
+  const hectares = roster.map(({ archetype }) =>
+    archetype === 'given'
+      ? 0.5
+      : archetype === 'neighbour'
+        ? 1.5
+        : Math.round(sizes.between(0.5, 3) * 4) / 4
+  )
+  const layout = layoutFields(roster, hectares, createRandom(CEIH_SEED + 2), options.givenPin)
 
   const farmers: CeihSeed['farmers'] = []
   const contracts: CeihSeed['contracts'] = []
@@ -224,17 +256,9 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     while (usedNames.has(name)) name = personName(r, 'Southern')
     usedNames.add(name)
 
-    const ha =
-      archetype === 'given'
-        ? 0.5
-        : archetype === 'neighbour'
-          ? 1.5
-          : Math.round(r.between(0.5, 3) * 4) / 4
+    const ha = hectares[i]
     const yieldTHa = archetype === 'given' ? 1.4 : Math.round(r.between(1.2, 1.8) * 10) / 10
-    const pin =
-      archetype === 'given' && options.givenPin
-        ? options.givenPin
-        : offset(camp.center, r.between(0.4, 5), r.between(0, 2 * Math.PI))
+    const { pin, polygon } = layout[i]
     // Early planters reach the establishment line inside the window; late ones may not.
     const early = [
       'given',
@@ -272,7 +296,8 @@ export function generateCeih(options: CeihOptions): CeihSeed {
             ? null
             : { given_at: consentAt, scope: 'org_contract', officer_id: camp.officer },
         field_pin: pin,
-        field_polygon: null,
+        // The walked boundary: it replaces the circle rule for this farm.
+        field_polygon: polygon,
         claimed_ha: ha,
         history:
           archetype === 'defaulted'
@@ -300,7 +325,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
         projected_value_zmw: projected,
         input_loan_zmw: archetype === 'given' ? 1950 : Math.round((ha * INPUTS_ZMW_HA) / 10) * 10,
         inputs_delivered: { at: inputsAt, photo_path: null, otp_confirmed: true },
-        field_polygon: circlePolygon(pin, fieldRadiusM(ha)),
+        field_polygon: polygon,
         status: 'active',
         shock_flag: null,
         side_sell_suspected: false,
@@ -351,7 +376,8 @@ export function generateCeih(options: CeihOptions): CeihSeed {
               [true, true, true],
             ])
           : ['neighbour', 'not_planted'].includes(archetype)
-            ? WINDOW.map(() => r.chance(0.45))
+            ? // Clear on the last two passes, so the flat curve reads as not planted.
+              [true, false, false]
             : r.pick([
                 [false, false, false],
                 [true, false, false],
@@ -419,7 +445,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     const id = `sim-ceih-obs-${pad(i + 1)}-${observations.filter(o => o.id.includes(`-${pad(i + 1)}-`)).length + 1}`
     const location = offset(
       f.data.field_pin,
-      r.between(0, fieldRadiusM(f.data.claimed_ha) / 1000) * 0.6,
+      r.between(0, fieldRadiusM(f.data.claimed_ha) / 1000) * 0.3,
       r.between(0, 2 * Math.PI)
     )
     const severityPct = issue ? r.int(45, 65) : null
@@ -820,4 +846,74 @@ export function officerLabel(uid: string) {
   if (uid === MOONO) return 'Officer N. Moono'
   if (uid === CREDIT_APPROVER) return 'C. Lungu (credit)'
   return 'an officer'
+}
+
+// The demo fields: strips laid in rows, as Monze smallholdings lie, each as long as its contract's
+// hectares need at the row's depth, corners off-true by a few metres, the block turned to the
+// camp's grain and set on its farmland. Given and Joseph share a boundary in Chikuni's first row.
+function layoutFields(
+  roster: { archetype: Archetype; camp: Camp }[],
+  hectares: number[],
+  r: ReturnType<typeof createRandom>,
+  givenPin: GeoPoint | null | undefined
+): { pin: GeoPoint; polygon: string }[] {
+  const out: { pin: GeoPoint; polygon: string }[] = []
+  const DEPTH = 120
+  const ROW = 760
+  const GAP_X = 7
+  const GAP_Y = 14
+  for (const camp of CAMPS) {
+    const members = roster.map((x, i) => i).filter(i => roster[i].camp === camp)
+    const placed: { i: number; corners: [number, number][] }[] = []
+    let x = 0
+    let row = 0
+    for (const i of members) {
+      const width = (hectares[i] * 10_000) / DEPTH
+      if (x + width > ROW && x > 0) {
+        row++
+        x = 0
+      }
+      const top = -row * (DEPTH + GAP_Y)
+      const jitter = () => r.between(-5, 5)
+      placed.push({
+        i,
+        corners: [
+          [x + jitter(), top + jitter()],
+          [x + width + jitter(), top + jitter()],
+          [x + width + jitter(), top - DEPTH + jitter()],
+          [x + jitter(), top - DEPTH + jitter()],
+        ],
+      })
+      x += width + GAP_X
+    }
+    const height = (row + 1) * (DEPTH + GAP_Y)
+    const angle = (camp.grain * Math.PI) / 180
+    const mPerDegLng = 111_320 * Math.cos((camp.center.latitude * Math.PI) / 180)
+    for (const { i, corners } of placed) {
+      const ring = corners.map(([cx, cy]) => {
+        const [ex, ny] = [cx - ROW / 2, cy + height / 2]
+        const east = ex * Math.cos(angle) - ny * Math.sin(angle)
+        const north = ex * Math.sin(angle) + ny * Math.cos(angle)
+        return [
+          Math.round((camp.center.longitude + east / mPerDegLng) * 1e7) / 1e7,
+          Math.round((camp.center.latitude + north / 110_574) * 1e7) / 1e7,
+        ] as [number, number]
+      })
+      out[i] = { pin: ringCentroid(ring), polygon: ringPolygon(ring) }
+    }
+  }
+  // The live capture-app beat: Given's field where the photo is taken.
+  if (givenPin) {
+    const side = Math.sqrt(hectares[0] * 10_000)
+    const dLat = side / 2 / 110_574
+    const dLng = side / 2 / (111_320 * Math.cos((givenPin.latitude * Math.PI) / 180))
+    const ring: [number, number][] = [
+      [givenPin.longitude - dLng, givenPin.latitude + dLat],
+      [givenPin.longitude + dLng, givenPin.latitude + dLat],
+      [givenPin.longitude + dLng, givenPin.latitude - dLat],
+      [givenPin.longitude - dLng, givenPin.latitude - dLat],
+    ]
+    out[0] = { pin: givenPin, polygon: ringPolygon(ring) }
+  }
+  return out
 }

@@ -3,6 +3,8 @@ import { z } from 'zod'
 import {
   ApprovalSchema,
   DeliveryInputSchema,
+  EnrolFieldInputSchema,
+  FieldsMapSchema,
   FieldCardSchema,
   PortfolioSchema,
   ReconciliationSchema,
@@ -50,6 +52,18 @@ export const seasonRouter = router({
     .query(({ ctx, input }) =>
       run(() => ctx.services.season.fieldCard(ctx.caller, input.orgId, input.contractId))
     ),
+
+  fields: signedInProcedure
+    .input(Org)
+    .output(FieldsMapSchema)
+    .query(({ ctx, input }) => run(() => ctx.services.season.fields(ctx.caller, input.orgId))),
+
+  enrolField: signedInProcedure
+    .input(Org.merge(EnrolFieldInputSchema))
+    .mutation(({ ctx, input }) => {
+      const { orgId, ...field } = input
+      return run(() => ctx.services.season.enrolField(ctx.caller, orgId, field))
+    }),
 
   approvals: signedInProcedure
     .input(Org)

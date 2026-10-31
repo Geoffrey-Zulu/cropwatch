@@ -19,6 +19,8 @@ import type {
   Eligibility,
   Farmer,
   FieldCard,
+  FieldState,
+  FieldsMap,
   GroundCheck,
   LedgerEntry,
   Portfolio,
@@ -35,6 +37,7 @@ import type {
 import type { Observation } from '../schemas/observation'
 import { eligibilityLabel, evaluateEligibility, type RecordObservation } from './eligibility'
 import { maskMsisdn, ndviText, shortDate, zmw } from './format'
+import { polygonRing, ringCentroid } from './geofence'
 import { balance, projectedTonnes, recovered, variance } from './ledger'
 import { establishmentNdvi, latestStatus, visiblePasses } from './ndvi'
 import { daysBetween, seasonNow } from './season'
@@ -667,4 +670,76 @@ export function buildSmsLog(data: SeasonData): SmsLogView[] {
       season_at: s.data.season_at,
       sim: s.data.sim,
     }))
+}
+
+// ---------------------------------------------------------------- Fields map
+
+const FIELD_STATE: Record<SeasonRow['verified']['state'], FieldState> = {
+  satellite: 'established',
+  officer: 'established',
+  not_planted: 'not_planted',
+  field_stress: 'stress',
+  shared_stress: 'stress',
+  cloud_gap: 'cloud_gap',
+  too_early: 'cloud_gap',
+}
+
+// About 130 m around a camp's fields: its extent, never a field's outline.
+const CAMP_PAD = 0.0012
+
+// The fields over the imagery (Outgrower View, Fields map). `precise`: the caller may see this
+// org's field outlines (invariant 6, amended); otherwise camp totals only, no outline, no name.
+export function buildFieldsMap(data: SeasonData, today: string, precise: boolean): FieldsMap {
+  const rows = new Map(data.contracts.map(c => [c.id, buildSeasonRow(data, c.id, today)]))
+  const fields = data.contracts.flatMap(c => {
+    const ring = polygonRing(c.data.field_polygon)
+    const row = rows.get(c.id)!
+    if (!ring) return []
+    return [
+      {
+        contract_id: c.id,
+        farmer_name: row.farmer_name,
+        camp: c.data.camp,
+        state: row.shock ? ('shock' as const) : FIELD_STATE[row.verified.state],
+        ring,
+        contracted_ha: c.data.contracted_ha,
+        eligibility_label: row.eligibility_label,
+        sim: row.sim,
+      },
+    ]
+  })
+  const camps = [...new Set(fields.map(f => f.camp))].sort().map(camp => {
+    const own = fields.filter(f => f.camp === camp)
+    const points = own.flatMap(f => f.ring)
+    const lngs = points.map(p => p[0])
+    const lats = points.map(p => p[1])
+    const count = (state: FieldState) => own.filter(f => f.state === state).length
+    return {
+      camp,
+      center: ringCentroid(points),
+      bounds: [
+        Math.min(...lngs) - CAMP_PAD,
+        Math.min(...lats) - CAMP_PAD,
+        Math.max(...lngs) + CAMP_PAD,
+        Math.max(...lats) + CAMP_PAD,
+      ] as [number, number, number, number],
+      contracts: own.length,
+      established: count('established'),
+      not_planted: count('not_planted'),
+      stress: count('stress'),
+      cloud_gap: count('cloud_gap'),
+      shock: count('shock') > 0,
+    }
+  })
+  return {
+    org_id: data.org.id,
+    today,
+    precise,
+    camps,
+    fields: precise ? fields : [],
+    hero_contract_id: precise
+      ? (data.contracts.find(c => c.data.farmer_id === data.state.hero_farmer_id)?.id ?? null)
+      : null,
+    sim: data.org.sim || fields.some(f => f.sim),
+  }
 }

@@ -79,3 +79,41 @@ function distanceToSegment(a: readonly [number, number], b: readonly [number, nu
   const t = length2 === 0 ? 0 : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / length2))
   return Math.hypot(ax + t * dx, ay + t * dy)
 }
+
+// A ring of [longitude, latitude] pairs, as drawn on the Fields map (closed or not).
+export type Ring = [number, number][]
+
+const openRing = (ring: Ring) =>
+  ring.length > 1 &&
+  ring[0][0] === ring[ring.length - 1][0] &&
+  ring[0][1] === ring[ring.length - 1][1]
+    ? ring.slice(0, -1)
+    : ring
+
+// Area in hectares (flat earth around the ring's first point: a field is hundreds of metres).
+export function polygonAreaHa(ring: Ring): number {
+  const points = openRing(ring)
+  if (points.length < 3) return 0
+  const toXY = local({ latitude: points[0][1], longitude: points[0][0] })
+  const xy = points.map(p => toXY(p))
+  let twice = 0
+  for (let i = 0; i < xy.length; i++) {
+    const [x1, y1] = xy[i]
+    const [x2, y2] = xy[(i + 1) % xy.length]
+    twice += x1 * y2 - x2 * y1
+  }
+  return Math.abs(twice) / 2 / 10_000
+}
+
+export function ringCentroid(ring: Ring): GeoPoint {
+  const points = openRing(ring)
+  const latitude = points.reduce((n, p) => n + p[1], 0) / points.length
+  const longitude = points.reduce((n, p) => n + p[0], 0) / points.length
+  return { latitude: round(latitude), longitude: round(longitude) }
+}
+
+// GeoJSON Polygon text from a ring, closed, coordinates rounded to about a centimetre.
+export function ringPolygon(ring: Ring): string {
+  const points = openRing(ring).map(([lng, lat]) => [round(lng), round(lat)] as [number, number])
+  return JSON.stringify({ type: 'Polygon', coordinates: [[...points, points[0]]] })
+}
