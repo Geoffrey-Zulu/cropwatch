@@ -130,7 +130,9 @@ export function AppShell({
           <a href="#/" aria-label="Phytos: national map" className="shrink-0 rounded-card">
             <PhytosLogo />
           </a>
-          <nav aria-label="Pages" className="hidden min-w-0 items-center gap-[0.2rem] lg:flex">
+          {/* In the header only from 1280 px: below that the five links and the verified count overlap
+              (found 31 Oct at 1024 to 1100 px), so they keep the row under the header. */}
+          <nav aria-label="Pages" className="hidden min-w-0 items-center gap-[0.2rem] xl:flex">
             {links(false)}
           </nav>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-4">
@@ -141,7 +143,7 @@ export function AppShell({
         </header>
         <nav
           aria-label="Pages"
-          className="flex gap-[0.2rem] overflow-x-auto bg-panel px-3 pb-[0.6rem] pt-[0.55rem] shadow-[0_1px_0_rgb(27_41_32/0.06)] [scrollbar-width:none] lg:hidden"
+          className="flex gap-[0.2rem] overflow-x-auto bg-panel px-3 pb-[0.6rem] pt-[0.55rem] shadow-[0_1px_0_rgb(27_41_32/0.06)] [scrollbar-width:none] xl:hidden"
         >
           {links(true)}
         </nav>
