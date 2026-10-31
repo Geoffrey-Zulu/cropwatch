@@ -10,7 +10,7 @@ Repository: `germansniper3/cropwatch`. Branch: `codex/cropwatch-audit-ios` (base
 
 1. Open **Actions → Build Phytos iOS → Run workflow** on this branch.
 2. Choose **simulator** first. It requires no Apple secrets and exports `Phytos-simulator.zip`, containing an `.app` for an iOS simulator on a Mac. It cannot be installed on a physical iPhone.
-3. For an IPA, add repository Actions secrets and select the appropriate signing mode below. Download the `Phytos-iOS-…` artifact after the build succeeds.
+3. For a signed IPA, add repository Actions secrets and select the appropriate signing mode below. Download the `Phytos-iOS-…` artifact after the build succeeds.
 
 To get the iPhone package before adding signing credentials, choose **unsigned-ipa**. This builds the Release app for physical iOS devices and packages it as `Phytos-unsigned.ipa`. It requires no secrets, but **must be signed before it can be installed on an iPhone**. It is not the simulator app and is not a ready-to-install distribution build.
 
@@ -28,6 +28,8 @@ To get the iPhone package before adding signing credentials, choose **unsigned-i
 The workflow creates a temporary keychain, imports signing assets, validates team/bundle identity, archives and exports, then removes the imported profile/keychain. Certificate files and profiles are never committed or uploaded as artifacts. Do not paste signing secrets into a chat or commit them to Git.
 
 Verified simulator build: [GitHub Actions run 41187727166](https://github.com/germansniper3/cropwatch/actions/runs/41187727166) compiled successfully in Xcode and uploaded the simulator app for commit `38a6d4d`. Device IPA builds are separate runs and have their own signing status.
+
+Verified unsigned device build: [GitHub Actions run 41188116184](https://github.com/germansniper3/cropwatch/actions/runs/41188116184) exported the ARM64 `iPhoneOS` IPA for commit `59b42ee`. The downloaded copy is `artifacts/ios/export/Phytos-unsigned.ipa`. It must be signed before installation; its checksum and package inspection are recorded in `AUDIT_VALIDATION.md`.
 
 ## Local development
 

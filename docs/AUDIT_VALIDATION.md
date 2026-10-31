@@ -20,7 +20,7 @@ Initial scan: 16 findings (6 high / 7 moderate / 3 low), plus upstream's already
 ## Release limits
 
 - Windows cannot run Xcode. A local web build and unit tests do not prove an iOS compile, native permissions or real-device operation.
-- The workflow supports an unsigned simulator `.app` and signed IPA export with supplied Apple Distribution credentials. No signing certificate/profile was supplied during this task, so no signed device IPA is claimed.
+- The workflow supports a simulator `.app`, an unsigned device IPA and signed IPA export with supplied Apple Distribution credentials. No signing certificate/profile was supplied during this task, so no signed device IPA is claimed.
 - Background native push, durable offline drafts, intervention/outcome endpoints, consent/account lifecycle and the other open audit findings remain explicitly unfinished.
 - Tests for the new native API boundary use mocked native plugins and transports. They validate authentication/error/contract flow, not hardware behaviour.
 
@@ -31,7 +31,7 @@ Initial scan: 16 findings (6 high / 7 moderate / 3 low), plus upstream's already
 - Final dependency scan: **one high / three moderate / two low**, no critical findings. The remaining high finding is Zod ([GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)). The existing `pnpm audit --audit-level high` CI gate therefore still fails; no new exception was introduced.
 - Capacitor sync succeeded with camera 8.2.6 and geolocation 8.2.4, using Capacitor 8.6.0. Native project permission descriptions are present. Node script and Bash build-script syntax checks passed.
 - The Tailwind declaration in the dashboard was aligned with capture's existing 3.4.19 version; this resolves the inherited dependency-consistency failure without changing the resolved Tailwind release.
-- The iOS workflow is manual and exports an artifact only. It does not deploy the original backend, send alerts, upload to App Store Connect or publish an app. Remote compilation results are available in the fork's **Build Phytos iOS** Actions runs; a device IPA still requires signing credentials.
+- The iOS workflow is manual and exports an artifact only. It does not deploy the original backend, send alerts, upload to App Store Connect or publish an app. Remote compilation results are available in the fork's **Build Phytos iOS** Actions runs; installing the device IPA still requires signing.
 
 ## Verified remote iOS compile
 
@@ -40,3 +40,11 @@ Initial scan: 16 findings (6 high / 7 moderate / 3 low), plus upstream's already
 The normal [CI run 41187727380](https://github.com/germansniper3/cropwatch/actions/runs/41187727380) failed specifically at **Audit dependencies**, as expected from the remaining Zod advisory. That failure was not suppressed.
 
 The workflow also has an `unsigned-ipa` mode, which compiles for physical iOS devices and exports an unsigned package without Apple credentials. Such a package must be signed before installation. Signed App Store/ad hoc modes continue to require the certificate and profile described in `IOS_BUILD.md`.
+
+## Verified device IPA export
+
+[Device build 41188116184](https://github.com/germansniper3/cropwatch/actions/runs/41188116184) **succeeded** for commit `59b42ee`, including the quality gates, Xcode Release compilation for physical iOS devices, IPA packaging and artifact upload. Artifact: `Phytos-iOS-unsigned-ipa`.
+
+The downloaded package is at `artifacts/ios/export/Phytos-unsigned.ipa` (2,039,643 bytes; ignored by Git). Inspection of the actual ZIP, binary plist and Mach-O header confirmed `Payload/App.app`, bundle ID `zm.cropwatch.app`, platform `iPhoneOS` and CPU `arm64`. The app has no `_CodeSignature/CodeResources`, consistent with the deliberately unsigned build. This is a device IPA, not the simulator app; it still requires signing before installation.
+
+SHA-256: `ed4184be437bfa1094216f766bc1fafb294aa783b4548e06d7f946ac747a857e`.
