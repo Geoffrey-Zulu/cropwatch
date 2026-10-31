@@ -98,6 +98,10 @@ button { font: inherit; color: inherit; }
 .toggle a[aria-current="page"] .letter { background: #fff; color: var(--accent); }
 .kicker .letter { width: 1.75rem; height: 1.75rem; margin-right: .5rem; background: var(--accent); color: #fff; font-size: .88rem; vertical-align: middle; }
 .page[hidden] { display: none; }
+.toggle a.plain { padding: .5rem 1rem; }
+.side.elig-grid { display: grid; align-items: start; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.4rem 1.8rem; margin-top: 1.1rem; }
+.card.card { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.elig-grid .neighbour .mini { max-width: 30rem; }
 .pager { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .4rem; }
 .pager svg { width: 1.05rem; height: 1.05rem; }
 .preview-note { flex-basis: 100%; margin: 0; font-size: .95rem; color: var(--ink-2); display: flex; gap: .5rem; align-items: flex-start; }
@@ -288,6 +292,8 @@ button { font: inherit; color: inherit; }
   .rrow .num { text-align: right; }
   .lab-m { display: inline; color: var(--ink-2); font-weight: 500; }
   .card { grid-template-columns: 1fr; padding: 1.05rem .95rem; }
+  .side.elig-grid { grid-template-columns: 1fr; }
+  .card.card { grid-template-columns: 1fr; }
   .appr { grid-template-columns: 1fr; }
   .photo { aspect-ratio: 16 / 9; }
   .recon { grid-template-columns: 1fr; }
@@ -346,18 +352,19 @@ button { font: inherit; color: inherit; }
   <div class="intro">
     <h1>DEMO OUTGROWER CO.</h1>
     <nav class="toggle" aria-label="Preview pages">
-      <a href="#a"><span class="letter">A</span>Portfolio</a>
-      <a href="#b"><span class="letter">B</span>Season ledger</a>
-      <a href="#c"><span class="letter">C</span>Approvals</a>
-      <a href="#d"><span class="letter">D</span>Reconciliation</a>
-      <a href="#e"><span class="letter">E</span>Farmer channel</a>
+      <a class="plain" href="#overview">Overview</a>
+      <a href="#c"><span class="letter">C</span>Crop verification</a>
+      <a href="#e"><span class="letter">E</span>Eligibility</a>
+      <a href="#i"><span class="letter">I</span>Instant disbursement</a>
+      <a href="#h"><span class="letter">H</span>Harvest reconciliation</a>
+      <a class="plain" href="#farmer">Farmer channel</a>
     </nav>
-    <p class="preview-note"><svg aria-hidden="true"><use href="#i-info"/></svg><span>Static preview of tomorrow's demo in five pages, A to E: one season, January to June. Nothing here is live.</span></p>
+    <p class="preview-note"><svg aria-hidden="true"><use href="#i-info"/></svg><span>Static preview of tomorrow's demo: C, E, I and H across one season, January to June. Nothing here is live.</span></p>
   </div>
 
   <!-- ============ 1 · portfolio ============ -->
-  <section class="moment page" data-page="a" aria-labelledby="m1">
-    <p class="kicker" id="m1"><span class="letter">A</span>Portfolio · <b>January</b> · the season at a glance</p>
+  <section class="moment page" data-page="overview" aria-labelledby="m1">
+    <p class="kicker" id="m1">Overview · <b>January</b> · the season at a glance</p>
     <div class="island portfolio">
       <div class="cell"><div class="fig">120</div><div class="lab">Contracts</div><div class="lsub">Soya, 3 camps in Monze</div></div>
       <div class="cell"><div class="fig"><small>ZMW</small>806,400</div><div class="lab">Projected value</div><div class="lsub">Hectares × yield × price</div></div>
@@ -370,12 +377,12 @@ button { font: inherit; color: inherit; }
         <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
       </div>
     </div>
-    <div class="pager"><a class="btn-quiet" href="#b">Next: B · Season ledger <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    <div class="pager"><a class="btn-quiet" href="#c">Next: C · Crop verification <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ 2 · season ledger ============ -->
-  <section class="moment page" data-page="b" aria-labelledby="m2">
-    <p class="kicker" id="m2"><span class="letter">B</span>Season ledger · <b>January</b> · who qualifies, and why</p>
+  <section class="moment page" data-page="c" aria-labelledby="m2">
+    <p class="kicker" id="m2"><span class="letter">C</span>Crop verification · <b>January</b> · seen from space, checked on the ground</p>
     <div class="island ledger">
       <div class="head">
         <div>
@@ -448,7 +455,10 @@ button { font: inherit; color: inherit; }
               <span><i class="gap"></i>No clear pass</span>
             </div>
 
-            <h3 style="margin-top:1.3rem">Verification timeline</h3>
+          </div>
+          <div>
+            <h3>Verification timeline</h3>
+            <p>Every entry with its source</p>
             <ol class="timeline">
               <li><span class="src"><svg aria-hidden="true"><use href="#i-box"/></svg></span><span class="when">22 Oct</span><span>Inputs handed over and acknowledged with the farmer's SMS code · Officer M. Banda</span></li>
               <li><span class="src"><svg aria-hidden="true"><use href="#i-sprout"/></svg></span><span class="when">18 Nov</span><span>Planted, reported by the farmer</span></li>
@@ -458,40 +468,6 @@ button { font: inherit; color: inherit; }
               <li><span class="src"><svg aria-hidden="true"><use href="#i-user"/></svg></span><span class="when">10 Jan</span><span>Field verified by Officer M. Banda · stage V4 · photo inside the field</span></li>
               <li><span class="src"><svg aria-hidden="true"><use href="#i-spark"/></svg></span><span class="when">10 Jan</span><span>Photo assessed by AI: no pest identified, high confidence</span></li>
             </ol>
-          </div>
-
-          <div class="side">
-            <div>
-              <h3>Eligibility factors</h3>
-              <p>Rules, not a score. Every one is shown.</p>
-              <ul class="factors">
-                <li>Satellite: 3 clear passes, NDVI 0.52 vs camp 0.49</li>
-                <li>Field verified by Officer M. Banda, stage V4</li>
-                <li>No open severe issues</li>
-                <li>Cap 15% of ZMW 5,600 = ZMW 840</li>
-              </ul>
-              <div class="verdict">
-                <span class="chip ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Eligible</span>
-                <span class="fig"><small>cap ZMW</small>840</span>
-              </div>
-              <button class="btn-primary" style="margin-top:1rem">Request advance for Given</button>
-            </div>
-
-            <div class="neighbour" aria-label="Joseph Hamoonga, neighbour">
-              <h3>Next to him: Joseph Hamoonga</h3>
-              <p class="dim" style="margin-top:.15rem;font-size:.86rem">Chikuni · 1.5 ha soya · same camp, same clouds</p>
-              <svg class="mini" viewBox="0 0 260 104" role="img" aria-label="Flat NDVI near bare soil while the camp median rises.">
-                <g stroke="#E8ECE4"><line x1="10" y1="95" x2="252" y2="95"/><line x1="10" y1="47" x2="252" y2="47"/></g>
-                <polyline points="10,78.2 33.3,77 56.7,75.8 80,73.4 103.3,68.6 126.7,61.4 150,55.4 173.3,49.4 196.7,44.6 220,39.8 243.3,36.2" fill="none" stroke="#7C887F" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
-                <polyline points="10,78.2 33.3,77 56.7,79.4 80,77 103.3,78.2 126.7,75.8" fill="none" stroke="#2D5B39" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <polyline points="196.7,77 220,78.2 243.3,77" fill="none" stroke="#2D5B39" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <text x="246" y="30" text-anchor="end" style="font:11px Figtree,sans-serif;fill:#55645A">camp 0.49</text>
-                <text x="246" y="72" text-anchor="end" style="font:600 11px Figtree,sans-serif;fill:#1B2920">0.15</text>
-              </svg>
-              <p><span class="chip no">Not planted</span></p>
-              <p style="font-weight:600">Not planted. No advance. Visit task created.</p>
-              <p class="dim" style="font-size:.86rem">Flat near bare soil 8 weeks after the camp's planting date.</p>
-            </div>
           </div>
         </div>
 
@@ -546,12 +522,60 @@ button { font: inherit; color: inherit; }
         <span>No field pins are shown or exported</span>
       </div>
     </div>
-    <div class="pager"><a class="btn-quiet" href="#c">Next: C · Approvals <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    <div class="pager"><a class="btn-quiet" href="#e">Next: E · Eligibility <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ E · eligibility ============ -->
+  <section class="moment page" data-page="e" aria-labelledby="m-e">
+    <p class="kicker" id="m-e"><span class="letter">E</span>Eligibility · <b>January</b> · rules, not a score</p>
+    <div class="island ledger">
+      <div class="head">
+        <div>
+          <h2>Eligibility</h2>
+          <p class="sub">Given beside his neighbour: same camp, same clouds, different fields</p>
+        </div>
+        <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
+      </div>
+      <div class="side elig-grid">
+            <div>
+              <h3>Given Mweemba: eligibility factors</h3>
+              <p>Rules, not a score. Every one is shown.</p>
+              <ul class="factors">
+                <li>Satellite: 3 clear passes, NDVI 0.52 vs camp 0.49</li>
+                <li>Field verified by Officer M. Banda, stage V4</li>
+                <li>No open severe issues</li>
+                <li>Cap 15% of ZMW 5,600 = ZMW 840</li>
+              </ul>
+              <div class="verdict">
+                <span class="chip ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Eligible</span>
+                <span class="fig"><small>cap ZMW</small>840</span>
+              </div>
+              <button class="btn-primary" style="margin-top:1rem">Request advance for Given</button>
+            </div>
+
+            <div class="neighbour" aria-label="Joseph Hamoonga, neighbour">
+              <h3>Next to him: Joseph Hamoonga</h3>
+              <p class="dim" style="margin-top:.15rem;font-size:.86rem">Chikuni · 1.5 ha soya · same camp, same clouds</p>
+              <svg class="mini" viewBox="0 0 260 104" role="img" aria-label="Flat NDVI near bare soil while the camp median rises.">
+                <g stroke="#E8ECE4"><line x1="10" y1="95" x2="252" y2="95"/><line x1="10" y1="47" x2="252" y2="47"/></g>
+                <polyline points="10,78.2 33.3,77 56.7,75.8 80,73.4 103.3,68.6 126.7,61.4 150,55.4 173.3,49.4 196.7,44.6 220,39.8 243.3,36.2" fill="none" stroke="#7C887F" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+                <polyline points="10,78.2 33.3,77 56.7,79.4 80,77 103.3,78.2 126.7,75.8" fill="none" stroke="#2D5B39" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="196.7,77 220,78.2 243.3,77" fill="none" stroke="#2D5B39" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="246" y="30" text-anchor="end" style="font:11px Figtree,sans-serif;fill:#55645A">camp 0.49</text>
+                <text x="246" y="72" text-anchor="end" style="font:600 11px Figtree,sans-serif;fill:#1B2920">0.15</text>
+              </svg>
+              <p><span class="chip no">Not planted</span></p>
+              <p style="font-weight:600">Not planted. No advance. Visit task created.</p>
+              <p class="dim" style="font-size:.86rem">Flat near bare soil 8 weeks after the camp's planting date.</p>
+            </div>
+          </div>
+    </div>
+    <div class="pager"><a class="btn-quiet" href="#i">Next: I · Instant disbursement <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ 3 · approval ============ -->
-  <section class="moment page" data-page="c" aria-labelledby="m3">
-    <p class="kicker" id="m3"><span class="letter">C</span>Approvals · <b>January</b> · a second person approves</p>
+  <section class="moment page" data-page="i" aria-labelledby="m3">
+    <p class="kicker" id="m3"><span class="letter">I</span>Instant disbursement · <b>January</b> · a second person approves</p>
     <div class="island approvals">
       <div class="head">
         <div>
@@ -615,12 +639,12 @@ button { font: inherit; color: inherit; }
         </div>
       </div>
     </div>
-    <div class="pager"><a class="btn-quiet" href="#d">Next: D · Reconciliation <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    <div class="pager"><a class="btn-quiet" href="#h">Next: H · Harvest reconciliation <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ 4 · reconciliation ============ -->
-  <section class="moment page" data-page="d" aria-labelledby="m4">
-    <p class="kicker" id="m4"><span class="letter">D</span>Reconciliation · <b>March and June</b> · the season settles</p>
+  <section class="moment page" data-page="h" aria-labelledby="m4">
+    <p class="kicker" id="m4"><span class="letter">H</span>Harvest reconciliation · <b>March and June</b> · the season settles</p>
     <div class="island recon">
       <section aria-label="Given's statement">
         <div class="head">
@@ -656,12 +680,12 @@ button { font: inherit; color: inherit; }
         <p class="variance"><svg aria-hidden="true"><use href="#i-sun"/></svg><span>A shortfall with no shock flag and no verified problem is marked unexplained: a possible side-sale for the credit team.</span></p>
       </section>
     </div>
-    <div class="pager"><a class="btn-quiet" href="#e">Next: E · Farmer channel <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    <div class="pager"><a class="btn-quiet" href="#farmer">Next: Farmer channel <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ farmer channel ============ -->
-  <section class="moment page" data-page="e" aria-labelledby="m5">
-    <p class="kicker" id="m5"><span class="letter">E</span>Farmer channel · <b>in production</b>, not built for the demo</p>
+  <section class="moment page" data-page="farmer" aria-labelledby="m5">
+    <p class="kicker" id="m5">Farmer channel · <b>in production</b>, not built for the demo</p>
   <aside class="island channel" aria-label="Farmer channel, in production">
     <div class="phone" aria-hidden="true">
       <div class="screen">
@@ -679,20 +703,20 @@ button { font: inherit; color: inherit; }
       <p>In production the farmer checks the season, requests the advance and reads the statement on a feature phone. Not built for the demo: tomorrow the officer requests on the farmer's behalf from this dashboard, and the farmer's SMS code confirms it.</p>
     </div>
   </aside>
-    <div class="pager"><a class="btn-quiet" href="#a">Back to A · Portfolio <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    <div class="pager"><a class="btn-quiet" href="#overview">Back to the overview <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
 </div>
 </main>
 <script>
-// One page at a time: #a to #e. The old section links (#m1 to #m4) still land on their page.
+// One page at a time: the overview, then C, E, I and H, then the farmer channel. Older links still land.
 (function () {
-  var NAMES = { a: 'A · Portfolio', b: 'B · Season ledger', c: 'C · Approvals', d: 'D · Reconciliation', e: 'E · Farmer channel' };
-  var OLD = { m1: 'a', m2: 'b', m3: 'c', m4: 'd', m5: 'e' };
+  var NAMES = { overview: 'Overview', c: 'C · Crop verification', e: 'E · Eligibility', i: 'I · Instant disbursement', h: 'H · Harvest reconciliation', farmer: 'Farmer channel' };
+  var OLD = { m1: 'overview', m2: 'c', m3: 'i', m4: 'h', m5: 'farmer', a: 'overview', b: 'c', d: 'h' };
   function show() {
     var key = location.hash.replace('#', '').toLowerCase();
     key = OLD[key] || key;
-    if (!NAMES[key]) key = 'a';
+    if (!NAMES[key]) key = 'overview';
     document.querySelectorAll('.page').forEach(function (el) { el.hidden = el.getAttribute('data-page') !== key; });
     document.querySelectorAll('.toggle a').forEach(function (el) {
       if (el.getAttribute('href') === '#' + key) el.setAttribute('aria-current', 'page');
