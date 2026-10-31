@@ -31,6 +31,8 @@ const context = await browser.newContext({
   recordVideo: { dir: join(out, '.raw'), size: { width, height } },
 })
 const page = await context.newPage()
+// A slow venue or hotel line: the first load of a new build can take most of a minute.
+page.setDefaultNavigationTimeout(120_000)
 // The video starts with the page: beat offsets from here cut the takes.
 const t0 = Date.now()
 const takes: { name: string; from: number; to: number }[] = []
@@ -72,7 +74,7 @@ await beat(
     // The pointer off the map, so no field's tooltip sits in the opening shot.
     await p.mouse.move(12, 140)
     await p.goto(`${base}/#/outgrower/fields`)
-    await p.getByRole('heading', { name: 'Fields map' }).waitFor({ timeout: 30_000 })
+    await p.getByRole('heading', { name: 'Fields map' }).waitFor({ timeout: 90_000 })
     // Into Chikuni: the fields light up once the map lands.
     await p.locator('.fm-lit').waitFor({ timeout: 20_000 })
     await p
