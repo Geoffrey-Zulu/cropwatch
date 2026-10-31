@@ -11,24 +11,23 @@ The checklist and the timed run for the live Phytos demo at the GreenCode final 
 
 Plan: [`ceih-overnight-plan.md`](ceih-overnight-plan.md) (storyline v2, §4). The demo is the dashboard: Outgrower View → Season ledger, Approvals, Reconciliation. The old path below stays as the fallback and passes on the same API.
 
-**Where it runs (until the cutover, production is untouched):**
+**Where it runs (production since 31 Oct 23:06, tag `ceih-2026-10-31`, API revision `cropwatch-api-00017-c5w`):**
 
-| What                                                            | URL                                                                        |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Dashboard, CEIH with the Fields map (Block 2)                   | https://crop-watch01--ceih-fields-bn4uxra8.web.app → `#/outgrower/fields`  |
-| Capture app against that API (optional live photo)              | https://crop-watch01-capture--ceih-fields-3bau9w91.web.app                 |
-| API, tagged revision `fields`, no traffic                       | https://fields---cropwatch-api-7d3oc7ppba-ew.a.run.app                     |
-| Fallback no. 2: dashboard, CEIH without the Fields map          | https://crop-watch01--ceih-preview-2d9ec7jj.web.app → `#/outgrower/season` |
-| Fallback no. 2: capture app                                     | https://crop-watch01-capture--ceih-preview-hnb6j9io.web.app                |
-| Fallback no. 2: API, tag `ceih` (demo check with `--no-fields`) | https://ceih---cropwatch-api-7d3oc7ppba-ew.a.run.app                       |
-| Static preview for mentors                                      | https://crop-watch01--ceih-preview-2d9ec7jj.web.app/mockups/d-ceih.html    |
+| What                                            | URL                                                                                                                                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard (the demo)                            | https://crop-watch01.web.app → `#/outgrower/fields`                                                                                                                              |
+| Capture app (optional live photo)               | https://crop-watch01-capture.web.app                                                                                                                                             |
+| API                                             | https://cropwatch-api-24960589333.europe-west1.run.app                                                                                                                           |
+| Fallback no. 1: the Block 2 preview, same build | https://crop-watch01--ceih-fields-bn4uxra8.web.app (API tag `fields`: https://fields---cropwatch-api-7d3oc7ppba-ew.a.run.app)                                                    |
+| Fallback no. 2: CEIH without the Fields map     | https://crop-watch01--ceih-preview-2d9ec7jj.web.app → `#/outgrower/season` (API tag `ceih`: https://ceih---cropwatch-api-7d3oc7ppba-ew.a.run.app; demo check with `--no-fields`) |
+| Static preview for mentors                      | https://crop-watch01.web.app/mockups/d-ceih.html                                                                                                                                 |
 
-Both previews share production's Firestore, so one re-arm serves all three builds. Redeploy a preview with `TAG_NAME=fields CHANNEL=ceih-fields bash infra/deploy-preview.sh` (MIN_INSTANCES 1; production traffic and sites unchanged); leave the `ceih` tag and `ceih-preview` channel alone as fallback no. 2. Sign in as a Command Center account (david@phytos.com): it stands in for the credit team, and it is not the officer who verifies the field, so it may approve.
+The previews share production's Firestore, so one re-arm serves all three builds. Leave the `ceih` and `fields` tags and their channels alone (they expire 7 Nov). `infra/deploy.sh` sends all production traffic to the new revision and keeps the tags. Sign in as a Command Center account (david@phytos.com): it stands in for the credit team, and it is not the officer who verifies the field, so it may approve.
 
 **Morning ritual (CEIH):**
 
 1. Re-arm both paths in one run: `pnpm --filter @repo/seed seed --live-demo --demo-issue tuta_absoluta --demo-center=-15.388311,28.346069 --demo-district Lusaka --ceih --commit`. Good: "Firestore CEIH: 120 farmers and contracts …; season day 2027-01-1x". Add `--demo-phone +2609…` to let Given's SMS reach the judge's phone once the Africa's Talking secrets exist; add `--given-pin <venue lat,lng>` only for the live capture-app beat (his field must be where the photo is taken).
-2. Demo check: `PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e --api https://ceih---cropwatch-api-7d3oc7ppba-ew.a.run.app`. Good: "All checks passed", beats 1 to 6 in about 10 s, "Cleaned up … the season is armed again". Then the old path: `API_URL=<that API>/api/v1 pnpm --filter @repo/admin-tools outbreak-e2e …` (step 3 below).
+2. Demo check: `PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e` (production by default; `--api <url>` for a fallback). Good: "All checks passed", beats 1 to 6 in about 10 to 16 s, "Cleaned up … the season is armed again". Then the old path: `API_URL=<that API>/api/v1 pnpm --filter @repo/admin-tools outbreak-e2e …` (step 3 below).
 3. Warm-up just before the pitch: the same `ceih-e2e … --warm` (the Fields map and one Esri imagery tile over Chikuni, the ledger, Given's card, REST eligibility and satellite; changes nothing). Good: "Fields map: Chikuni armed, two grey holes", "the Fields map loads imagery", "Warm in … s".
 4. Open the dashboard in a clean browser profile at the projector's resolution, signed in, on `#/outgrower/fields`, and let the map land once: the browser then holds the Chikuni tiles (the page also prefetches zooms 13 to 17 over every camp). If the venue blocks Esri, the map switches to EOX Sentinel-2 by itself; if both fail it shows the fields on the plain canvas, and the story still holds.
 
@@ -48,14 +47,15 @@ Both previews share production's Firestore, so one re-arm serves all three build
 
 Each beat answers in about 1 to 4.5 s on the deployed revision (recorded 31 Oct). Backup recordings (a continuous run as `.webm` and `.mp4`, a take a beat in `takes/`, a frame a beat), at 1280×800:
 
-- `Desktop/Phytos CEIH recording 2026-10-31 fields-preview/`: the Fields map opening, on the Block 2 preview.
+- `Desktop/Phytos CEIH recording 2026-10-31 production 1280/`: production, the Fields map opening (the current backup).
+- `Desktop/Phytos CEIH recording 2026-10-31 fields-preview/`: the same build on the Block 2 preview.
 - `Desktop/Phytos CEIH recording 2026-10-31/`: the first take, opening on the Season ledger.
 
 Recorded with `PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/visual record-ceih --out <folder> [--dashboard <url>] [--size 1920x1080]` (default dashboard: production; ffmpeg cuts the takes). It moves the season to June: re-arm after recording.
 
 The Fields map is the Outgrower View's own: farm-level outlines for this agribusiness under contract consent (its credit and field-officer roles; a Command Center account stands in on the simulated org), camp totals for anyone else, and nothing precise in exports. "Add farm" (draw-to-enrol) works live but leaves a farmer behind: re-arm after showing it.
 
-**Cutover (Geoffrey's go):** `bash infra/deploy.sh` from the `ceih` branch moves production (API traffic and both sites) to this build; then the morning ritual against the production URLs. **Fallback until Sunday 09:00:** if beats 1 to 6 are not green on the deployed build, present `stable-2026-10-31` (field-airy, the outbreak story) with its recordings and tell the CEIH story on slides.
+**Cutover: done** (31 Oct 23:06, `MIN_INSTANCES=1 bash infra/deploy.sh` from `ceih`). **Fallback until Sunday 09:00:** if beats 1 to 6 are not green on the deployed build, present `stable-2026-10-31` (field-airy, the outbreak story) with its recordings and tell the CEIH story on slides.
 
 ## Before the day (freeze tag freeze-2026-10-30)
 
