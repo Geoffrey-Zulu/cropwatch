@@ -91,6 +91,15 @@ button { font: inherit; color: inherit; }
 .toggle button:hover { color: var(--ink); background: var(--hover); }
 .toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
 .toggle.small button { padding: .42rem .8rem; font-size: .86rem; }
+.toggle a { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem 1rem .5rem .55rem; border-radius: var(--r-pill); font-size: .92rem; font-weight: 500; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
+.toggle a:hover { color: var(--ink); background: var(--hover); }
+.toggle a[aria-current="page"] { background: var(--accent); color: #fff; font-weight: 600; }
+.letter { display: inline-grid; place-items: center; width: 1.55rem; height: 1.55rem; border-radius: var(--r-pill); background: var(--accent-tint); color: var(--accent); font-size: .8rem; font-weight: 700; flex: none; }
+.toggle a[aria-current="page"] .letter { background: #fff; color: var(--accent); }
+.kicker .letter { width: 1.75rem; height: 1.75rem; margin-right: .5rem; background: var(--accent); color: #fff; font-size: .88rem; vertical-align: middle; }
+.page[hidden] { display: none; }
+.pager { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .4rem; }
+.pager svg { width: 1.05rem; height: 1.05rem; }
 .preview-note { flex-basis: 100%; margin: 0; font-size: .95rem; color: var(--ink-2); display: flex; gap: .5rem; align-items: flex-start; }
 .preview-note svg { width: 1.05rem; height: 1.05rem; flex: none; margin-top: .12rem; color: var(--ink-3); }
 
@@ -107,6 +116,7 @@ button { font: inherit; color: inherit; }
 .demo svg { width: .9rem; height: .9rem; }
 
 .btn-primary, .btn-quiet { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.65rem; padding: 0 1.25rem; border-radius: var(--r-pill); border: 0; cursor: pointer; font-size: .95rem; font-weight: 600; white-space: nowrap; }
+.btn-primary, .btn-quiet { text-decoration: none; }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { filter: brightness(1.1); }
 .btn-quiet { background: var(--island); color: var(--ink); box-shadow: var(--shadow-sm); font-weight: 500; }
@@ -295,6 +305,7 @@ button { font: inherit; color: inherit; }
   <symbol id="i-leaf" viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#2D5B39"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8 12.3 2.7 2.7L16.2 9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 16.5v-5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.6 18.2A1.9 1.9 0 0 0 6.3 21h11.4a1.9 1.9 0 0 0 1.7-2.8L14 9V3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15h9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v4M16 3v4M3.5 10h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
@@ -334,18 +345,19 @@ button { font: inherit; color: inherit; }
 
   <div class="intro">
     <h1>DEMO OUTGROWER CO.</h1>
-    <div class="toggle" role="group" aria-label="Outgrower View">
-      <button aria-pressed="false">Field visits</button>
-      <button aria-pressed="true">Season ledger</button>
-      <button aria-pressed="false">Approvals <span class="dim">2</span></button>
-      <button aria-pressed="false">Reconciliation</button>
-    </div>
-    <p class="preview-note"><svg aria-hidden="true"><use href="#i-info"/></svg><span>Static preview of tomorrow's demo: four moments of one season, January to June. Nothing on this page is live.</span></p>
+    <nav class="toggle" aria-label="Preview pages">
+      <a href="#a"><span class="letter">A</span>Portfolio</a>
+      <a href="#b"><span class="letter">B</span>Season ledger</a>
+      <a href="#c"><span class="letter">C</span>Approvals</a>
+      <a href="#d"><span class="letter">D</span>Reconciliation</a>
+      <a href="#e"><span class="letter">E</span>Farmer channel</a>
+    </nav>
+    <p class="preview-note"><svg aria-hidden="true"><use href="#i-info"/></svg><span>Static preview of tomorrow's demo in five pages, A to E: one season, January to June. Nothing here is live.</span></p>
   </div>
 
   <!-- ============ 1 · portfolio ============ -->
-  <section class="moment" aria-labelledby="m1">
-    <p class="kicker" id="m1"><b>January</b> · the season at a glance</p>
+  <section class="moment page" data-page="a" aria-labelledby="m1">
+    <p class="kicker" id="m1"><span class="letter">A</span>Portfolio · <b>January</b> · the season at a glance</p>
     <div class="island portfolio">
       <div class="cell"><div class="fig">120</div><div class="lab">Contracts</div><div class="lsub">Soya, 3 camps in Monze</div></div>
       <div class="cell"><div class="fig"><small>ZMW</small>806,400</div><div class="lab">Projected value</div><div class="lsub">Hectares × yield × price</div></div>
@@ -358,11 +370,12 @@ button { font: inherit; color: inherit; }
         <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
       </div>
     </div>
+    <div class="pager"><a class="btn-quiet" href="#b">Next: B · Season ledger <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ 2 · season ledger ============ -->
-  <section class="moment" aria-labelledby="m2">
-    <p class="kicker" id="m2"><b>January</b> · who qualifies, and why</p>
+  <section class="moment page" data-page="b" aria-labelledby="m2">
+    <p class="kicker" id="m2"><span class="letter">B</span>Season ledger · <b>January</b> · who qualifies, and why</p>
     <div class="island ledger">
       <div class="head">
         <div>
@@ -533,11 +546,12 @@ button { font: inherit; color: inherit; }
         <span>No field pins are shown or exported</span>
       </div>
     </div>
+    <div class="pager"><a class="btn-quiet" href="#c">Next: C · Approvals <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ 3 · approval ============ -->
-  <section class="moment" aria-labelledby="m3">
-    <p class="kicker" id="m3"><b>January</b> · a second person approves</p>
+  <section class="moment page" data-page="c" aria-labelledby="m3">
+    <p class="kicker" id="m3"><span class="letter">C</span>Approvals · <b>January</b> · a second person approves</p>
     <div class="island approvals">
       <div class="head">
         <div>
@@ -601,11 +615,12 @@ button { font: inherit; color: inherit; }
         </div>
       </div>
     </div>
+    <div class="pager"><a class="btn-quiet" href="#d">Next: D · Reconciliation <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ 4 · reconciliation ============ -->
-  <section class="moment" aria-labelledby="m4">
-    <p class="kicker" id="m4"><b>March and June</b> · the season settles</p>
+  <section class="moment page" data-page="d" aria-labelledby="m4">
+    <p class="kicker" id="m4"><span class="letter">D</span>Reconciliation · <b>March and June</b> · the season settles</p>
     <div class="island recon">
       <section aria-label="Given's statement">
         <div class="head">
@@ -641,9 +656,12 @@ button { font: inherit; color: inherit; }
         <p class="variance"><svg aria-hidden="true"><use href="#i-sun"/></svg><span>A shortfall with no shock flag and no verified problem is marked unexplained: a possible side-sale for the credit team.</span></p>
       </section>
     </div>
+    <div class="pager"><a class="btn-quiet" href="#e">Next: E · Farmer channel <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
   </section>
 
   <!-- ============ farmer channel ============ -->
+  <section class="moment page" data-page="e" aria-labelledby="m5">
+    <p class="kicker" id="m5"><span class="letter">E</span>Farmer channel · <b>in production</b>, not built for the demo</p>
   <aside class="island channel" aria-label="Farmer channel, in production">
     <div class="phone" aria-hidden="true">
       <div class="screen">
@@ -661,8 +679,31 @@ button { font: inherit; color: inherit; }
       <p>In production the farmer checks the season, requests the advance and reads the statement on a feature phone. Not built for the demo: tomorrow the officer requests on the farmer's behalf from this dashboard, and the farmer's SMS code confirms it.</p>
     </div>
   </aside>
+    <div class="pager"><a class="btn-quiet" href="#a">Back to A · Portfolio <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
 
 </div>
 </main>
+<script>
+// One page at a time: #a to #e. The old section links (#m1 to #m4) still land on their page.
+(function () {
+  var NAMES = { a: 'A · Portfolio', b: 'B · Season ledger', c: 'C · Approvals', d: 'D · Reconciliation', e: 'E · Farmer channel' };
+  var OLD = { m1: 'a', m2: 'b', m3: 'c', m4: 'd', m5: 'e' };
+  function show() {
+    var key = location.hash.replace('#', '').toLowerCase();
+    key = OLD[key] || key;
+    if (!NAMES[key]) key = 'a';
+    document.querySelectorAll('.page').forEach(function (el) { el.hidden = el.getAttribute('data-page') !== key; });
+    document.querySelectorAll('.toggle a').forEach(function (el) {
+      if (el.getAttribute('href') === '#' + key) el.setAttribute('aria-current', 'page');
+      else el.removeAttribute('aria-current');
+    });
+    document.title = 'Phytos · ' + NAMES[key];
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', show);
+  show();
+})();
+</script>
 </body>
 </html>
