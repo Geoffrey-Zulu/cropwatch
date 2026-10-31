@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type RefObject,
 } from 'react'
 import { ISSUE_LABELS, type GeoPoint, type Issue, type RiskLevel } from '@repo/shared'
@@ -160,6 +161,12 @@ export function FieldMap({
     (p: GeoPoint) => projection?.([p.longitude, p.latitude]) ?? null,
     [projection]
   )
+  // 10 km in frame units, measured at Lusaka (Mercator varies by 4% across Zambia).
+  const tenKm = useMemo(() => {
+    const a = projection?.([28.3, -15.4])
+    const b = projection?.([28.3 + 10 / (111.32 * Math.cos((15.4 * Math.PI) / 180)), -15.4])
+    return a && b ? Math.hypot(b[0] - a[0], b[1] - a[1]) : 7.4
+  }, [projection])
 
   useLayoutEffect(() => {
     const el = host.current
@@ -350,13 +357,18 @@ export function FieldMap({
     () => (
       <>
         <g filter="url(#fm-lift)">
-          <g fill="#93A784" stroke="#93A784" strokeWidth={3} strokeLinejoin="round">
+          <g
+            fill="#93A784"
+            stroke="#93A784"
+            strokeLinejoin="round"
+            style={{ strokeWidth: 'var(--fm-coast)' }}
+          >
             {shapes.map(s => (
               <path key={s.key} d={s.d} />
             ))}
           </g>
         </g>
-        <g stroke="#FFFFFF" strokeWidth={0.75} strokeLinejoin="round">
+        <g stroke="#FFFFFF" strokeLinejoin="round" style={{ strokeWidth: 'var(--fm-line)' }}>
           {shapes.map(s => {
             const level = levels.get(s.slug) ?? 'LOW'
             return (
@@ -390,7 +402,13 @@ export function FieldMap({
           ))}
         </g>
         {/* A darker rim round High, so the block holds together on a projector. */}
-        <g fill="none" stroke="#6E2410" strokeWidth={1} opacity={0.5} pointerEvents="none">
+        <g
+          fill="none"
+          stroke="#6E2410"
+          opacity={0.5}
+          pointerEvents="none"
+          style={{ strokeWidth: 'var(--fm-rim)' }}
+        >
           {shapes
             .filter(s => levels.get(s.slug) === 'HIGH')
             .map(s => (
@@ -414,10 +432,16 @@ export function FieldMap({
 
   const { s } = view
   const u = (px: number) => px / s
+  // Lines, stripes and dots are sized in frame units, as in mockup A, until the map is zoomed
+  // in; past that they keep a screen size (at most `cap` times their national size), so Lusaka
+  // and Chongwe reads like the national map rather than through a magnifying glass.
+  const fixed = (units: number, cap = 1.4) => Math.min(units, u(units * cap))
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 15
   const vb = [view.cx - size.w / 2 / s, view.cy - size.h / 2 / s, size.w / s, size.h / s]
-  const dotR = Math.max(2.1, u(2.15))
-  const ringR = Math.max(11, u(rem * 0.78))
+  const dotR = Math.min(Math.max(2.1, u(2.15)), u(3.9))
+  // A ring is a fixed size on screen until the map is zoomed in far enough to draw its true
+  // 10 km, which then encloses the reports it counts.
+  const ringR = Math.max(u(rem * 0.78), tenKm)
   const countPx = rem * (stacked ? 0.78 : 0.84)
   const showNames = !(stacked && region === 'all' && !focus && zoom <= 1)
 
@@ -516,6 +540,13 @@ export function FieldMap({
       <svg
         viewBox={vb.map(n => n.toFixed(3)).join(' ')}
         className="absolute inset-0 block h-full w-full touch-none select-none"
+        style={
+          {
+            '--fm-coast': fixed(3),
+            '--fm-line': fixed(0.75),
+            '--fm-rim': fixed(1),
+          } as CSSProperties
+        }
         role="img"
         aria-label="Zambia's districts shaded by risk signal level, with report dots and cluster rings"
       >
@@ -525,7 +556,7 @@ export function FieldMap({
             patternUnits="userSpaceOnUse"
             width={5.4}
             height={5.4}
-            patternTransform="rotate(45)"
+            patternTransform={`rotate(45) scale(${fixed(1).toFixed(4)})`}
           >
             <rect width={2} height={5.4} fill="#B98516" />
           </pattern>
@@ -535,8 +566,8 @@ export function FieldMap({
           <filter id="fm-pill" x="-40%" y="-60%" width="180%" height="240%">
             <feDropShadow
               dx={0}
-              dy={0.8}
-              stdDeviation={1.1}
+              dy={fixed(0.8)}
+              stdDeviation={fixed(1.1)}
               floodColor="#1B2920"
               floodOpacity={0.3}
             />
@@ -547,13 +578,18 @@ export function FieldMap({
           <path d={selectedPath} stroke="#FFFFFF" strokeWidth={u(4.8)} />
           <path d={selectedPath} stroke="#1B2920" strokeWidth={u(2.2)} />
           {hoverSlug && hoverSlug !== selected && watchedSet.has(hoverSlug) && (
-            <path d={hoverPath} stroke="#1B2920" strokeWidth={u(1.5)} strokeDasharray="3 2" />
+            <path
+              d={hoverPath}
+              stroke="#1B2920"
+              strokeWidth={u(1.5)}
+              strokeDasharray={`${fixed(3)} ${fixed(2)}`}
+            />
           )}
         </g>
         <g
           fill="#1B2920"
           stroke="#FFFFFF"
-          strokeWidth={Math.max(0.7, u(0.75))}
+          strokeWidth={Math.min(Math.max(0.7, u(0.75)), u(1.2))}
           pointerEvents="none"
         >
           {points.map(p => {

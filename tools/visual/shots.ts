@@ -64,6 +64,18 @@ const VIEWS: View[] = [
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
   { name: 'dashboard-map', app: 'dashboard', route: 'map', extra: PROJECTOR },
   {
+    // The demo's own view: the pre-stage leaves the map on Lusaka and Chongwe, where the
+    // presenter's report lands. Marks keep their screen size at this zoom.
+    name: 'dashboard-map-lusaka',
+    app: 'dashboard',
+    route: 'map',
+    extra: PROJECTOR,
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Lusaka and Chongwe' }).click({ force: true })
+      await page.waitForTimeout(900)
+    },
+  },
+  {
     name: 'dashboard-map-eastern',
     app: 'dashboard',
     route: 'map',
