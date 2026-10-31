@@ -94,3 +94,6 @@ public/dist
 
 # Dashboard preview fixtures (generated from the seed, dev only)
 apps/web/src/dev/fixtures.local.json
+
+# Personal working files (CVs, notes), never committed
+Claude outputs/
