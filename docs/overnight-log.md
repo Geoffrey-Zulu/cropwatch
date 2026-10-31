@@ -90,3 +90,30 @@ Reviewers: a judge seeing the demo cold, a Zambian agribusiness credit manager, 
 
 - A Chitonga SMS template (new scope; Nyanja templates were already a cut line).
 - Re-running the recording during daytime (it will be re-recorded at the 06:30 freeze; the live demo runs in the afternoon).
+
+## Cycle 1 build and checks (23:40 to 00:45)
+
+- **Gate:** typecheck, lint and build clean, and every test passes. That includes the new service test: an advance whose camp the drought rule paused after the farmer confirmed cannot be approved, and the card says why.
+- **Preview `night1`** (API tag `night1`, revision `00019-nid`; dashboard https://crop-watch01--ceih-night-epl345e7.web.app):
+  - demo check: all checks, beats 1 to 6 in 16.1 s;
+  - old outbreak check: dispatched in 9.2 s, Lusaka HIGH.
+- **The full recording in the new order** found two things, both fixed and re-recorded with no page errors:
+  1. The Fields map's opening fly-in overrode a camp pressed in its first 700 ms. A pressed camp now always wins.
+  2. **In June** the map shows most Chikuni fields as "stress". Soya greenness falls at maturity, and the status rule reads that as stress. The map beat therefore moves to **March** (Hamangaba in brick, Chikuni green), and the run closes on June's statement.
+  - Teaching the status rule about maturity is a model change, and stays out of tonight's scope.
+- **Visual pass** of the seven changed views at laptop, phone and projector sizes (`docs/ui-review/2026-11-01-night1/`): no issues, every shot looked at. One cosmetic phone wrap in the map legend is queued for cycle 2.
+- `deploy-preview.sh` misreported production traffic: it printed the first traffic entry, not the one serving. Production was never affected, and the script is fixed.
+
+## Production deploy of cycle 1 (00:10 to 00:45)
+
+- **First run of `deploy.sh` from `1407e4a`:** the API went live (`cropwatch-api-00019-sng`, 100%, with the preview tags kept by the new `--to-latest` step). Then the script stopped at the Firebase step for the capture site and rules, exit 1, with no message in the log. Neither site was redeployed.
+- **Production was never red:**
+  - the 31 Oct dashboard works against the new API, since every API change is additive;
+  - after a re-arm the demo check passed on production (all checks, beats 1 to 6 in 11.7 s).
+- The Firebase CLI session checked out. The failure looks transient, on a line that has dropped connections all night, so the deploy was re-run.
+- **Re-run (00:45 to 00:55):** the API went live as `00020-wnp`, the capture site and rules deployed, and the dashboard deployed (bundle `index-U75SiXyZ.js`). The script's last step, a fetch of the district boundaries, hit a connection reset on the local line (curl exit 56); the same fetch then answered 200.
+- **Checks on production, all green:**
+  - demo check: beats 1 to 6 in 13.1 s;
+  - old outbreak check: dispatched in 5.3 s, Lusaka HIGH;
+  - the full storyline v3 recorded, 14 beats, no page errors: `Desktop/Phytos CEIH recording 2026-11-01 night1 production 1280/`.
+- **Tag `ceih-night-1`:** commit `1407e4a`, revision `00020-wnp`. Production green throughout.
