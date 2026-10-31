@@ -17,7 +17,12 @@ import { Bar, Loading, SkeletonRows } from '../components/Skeleton'
 import { SkeletonStatCards, StatCards, weekDelta } from '../components/StatCards'
 import { ZambiaMap } from '../components/ZambiaMap'
 import type { Officer } from '../hooks/useAuth'
-import { useDrawerLinks } from '../hooks/useRoute'
+import { useDrawerLinks, useRoute, type OutgrowerTab } from '../hooks/useRoute'
+import { useSeasonQueries } from '../lib/season'
+import { ApprovalsSection } from '../sections/season/ApprovalsSection'
+import { DemoControls } from '../sections/season/DemoControls'
+import { ReconciliationSection } from '../sections/season/ReconciliationSection'
+import { PortfolioHeader, SeasonLedgerSection } from '../sections/season/SeasonLedgerSection'
 import { ago, dateTime, SEVERITY_TEXT, VERIFICATION_TEXT } from '../lib/copy'
 import { trpc } from '../lib/trpc'
 
@@ -66,16 +71,97 @@ interface OfficerList {
 // only: no farm locations (CLAUDE.md invariant 6). The first paint is never empty: the top camps
 // and one line a field officer show on load; "Prioritise" opens the full ranked lists. Why a
 // farm is on a list, its history and where its district is open in a drawer (patterns-v2.md).
-export function OutgrowerViewPage({ officer }: { officer: Officer }) {
+export function OutgrowerViewPage({
+  officer,
+  tab: shown,
+}: {
+  officer: Officer
+  // The dev preview names the tab itself (its routes are not the app's).
+  tab?: OutgrowerTab
+}) {
   const orgId = officer.commandCenter ? DEMO_ORG_ID : officer.orgId
-  const overview = trpc.outgrower.overview.useQuery(
-    { orgId: orgId ?? '' },
-    { enabled: Boolean(orgId), refetchInterval: 60_000 }
-  )
+  const route = useRoute()
+  const tab = shown ?? (route.page === 'outgrower' ? route.tab : undefined)
   if (!orgId) return <Muted>This account is not linked to an outgrower.</Muted>
+  if (tab) return <SeasonTabs orgId={orgId} tab={tab} commandCenter={officer.commandCenter} />
+  return <FieldVisits orgId={orgId} />
+}
+
+function FieldVisits({ orgId }: { orgId: string }) {
+  const overview = trpc.outgrower.overview.useQuery({ orgId }, { refetchInterval: 60_000 })
   if (overview.error) return <Muted>The view could not be built ({overview.error.message}).</Muted>
   if (!overview.data) return <OverviewSkeleton />
   return <Overview data={overview.data} />
+}
+
+const TABS: { tab: OutgrowerTab | null; label: string }[] = [
+  { tab: null, label: 'Field visits' },
+  { tab: 'season', label: 'Season ledger' },
+  { tab: 'approvals', label: 'Approvals' },
+  { tab: 'reconciliation', label: 'Reconciliation' },
+]
+
+// The Outgrower View's tabs (CEIH, plan §3). The season's three sit under its portfolio.
+function OutgrowerTabs({ current, waiting }: { current: OutgrowerTab | null; waiting?: number }) {
+  return (
+    <nav className="toggle-group self-start" aria-label="Outgrower View">
+      {TABS.map(t => (
+        <a
+          key={t.label}
+          href={t.tab ? `#/outgrower/${t.tab}` : '#/outgrower'}
+          className="toggle inline-flex items-center gap-1.5"
+          aria-current={t.tab === current ? 'page' : undefined}
+          aria-selected={t.tab === current}
+          role="tab"
+        >
+          {t.label}
+          {t.tab === 'approvals' && waiting ? (
+            <span className="inline-grid h-5 min-w-5 place-items-center rounded-pill bg-chip px-1.5 text-[0.72rem] font-bold text-chip-fg">
+              {waiting}
+            </span>
+          ) : null}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+function SeasonTabs({
+  orgId,
+  tab,
+  commandCenter,
+}: {
+  orgId: string
+  tab: OutgrowerTab
+  commandCenter: boolean
+}) {
+  const { portfolio, approvals, sms } = useSeasonQueries(orgId)
+  const p = portfolio.data
+  if (portfolio.error) return <Muted>The season could not load ({portfolio.error.message}).</Muted>
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader title={p?.name ?? 'Season'} />
+      <OutgrowerTabs current={tab} waiting={approvals.data?.filter(a => a.otp_ok).length} />
+      {!p ? (
+        <Loading label="Building the season">
+          <div className="flex flex-col gap-5">
+            <SkeletonStatCards count={6} />
+            <SkeletonRows rows={8} label="Loading the season ledger" />
+          </div>
+        </Loading>
+      ) : (
+        <>
+          <PortfolioHeader portfolio={p} />
+          {tab === 'season' && <SeasonLedgerSection portfolio={p} commandCenter={commandCenter} />}
+          {tab === 'approvals' && (
+            <ApprovalsSection orgId={orgId} approvals={approvals.data} sms={sms.data} />
+          )}
+          {tab === 'reconciliation' && <ReconciliationSection portfolio={p} />}
+          {commandCenter && p.sim && <DemoControls portfolio={p} />}
+        </>
+      )}
+    </div>
+  )
 }
 
 function OverviewSkeleton() {
@@ -133,6 +219,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={data.name} />
+      <OutgrowerTabs current={null} />
       <div className="flex flex-col gap-2">
         <StatCards
           stats={[
@@ -209,8 +296,7 @@ function Overview({ data }: { data: OutgrowerOverview }) {
           <OfficerSummary lists={lists} />
         )}
         <p className="text-caption text-fg-2">
-          Priority orders farms by the reasons shown, not by likelihood. Loan and credit views:
-          roadmap only, not built.
+          Priority orders farms by the reasons shown, not by likelihood.
         </p>
       </section>
 

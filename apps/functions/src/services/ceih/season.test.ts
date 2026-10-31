@@ -6,13 +6,13 @@ import {
   type Advance,
   type AdvanceState,
   type SatellitePass,
+  type SeasonData,
 } from '@repo/shared'
 import type { SmsSender } from '../alerts/sms'
 import type { Caller } from '../observationModel'
 import { simulatedProvider } from './mobileMoney'
 import { observationLinker, seasonService, SeasonError } from './season'
 import type { SeasonStore } from './store'
-import type { SeasonData } from './views'
 
 // The CEIH acceptance tests (spec §6, plan §5) on an in-memory store: eligibility, the advance
 // state machine with maker-checker, the ledger as the only record of money, and the fee shown

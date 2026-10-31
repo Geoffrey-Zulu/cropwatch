@@ -5,22 +5,30 @@ import { useEffect, useState } from 'react'
 //   #/                 national map          #/queue/<id>      queue with a report selected
 //   #/?outbreak=<id>   map + outbreak drawer  #/queue?observation=<id>
 //   #/?alerts          map + alerts drawer    #/outgrower?visit=<report number>
+//   #/outgrower/season?contract=<id>   the season ledger with a field card open
+//   #/outgrower/approvals              #/outgrower/reconciliation
 export type Drawer =
   // `via`: opened from the alerts drawer, so the outbreak offers "Back to alerts".
   | { kind: 'outbreak'; id: string; via?: 'alerts' }
   | { kind: 'observation'; id: string }
   | { kind: 'visit'; id: string }
+  // A season ledger row opened into its field card (inline, not a drawer).
+  | { kind: 'contract'; id: string }
   | { kind: 'alerts' }
 
 export type Route = (
   | { page: 'map' }
   | { page: 'queue'; id?: string }
-  | { page: 'outgrower' }
+  | { page: 'outgrower'; tab?: OutgrowerTab }
   | { page: 'sources' }
   | { page: 'scenario' }
 ) & { drawer?: Drawer }
 
-const DRAWERS = ['outbreak', 'observation', 'visit'] as const
+// The Outgrower View's tabs (CEIH): the field visits are the tab with no name.
+export const OUTGROWER_TABS = ['season', 'approvals', 'reconciliation'] as const
+export type OutgrowerTab = (typeof OUTGROWER_TABS)[number]
+
+const DRAWERS = ['outbreak', 'observation', 'visit', 'contract'] as const
 
 function parseDrawer(query: string): Drawer | undefined {
   const params = new URLSearchParams(query)
@@ -44,7 +52,10 @@ export function parseRoute(hash: string): Route {
   if (page === 'outbreaks' && id) return { page: 'map', drawer: { kind: 'outbreak', id } }
   if (page === 'observations' && id) return { page: 'map', drawer: { kind: 'observation', id } }
   if (page === 'queue') return withDrawer(id ? { page: 'queue', id } : { page: 'queue' })
-  if (page === 'outgrower') return withDrawer({ page: 'outgrower' })
+  if (page === 'outgrower') {
+    const tab = OUTGROWER_TABS.find(t => t === id)
+    return withDrawer(tab ? { page: 'outgrower', tab } : { page: 'outgrower' })
+  }
   if (page === 'sources') return withDrawer({ page: 'sources' })
   if (page === 'scenario') return withDrawer({ page: 'scenario' })
   return withDrawer({ page: 'map' })
@@ -57,7 +68,7 @@ function pathFor(route: Route) {
     case 'queue':
       return route.id ? `#/queue/${route.id}` : '#/queue'
     case 'outgrower':
-      return '#/outgrower'
+      return route.tab ? `#/outgrower/${route.tab}` : '#/outgrower'
     case 'sources':
       return '#/sources'
     case 'scenario':

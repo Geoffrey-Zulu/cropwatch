@@ -25,13 +25,13 @@ import {
   type Observation,
   type ShockFlag,
   type SmsLog,
+  type SeasonData,
   type WeatherTrigger,
 } from '@repo/shared'
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { ZodTypeAny, z } from 'zod'
 import { fromFirestore, toGeoPoint, toTimestamp } from '../../lib/firestoreData'
 import { log } from '../../lib/log'
-import type { SeasonData } from './views'
 
 // CEIH persistence (docs/ceih-workflows-mvp.md §3.1). The collections are server-only
 // (infra/firestore.rules matches none of them); times are ISO strings. Every write that moves an
@@ -84,132 +84,23 @@ function parseAll<S extends ZodTypeAny>(
 export function firestoreSeasonStore(db: Firestore): SeasonStore {
   const byOrg = (collection: string, orgId: string) =>
     db.collection(collection).where('org_id', '==', orgId).get()
+  // The dashboard asks for several views at once (one tRPC batch): they share one load for two
+  // seconds. Every write clears it, so an action never reads its own stale state.
+  const cache = new Map<string, { at: number; value: Promise<SeasonData | null> }>()
+  const fresh = () => cache.clear()
 
-  return {
-    async load(orgId) {
-      const [
-        orgSnap,
-        stateSnap,
-        farmers,
-        contracts,
-        metrics,
-        advances,
-        ledger,
-        deliveries,
-        triggers,
-        rainfall,
-        sms,
-      ] = await Promise.all([
-        db.collection('orgs').doc(orgId).get(),
-        db.collection('ceih_demo').doc(orgId).get(),
-        byOrg('farmers', orgId),
-        byOrg('contracts', orgId),
-        byOrg('satellite_metrics', orgId),
-        byOrg('advances', orgId),
-        byOrg('ledger_entries', orgId),
-        byOrg('deliveries', orgId),
-        byOrg('weather_triggers', orgId),
-        byOrg('rainfall_series', orgId),
-        byOrg('sms_log', orgId),
-      ])
-      if (!orgSnap.exists || farmers.empty) return null
-      const org = orgSnap.data()!
-      const credit = CreditConfigSchema.safeParse(org.credit)
-      // No demo calendar: the real calendar (production).
-      const state = stateSnap.exists
-        ? CeihDemoStateSchema.parse(fromFirestore(stateSnap.data()))
-        : {
-            phase: 'january' as const,
-            offset_days: 0,
-            sms_allow: [],
-            hero_farmer_id: null,
-            neighbour_farmer_id: null,
-            ground_officer_id: null,
-            armed_at: new Date(0).toISOString(),
-            sim: false,
-          }
-      const farmerRows = parseAll(FarmerSchema, farmers.docs, 'farmer')
-      const farmerIds = new Set(farmerRows.map(f => f.id))
-
-      // Reports on these farmers' fields (the geofence link), with the internal severity.
-      const linked = await db.collection('observations').where('farmer_id', '!=', null).get()
-      const observations = parseAll(
-        ObservationSchema,
-        linked.docs.filter(d => farmerIds.has(d.get('farmer_id'))),
-        'observation'
-      )
-      const internals = observations.length
-        ? await db.getAll(
-            ...observations.map(o =>
-              db.collection('observations').doc(o.id).collection('internal').doc('diagnosis')
-            )
-          )
-        : []
-      const severity = new Map(
-        internals.map(s => [
-          s.ref.parent.parent!.id,
-          (s.data()?.severity_pct as number | null | undefined) ?? null,
-        ])
-      )
-
-      const advanceRows = parseAll(AdvanceSchema, advances.docs, 'advance')
-      const uids = new Set<string>()
-      for (const f of farmerRows) if (f.data.consent) uids.add(f.data.consent.officer_id)
-      for (const o of observations) if (o.data.verified_by) uids.add(o.data.verified_by)
-      for (const a of advanceRows) {
-        a.data.eligibility_snapshot.verifier_ids.forEach(uid => uids.add(uid))
-        if (a.data.approval) uids.add(a.data.approval.approver_id)
-      }
-      const userSnaps = uids.size
-        ? await db.getAll(...[...uids].map(uid => db.collection('users').doc(uid)))
-        : []
-      const users = new Map(
-        userSnaps
-          .filter(s => s.exists)
-          .map(s => {
-            const role = RoleSchema.safeParse(s.get('role'))
-            return [
-              s.id,
-              {
-                role: role.success ? role.data : ('farmer' as const),
-                display_name:
-                  typeof s.get('display_name') === 'string'
-                    ? (s.get('display_name') as string)
-                    : null,
-              },
-            ] as const
-          })
-      )
-
-      return {
-        org: {
-          id: orgId,
-          name: typeof org.name === 'string' ? org.name : orgId,
-          credit: credit.success
-            ? credit.data
-            : {
-                cap_pct: CAP_PCT_DEFAULT,
-                hard_ceiling_zmw: HARD_CEILING_ZMW,
-                advance_fee_pct: ADVANCE_FEE_PCT,
-              },
-          sim: org.sim === true,
-        },
-        state,
-        farmers: farmerRows,
-        contracts: parseAll(ContractSchema, contracts.docs, 'contract'),
-        metrics: parseAll(SatelliteMetricsSchema, metrics.docs, 'satellite_metrics'),
-        advances: advanceRows,
-        ledger: parseAll(LedgerEntrySchema, ledger.docs, 'ledger_entry'),
-        deliveries: parseAll(DeliverySchema, deliveries.docs, 'delivery'),
-        triggers: parseAll(WeatherTriggerSchema, triggers.docs, 'weather_trigger'),
-        rainfall: parseAll(RainfallSeriesSchema, rainfall.docs, 'rainfall_series'),
-        sms: parseAll(SmsLogSchema, sms.docs, 'sms_log'),
-        observations: observations.map(o => ({ ...o, severity_pct: severity.get(o.id) ?? null })),
-        users,
-      }
+  const store: SeasonStore = {
+    load(orgId) {
+      const hit = cache.get(orgId)
+      if (hit && Date.now() - hit.at < 2000) return hit.value
+      const value = loadSeason(orgId)
+      cache.set(orgId, { at: Date.now(), value })
+      value.catch(() => cache.delete(orgId))
+      return value
     },
 
     async commitAdvance(id, from, next, ledger) {
+      fresh()
       const ref = db.collection('advances').doc(id)
       return db.runTransaction(async tx => {
         const snap = await tx.get(ref)
@@ -227,6 +118,7 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
     },
 
     async addDelivery(id, delivery, ledger, sideSell) {
+      fresh()
       const batch = db.batch()
       batch.set(db.collection('deliveries').doc(id), DeliverySchema.parse(delivery))
       for (const row of ledger)
@@ -238,14 +130,17 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
     },
 
     async logSms(entry) {
+      fresh()
       await db.collection('sms_log').add(SmsLogSchema.parse(entry))
     },
 
     async setState(orgId, patch) {
+      fresh()
       await db.collection('ceih_demo').doc(orgId).set(patch, { merge: true })
     },
 
     async writeTrigger(id, trigger, flag) {
+      fresh()
       const batch = db.batch()
       batch.set(db.collection('weather_triggers').doc(id), WeatherTriggerSchema.parse(trigger))
       if (flag)
@@ -255,6 +150,7 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
     },
 
     async addObservation(id, observation) {
+      fresh()
       const o = ObservationSchema.parse(observation)
       await db
         .collection('observations')
@@ -271,7 +167,132 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
     },
 
     async patchObservation(id, patch) {
+      fresh()
       await db.collection('observations').doc(id).update(patch)
     },
+  }
+  return store
+
+  async function loadSeason(orgId: string): Promise<SeasonData | null> {
+    const [
+      orgSnap,
+      stateSnap,
+      farmers,
+      contracts,
+      metrics,
+      advances,
+      ledger,
+      deliveries,
+      triggers,
+      rainfall,
+      sms,
+    ] = await Promise.all([
+      db.collection('orgs').doc(orgId).get(),
+      db.collection('ceih_demo').doc(orgId).get(),
+      byOrg('farmers', orgId),
+      byOrg('contracts', orgId),
+      byOrg('satellite_metrics', orgId),
+      byOrg('advances', orgId),
+      byOrg('ledger_entries', orgId),
+      byOrg('deliveries', orgId),
+      byOrg('weather_triggers', orgId),
+      byOrg('rainfall_series', orgId),
+      byOrg('sms_log', orgId),
+    ])
+    if (!orgSnap.exists || farmers.empty) return null
+    const org = orgSnap.data()!
+    const credit = CreditConfigSchema.safeParse(org.credit)
+    // No demo calendar: the real calendar (production).
+    const state = stateSnap.exists
+      ? CeihDemoStateSchema.parse(fromFirestore(stateSnap.data()))
+      : {
+          phase: 'january' as const,
+          offset_days: 0,
+          sms_allow: [],
+          hero_farmer_id: null,
+          neighbour_farmer_id: null,
+          ground_officer_id: null,
+          armed_at: new Date(0).toISOString(),
+          sim: false,
+        }
+    const farmerRows = parseAll(FarmerSchema, farmers.docs, 'farmer')
+    const farmerIds = new Set(farmerRows.map(f => f.id))
+
+    // Reports on these farmers' fields (the geofence link), with the internal severity.
+    const linked = await db.collection('observations').where('farmer_id', '!=', null).get()
+    const observations = parseAll(
+      ObservationSchema,
+      linked.docs.filter(d => farmerIds.has(d.get('farmer_id'))),
+      'observation'
+    )
+    const internals = observations.length
+      ? await db.getAll(
+          ...observations.map(o =>
+            db.collection('observations').doc(o.id).collection('internal').doc('diagnosis')
+          )
+        )
+      : []
+    const severity = new Map(
+      internals.map(s => [
+        s.ref.parent.parent!.id,
+        (s.data()?.severity_pct as number | null | undefined) ?? null,
+      ])
+    )
+
+    const advanceRows = parseAll(AdvanceSchema, advances.docs, 'advance')
+    const uids = new Set<string>()
+    for (const f of farmerRows) if (f.data.consent) uids.add(f.data.consent.officer_id)
+    for (const o of observations) if (o.data.verified_by) uids.add(o.data.verified_by)
+    for (const a of advanceRows) {
+      a.data.eligibility_snapshot.verifier_ids.forEach(uid => uids.add(uid))
+      if (a.data.approval) uids.add(a.data.approval.approver_id)
+    }
+    const userSnaps = uids.size
+      ? await db.getAll(...[...uids].map(uid => db.collection('users').doc(uid)))
+      : []
+    const users = new Map(
+      userSnaps
+        .filter(s => s.exists)
+        .map(s => {
+          const role = RoleSchema.safeParse(s.get('role'))
+          return [
+            s.id,
+            {
+              role: role.success ? role.data : ('farmer' as const),
+              display_name:
+                typeof s.get('display_name') === 'string'
+                  ? (s.get('display_name') as string)
+                  : null,
+            },
+          ] as const
+        })
+    )
+
+    return {
+      org: {
+        id: orgId,
+        name: typeof org.name === 'string' ? org.name : orgId,
+        credit: credit.success
+          ? credit.data
+          : {
+              cap_pct: CAP_PCT_DEFAULT,
+              hard_ceiling_zmw: HARD_CEILING_ZMW,
+              advance_fee_pct: ADVANCE_FEE_PCT,
+            },
+        sim: org.sim === true,
+      },
+      state,
+      farmers: farmerRows,
+      contracts: parseAll(ContractSchema, contracts.docs, 'contract'),
+      metrics: parseAll(SatelliteMetricsSchema, metrics.docs, 'satellite_metrics'),
+      advances: advanceRows,
+      ledger: parseAll(LedgerEntrySchema, ledger.docs, 'ledger_entry'),
+      deliveries: parseAll(DeliverySchema, deliveries.docs, 'delivery'),
+      triggers: parseAll(WeatherTriggerSchema, triggers.docs, 'weather_trigger'),
+      rainfall: parseAll(RainfallSeriesSchema, rainfall.docs, 'rainfall_series'),
+      sms: parseAll(SmsLogSchema, sms.docs, 'sms_log'),
+      observations: observations.map(o => ({ ...o, severity_pct: severity.get(o.id) ?? null })),
+      users,
+    }
   }
 }

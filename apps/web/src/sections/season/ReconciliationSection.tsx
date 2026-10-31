@@ -1,0 +1,320 @@
+import { LoaderCircle, Sun, Truck } from 'lucide-react'
+import { useState } from 'react'
+import {
+  GRADE_PRICE_FACTOR,
+  GRADES,
+  zmw,
+  type Grade,
+  type Portfolio,
+  type Reconciliation,
+  type Statement,
+  type VarianceKind,
+} from '@repo/shared'
+import { DemoBadge } from '../../components/DemoBadge'
+import { SkeletonRows } from '../../components/Skeleton'
+import { seasonDate, useSeasonRefresh } from '../../lib/season'
+import { trpc } from '../../lib/trpc'
+
+// Tab 3 (plan §3): the depot's delivery entry, priced at the contract price for its grade; the
+// statement, every line from the ledger; and the variance, shock-explained against unexplained.
+export function ReconciliationSection({ portfolio: p }: { portfolio: Portfolio }) {
+  const reconciliation = trpc.season.reconciliation.useQuery(
+    { orgId: p.org_id },
+    { refetchInterval: 6000 }
+  )
+  return (
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <DeliveryAndStatement portfolio={p} />
+      <div className="flex min-w-0 flex-col gap-6">
+        {reconciliation.data?.claim_packs.map(pack => (
+          <ClaimPack key={pack.trigger_id} pack={pack} />
+        ))}
+        <VarianceList data={reconciliation.data} />
+      </div>
+    </div>
+  )
+}
+
+function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
+  const refresh = useSeasonRefresh()
+  const candidates = p.rows.filter(r => r.verified.state !== 'not_planted')
+  const [contractId, setContractId] = useState(
+    p.hero_contract_id ?? candidates[0]?.contract_id ?? ''
+  )
+  const [weight, setWeight] = useState('720')
+  const [moisture, setMoisture] = useState('11')
+  const [grade, setGrade] = useState<Grade>('A')
+  const statement = trpc.season.statement.useQuery(
+    { orgId: p.org_id, contractId },
+    { enabled: Boolean(contractId), refetchInterval: 6000 }
+  )
+  const record = trpc.season.recordDelivery.useMutation({ onSuccess: () => void refresh() })
+  const s = statement.data
+  const kg = Number(weight)
+  const price = s ? Math.round(s.contract_price_zmw_t * GRADE_PRICE_FACTOR[grade]) : 0
+  const delivered = s?.lines.some(l => l.type === 'delivery') ?? false
+  const before = p.phase !== 'june'
+
+  return (
+    <section
+      aria-labelledby="delivery"
+      className="island min-w-0 px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="delivery" className="serif text-title font-semibold text-fg">
+            Delivery and statement
+          </h2>
+          <p className="text-label text-fg-2">
+            The depot enters the weight; the ledger does the arithmetic
+          </p>
+        </div>
+        {s && <DemoBadge rows={[s]} />}
+      </div>
+
+      <form
+        className="mt-4 grid gap-3 sm:grid-cols-2"
+        onSubmit={event => {
+          event.preventDefault()
+          record.mutate({
+            orgId: p.org_id,
+            contract_id: contractId,
+            weight_kg: kg,
+            moisture_pct: Number(moisture),
+            grade,
+          })
+        }}
+      >
+        <label className="flex flex-col gap-1 text-label font-semibold text-fg sm:col-span-2">
+          Farmer
+          <select
+            className="field"
+            value={contractId}
+            onChange={event => setContractId(event.target.value)}
+          >
+            {candidates.map(r => (
+              <option key={r.contract_id} value={r.contract_id}>
+                {r.farmer_name} · {r.camp}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-label font-semibold text-fg">
+          Weight (kg)
+          <input
+            className="field tabular-nums"
+            inputMode="numeric"
+            value={weight}
+            onChange={event => setWeight(event.target.value.replace(/[^\d]/g, ''))}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-label font-semibold text-fg">
+          Moisture (%)
+          <input
+            className="field tabular-nums"
+            inputMode="decimal"
+            value={moisture}
+            onChange={event => setMoisture(event.target.value.replace(/[^\d.]/g, ''))}
+          />
+        </label>
+        <fieldset className="sm:col-span-2">
+          <legend className="text-label font-semibold text-fg">Grade</legend>
+          <div className="toggle-group mt-1" role="group">
+            {GRADES.map(g => (
+              <button
+                key={g}
+                type="button"
+                className="toggle !py-1.5"
+                aria-pressed={grade === g}
+                onClick={() => setGrade(g)}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <p className="text-label text-fg-2 sm:col-span-2">
+          {kg > 0 && price > 0
+            ? `${(kg / 1000).toFixed(2)} t × ZMW ${price.toLocaleString('en-GB')} (grade ${grade}) = ${zmw((kg / 1000) * price)}`
+            : 'Enter the weight to price it'}
+        </p>
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={record.isPending || delivered || before || !(kg > 0)}
+          >
+            {record.isPending ? (
+              <LoaderCircle size={18} aria-hidden className="animate-spin" />
+            ) : (
+              <Truck size={18} aria-hidden />
+            )}
+            Record delivery
+          </button>
+          {before && (
+            <span className="text-caption text-fg-2">
+              Deliveries open in June (season day {seasonDate(p.today)})
+            </span>
+          )}
+          {delivered && (
+            <span className="text-caption text-fg-2">Delivered: the statement below is final</span>
+          )}
+        </div>
+        {record.error && (
+          <p className="text-label text-high-text sm:col-span-2">{record.error.message}</p>
+        )}
+      </form>
+
+      <h3 className="mt-6 text-section font-semibold text-fg">
+        {s ? `${s.farmer_name}'s statement` : 'Statement'}
+      </h3>
+      {!s ? (
+        <SkeletonRows rows={4} lines={1} label="Loading the statement" />
+      ) : (
+        <StatementTable statement={s} />
+      )}
+    </section>
+  )
+}
+
+function StatementTable({ statement: s }: { statement: Statement }) {
+  const net = -s.balance_zmw
+  return (
+    <>
+      <table className="mt-2 w-full text-left text-label">
+        <tbody>
+          {s.lines.map((l, i) => (
+            <tr key={`${l.ref}-${i}`} className="border-b border-hairline">
+              <td className="py-2 pr-3">
+                <span className="text-fg">{l.label}</span>
+                <span className="block text-caption text-fg-2">
+                  {seasonDate(l.at)} · {l.note}
+                  {l.simulated && !l.note.includes('simulated') ? ' · simulated' : ''}
+                </span>
+              </td>
+              <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-fg">
+                {l.amount_zmw < 0 ? zmw(-l.amount_zmw) : `less ${zmw(l.amount_zmw)}`}
+              </td>
+            </tr>
+          ))}
+          <tr className="border-t-[1.5px] border-fg">
+            <td className="pt-3 font-semibold text-fg">
+              {net >= 0 ? `Net due to ${s.farmer_name.split(' ')[0]}` : 'Still owed by the farmer'}
+              <span className="block text-caption font-normal text-fg-2">
+                {s.settled
+                  ? net > 0
+                    ? 'Paying it moves money, so it waits for approval'
+                    : 'Carried to next season'
+                  : 'Before harvest: what is owed so far'}
+              </span>
+            </td>
+            <td className="serif whitespace-nowrap pt-3 text-right text-[1.6rem] font-semibold tabular-nums text-fg">
+              <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
+              {Math.abs(net).toLocaleString('en-GB')}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="mt-3 text-label text-fg-2">{s.variance.text}</p>
+      <p className="mt-1 text-caption text-fg-2">
+        Every figure is summed from the ledger rows; nothing is stored twice.
+      </p>
+    </>
+  )
+}
+
+const KIND: Record<VarianceKind, { label: string; className: string }> = {
+  unexplained: {
+    label: 'Unexplained',
+    className: 'bg-well text-high-text shadow-[inset_0_0_0_1px_var(--hairline)]',
+  },
+  shock: { label: 'Shock, uncontrollable', className: 'bg-attention-tint text-attention-text' },
+  verified_issue: {
+    label: 'Verified problem',
+    className: 'bg-well text-fg shadow-[inset_0_0_0_1px_var(--hairline)]',
+  },
+  none: { label: 'On projection', className: 'bg-signal-tint text-signal-text' },
+}
+
+function VarianceList({ data }: { data: Reconciliation | undefined }) {
+  return (
+    <section
+      aria-labelledby="variance"
+      className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="variance" className="serif text-title font-semibold text-fg">
+            Delivered against projected
+          </h2>
+          <p className="text-label text-fg-2">Shortfalls the credit team must look at first</p>
+        </div>
+        {data && <DemoBadge rows={data.rows} />}
+      </div>
+      {!data ? (
+        <SkeletonRows rows={4} lines={2} label="Loading the deliveries" />
+      ) : data.rows.length === 0 ? (
+        <p className="mt-3 text-label text-fg-2">No deliveries yet: they come in from late May.</p>
+      ) : (
+        <ul className="mt-3 flex flex-col">
+          {data.rows.slice(0, 8).map(r => (
+            <li key={r.contract_id} className="border-b border-hairline py-2.5 last:border-b-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-label font-semibold text-fg">
+                  {r.farmer_name} <span className="font-normal text-fg-2">· {r.camp}</span>
+                </span>
+                <span
+                  className={`rounded-pill px-2.5 py-[0.15rem] text-caption font-semibold ${KIND[r.variance.kind].className}`}
+                >
+                  {KIND[r.variance.kind].label}
+                </span>
+              </div>
+              <p className="mt-0.5 text-caption text-fg-2">{r.variance.text}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
+  const t = pack.trigger
+  return (
+    <section
+      aria-label={`Claim pack, ${pack.camp}`}
+      className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-section font-semibold text-fg">
+            <span aria-hidden className="swatch swatch-elevated" />
+            {pack.camp}
+          </p>
+          <p className="mt-0.5 text-label font-semibold text-attention-text">
+            drought trigger · insurance payout SIMULATED
+          </p>
+        </div>
+        <DemoBadge small rows={[pack]} />
+      </div>
+      <ul className="mt-3 flex flex-col gap-1.5 text-label text-fg">
+        <li className="flex gap-2">
+          <Sun size={16} aria-hidden className="mt-0.5 shrink-0 text-attention-text" />
+          Rain over 30 days: {t.value} mm, below the {t.threshold} mm rule
+        </li>
+        <li>
+          Camp median NDVI {t.ndvi.median_start?.toFixed(2)} to {t.ndvi.median_end?.toFixed(2)} ·{' '}
+          {t.ndvi.fields_falling} of {t.ndvi.fields_total} fields falling
+        </li>
+        <li>Two independent sources agree: flag raised {seasonDate(t.evaluated_at)}</li>
+        <li>
+          {pack.contracts.length} contracts: shortfalls marked uncontrollable, advances paused
+        </li>
+        <li>Claim pack ready for an insurer: camp, contracts, verified records, trigger data</li>
+      </ul>
+      <p className="mt-3 text-caption text-fg-2">
+        Rain: {pack.rainfall_source}. Greenness: Sentinel-2 camp median.
+      </p>
+    </section>
+  )
+}

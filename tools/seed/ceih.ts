@@ -28,6 +28,7 @@ import {
   severityBand,
   simPhotoPath,
   visiblePasses,
+  zmw,
   AdvanceSchema,
   CeihDemoStateSchema,
   ContractSchema,
@@ -356,6 +357,11 @@ export function generateCeih(options: CeihOptions): CeihSeed {
                 [true, false, false],
               ])
     WINDOW.forEach((date, k) => clouds.set(date, pattern[k]))
+    // Given's curve tells the story plainly: clear skies through his crop's rise, then the two
+    // clouded passes the ground check makes up for.
+    if (archetype === 'given')
+      for (const date of PASS_DATES)
+        if (date >= '2026-10-24' && date < WINDOW[0]) clouds.set(date, false)
     truths.push({ curve, clouds })
   })
 
@@ -705,7 +711,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
       when,
       -value_zmw,
       id,
-      `${(weight / 1000).toFixed(2)} t grade ${grade} at ${price_zmw_t} a tonne`
+      `${(weight / 1000).toFixed(2)} t grade ${grade} at ${zmw(price_zmw_t)} a tonne`
     )
     // No payout row: paying the net moves money, so it waits for approval (invariant 11).
   })

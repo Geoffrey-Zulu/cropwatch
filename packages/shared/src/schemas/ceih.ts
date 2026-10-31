@@ -388,6 +388,9 @@ export const PortfolioSchema = z.object({
   credit: CreditConfigSchema,
   camps: z.array(z.string()),
   rows: z.array(SeasonRowSchema),
+  // The demo's storyline farmer (null outside a simulated season).
+  hero_contract_id: z.string().nullable(),
+  neighbour_contract_id: z.string().nullable(),
   sim: z.boolean(),
 })
 export type Portfolio = z.infer<typeof PortfolioSchema>
@@ -448,6 +451,17 @@ export const FieldCardSchema = z.object({
   phone_masked: z.string(),
   credit: CreditConfigSchema,
   shock: ShockFlagSchema.nullable(),
+  // The demo's contrast (plan §4 beat 3): beside the hero, the neighbour who never planted.
+  neighbour: z
+    .object({
+      farmer_name: z.string(),
+      contracted_ha: z.number(),
+      status_label: z.string(),
+      eligibility_label: z.string(),
+      curve: z.array(CurvePointSchema),
+    })
+    .nullable()
+    .optional(),
   sim: z.boolean(),
 })
 export type FieldCard = z.infer<typeof FieldCardSchema>
@@ -493,6 +507,7 @@ export const StatementSchema = z.object({
   balance_zmw: Zmw,
   delivered_t: z.number().nullable(),
   projected_t: z.number(),
+  contract_price_zmw_t: Zmw,
   variance: z.object({ kind: VarianceKindSchema, text: z.string() }),
   settled: z.boolean(),
   sim: z.boolean(),

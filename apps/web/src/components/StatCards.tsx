@@ -7,6 +7,8 @@ export interface Stat {
   value: ReactNode
   // A small change line where the data has one: "↑3 new this week", "↓2 on last week".
   delta?: string | null
+  // A small unit before the figure ("ZMW"), and figures with thousands separators.
+  prefix?: string
 }
 
 const FIGURE = { fontVariationSettings: '"SOFT" 100, "WONK" 0, "opsz" 72' }
@@ -16,9 +18,12 @@ const FIGURE = { fontVariationSettings: '"SOFT" 100, "WONK" 0, "opsz" 72' }
 export function StatCards({
   stats,
   columns = 'grid-cols-2 lg:grid-cols-4',
+  countFromZero = false,
 }: {
   stats: Stat[]
   columns?: string
+  // Count up from 0 when the page opens (the season's portfolio, plan §4 beat 1).
+  countFromZero?: boolean
 }) {
   return (
     <dl className={`island grid overflow-hidden ${columns}`}>
@@ -28,7 +33,20 @@ export function StatCards({
           className="min-w-0 px-[1.45rem] py-[1.05rem] shadow-[inset_1px_0_0_var(--hairline),inset_0_1px_0_var(--hairline)]"
         >
           <dd className="serif text-stat font-semibold tabular-nums text-fg" style={FIGURE}>
-            {typeof s.value === 'number' ? <CountUp value={s.value} /> : s.value}
+            {s.prefix && (
+              <span className="mr-1 font-body text-[0.85rem] font-[650] tracking-normal text-fg-2">
+                {s.prefix}
+              </span>
+            )}
+            {typeof s.value === 'number' ? (
+              <CountUp
+                value={s.value}
+                start={countFromZero ? 0 : undefined}
+                format={n => n.toLocaleString('en-GB')}
+              />
+            ) : (
+              s.value
+            )}
           </dd>
           <dt className="mt-[0.35rem] text-[0.93rem] font-semibold leading-[1.3] text-fg">
             {s.label}

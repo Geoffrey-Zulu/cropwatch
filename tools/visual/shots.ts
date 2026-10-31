@@ -120,6 +120,30 @@ const VIEWS: View[] = [
     },
   },
   { name: 'dashboard-visit', app: 'dashboard', route: 'visit' },
+  // CEIH (plan §3): the season's three tabs and the approval, from tools/seed/ceih-fixtures.ts.
+  { name: 'dashboard-season-ledger', app: 'dashboard', route: 'season', extra: PROJECTOR },
+  { name: 'dashboard-season-approvals', app: 'dashboard', route: 'approvals', extra: PROJECTOR },
+  {
+    name: 'dashboard-season-approve',
+    app: 'dashboard',
+    route: 'approvals',
+    extra: PROJECTOR,
+    // The modal that restates amount, fee and the farmer's code before money moves.
+    prepare: async page => {
+      await page
+        .getByRole('button', { name: /^approve zmw 840$/i })
+        .first()
+        .click()
+      await page.getByRole('dialog').waitFor()
+      await page.waitForTimeout(500)
+    },
+  },
+  {
+    name: 'dashboard-season-reconciliation',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+  },
   { name: 'dashboard-sources', app: 'dashboard', route: 'sources' },
   { name: 'dashboard-scenario', app: 'dashboard', route: 'scenario' },
   {
@@ -265,6 +289,9 @@ for (const view of VIEWS.filter(v => !only || only.includes(v.name) || only.incl
     page.on('pageerror', e => errors.push(`page error: ${e.message}`))
     page.on('console', async m => {
       if (m.type() !== 'error') return
+      // The previews have no sign-in, so Storage refuses report photos (the drawer then shows
+      // its "could not be loaded" frame): expected here, never in the signed-in app.
+      if (m.location().url.includes('firebasestorage.googleapis.com')) return
       const details = await Promise.all(m.args().map(a => a.jsonValue().catch(() => '')))
       errors.push(`console: ${details.map(String).join(' ').replace(/\s+/g, ' ').slice(0, 600)}`)
     })

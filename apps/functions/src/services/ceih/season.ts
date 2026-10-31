@@ -23,6 +23,7 @@ import {
   statementMessage,
   variance,
   visiblePasses,
+  zmw,
   geohash,
   balance,
   districtSlug,
@@ -39,22 +40,20 @@ import {
   type SmsLog,
   type SmsLogView,
   type Statement,
+  buildApprovals,
+  buildFieldCard,
+  buildPortfolio,
+  buildReconciliation,
+  buildSmsLog,
+  buildStatement,
+  eligibilityFor,
+  seasonToday,
+  type SeasonData,
 } from '@repo/shared'
 import type { SmsSender } from '../alerts/sms'
 import type { Caller } from '../observationModel'
 import type { MobileMoney } from './mobileMoney'
 import type { SeasonStore } from './store'
-import {
-  approvals,
-  eligibilityFor,
-  fieldCard,
-  portfolio,
-  reconciliation,
-  seasonToday,
-  smsLog,
-  statement,
-  type SeasonData,
-} from './views'
 
 // The CEIH service (docs/ceih-overnight-plan.md, Phase 2). Reads build the dashboard views from
 // one load; every action re-checks its rule on fresh data, and money moves only through
@@ -192,12 +191,12 @@ export function seasonService({
   const service: SeasonService = {
     async portfolio(caller, orgId) {
       const { data, today } = await load(caller, orgId)
-      return portfolio(data, today)
+      return buildPortfolio(data, today)
     },
 
     async fieldCard(caller, orgId, contractId) {
       const { data, today } = await load(caller, orgId)
-      const card = fieldCard(data, contractId, today)
+      const card = buildFieldCard(data, contractId, today)
       if (!card) throw new SeasonError('not_found', 'No such contract.')
       return card
     },
@@ -213,24 +212,24 @@ export function seasonService({
 
     async approvals(caller, orgId) {
       const { data, today } = await load(caller, orgId)
-      return approvals(data, today, caller.uid)
+      return buildApprovals(data, today, caller.uid)
     },
 
     async statement(caller, orgId, contractId) {
       const { data, today } = await load(caller, orgId)
-      const s = statement(data, contractId, today)
+      const s = buildStatement(data, contractId, today)
       if (!s) throw new SeasonError('not_found', 'No such contract.')
       return s
     },
 
     async reconciliation(caller, orgId) {
       const { data, today } = await load(caller, orgId)
-      return reconciliation(data, today)
+      return buildReconciliation(data, today)
     },
 
     async smsLog(caller, orgId) {
       const { data } = await load(caller, orgId)
-      return smsLog(data)
+      return buildSmsLog(data)
     },
 
     async requestAdvance(caller, orgId, contractId, amountZmw) {
@@ -448,7 +447,7 @@ export function seasonService({
         type: 'delivery',
         amount_zmw: -value_zmw,
         ref: id,
-        note: `${(input.weight_kg / 1000).toFixed(2)} t grade ${input.grade} at ${price_zmw_t} a tonne`,
+        note: `${(input.weight_kg / 1000).toFixed(2)} t grade ${input.grade} at ${zmw(price_zmw_t)} a tonne`,
         simulated: false,
         sim: contract.data.sim,
       }
@@ -477,7 +476,7 @@ export function seasonService({
         today
       )
       const fresh = await store.load(orgId)
-      return statement(fresh!, contract.id, today)!
+      return buildStatement(fresh!, contract.id, today)!
     },
 
     async evaluateTriggers(caller, orgId) {

@@ -1,53 +1,44 @@
 import {
-  balance,
   CEIH_SEASON,
-  establishmentNdvi,
-  eligibilityLabel,
-  evaluateEligibility,
-  ISSUE_LABELS,
-  latestStatus,
   LEDGER_LABELS,
-  maskMsisdn,
   MOMO_LABELS,
-  ndviText,
-  projectedTonnes,
-  recovered,
   SATELLITE_STATUS_LABELS,
-  seasonNow,
-  shortDate,
-  variance,
   VERIFICATION_WINDOW_DAYS,
-  visiblePasses,
-  zmw,
-  daysBetween,
-  type Advance,
-  type AdvanceSummary,
-  type Approval,
-  type CeihDemoState,
-  type Contract,
-  type CreditConfig,
-  type Delivery,
-  type Eligibility,
-  type Farmer,
-  type FieldCard,
-  type GroundCheck,
-  type LedgerEntry,
-  type Observation,
-  type Portfolio,
-  type RainfallSeries,
-  type Reconciliation,
-  type RecordObservation,
-  type Role,
-  type SatelliteMetrics,
-  type SeasonRow,
-  type SmsLog,
-  type SmsLogView,
-  type Statement,
-  type TimelineEntry,
-  type WeatherTrigger,
-} from '@repo/shared'
+} from '../constants/ceih'
+import { ISSUE_LABELS } from '../constants/issues'
+import type { Role } from '../constants/roles'
+import type {
+  Advance,
+  AdvanceSummary,
+  Approval,
+  CeihDemoState,
+  Contract,
+  CreditConfig,
+  Delivery,
+  Eligibility,
+  Farmer,
+  FieldCard,
+  GroundCheck,
+  LedgerEntry,
+  Portfolio,
+  RainfallSeries,
+  Reconciliation,
+  SatelliteMetrics,
+  SeasonRow,
+  SmsLog,
+  SmsLogView,
+  Statement,
+  TimelineEntry,
+  WeatherTrigger,
+} from '../schemas/ceih'
+import type { Observation } from '../schemas/observation'
+import { eligibilityLabel, evaluateEligibility, type RecordObservation } from './eligibility'
+import { maskMsisdn, ndviText, shortDate, zmw } from './format'
+import { balance, projectedTonnes, recovered, variance } from './ledger'
+import { establishmentNdvi, latestStatus, visiblePasses } from './ndvi'
+import { daysBetween, seasonNow } from './season'
 
-// Everything the CEIH views read for one org, loaded once a request (store.ts). Pure from here:
+// Everything the CEIH views read for one org, loaded once a request (the API's store.ts). Pure from here:
 // every figure on the dashboard is computed from these rows, never stored (spec §6.3).
 export interface SeasonData {
   org: { id: string; name: string; credit: CreditConfig; sim: boolean }
@@ -211,7 +202,7 @@ function verifiedState(
   return { state: 'cloud_gap', label: 'Cloud gap', date: lastClear?.date ?? null }
 }
 
-export function seasonRow(data: SeasonData, contractId: string, today: string): SeasonRow {
+export function buildSeasonRow(data: SeasonData, contractId: string, today: string): SeasonRow {
   const contract = data.contracts.find(c => c.id === contractId)!
   const farmer = data.farmers.find(f => f.id === contract.data.farmer_id)!
   const e = eligibilityFor(data, contractId, today)
@@ -240,8 +231,8 @@ export function seasonRow(data: SeasonData, contractId: string, today: string): 
   }
 }
 
-export function portfolio(data: SeasonData, today: string): Portfolio {
-  const rows = data.contracts.map(c => seasonRow(data, c.id, today))
+export function buildPortfolio(data: SeasonData, today: string): Portfolio {
+  const rows = data.contracts.map(c => buildSeasonRow(data, c.id, today))
   const ledger = visibleRows(data.ledger, today).map(l => l.data)
   const camps = [...new Set(data.contracts.map(c => c.data.camp))].sort()
   return {
@@ -272,6 +263,10 @@ export function portfolio(data: SeasonData, today: string): Portfolio {
     credit: data.org.credit,
     camps,
     rows,
+    hero_contract_id:
+      data.contracts.find(c => c.data.farmer_id === data.state.hero_farmer_id)?.id ?? null,
+    neighbour_contract_id:
+      data.contracts.find(c => c.data.farmer_id === data.state.neighbour_farmer_id)?.id ?? null,
     sim: data.org.sim || rows.some(r => r.sim),
   }
 }
@@ -452,7 +447,11 @@ function timeline(
   return entries.sort((a, b) => a.at.localeCompare(b.at))
 }
 
-export function fieldCard(data: SeasonData, contractId: string, today: string): FieldCard | null {
+export function buildFieldCard(
+  data: SeasonData,
+  contractId: string,
+  today: string
+): FieldCard | null {
   const contract = data.contracts.find(c => c.id === contractId)
   if (!contract) return null
   const farmer = data.farmers.find(f => f.id === contract.data.farmer_id)!
@@ -491,18 +490,44 @@ export function fieldCard(data: SeasonData, contractId: string, today: string): 
     phone_masked: maskMsisdn(farmer.data.phone_msisdn),
     credit: data.org.credit,
     shock: contractToday(contract.data, today).shock_flag,
+    neighbour: neighbourOf(data, farmer.id, today),
     sim: contract.data.sim || farmer.data.sim || (metrics?.data.sim ?? false),
   }
 }
 
-export function approvals(data: SeasonData, today: string, callerUid: string): Approval[] {
+function neighbourOf(data: SeasonData, farmerId: string, today: string): FieldCard['neighbour'] {
+  if (farmerId !== data.state.hero_farmer_id || !data.state.neighbour_farmer_id) return null
+  const farmer = data.farmers.find(f => f.id === data.state.neighbour_farmer_id)
+  const contract = data.contracts.find(c => c.data.farmer_id === farmer?.id)
+  if (!farmer || !contract) return null
+  const passes = visiblePasses(
+    data.metrics.find(m => m.id === contract.id)?.data.passes ?? [],
+    today
+  )
+  return {
+    farmer_name: farmer.data.name,
+    contracted_ha: contract.data.contracted_ha,
+    status_label: SATELLITE_STATUS_LABELS[latestStatus(passes)],
+    eligibility_label: eligibilityLabel(eligibilityFor(data, contract.id, today)),
+    curve: passes.map(p => ({
+      date: p.date,
+      ndvi: p.usable ? p.ndvi : null,
+      camp_median: p.ndvi_camp_median,
+      usable: p.usable,
+      cloud_pct: p.cloud_pct,
+      status: p.status_derived,
+    })),
+  }
+}
+
+export function buildApprovals(data: SeasonData, today: string, callerUid: string): Approval[] {
   return data.advances
     .filter(
       a => ['requested', 'farmer_confirmed'].includes(a.data.state) && a.data.requested_at <= today
     )
     .sort((a, b) => b.data.requested_at.localeCompare(a.data.requested_at))
     .flatMap(a => {
-      const card = fieldCard(data, a.data.contract_id, today)
+      const card = buildFieldCard(data, a.data.contract_id, today)
       if (!card) return []
       return [
         {
@@ -536,7 +561,11 @@ function verifiedIssueOf(data: SeasonData, farmerId: string, today: string) {
   return issue ? ISSUE_LABELS[issue.issue!].toLowerCase() : null
 }
 
-export function statement(data: SeasonData, contractId: string, today: string): Statement | null {
+export function buildStatement(
+  data: SeasonData,
+  contractId: string,
+  today: string
+): Statement | null {
   const contract = data.contracts.find(c => c.id === contractId)
   if (!contract) return null
   const farmer = data.farmers.find(f => f.id === contract.data.farmer_id)!
@@ -563,6 +592,7 @@ export function statement(data: SeasonData, contractId: string, today: string): 
     balance_zmw: balance(rows.map(r => r.data)),
     delivered_t: deliveredT,
     projected_t: projectedTonnes(contract.data),
+    contract_price_zmw_t: contract.data.contract_price_zmw_t,
     variance: variance({
       contract: contractToday(contract.data, today),
       deliveredT,
@@ -573,9 +603,9 @@ export function statement(data: SeasonData, contractId: string, today: string): 
   }
 }
 
-export function reconciliation(data: SeasonData, today: string): Reconciliation {
+export function buildReconciliation(data: SeasonData, today: string): Reconciliation {
   const rows = data.contracts.flatMap(c => {
-    const s = statement(data, c.id, today)
+    const s = buildStatement(data, c.id, today)
     if (!s || s.delivered_t === null) return []
     return [
       {
@@ -618,7 +648,7 @@ export function reconciliation(data: SeasonData, today: string): Reconciliation 
   }
 }
 
-export function smsLog(data: SeasonData): SmsLogView[] {
+export function buildSmsLog(data: SeasonData): SmsLogView[] {
   return [...data.sms]
     .sort((a, b) => b.data.at.localeCompare(a.data.at))
     .slice(0, 30)
