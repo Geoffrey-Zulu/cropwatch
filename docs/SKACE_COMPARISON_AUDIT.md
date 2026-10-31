@@ -4,7 +4,7 @@ Audit date: 31 October 2026 (Africa/Lusaka). This is a source and build audit, n
 
 ## Scope and branch correction
 
-The upstream default branch, `main` (`88ee00d`), stops at D4: backend diagnosis/recommendation, a template dashboard and a mobile README. Auditing that checkout alone would incorrectly conclude that CropWatch has no useful interface. The implementation branch is `d9-dashboard-v2` (`13074135f05c5855559b550e7f5be36c0fddfcf8`). This work branches from that revision as `codex/cropwatch-audit-ios`.
+The upstream default branch, `main` (`88ee00d`), stops at D4: backend diagnosis/recommendation, a template dashboard and a mobile README. Auditing that checkout alone would incorrectly conclude that CropWatch has no useful interface. The implementation branch is `d9-dashboard-v2` (`13074135f05c5855559b550e7f5be36c0fddfcf8`). This work branches from that revision as `cropwatch-audit-ios`.
 
 SKACE was compared against the local `SKACE -SMART-FARMER` working tree. Its existing document changes were left alone. Evidence below names source files, rather than treating README promises as shipped features. Live cloud resources, external model accuracy, source licences and regulatory authorisation were not independently certified.
 

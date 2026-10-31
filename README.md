@@ -2,7 +2,7 @@
 
 Crop-health reporting, cited advice, outbreak surveillance and officer priorities for Zambia.
 
-The working product is based on upstream `d9-dashboard-v2`. Upstream `main` still contains an earlier implementation. This fork's audit and iOS work lives on `codex/cropwatch-audit-ios`.
+The working product is based on upstream `d9-dashboard-v2`. Upstream `main` still contains an earlier implementation. This fork's audit and iOS work lives on `cropwatch-audit-ios`.
 
 - [Full audit and functionality comparison with SKACE](docs/SKACE_COMPARISON_AUDIT.md)
 - [iPhone app and simulator / signed IPA build instructions](docs/IOS_BUILD.md)

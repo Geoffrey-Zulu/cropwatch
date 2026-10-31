@@ -1,6 +1,6 @@
 # Audit validation record
 
-Date: 31 October 2026. Base: upstream `d9-dashboard-v2` at `13074135f05c5855559b550e7f5be36c0fddfcf8`. Working branch: `codex/cropwatch-audit-ios`.
+Date: 31 October 2026. Base: upstream `d9-dashboard-v2` at `13074135f05c5855559b550e7f5be36c0fddfcf8`. Working branch: `cropwatch-audit-ios`.
 
 ## Completed local checks
 

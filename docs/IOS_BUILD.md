@@ -6,7 +6,7 @@ App display name: **Phytos**. Configured bundle identifier: **`zm.cropwatch.app`
 
 ## GitHub build
 
-Repository: `germansniper3/cropwatch`. Branch: `codex/cropwatch-audit-ios` (based on upstream D9, not the older template on upstream `main`).
+Repository: `germansniper3/cropwatch`. Branch: `cropwatch-audit-ios` (based on upstream D9, not the older template on upstream `main`).
 
 1. Open **Actions → Build Phytos iOS → Run workflow** on this branch.
 2. Choose **simulator** first. It requires no Apple secrets and exports `Phytos-simulator.zip`, containing an `.app` for an iOS simulator on a Mac. It cannot be installed on a physical iPhone.

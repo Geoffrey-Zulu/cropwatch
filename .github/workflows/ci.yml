@@ -17,12 +17,12 @@ on:
       - dev
       - stage
       - 'release/**'
-      - codex/cropwatch-audit-ios
+      - cropwatch-audit-ios
   push:
     branches:
       - main
       - dev
-      - codex/cropwatch-audit-ios
+      - cropwatch-audit-ios
 
 # ============================================================================
 # CONCURRENCY
