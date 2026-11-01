@@ -40,7 +40,7 @@ const EVIDENCE = {
 
 const OVERVIEW = {
   org_id: 'org1',
-  name: 'DEMO OUTGROWER CO.',
+  name: 'Outgrower Co.',
   enrolled_farmers: 1240,
   sim: true,
   window_days: 14,

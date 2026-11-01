@@ -1,4 +1,4 @@
-import { FlaskConical, LoaderCircle } from 'lucide-react'
+import { LoaderCircle, Settings } from 'lucide-react'
 import type { Portfolio, SeasonPhase } from '@repo/shared'
 import { seasonDate, useSeasonRefresh } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
@@ -19,16 +19,17 @@ export function DemoControls({ portfolio: p }: { portfolio: Portfolio }) {
 
   return (
     <details className="group relative ml-auto shrink-0">
+      {/* A small unlabeled gear: the presenter knows where it is; the room does not read it. */}
       <summary
-        className="inline-flex cursor-pointer list-none items-center gap-2 rounded-pill py-1.5 pl-3 pr-4 text-caption font-bold tracking-[0.06em] text-fg shadow-[var(--raise-sm),inset_0_0_0_1.5px_rgb(27_41_32/0.45)] [&::-webkit-details-marker]:hidden"
-        style={{ background: 'var(--hatch), #FFFFFF' }}
+        aria-label="Season controls"
+        title="Season controls"
+        className="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-pill text-fg-2 transition-colors duration-200 ease-out hover:bg-well hover:text-fg group-open:bg-well group-open:text-fg [&::-webkit-details-marker]:hidden"
       >
-        <FlaskConical size={15} aria-hidden />
-        DEMO CONTROLS
+        <Settings size={18} aria-hidden />
       </summary>
       <div className="island absolute right-0 top-full z-30 mt-2 flex w-[min(34rem,calc(100vw-2rem))] flex-col gap-3 px-5 py-4">
         <p className="text-caption text-fg-2">
-          Season day {seasonDate(p.today)}. Simulated season only; every rule still applies.
+          Season day {seasonDate(p.today)}. Every rule still applies.
         </p>
         <div className="flex flex-wrap gap-2">
           <button

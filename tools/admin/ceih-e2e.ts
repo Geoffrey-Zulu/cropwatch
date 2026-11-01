@@ -312,7 +312,7 @@ try {
     sms2.some(
       s =>
         s.purpose === 'disbursement' &&
-        s.message.startsWith('Phytos DEMO: ZMW 840 sent to your Airtel Money (simulated transfer')
+        /^Phytos( DEMO)?: ZMW 840 sent to your Airtel Money \(simulated transfer/.test(s.message)
     ),
     'SMS: "ZMW 840 sent to your Airtel Money…"'
   )

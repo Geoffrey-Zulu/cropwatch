@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { establishmentNdvi, zmw, type Approval, type SmsLogView } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { NdviChart } from '../../components/NdviChart'
 import { SkeletonRows } from '../../components/Skeleton'
 import { firstName, seasonDate, seasonTime } from '../../lib/season'
@@ -47,7 +46,6 @@ export function ApprovalsSection({
               farmer&apos;s code, and an approver who did not verify the field
             </p>
           </div>
-          {approvals && <DemoBadge rows={approvals} />}
         </div>
         {!approvals ? (
           <SkeletonRows rows={3} lines={4} label="Loading the approvals" />
@@ -178,7 +176,7 @@ function ApprovalCard({
           <MessageSquare size={14} aria-hidden className="mt-0.5 shrink-0" />
           {otpSms?.status === 'sent'
             ? `${name} got the amount and the fee by SMS before confirming`
-            : `The SMS with the amount, the fee and the code: logged on screen, not sent (the gateway is off in the demo)`}
+            : `The SMS with the amount, the fee and the code: logged on screen, not sent`}
         </p>
         {a.otp_ok ? (
           <p className="mt-1.5 flex items-center gap-1.5 text-label font-semibold text-signal-text">
@@ -233,7 +231,7 @@ function ApprovalCard({
                   No field visit: established from space.
                 </span>
               )}{' '}
-              The transfer runs on the simulated provider; the SMS is real when the gateway is on.
+              The transfer is simulated; the SMS is logged on screen.
             </span>
           )}
         </p>

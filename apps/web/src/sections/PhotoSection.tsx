@@ -57,7 +57,7 @@ export function PhotoSection({ path, sim }: { path: string | null; sim: boolean 
   return (
     <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card border border-dashed border-hairline-strong bg-ground text-center text-label text-fg-2">
       <ImageOff aria-hidden />
-      {sim ? 'Simulated report: no photo' : !path ? 'No photo' : 'The photo could not be loaded'}
+      {sim || !path ? 'No photo' : 'The photo could not be loaded'}
     </div>
   )
 }

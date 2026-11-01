@@ -41,7 +41,7 @@ const clone = <T>(value: T): T => structuredClone(value)
 
 function base(): SeasonData {
   return {
-    org: { id: DEMO_ORG_ID, name: 'DEMO OUTGROWER CO.', credit: CREDIT, sim: true },
+    org: { id: DEMO_ORG_ID, name: 'Outgrower Co.', credit: CREDIT, sim: true },
     state: clone(seed.state.data),
     farmers: clone(seed.farmers.map(({ id, data }) => ({ id, data }))),
     contracts: clone(seed.contracts),
@@ -141,7 +141,7 @@ function january(): SeasonData {
       farmer_id: hero.id,
       to: hero.data.phone_msisdn,
       message: otpMessage({
-        org: 'DEMO OUTGROWER CO.',
+        org: 'Outgrower Co.',
         farmerName: hero.data.name,
         amountZmw: snapshot.cap_zmw,
         feeZmw: fee,

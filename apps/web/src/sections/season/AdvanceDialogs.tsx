@@ -1,7 +1,6 @@
 import { LoaderCircle, MessageSquare, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { feeFor, zmw, type Approval, type FieldCard } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { Dialog } from '../../components/Dialog'
 import { firstName, seasonTime, useSeasonRefresh } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
@@ -94,7 +93,6 @@ export function RequestAdvanceDialog({
   if (done)
     return (
       <Dialog
-        aside={<DemoBadge small rows={[card]} />}
         title="Confirmed by the farmer"
         kicker={card.farmer_name}
         onClose={onClose}
@@ -119,7 +117,6 @@ export function RequestAdvanceDialog({
   if (!advanceId)
     return (
       <Dialog
-        aside={<DemoBadge small rows={[card]} />}
         title={`Advance for ${card.farmer_name}`}
         kicker={`Requested on the farmer's behalf · ${card.camp}`}
         onClose={onClose}
@@ -151,7 +148,6 @@ export function RequestAdvanceDialog({
 
   return (
     <Dialog
-      aside={<DemoBadge small rows={[card]} />}
       title={`${name}'s code`}
       kicker={
         sent?.status === 'sent'
@@ -172,7 +168,7 @@ export function RequestAdvanceDialog({
           {sentCode && (
             <button type="button" className="btn-quiet" onClick={() => setCode(sentCode)}>
               <MessageSquare size={16} aria-hidden />
-              Use the code from the SMS log (demo)
+              Use the code from the SMS log
             </button>
           )}
         </>
@@ -215,7 +211,6 @@ export function ApproveDialog({
   if (approve.data)
     return (
       <Dialog
-        aside={<DemoBadge small rows={[approval]} />}
         title={`${zmw(approval.amount_zmw)} sent`}
         kicker={name}
         onClose={onClose}
@@ -234,7 +229,6 @@ export function ApproveDialog({
     )
   return (
     <Dialog
-      aside={<DemoBadge small rows={[approval]} />}
       title={`Approve ${zmw(approval.amount_zmw)}`}
       kicker={`${name} · ${approval.card.camp}`}
       onClose={onClose}
@@ -261,8 +255,7 @@ export function ApproveDialog({
           {seasonTime(approval.requested_at)}
         </li>
         <li>
-          To {approval.card.momo_label}, {approval.card.phone_masked} · simulated provider in the
-          demo
+          To {approval.card.momo_label}, {approval.card.phone_masked} · simulated transfer
         </li>
         <li className="flex gap-2 text-fg-2">
           <ShieldCheck size={18} aria-hidden className="mt-0.5 shrink-0 text-signal-text" />
@@ -294,7 +287,6 @@ export function DeclineDialog({
   })
   return (
     <Dialog
-      aside={<DemoBadge small rows={[approval]} />}
       title="Decline with a reason"
       kicker={`${approval.card.farmer_name} · ${zmw(approval.amount_zmw)}`}
       onClose={onClose}

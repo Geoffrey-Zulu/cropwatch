@@ -85,5 +85,5 @@ export function statementMessage(input: {
     input.netZmw > 0
       ? `Net due to you ${zmw(input.netZmw)}, paid to your mobile money after approval`
       : `Still owed ${zmw(-input.netZmw)}, carried to next season`
-  return `Phytos DEMO statement for ${input.farmerName.split(' ')[0]}: ${parts.join('; ')}. ${net}.`
+  return `Phytos statement for ${input.farmerName.split(' ')[0]}: ${parts.join('; ')}. ${net}.`
 }

@@ -13,7 +13,6 @@ import {
   X,
 } from 'lucide-react'
 import { useState } from 'react'
-import { DemoBadge } from '../../components/DemoBadge'
 import {
   CROP_LABELS,
   eligibilityLabel,
@@ -111,12 +110,10 @@ export function FieldCardView({
             <p className="text-caption text-fg-2">
               Sentinel-2, a pass a week · planted {seasonDate(card.planting_date)} ·{' '}
               {card.contracted_ha} ha {cropWord(card.crop)} · field from the officer&apos;s pin
-              {card.curve_source === 'seeded' ? ' · demo curve' : ''}
             </p>
           </div>
           {/* In the ledger the island's pill scrolls away as the row rises: the curve keeps its
               own. In the drawer the header carries it. */}
-          {!narrow && <DemoBadge small rows={[card]} />}
         </div>
         <div className="mt-3">
           <NdviChart

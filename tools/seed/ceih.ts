@@ -761,7 +761,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
       data: RainfallSeriesSchema.parse({
         org_id: DEMO_ORG_ID,
         camp: camp.name,
-        source: 'Demo rainfall series (simulated)',
+        source: 'Seeded rainfall series',
         days,
         sim: true,
       }),

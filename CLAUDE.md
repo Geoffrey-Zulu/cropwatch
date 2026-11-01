@@ -1,6 +1,6 @@
 # CLAUDE.md — Phytos repo instructions
 
-Phytos (Team Phytos; formerly CropWatch): early-warning and crop-health intelligence prototype for Zambia. GreenCode Hackathon (Lusaka, 30 Oct – 1 Nov 2026). Read `docs/buildplan.md` (schedule, work packages, acceptance criteria) and `docs/technicaldoc.md` (data model, contracts, corpus, demo runbook) before building anything. Where they conflict, buildplan.md wins.
+Phytos (Team Phytos; formerly CropWatch): the verification and ledger layer for outgrower agribusinesses in Zambia (CEIH, four screens; it grew from a crop-health early-warning prototype). GreenCode Hackathon (Lusaka, 30 Oct – 1 Nov 2026). Read `docs/buildplan.md` (schedule, work packages, acceptance criteria) and `docs/technicaldoc.md` (data model, contracts, corpus, demo runbook) before building anything. Where they conflict, buildplan.md wins.
 
 ## Invariants — never violate, even under time pressure
 
@@ -8,7 +8,7 @@ Phytos (Team Phytos; formerly CropWatch): early-warning and crop-health intellig
 2. No numeric outbreak probabilities anywhere. Risk is a qualitative prototype signal (LOW / ELEVATED / HIGH) with contributing factors always displayed.
 3. `model_confidence` is internal. UI shows qualitative bands ("AI assessment: high confidence"), never percentages, never the word "probability".
 4. Low confidence (< 0.6) or `suspected_issue == "unknown"` → `needs_expert_review: true` and the officer queue. Never guess.
-5. Every synthetic row carries `sim: true`; any view displaying a sim row renders the `DemoBadge` ("DEMO DATA · SIMULATED").
+5. **(Amended 1 Nov, Geoffrey's decision.)** Every synthetic row carries `sim: true`. The screens mark a simulated season with exactly two quiet, honest markers: one line next to the season day, "Simulated season 2026/27" (on the Fields map too), and the word "simulated" on disbursement and insurance-payout lines only. No hatched DEMO pills, and no "demo", "DEMO DATA" or "prototype" in rendered copy. Exports keep their `simulated` column.
 6. **(Amended 31 Oct, CEIH.)** Farmer-level data is visible to the farmer's own contracting agribusiness under recorded contract consent (`consent.scope == "org_contract"`). Precise locations remain hidden from any other organisation, from insurers and from exports; those receive camp/district aggregates only.
 7. Use the Google Gen AI SDK (`google-genai`). Never `vertexai.generative_models` (deprecated).
 8. "Where to buy" lists ALL registered options for the issue, renders only after the recommendation, never sponsor-filtered.
@@ -17,9 +17,11 @@ Phytos (Team Phytos; formerly CropWatch): early-warning and crop-health intellig
 11. **(New 31 Oct, CEIH; numbered 9 in the spec.)** Phytos never moves money without (a) farmer OTP confirmation after seeing amount and fee, (b) a human approval by a user who did not perform the verification, and (c) a ledger entry. No exceptions for the demo.
 12. **(New 31 Oct, CEIH; numbered 10 in the spec.)** Eligibility and shock decisions are rule-based with stored, displayed factors. No model decides who gets money. Satellite signals are thresholds on NDVI against calendar and camp median, with every pass stored; no "AI crop health score".
 
+**The product is four screens (1 Nov, Geoffrey's decision):** Fields map, Season ledger, Approvals, Reconciliation (the Outgrower View's tabs). Sign-in lands on the Fields map. The National map, Officer queue, Dry-spell scenario and Knowledge sources were deleted, with their demo check: they live at tag `pre-ceih-only` and in branch history only. The season engine's inputs stay (the observation model, the diagnose and verify endpoints, the ground-check path, the seed, the SMS log); the capture app stays deployed, unlinked. Invariants 1, 3, 4, 8 and 10 govern those retained paths.
+
 **CEIH pivot (31 Oct, mentor decision; `docs/ceih-workflows-mvp.md`, sequenced by `docs/ceih-overnight-plan.md`, which wins where they disagree).**
 
-- Technicaldoc §3 ("Earth Engine is architecture, not MVP critical path") is superseded for the demo fields by the CEIH spec §3.6, and technicaldoc §11 item 4 ("no loan-exposure figures") by spec §3.4: exposure figures are now the point, always under the DEMO badge while simulated.
+- Technicaldoc §3 ("Earth Engine is architecture, not MVP critical path") is superseded for the demo fields by the CEIH spec §3.6, and technicaldoc §11 item 4 ("no loan-exposure figures") by spec §3.4: exposure figures are now the point, marked as a simulated season while simulated (invariant 5).
 - Invariant 2 (no numeric probabilities) is untouched. NDVI values, ZMW amounts, hectares and dates are measurements and amounts, not probabilities; they display as figures. No scores, no percentages of confidence, anywhere.
 
 ## Environment
@@ -53,7 +55,7 @@ Phytos (Team Phytos; formerly CropWatch): early-warning and crop-health intellig
   - **The look:** a cream canvas, white islands with layered shadows, one field-green accent (`#2D5B39`), brick for High and hatched maize for Elevated, Figtree for UI text, Fraunces for titles and figures.
   - **The national map is the page:** the islands float over it.
   - **Motion comes from mockup B:** fly-to on the region toggle and on a pressed district, rings breathing, fills fading, figures counting up. 250 to 400 ms, ease-out, no bounce, and honouring prefers-reduced-motion.
-  - **Kept from the polish:** no question line under titles; the DEMO pill on the data, never in the chrome; shimmer skeletons, with a spinner only inside a busy button; Lucide icons.
+  - **Kept from the polish:** no question line under titles; the simulated-season marker on the data, never in the chrome (invariant 5); shimmer skeletons, with a spinner only inside a busy button; Lucide icons.
   - Every deploy runs `pnpm --filter @repo/visual shots` (laptop and phone, all views), and every shot is looked at before a tag.
 - **UI window (changed 30 Oct evening, Geoffrey's call: full UI rebuild, mockup first).** In this order:
   1. The backup recordings are made on the stable version: tag `stable-2026-10-30c` (`Desktop/Phytos backup recordings 2026-10-30/`).

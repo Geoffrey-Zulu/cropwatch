@@ -10,7 +10,6 @@ import {
   type Statement,
   type VarianceKind,
 } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { SkeletonRows } from '../../components/Skeleton'
 import { seasonDate, useSeasonRefresh } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
@@ -97,7 +96,6 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
             The depot enters the weight; the ledger does the arithmetic
           </p>
         </div>
-        {s && <DemoBadge rows={[s]} />}
       </div>
 
       <form
@@ -231,7 +229,12 @@ function StatementTable({ statement: s }: { statement: Statement }) {
                   {seasonDate(l.at)} · {l.note}
                   {/* The transfer's reference, so the row can be traced to the "sent" receipt. */}
                   {l.type === 'advance' && l.ref.startsWith('SIM-') ? ` · ref ${l.ref}` : ''}
-                  {l.simulated && !l.note.includes('simulated') ? ' · simulated' : ''}
+                  {/* "simulated" only on money that moved: a transfer or a payout (invariant 5). */}
+                  {l.simulated &&
+                  ['advance', 'payout', 'insurance_payout'].includes(l.type) &&
+                  !l.note.includes('simulated')
+                    ? ' · simulated'
+                    : ''}
                 </span>
               </td>
               <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-fg">
@@ -293,7 +296,6 @@ function VarianceList({ data }: { data: Reconciliation | undefined }) {
           </h2>
           <p className="text-label text-fg-2">Shortfalls the credit team must look at first</p>
         </div>
-        {data && <DemoBadge rows={data.rows} />}
       </div>
       {!data ? (
         <SkeletonRows rows={4} lines={2} label="Loading the deliveries" />
@@ -354,7 +356,6 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
             Claim pack for an insurer · the payout is simulated
           </p>
         </div>
-        <DemoBadge small rows={[pack]} />
       </div>
       <ul className="mt-3 flex flex-col gap-1.5 text-label text-fg [&>li]:relative [&>li]:pl-4 [&>li]:before:absolute [&>li]:before:left-0 [&>li]:before:top-[0.55rem] [&>li]:before:h-[0.36rem] [&>li]:before:w-[0.36rem] [&>li]:before:rounded-full [&>li]:before:bg-high [&>li]:before:content-['']">
         <li>
@@ -374,7 +375,7 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
         </li>
       </ul>
       <p className="mt-3 text-caption text-fg-2">
-        Rain: {pack.rainfall_source}. Greenness: Sentinel-2 camp median (demo curves).
+        Rain: {pack.rainfall_source}. Greenness: the camp median of the season&apos;s passes.
       </p>
     </section>
   )

@@ -106,7 +106,7 @@ export function otpMessage(input: {
   code: string
 }) {
   const first = input.farmerName.split(' ')[0]
-  return `Phytos DEMO: ${first}, ${input.org} offers you a cash advance of ${zmw(input.amountZmw)}. Fee ${zmw(input.feeZmw)}. Both are deducted at harvest. To agree, give your officer this code: ${input.code}. Do not share it with anyone else.`
+  return `Phytos: ${first}, ${input.org} offers you a cash advance of ${zmw(input.amountZmw)}. Fee ${zmw(input.feeZmw)}. Both are deducted at harvest. To agree, give your officer this code: ${input.code}. Do not share it with anyone else.`
 }
 
 export function disbursedMessage(input: {
@@ -116,5 +116,5 @@ export function disbursedMessage(input: {
   txRef: string
   simulated: boolean
 }) {
-  return `Phytos DEMO: ${zmw(input.amountZmw)} sent to your ${input.wallet}${input.simulated ? ` (simulated transfer, ref ${input.txRef})` : `, ref ${input.txRef}`}. Deducted at harvest with ${zmw(input.feeZmw)} fee.`
+  return `Phytos: ${zmw(input.amountZmw)} sent to your ${input.wallet}${input.simulated ? ` (simulated transfer, ref ${input.txRef})` : `, ref ${input.txRef}`}. Deducted at harvest with ${zmw(input.feeZmw)} fee.`
 }

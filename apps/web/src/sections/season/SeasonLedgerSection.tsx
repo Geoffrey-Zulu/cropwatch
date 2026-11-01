@@ -1,7 +1,6 @@
 import { CalendarDays, ChevronDown, Download } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { zmw, type Portfolio, type SeasonRow } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { Sparkline } from '../../components/NdviChart'
 import { StatCards } from '../../components/StatCards'
 import { useDrawerLinks } from '../../hooks/useRoute'
@@ -72,9 +71,10 @@ export function PortfolioHeader({ portfolio: p }: { portfolio: Portfolio }) {
             className="mr-1.5 inline-block align-[-0.2em] text-signal-text"
           />
           Season day <span className="font-semibold text-fg">{seasonDate(p.today)}</span> ·{' '}
-          {PHASE[p.phase]} · season {p.season}
+          {PHASE[p.phase]} ·{' '}
+          {/* One of the two markers (CLAUDE.md invariant 5, 1 Nov): the season is simulated. */}
+          {p.sim ? `Simulated season ${p.season}` : `Season ${p.season}`}
         </p>
-        <DemoBadge rows={[p]} />
       </div>
     </div>
   )
@@ -152,7 +152,6 @@ export function SeasonLedgerSection({
             <Download size={18} aria-hidden />
             Export CSV
           </button>
-          <DemoBadge rows={rows} />
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { Loading, SkeletonRows } from '../components/Skeleton'
 import { SkeletonStatCards } from '../components/StatCards'
 import type { Officer } from '../hooks/useAuth'
 import { useRoute, type OutgrowerTab } from '../hooks/useRoute'
-import { useSeasonQueries } from '../lib/season'
+import { seasonDate, useSeasonQueries } from '../lib/season'
 import { ApprovalsSection } from '../sections/season/ApprovalsSection'
 import { DemoControls } from '../sections/season/DemoControls'
 import { FieldsMapSection } from '../sections/season/FieldsMapSection'
@@ -135,6 +135,11 @@ function SeasonTabs({
         <FieldsMapSection
           orgId={orgId}
           commandCenter={commandCenter}
+          seasonLine={
+            p
+              ? `Season day ${seasonDate(p.today)} · ${p.sim ? 'Simulated season' : 'Season'} ${p.season}`
+              : undefined
+          }
           intro={
             <>
               <h1

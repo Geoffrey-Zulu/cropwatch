@@ -290,7 +290,7 @@ describe('the CEIH season service', () => {
       ['advance_fee', 42, true],
     ])
     expect(data.sms.find(s => s.data.purpose === 'disbursement')!.data.message).toMatch(
-      /^Phytos DEMO: ZMW 840 sent to your Airtel Money \(simulated transfer, ref SIM-[0-9A-F]{6}\)\. Deducted at harvest with ZMW 42 fee\.$/
+      /^Phytos: ZMW 840 sent to your Airtel Money \(simulated transfer, ref SIM-[0-9A-F]{6}\)\. Deducted at harvest with ZMW 42 fee\.$/
     )
     // Never twice.
     expect((await refusal(service.disburse(david, ORG, advance_id))).code).toBe('refused')

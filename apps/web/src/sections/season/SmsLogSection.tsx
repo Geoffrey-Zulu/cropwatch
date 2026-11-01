@@ -1,6 +1,5 @@
 import { MessageSquare } from 'lucide-react'
 import type { SmsLogView } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { SkeletonRows } from '../../components/Skeleton'
 import { seasonDate, seasonTime } from '../../lib/season'
 
@@ -21,13 +20,10 @@ export function SmsLogSection({ sms }: { sms: SmsLogView[] | undefined }) {
           <MessageSquare size={18} aria-hidden />
           SMS log
         </h2>
-        {sms && <DemoBadge small rows={sms} />}
       </div>
       <p className="mt-1 text-caption text-fg-2">
         What the farmers&apos; phones receive
-        {sms?.some(s => s.status === 'logged')
-          ? '. The gateway is off in the demo: logged, not sent'
-          : ''}
+        {sms?.some(s => s.status === 'logged') ? '. The gateway is off: logged, not sent' : ''}
       </p>
       {!sms ? (
         <SkeletonRows rows={3} lines={3} label="Loading the SMS log" />

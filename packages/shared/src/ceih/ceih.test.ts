@@ -385,7 +385,7 @@ describe('advances (spec W4, invariant 11, §6.2 and §6.4)', () => {
         simulated: true,
       })
     ).toBe(
-      'Phytos DEMO: ZMW 840 sent to your Airtel Money (simulated transfer, ref SIM-7Q2X). Deducted at harvest with ZMW 42 fee.'
+      'Phytos: ZMW 840 sent to your Airtel Money (simulated transfer, ref SIM-7Q2X). Deducted at harvest with ZMW 42 fee.'
     )
   })
 })

@@ -103,8 +103,8 @@ describe('simulated data', () => {
     }
   })
 
-  it('includes DEMO OUTGROWER CO. with member farmers and field officers', () => {
-    expect(seed.org.data.name).toBe('DEMO OUTGROWER CO.')
+  it('includes Outgrower Co. with member farmers and field officers', () => {
+    expect(seed.org.data.name).toBe('Outgrower Co.')
     const members = seed.users.filter(u => u.profile.org_id === seed.org.id)
     expect(members.some(u => u.profile.role === 'field_officer')).toBe(true)
     expect(members.filter(u => u.profile.role === 'farmer').length).toBeGreaterThan(20)

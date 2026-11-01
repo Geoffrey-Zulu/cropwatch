@@ -9,7 +9,6 @@ import {
   type FieldsMap,
   type MomoProvider,
 } from '@repo/shared'
-import { DemoBadge } from '../../components/DemoBadge'
 import { Dialog } from '../../components/Dialog'
 import { Drawer } from '../../components/Drawer'
 import { Bar, Loading } from '../../components/Skeleton'
@@ -65,9 +64,12 @@ export function FieldsMapSection({
   orgId,
   commandCenter,
   intro,
+  seasonLine,
 }: {
   orgId: string
   commandCenter: boolean
+  // "Season day 12 Jan 2027 · Simulated season 2026/27": the marker on the map's own screen.
+  seasonLine?: string
   // The page's title and tabs: they float on the map on a wide screen, and stack above it on a
   // phone (mockup A's .intro).
   intro?: ReactNode
@@ -94,13 +96,13 @@ export function FieldsMapSection({
       <FieldsMapView
         data={data}
         intro={intro}
+        seasonLine={seasonLine}
         onOpen={id => (window.location.hash = open({ kind: 'contract', id }))}
       />
       {openedField && (
         <Drawer
           kicker={`${openedField.camp} · ${openedField.contracted_ha} ha`}
           title={openedField.farmer_name}
-          aside={<DemoBadge small rows={[openedField]} />}
           closeHref={close()}
         >
           <FieldCardSection
@@ -118,10 +120,12 @@ export function FieldsMapSection({
 export function FieldsMapView({
   data,
   intro,
+  seasonLine,
   onOpen,
 }: {
   data: FieldsMap
   intro?: ReactNode
+  seasonLine?: string
   onOpen: (contractId: string) => void
 }) {
   const el = useRef<HTMLDivElement>(null)
@@ -364,6 +368,7 @@ export function FieldsMapView({
               ? fieldCounts(shown)
               : `${data.camps.reduce((n, c) => n + c.contracts, 0)} farms in ${data.camps.length} camps · seen from space, checked on the ground`}
           </p>
+          {seasonLine && <p className="mt-0.5 text-caption text-fg-2">{seasonLine}</p>}
         </div>
         <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
           <div className="toggle-group" role="group" aria-label="Camp">
@@ -385,7 +390,6 @@ export function FieldsMapView({
               Add farm
             </button>
           )}
-          <DemoBadge rows={[data]} />
         </div>
       </div>
 

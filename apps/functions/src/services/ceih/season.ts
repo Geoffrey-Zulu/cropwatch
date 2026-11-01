@@ -561,7 +561,7 @@ export function seasonService({
         data,
         farmer.id,
         farmer.data.phone_msisdn,
-        `Phytos DEMO: ${farmer.data.name.split(' ')[0]}, your advance request was not approved: ${reason.trim()}. Your officer will explain.`,
+        `Phytos: ${farmer.data.name.split(' ')[0]}, your advance request was not approved: ${reason.trim()}. Your officer will explain.`,
         'decline',
         today
       )
@@ -716,7 +716,7 @@ export function seasonService({
       const hero = data.farmers.find(f => f.id === heroId)
       const contract = data.contracts.find(c => c.data.farmer_id === heroId)
       if (!hero || !contract || !officer)
-        throw new SeasonError('not_found', 'No demo farmer is armed.')
+        throw new SeasonError('not_found', 'No storyline farmer is armed. Re-arm the season.')
       // The live beat: a capture-app photo already landed on his field since this arming. The
       // field officer verifies it, with the stage.
       const live = data.observations
@@ -780,10 +780,10 @@ export function seasonService({
 
   async function demoOnly(caller: Caller, orgId: string) {
     if (!COMMAND_CENTER_ROLES.includes(caller.role))
-      throw new SeasonError('forbidden', 'Demo controls are for Command Center accounts.')
+      throw new SeasonError('forbidden', 'Season controls are for Command Center accounts.')
     const loaded = await load(caller, orgId)
     if (!loaded.data.state.sim)
-      throw new SeasonError('forbidden', 'Demo controls work on simulated seasons only.')
+      throw new SeasonError('forbidden', 'Season controls are not available for this season.')
     return loaded
   }
 

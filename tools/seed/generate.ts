@@ -36,7 +36,7 @@ export const SEED = 20261030
 export const SIM_STAMP = { model_id: 'sim-seed', prompt_version: 'sim-seed-v1' }
 export const DEMO_ORG_ID = 'demo-outgrower'
 const DEMO_ORG: Org = OrgSchema.parse({
-  name: 'DEMO OUTGROWER CO.',
+  name: 'Outgrower Co.',
   type: 'outgrower',
   enrolled_farmer_count: 1240,
   sim: true,
