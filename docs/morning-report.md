@@ -35,9 +35,44 @@ All three previews share production's Firestore, so one re-arm serves them all.
 
 Any of them can be redeployed with `git checkout <tag> && MIN_INSTANCES=1 bash infra/deploy.sh`.
 
-**Known, not changed (freeze):** the "Field visits" tab, which is not on the demo path, still shows the org name in capitals. It is a one-line fix after the pitch.
+## What changed this morning (Geoffrey's orders, 06:53 to 08:00)
 
-## What changed overnight, and why
+The app is four screens: **Fields map, Season ledger, Approvals, Reconciliation**.
+
+- **A. Old surfaces deleted.**
+  - The National map, Officer queue, Dry-spell scenario and Knowledge sources are gone, with their nav, the verified counter, the bell, the Field visits tab and the old outbreak check.
+  - Sign-in lands on the Fields map.
+  - The season engine's inputs stay: the observation model, diagnose and verify, the ground check, the seed and the SMS log. The capture app is still deployed, unlinked.
+  - Recovery point: tag `pre-ceih-only`.
+- **B. De-badged.**
+  - No DEMO pills and no "demo" or "prototype" in the copy.
+  - Two quiet markers remain: "Simulated season 2026/27" beside the season day (also on the Fields map), and "simulated" on transfers and the insurance payout.
+  - The season controls are a small gear at the right end of the top bar, before the avatar.
+  - The org reads "Outgrower Co.", and the SMS templates lost their DEMO prefix.
+  - CLAUDE.md invariant 5 is amended as your decision.
+- **C. The loan check, played.** "Run check" on any farmer plays four stages in about 11 s:
+  - the map flies to his traced field and the outline draws itself;
+  - the passes arrive along his curve, with the cloud gap;
+  - the rules tick on one by one;
+  - the cap counts up to the verdict, which carries "Request advance".
+
+  A click moves to the next stage, and Skip goes straight to the verdict. The same rules engine runs underneath, with no scores. It is wired into beat 3.
+
+- **D. Real imagery instead of the satellite glyph.**
+  - Each farm's Esri thumbnail, outline on top, appears on the field card, on satellite-only approvals and on the season record's passes.
+  - The imagery credit appears once per view.
+  - Outlines go only to callers who may see them (invariant 6).
+- **E. Tracing.**
+  - Drag a corner to adjust it, with the hectares updating live.
+  - A click on the first corner closes the field. Esc cancels.
+  - Paste "lat, lng" to fly there first.
+  - Saving goes straight to the Season ledger with the new row open.
+- **Top bar (Geoffrey, 07:56).**
+  - The four screens are the pills in the top bar beside the Phytos logo: same style, same active state, Approvals with its count.
+  - The gear sits at the right end of the top bar, before the avatar, on every screen.
+  - The page keeps only "Outgrower Co.", smaller, with "Simulated season 2026/27 · Season day … · phase" beside it.
+  - The header is sticky, so the screens stay in reach on scroll.
+  - On a phone the screens are a strip under the header that scrolls sideways, with the current one centred.
 
 Five reviewers read the production app: a judge seeing it cold, a Zambian agribusiness credit manager, a Chikuni field officer, a designer holding it against mockup A, and a pitch mentor timing the run. They ran in three rounds. Each round's findings were triaged against the fixed idea and the invariants, built, checked on a preview, then deployed. Nothing was added to the product's scope.
 
@@ -108,7 +143,7 @@ See [`morning-decisions.md`](morning-decisions.md). In short:
 
 1. **Re-arm after the last rehearsal.** Then run the demo check (green), then `ceih-e2e --warm` in the 10 minutes before you go on.
 2. **Browser.** A clean profile, signed in as david@phytos.com. Zoom 100%, F11 full screen, 1280×800 if the projector takes it. Notifications, sleep and updates off; charger in.
-3. **"Season ledger" check.** The page reads "Season day 12 Jan 2027 · … · Simulated season 2026/27". Given is first, with "Not eligible: cloud gap, ground check required". The tab reads "Approvals 2". Do not open a row.
+3. **"Season ledger" check.** Beside "Outgrower Co." the line reads "Simulated season 2026/27 · Season day 12 Jan 2027 · January: the advance". Given is first, with "Not eligible: cloud gap, ground check required". The tab reads "Approvals 2". Do not open a row.
 4. **Opening frame.** On the "Fields map" tab, let it fly into Chikuni, then press **All camps**. Park the pointer top left, off the map.
 5. **Backup.** Open `Desktop/Phytos CEIH recording 2026-11-01 four screens production 1280/takes/` in a video player, one Alt+Tab away.
 6. **Never press on stage:** "Back to January", "Add farm", "Decline", "Cancel", "Export CSV".
@@ -134,6 +169,8 @@ See [`morning-decisions.md`](morning-decisions.md). In short:
 | 2:48–3:00 | Slack                        |                                                                                                                               | For the room, a slow tile or a recovery.                                                                                                                                                                                                                                                                                   | 12  |
 
 **Driver notes:**
+
+- The four screens are the pills in the top bar beside the Phytos logo. The gear is at the right end of the top bar, before the avatar, on every screen. The top bar stays put on scroll.
 
 - The loan check runs about 11 s on its own. A click anywhere in it moves to the next stage, and "Skip" goes straight to the verdict. If you run long, click once per stage while N speaks.
 - The Fields map flies into Chikuni about 0.7 s after it opens, unless a camp was already pressed. In 7b, wait for Chikuni to land before pressing "Hamangaba".
