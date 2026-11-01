@@ -97,7 +97,7 @@ export function FieldsMapSection({
       />
       {openedField && (
         <Drawer
-          kicker={`${openedField.camp} · ${openedField.contracted_ha} ha soya`}
+          kicker={`${openedField.camp} · ${openedField.contracted_ha} ha`}
           title={openedField.farmer_name}
           aside={<DemoBadge small rows={[openedField]} />}
           closeHref={close()}

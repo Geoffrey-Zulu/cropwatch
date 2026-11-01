@@ -1,3 +1,5 @@
+> **Historical.** Archived 1 Nov 2026: from the Hytel React template this repository started from. The project README is [`/README.md`](../../README.md).
+
 # Upgrade Notes
 
 Running log of the staged upgrade of this template. Each phase is a separate branch and PR,

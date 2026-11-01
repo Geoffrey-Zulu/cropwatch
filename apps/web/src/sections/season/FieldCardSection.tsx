@@ -15,6 +15,7 @@ import {
 import { useState } from 'react'
 import { DemoBadge } from '../../components/DemoBadge'
 import {
+  CROP_LABELS,
   eligibilityLabel,
   establishmentNdvi,
   zmw,
@@ -109,7 +110,7 @@ export function FieldCardView({
             <h3 className="text-section font-semibold text-fg">Greenness from space</h3>
             <p className="text-caption text-fg-2">
               Sentinel-2, a pass a week · planted {seasonDate(card.planting_date)} ·{' '}
-              {card.contracted_ha} ha soya · field from the officer&apos;s pin
+              {card.contracted_ha} ha {cropWord(card.crop)} · field from the officer&apos;s pin
               {card.curve_source === 'seeded' ? ' · demo curve' : ''}
             </p>
           </div>
@@ -210,7 +211,8 @@ export function FieldCardView({
               Beside {firstName(card.farmer_name)}: {card.neighbour.farmer_name}
             </h3>
             <p className="text-caption text-fg-2">
-              {card.camp} · {card.neighbour.contracted_ha} ha soya · same camp, same clouds
+              {card.camp} · {card.neighbour.contracted_ha} ha {cropWord(card.crop)} · same camp,
+              same clouds
             </p>
             <div className="mt-2">
               <NdviChart
@@ -270,6 +272,10 @@ const RECORD_NAME: Partial<Record<EligibilityFactor['code'], string>> = {
   shock: 'camp flag',
   one_advance: 'one advance',
 }
+
+// The crop as people in the camp say it: soybean is "soya" in Zambia.
+const cropWord = (crop: FieldCard['crop']) =>
+  crop === 'soybean' ? 'soya' : CROP_LABELS[crop].toLowerCase()
 
 export function FactorList({ factors }: { factors: EligibilityFactor[] }) {
   const head = factors.filter(f => !RECORD.includes(f.code) || !f.met)
