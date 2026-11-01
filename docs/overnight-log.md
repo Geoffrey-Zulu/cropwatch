@@ -275,3 +275,33 @@ The advance moment takes more than two presses because its safeguards (the fee b
   - The re-arm just before it timed out reaching Firestore on the local line. Re-armed straight after the deploy.
   - Demo check: beats 1 to 6 in 13.3 s. Outbreak check: dispatched in 6.8 s, HIGH.
 - **Tag `ceih-night-5`:** commit `825b788`.
+
+## Final design sweep (03:00 to 03:40)
+
+**Found** (a designer's regression sweep of every CEIH view at every size):
+
+- one regression from tonight: the sticky tab band hid the SMS log title in the beat 5 frame;
+- the approval card's middle column starved at 1920, because the root font grows on a 1080p projector while the side columns were sized in rem;
+- the DEMO CONTROLS pill sat over figures at 1280;
+- two phone clippings: the drought title, and Given's map label.
+
+**Fixed** (commit `a23fead`):
+
+- DEMO CONTROLS moved to the right end of the sticky tab bar. It opens downward, sits over no figure, and takes its own line on a phone.
+- The approval card's columns are sized in px.
+- On a phone, the drought card's pill drops below its title, and the map leaves room for the label.
+- The recorder parks its targets clear of the bar.
+
+**Checks:**
+
+- Gate (typecheck, lint, tests, build): all green.
+- Preview `night6`:
+  - demo check: 15.0 s;
+  - outbreak check: green on the second run (the first hit the line);
+  - the full recording: no page errors (the first attempt timed out on the line).
+- Production (03:33): clean, API `00030-l2v`.
+  - demo check: beats 1 to 6 in 16.5 s;
+  - outbreak check: dispatched in 8.0 s, HIGH.
+- Tag `ceih-night-6`. Re-armed.
+
+From here to the 06:30 freeze: polish only, and nothing that touches the demo path.
