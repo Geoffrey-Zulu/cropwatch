@@ -3,9 +3,14 @@
 The checklist and the timed run for the live Phytos demo at the GreenCode final (3-minute pitch). Start the morning checklist **at least two hours before** the pitch, from a laptop with the repo, pnpm 12.9.1 and `gcloud` logged in as `zulugeoffrey034@gmail.com`. Every command runs from the repo root. Each step says what "good" looks like; if a step fails, fix it before moving on.
 
 - Capture app (presenter's phone): https://crop-watch01-capture.web.app
-- Command Center (laptop): https://crop-watch01.web.app
+- Agribusiness app (laptop, tab 1): https://crop-watch01.web.app
+- Farmer app (laptop, tab 2; Given's phone, no sign-in, resets on refresh): https://crop-watch01-farmer.web.app
 - API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
 - The morning ritual for the CEIH demo is below ("Morning ritual (CEIH)"). The printed checklist and the Saturday test plan from before the pivot are in [`archive/`](archive/).
+
+## The final shape (1 Nov afternoon): two tabs
+
+The run sheet is v5 in [`morning-report.md`](morning-report.md) ("Rehearsal script v5"): the agribusiness app in tab 1 (Fields map, Season ledger, Reconciliation; no Approvals screen) and Given's farmer app in tab 2. The demo check is `ceih-e2e` (ledger, ground check, cap, June batch, one payout request); the farmer app's check is `pnpm --filter @repo/visual exec tsx farmer-shot.ts https://crop-watch01-farmer.web.app/`, and every screen's overflow audit is `tsx overflow.ts` against the dev preview. Re-arm after every run of either the demo check or the recording. Storyline v4 below is retired.
 
 ## CEIH pivot (31 Oct): the dashboard-only demo
 

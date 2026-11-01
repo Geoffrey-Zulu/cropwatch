@@ -188,7 +188,7 @@ try {
   console.log('\nBeat 1: the season ledger')
   const p0 = await call<Portfolio>('season.portfolio', { orgId: ORG })
   check(p0.contracts === 120, 'portfolio: 120 contracts', `${p0.contracts}`)
-  check(p0.sim, 'the season is simulated (DEMO pill)')
+  check(p0.sim, 'the season is simulated (the season line says so)')
   check(
     p0.phase === 'january',
     'season calendar on January',
@@ -333,7 +333,7 @@ try {
     st.lines.some(l => l.type === 'payout' && l.amount_zmw === one.net_zmw && l.simulated),
     `ledger: ${one.farmer_name}'s payout, labelled simulated`
   )
-  check(st.balance_zmw === 0, 'his statement closes at zero', `${st.balance_zmw}`)
+  check(st.balance_zmw === 0, 'the statement closes at zero', `${st.balance_zmw}`)
   let again = 0
   try {
     again = (await call<{ farmers: number }>('season.requestPayouts', { orgId: ORG }, true)).farmers

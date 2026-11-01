@@ -164,8 +164,9 @@ export function checkCeih(seed: CeihSeed): string[] {
 
   const eligible = seed.farmers.filter((_, i) => eligibilityOf(seed, i).eligible).length
   if (eligible < 32 || eligible > 48) problems.push(`ceih: ${eligible} eligible, not about 40`)
-  const waiting = seed.advances.filter(a => a.data.state === 'farmer_confirmed').length
-  if (waiting !== 2) problems.push(`ceih: ${waiting} advances waiting for approval, not 2`)
+  // No approval queue since 1 Nov: within the cap the season's rules send every advance.
+  const waiting = seed.advances.filter(a => a.data.state !== 'disbursed').length
+  if (waiting !== 0) problems.push(`ceih: ${waiting} advances not sent, not 0`)
   for (const a of seed.advances) {
     if (!a.data.eligibility_snapshot.eligible)
       problems.push(`ceih: ${a.id} was not eligible when requested`)

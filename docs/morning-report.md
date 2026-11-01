@@ -2,6 +2,19 @@
 
 For Team Phytos, before the final pitch. What changed overnight and why, where production stands, what needs a decision, and the rehearsal script with every click. The detail is in [`overnight-log.md`](overnight-log.md); decisions are in [`morning-decisions.md`](morning-decisions.md).
 
+## The final shape (1 Nov, 12:06): two apps, tag `ceih-final-3`
+
+Geoffrey's restructure, built and live on production (commit `3b44984`, API `cropwatch-api-00037-ftd`, MIN_INSTANCES 1). Earlier sections below describe the overnight and morning builds and are kept for the record; the run sheet further down is v5.
+
+- **Agribusiness app, tab 1:** https://crop-watch01.web.app. Three screens: Fields map (the org name alone, no season line), Season ledger (informational; the loan check runs on any farmer), Reconciliation (a batch). The Approvals screen is gone: within the cap the season's rules send an advance (CLAUDE.md invariant 11, amended).
+- **Farmer app, tab 2:** https://crop-watch01-farmer.web.app. No sign-in. Given's dashboard from a snapshot in the bundle: his field on the imagery, his curve, his loan, and "Check my advance", which plays the same check in his voice and carries on into the money (amount and fee before the send, "ZMW 840 sent to your registered mobile money account · simulated", the SMS, his statement updated). Everything is in memory: **a refresh resets it**, and it never reads or writes the live season.
+- **Reconciliation batch:** "Start reconciliation" shows 114 farmers, 65 ready and 49 not yet (Given not yet). The run resolves each ready farmer (delivered, value, less inputs, less advance and fee, net) in under 10 s. The summary: 65 settled, gross ZMW 871,874, recovered ZMW 410,255, payouts due ZMW 461,619; Hamangaba's 25 short deliveries uncontrollable; 2 unexplained (Kelvin Moono, Mulenga Hangoma) flagged. "Request payout for farmers" → "Pay 62 farmers ZMW 461,619?" → "Payout request sent to Phytos · simulated", one ledger row per farmer, never twice.
+- **Checks on production:** the demo check (map, ledger, ground check, cap, June batch, payout request, a second press paying no one) passes, beats 1 to 6 in 7.9 s. The farmer app played at projector, laptop and phone: 16 s from the press to "sent", no page errors, no sideways scroll. The overflow audit (`tools/visual/overflow.ts`) passes every screen of both apps at 390, 600, 768, 1024, 1152, 1280 and 1440 px. The visual pass is in `docs/ui-review/2026-11-01-two-apps/`.
+- **Layout fixes from Geoffrey's screenshot:** the loan check stacks below 1280 px (two columns there squeezed the verdict's figures and its button) and the ledger table folds below 1280 px (it ran 26 px wider than a 1024 px screen).
+- **Backup:** `Desktop/Phytos CEIH recording 2026-11-01 two apps production 1280/`: the continuous run, 12 takes, a picture per beat, no page errors. The four-screen recordings are retired.
+- **Season:** re-armed at 12:06, day 12 Jan 2027.
+- **Not built:** the float card (decision 7 in [`morning-decisions.md`](morning-decisions.md)).
+
 ## Where production stands
 
 **Green, frozen at 06:30, tag `ceih-night-7`** (commit `827620c`, API revision `cropwatch-api-00032-8w4`, MIN_INSTANCES 1). Production stayed green at every check through the night: a watch every 15 minutes from 04:00 to 06:30 found the API and the dashboard up each time.
@@ -145,93 +158,95 @@ See [`morning-decisions.md`](morning-decisions.md). In short:
 5. Rule items from the credit-manager review (drought cover for fields that held, moisture pricing, a code-attempt limit, disbursement order).
 6. Post-event: rotate David's password; tear down the RAG corpus.
 
-## Rehearsal script v4: the four screens (3:00, 27 presses, no scrolling)
+## Rehearsal script v5: two tabs, the agribusiness and Given's phone (3:00, 19 presses)
 
-**Roles.** **D** drives the laptop and says nothing; **N** speaks every line. A number in brackets is D's cue for that press. Timings are measured app waits on the final production build plus speech at about 150 words a minute.
+**Roles.** **D** drives the laptop and says nothing; **N** speaks every line. A number in brackets is D's cue for that press. Timings are the measured app waits on the final production build (`ceih-final-3`) plus speech at about 150 words a minute. Run sheet v4 and its recordings are retired: there is no Approvals screen and no request on the ledger any more.
 
 ### Pre-stage
 
 1. **Re-arm after the last rehearsal.** Then run the demo check (green), then `ceih-e2e --warm` in the 10 minutes before you go on.
-2. **Browser.** A clean profile, signed in as david@phytos.com. Zoom 100%, F11 full screen, 1280×800 if the projector takes it. Notifications, sleep and updates off; charger in.
-3. **"Season ledger" check.** Beside "Outgrower Co." the line reads "Simulated season 2026/27 · Season day 12 Jan 2027 · January: the advance". Given is first, with "Not eligible: cloud gap, ground check required". The tab reads "Approvals 2". Do not open a row.
-4. **Opening frame.** On the "Fields map" (top bar), let it fly into Chikuni, then press **All camps**. Park the pointer top left, off the map.
-5. **Backup.** Open `Desktop/Phytos CEIH recording 2026-11-01 final layout production 1280/takes/` in a video player, one Alt+Tab away.
-6. **Never press on stage:** "Back to January", "Add farm", "Decline", "Cancel", "Export CSV".
-7. **Timekeeper.** One person in the front row holds the checkpoints. D presses only on a cue, never the same button twice.
+2. **Browser.** A clean profile, two tabs, zoom 100%, F11 full screen, 1280×800 if the projector takes it. Notifications, sleep and updates off; charger in.
+   - **Tab 1, the agribusiness:** https://crop-watch01.web.app, signed in as david@phytos.com.
+   - **Tab 2, Given's phone:** https://crop-watch01-farmer.web.app. **It resets on refresh** and never touches the live season: press F5 on it just before you go on, and rehearse on it as often as you like.
+   - Ctrl+1 and Ctrl+2 switch the tabs, also in full screen.
+3. **"Season ledger" check (tab 1).** Beside "Outgrower Co." the line reads "Simulated season 2026/27 · Season day 12 Jan 2027 · January: the advance". Given is first, with "Not eligible: cloud gap, ground check required". Do not open a row.
+4. **Farmer check (tab 2).** "Hello, Given" and the green "Check my advance". "Your loan" shows one line, Inputs on loan ZMW 1,950.
+5. **Opening frame.** Tab 1, the "Fields map" (top bar): let it fly into Chikuni, then press **All camps**. Park the pointer top left, off the map.
+6. **Backup.** Open `Desktop/Phytos CEIH recording 2026-11-01 two apps production 1280/takes/` in a video player, one Alt+Tab away.
+7. **Never press on stage:** "Back to January", "Add farm", "Cancel", "Export CSV". Never refresh tab 1 after June.
+8. **Timekeeper.** One person in the front row holds the checkpoints. D presses only on a cue, never the same button twice.
 
 ### Run sheet
 
-| Time      | Beat                         | Presses (D)                                                                                                                                            | Say (N)                                                                                                                                                                                                                                                                                                                    | s   |
-| --------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
-| 0:00–0:14 | Hook (Fields map, All camps) | 1. "Chikuni", on the word "Phytos"                                                                                                                     | "Zambia's outgrower companies lend seed and fertiliser to farmers they never see. In January those farmers run out of cash, and the crop gets side-sold. **[1]** Phytos is the verification and ledger layer: one season, four screens."                                                                                   | 14  |
-| 0:14–0:24 | 1a Chikuni                   | None                                                                                                                                                   | "Chikuni camp, Monze, on real satellite imagery. Green: crop seen from space. Grey: no crop seen, so an officer visits. Dashed: cloud. And this is Given Mweemba."                                                                                                                                                         | 10  |
-| 0:24–0:33 | 1b Season ledger             | 2. "Season ledger" (top bar)                                                                                                                           | "**[2]** The season ledger: 120 contracts, every loan and advance in kwacha. Given first: not eligible. Cloud gap, ground check required."                                                                                                                                                                                 | 9   |
-| 0:33–0:42 | 2 Given's card               | 3. His row                                                                                                                                             | "**[3]** His farm, his curve: on track until the December clouds. One clear pass; the rule wants two, or an officer. Phytos doesn't guess: it sends one."                                                                                                                                                                  | 9   |
-| 0:42–0:48 | 3a Ground check              | 4. The gear (top bar, right)<br>5. "The field officer's ground check lands"<br>6. The gear                                                             | "**[4] [5]** The officer's check lands. **[6]**"                                                                                                                                                                                                                                                                           | 6   |
-| 0:48–1:04 | 3b The loan check            | 7. "Run check" (on his card); let it play                                                                                                              | "**[7]** The hunger-month loan check. His traced field, on real imagery. The passes, along his curve: the clouds, then on track. The rules, one by one: photo within 150 metres, the ground check covers the clouds, no open problem: **rules, not a score**. The cap: fifteen percent of his projected crop. 840 kwacha." | 16  |
-| 1:04–1:24 | 4 Amount, fee, code          | 8. "Request advance for Given" (on the verdict)<br>9. "Send to Given"<br>10. "Use the code from the SMS log"<br>11. "Confirm"                          | "**[8]** Before anything moves: the amount, the fee, five percent flat, and what he owes at harvest. **[9]** The SMS with the amount, the fee and a code: logged on screen, not sent. **[10]** He reads the code back. **[11]** Confirmed by the farmer."                                                                  | 20  |
-| 1:24–1:38 | 5 Approval card              | 12. "Open approvals"                                                                                                                                   | "**[12]** The credit team approves, and never the officer who verified the field: same record, same curve, same rules. The agribusiness lends its own money."                                                                                                                                                              | 14  |
-| 1:38–1:54 | 6 Money and ledger           | 13. "Approve ZMW 840"<br>14. "Approve and send"<br>15. "Done"<br>16. "Reconciliation" (top bar)                                                        | "**[13] [14]** Approved. 840 kwacha to his mobile money: **a simulated transfer; the ledger row is real**. **[15] [16]** On Given's statement: the advance and the fee, straight from the ledger."                                                                                                                         | 16  |
-| 1:54–2:10 | 7a March: the drought rule   | 17. The gear (top bar, right)<br>18. "Go to March: drought rule"<br>19. The gear                                                                       | "**[17] [18]** Jump to March. Hamangaba: 8.3 millimetres of rain against a 60 millimetre rule; from space, 37 of 40 fields falling. **[19]** Rain and space agree, so the rule fires: advances pause there, and a claim pack is ready for a licensed insurer, simulated."                                                  | 16  |
-| 2:10–2:19 | 7b The drought on the map    | 20. "Fields map" (top bar) (let Chikuni land)<br>21. "Hamangaba"                                                                                       | "**[20]** Chikuni, Given's camp: no drought flag. **[21]** Hamangaba: all 40 fields in brick."                                                                                                                                                                                                                             | 9   |
-| 2:19–2:37 | 8 June: harvest              | 22. "Reconciliation" (top bar)<br>23. The gear (top bar, right)<br>24. "Go to June: harvest"<br>25. The gear (top bar, right)<br>26. "Record delivery" | "**[22] [23] [24]** June: harvest. **[25]** The depot enters Given's delivery: 720 kilos, grade A. **[26]** Net due to Given: 2,928 kwacha, every line from the ledger. Keemba's shortfalls: unexplained, so the credit team looks there first. Hamangaba's: uncontrollable."                                              | 18  |
-| 2:37–2:48 | Close                        | None; stay on the statement                                                                                                                            | "The agribusiness could never see its season. Now it can, so it can give Given the January cash that keeps the crop in the contract. Thank you."                                                                                                                                                                           | 11  |
-| 2:48–3:00 | Slack                        |                                                                                                                                                        | For the room, a slow tile or a recovery.                                                                                                                                                                                                                                                                                   | 12  |
+| Time      | Beat                        | Presses (D)                                                                                                       | Say (N)                                                                                                                                                                                                                                                                                                 | s   |
+| --------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| 0:00–0:14 | Hook (tab 1, Fields map)    | 1. "Chikuni", on the word "Phytos"                                                                                | "Zambia's outgrower companies lend seed and fertiliser to farmers they never see. In January those farmers run out of cash, and the crop gets side-sold. **[1]** Phytos is the verification and ledger layer: the agribusiness's season on one side, the farmer's phone on the other."                  | 14  |
+| 0:14–0:24 | 1a Chikuni                  | None                                                                                                              | "Chikuni camp, Monze, on real satellite imagery. Green: crop seen from space. Grey: no crop seen, so an officer visits. Dashed: cloud. And this is Given Mweemba."                                                                                                                                      | 10  |
+| 0:24–0:33 | 1b Season ledger            | 2. "Season ledger" (top bar)                                                                                      | "**[2]** The season ledger: 120 contracts, every loan and advance in kwacha. Given first: not eligible. Cloud gap, ground check required."                                                                                                                                                              | 9   |
+| 0:33–0:42 | 2 Given's card              | 3. His row                                                                                                        | "**[3]** His farm, his curve: on track until the December clouds. One clear pass; the rule wants two, or an officer. Phytos doesn't guess: it sends one."                                                                                                                                               | 9   |
+| 0:42–0:48 | 3a Ground check             | 4. The gear (top bar, right)<br>5. "The field officer's ground check lands"<br>6. The gear                        | "**[4] [5]** The officer's check lands. **[6]**"                                                                                                                                                                                                                                                        | 6   |
+| 0:48–1:04 | 3b The loan check           | 7. "Run check" (on his card); let it play                                                                         | "**[7]** The hunger-month loan check. His traced field, on real imagery. The passes along his curve. The rules, one by one: **rules, not a score**. The cap: fifteen percent of his projected crop, 840 kwacha. The agribusiness set these rules before the season: within the cap, no approval queue." | 16  |
+| 1:04–1:08 | 4a Given's phone            | 8. "Done"<br>9. Ctrl+2 (tab 2)                                                                                    | "**[8] [9]** Now Given's phone."                                                                                                                                                                                                                                                                        | 4   |
+| 1:08–1:28 | 4b Check my advance         | 10. "Check my advance"; let it play (16 s)                                                                        | "**[10]** He asks for himself. The same check, in his words: his field, his crop from space, the season's rules, his cap. Every rule holds, so it goes: the amount and the fee on screen before it is sent, **840 kwacha to his mobile money, simulated**, and the SMS."                                | 20  |
+| 1:28–1:36 | 4c His statement            | 11. "Done"                                                                                                        | "**[11]** On his statement: the inputs, the advance and the fee. He owes 2,832 kwacha at harvest, from his crop."                                                                                                                                                                                       | 8   |
+| 1:36–1:48 | 5a June (tab 1)             | 12. Ctrl+1 (tab 1)<br>13. "Reconciliation" (top bar)<br>14. The gear<br>15. "Go to June: harvest"<br>16. The gear | "**[12] [13]** Back to the agribusiness. **[14] [15]** June: harvest. **[16]**"                                                                                                                                                                                                                         | 12  |
+| 1:48–2:06 | 5b The reconciliation batch | 17. "Start reconciliation"; let it play (10 s)                                                                    | "**[17]** Who has delivered, and who not yet. Each row: the crop at the contract price, less the inputs, less the advance and fee: what each farmer is owed. Hamangaba's shortfalls: drought, rain and space agree, uncontrollable. Two in Keemba: unexplained, flagged for the credit team."           | 18  |
+| 2:06–2:20 | 6 One payout request        | 18. "Request payout for farmers"<br>19. "Send payout request"                                                     | "**[18]** One request for every farmer owed: the count and the total, restated. **[19]** Sent to Phytos: **a simulated transfer, and a ledger row for every farmer**."                                                                                                                                  | 14  |
+| 2:20–2:31 | Close                       | None; stay on "Payout request sent"                                                                               | "The agribusiness could never see its season. Now it can: Given gets the January cash that keeps his crop in the contract, and every farmer is paid at harvest from one ledger. Thank you."                                                                                                             | 11  |
+| 2:31–3:00 | Slack                       |                                                                                                                   | For the room, a slow tile or a recovery.                                                                                                                                                                                                                                                                | 29  |
 
 **Driver notes:**
 
-- The four screens are the pills in the top bar beside the Phytos logo. The gear is at the right end of the top bar, before the avatar, on every screen. The top bar stays put on scroll.
-
-- The loan check runs about 11 s on its own. A click anywhere in it moves to the next stage, and "Skip" goes straight to the verdict. If you run long, click once per stage while N speaks.
-- The Fields map flies into Chikuni about 0.7 s after it opens, unless a camp was already pressed. In 7b, wait for Chikuni to land before pressing "Hamangaba".
-- "Record delivery" needs no typing: 720 kg, 11% and grade A are already filled in.
+- The screens are the pills in the top bar beside the Phytos logo: Fields map, Season ledger, Reconciliation. The gear is at the right end of the top bar, on every screen.
+- The agribusiness's loan check runs about 11 s on its own; a click moves it on a stage, "Skip" goes to the verdict. On Given's phone the same check carries on into the money by itself: about 16 s from the press to "sent". Do not press while it plays.
+- The batch plays in under 10 s whatever the count; "Skip" shows it all at once. The page scrolls the batch under the top bar by itself.
+- **Tab 2 resets on refresh.** If anything goes wrong there, F5 and press "Check my advance" again: the live season is untouched.
 
 ### Checkpoints
 
-| By   | On screen                                               | Said by then                                   |
-| ---- | ------------------------------------------------------- | ---------------------------------------------- |
-| 0:14 | The fly into Chikuni under way                          | The hook                                       |
-| 0:42 | Given's card, a cross on the failing rule               |                                                |
-| 1:04 | The loan check's verdict, "Eligible ZMW 840"            | "rules, not a score"                           |
-| 1:24 | "Confirmed by the farmer"                               | "logged on screen, not sent"                   |
-| 1:54 | Given's statement with "Cash advance" and "Advance fee" | "a simulated transfer; the ledger row is real" |
-| 2:19 | Hamangaba in brick                                      |                                                |
-| 2:37 | "Net due to Given ZMW 2,928"                            |                                                |
+| By   | On screen                                                     | Said by then                             |
+| ---- | ------------------------------------------------------------- | ---------------------------------------- |
+| 0:14 | The fly into Chikuni under way                                | The hook                                 |
+| 0:42 | Given's card, a cross on the failing rule                     |                                          |
+| 1:04 | The loan check's verdict, "Eligible ZMW 840"                  | "rules, not a score"                     |
+| 1:28 | Tab 2: "ZMW 840 sent to your registered mobile money account" | "simulated"                              |
+| 1:48 | Tab 1: "Start reconciliation" on June                         |                                          |
+| 2:20 | "Payout request sent to Phytos · simulated"                   | "a simulated transfer, and a ledger row" |
 
 If you are 5 s late at a checkpoint, take the next cut; 15 s late, the next two.
 
 **Cut order:**
 
-1. Beat 7b (saves 9 s): stay on Reconciliation after 7a.
-2. The loan check (saves 6 s): click once per stage instead of letting it play.
-3. Beat 8's last two sentences (6 s).
+1. Beat 4c (saves 8 s): stay on the receipt, say "He owes 2,832 kwacha at harvest" over it, then Ctrl+1.
+2. The loan check in tab 1 (saves 6 s): click once per stage instead of letting it play.
+3. Beat 5b's last two sentences (8 s).
 4. Beat 1b (4 s): say only "Given first: not eligible."
-5. Beat 7a's figures (6 s).
 
-**Never cut:** the loan check's verdict, "rules, not a score", "a simulated transfer; the ledger row is real", "logged on screen, not sent", "never the officer who verified the field", the close.
+**Never cut:** the loan check's verdict, "rules, not a score", "within the cap, no approval queue", "simulated" on both money lines, the close.
 
 ### Recovery rule
 
-- **When to act:** nothing new 8 s after a press (the loan check excepted: it plays for about 11 s), red error text, a spinner that keeps turning, or the sign-in page. Missing imagery is not a reason: the map falls back to EOX, then to the plain canvas.
-- **Safe to press once more:** a tab, his row, "Chikuni", "Hamangaba", the gear and its buttons, "Run check", "Skip".
-- **Never press twice:** "Send to Given", "Confirm", "Approve and send", "Record delivery". If one of those hangs, go straight to the take.
-- **The take:** D Alt+Tabs and plays `takes/<beat>.mp4`; N keeps the same lines and adds "Same step, recorded on production this morning." From beat 3a on, stay on the takes to the close.
+- **When to act:** nothing new 8 s after a press (the loan check, Given's check and the batch excepted: they play for 11, 16 and 10 s), red error text, a spinner that keeps turning, or the sign-in page. Missing imagery is not a reason: the map falls back to EOX, then to the plain canvas.
+- **Safe to press once more:** a tab, his row, "Chikuni", the gear and its buttons, "Run check", "Skip", "Start reconciliation". Anything in tab 2 (after an F5).
+- **Never press twice:** "Send payout request". If it hangs, go straight to the take.
+- **The take:** D Alt+Tabs and plays `takes/<beat>.mp4`; N keeps the same lines and adds "Same step, recorded on production this morning." From beat 5a on, stay on the takes to the close.
 
 ### Do not say
 
 1. "predicts", "forecast", "probability", "AI-powered", "revolutionary", "platform", or "score" except in "rules, not a score".
 2. "verified from space": it is "seen from space"; "verified" is an officer's visit.
-3. "his photo": the approval card's photo is a library image.
-4. "inside his field": say "within 150 metres of the field".
-5. "Given gets an SMS": it is "logged on screen, not sent".
-6. "a real transfer", "Phytos pays", "Phytos lends": the agribusiness lends its own money; the transfer is simulated.
-7. "the AI decides", "the model approves": rules decide, and the approver is never the officer who verified.
-8. "we insure", "payout sent": a claim pack for a licensed insurer, simulated.
-9. "real farmers", "live data": the season is simulated, and the screen says so.
-10. "side-seller", "fraud": shortfalls are "unexplained".
+3. "inside his field": say "within 150 metres of the field".
+4. "a real transfer", "Phytos lends": the agribusiness lends its own money, inside rules it set; the transfer is simulated.
+5. "approved by", "the credit team approves": there is no approval queue now. Rules the agribusiness pre-set decide.
+6. "the AI decides", "the model approves": rules decide.
+7. "we insure", "insurance paid": a claim pack for a licensed insurer, simulated.
+8. "real farmers", "live data": the season is simulated, and the screen says so.
+9. "side-seller", "fraud": shortfalls are "unexplained".
+10. "Given's phone is live": tab 2 is the farmer app on a snapshot of his season; it resets on refresh.
 
 ### Likely questions, with honest answers
 
 - **"Is this real data?"** The imagery is real (Esri). The season is simulated, and every screen says so beside the season day. The rules, the money controls and the ledger arithmetic are the running code.
-- **"One login requested and approved?"** The rule we enforce is that the officer who verified the field cannot approve. Requester ≠ approver is one more rule, added together with a credit-team account.
+- **"Who approves the money?"** No one, case by case: the agribusiness sets the season's rules and caps before the season, and within the cap an advance is sent when the farmer asks. Money still needs every rule passed, a ledger row and the provider (simulated here).
+- **"Is Given's phone connected to the agribusiness's screen?"** Not in this build: the farmer app runs on a snapshot of his season so it can be shown any number of times. In a live season both read the same ledger.
 - **"37 of 40 falling, all 40 uncontrollable?"** The drought rule is camp-wide by design today. Marking only fields whose own curve fell is the next refinement, already written up.

@@ -26,7 +26,7 @@ git push --force-with-lease origin ceih main && git push --force origin --tags
 
 Amended invariant 6 limits field outlines to the contracting agribusiness. The order asked for its `credit` and `field_officer` roles only. There is no `credit` account, and creating accounts is yours to do, so a Command Center account (David) also sees fields, but only on a simulated org (`canSeeFields` in `apps/functions/src/services/ceih/season.ts`). If you create a credit user for the demo org, strict mode is a one-line change.
 
-## 4. Maker-checker: the requester should not be able to approve
+## 4. Maker-checker: the requester should not be able to approve (moot since 1 Nov: no approval queue)
 
 Invariant 11 asks for approval "by a user who did not perform the verification", and that is enforced: the officer who verified the field cannot approve. The credit-manager review asks for more: the person who requested the advance, or typed in the farmer's code, should not approve it either. Today one Command Center login (David) requests, confirms and approves on stage.
 
@@ -46,6 +46,17 @@ These change rules or the money path, so they wait for the team. Each is small.
 - **One delivery per contract.** A second load cannot be recorded.
 - **"soya" is fixed** in three card strings; a maize contract would read wrong.
 - **Maturity read as stress.** In June most Chikuni fields show "stress" on the map, because greenness falls at maturity. The storyline shows the map in March, but the status rule should learn the season's end.
+
+## 7. The float card (asked 1 Nov, 11:40; not built)
+
+Geoffrey's idea: a "Float" stat card, "ZMW … · deposited by Outgrower Co. · advances draw from this", from a seeded ZMW 100,000 deposit, with advances and the payout batch drawing from it. Worth doing: it shows whose money moves. Before it is built:
+
+- **The figure.** ZMW 79,850 does not match the seed: 12 advances sent total ZMW 23,550 and their fees ZMW 1,177, so the float reads about ZMW 75,273. It must be computed from ledger rows, never typed.
+- **The payout overdraws it.** June's batch owes 62 farmers ZMW 461,619. Either the payout request refuses with "Float short by ZMW X: top up before paying" (a rule, recommended), or a harvest deposit is seeded.
+- **Fees.** Are fees paid to Phytos out of the float at send, or collected from the farmer at harvest? Only the first reduces the float.
+- **The farmer app** never touches the live season, so its ZMW 840 does not move this card; the narrator links them.
+
+About 40 minutes with a demo-check assertion. Say go or leave it for after the pitch.
 
 ## 6. Post-event
 

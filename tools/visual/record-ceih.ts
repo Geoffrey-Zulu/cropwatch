@@ -1,11 +1,12 @@
-// The CEIH backup recording (docs/ceih-overnight-plan.md §4, Phase 4): the dashboard-only
-// storyline played on a deployed dashboard from a clean browser profile at projector size, as
-// one continuous video, a take a beat cut from it (needs ffmpeg on the PATH) and a screenshot a
-// beat. It opens on the Fields map, then cuts to the Season ledger. It moves the season (a ground
-// check, Given's advance, March and June), so re-arm the season afterwards: `seed --ceih … --commit`.
+// The CEIH backup recording (1 Nov, the two-app storyline): the agribusiness app and the farmer
+// app played on the deployed sites from a clean browser profile at projector size, as one
+// continuous video (one tab: the farmer app is opened in place of the agribusiness app and back),
+// a take a beat cut from it (needs ffmpeg on the PATH) and a screenshot a beat. It moves the live
+// season (a ground check, June, the payout request), so re-arm afterwards: `seed --ceih … --commit`.
+// The farmer app never touches the live season.
 //
 //   PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/visual record-ceih \
-//        --out <folder> [--dashboard https://…web.app] [--size 1280x800]
+//        --out <folder> [--dashboard https://…web.app] [--farmer https://…web.app] [--size 1280x800]
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, renameSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -18,6 +19,7 @@ const flag = (name: string) => {
 }
 const out = resolve(process.env.INIT_CWD ?? process.cwd(), flag('out') ?? 'ceih-recording')
 const base = flag('dashboard') ?? 'https://crop-watch01.web.app'
+const farmer = flag('farmer') ?? 'https://crop-watch01-farmer.web.app'
 const [width, height] = (flag('size') ?? '1280x800').split('x').map(Number)
 const email = process.env.PHYTOS_RECORD_EMAIL
 const password = process.env.PHYTOS_RECORD_PASSWORD
@@ -52,12 +54,6 @@ async function beat(name: string, work: (p: Page) => Promise<void>, hold = 3500)
   await page.screenshot({ path: join(out, `${name}.png`) })
   takes.push({ name, from: (t - t0) / 1000, to: (Date.now() - t0) / 1000 })
 }
-// Put an element near the top of the screen, under the header, so its whole island shows.
-async function frame(p: Page, target: ReturnType<Page['locator']>) {
-  const box = await target.boundingBox()
-  // Clear of the header and the sticky tab band.
-  if (box) await p.evaluate(y => window.scrollBy(0, y - 150), box.y)
-}
 // The season controls: a small unlabeled gear at the right of the tab bar (1 Nov).
 const gear = (p: Page) => p.locator('summary[aria-label="Season controls"]')
 const controls = async (p: Page) => {
@@ -71,7 +67,7 @@ await page.goto(base)
 await page.locator('input[type=email]').fill(email)
 await page.locator('input[type=password]').fill(password)
 await page.getByRole('button', { name: 'Sign in' }).click()
-// Sign-in lands on the Fields map (1 Nov: the four screens).
+// Sign-in lands on the Fields map (1 Nov: three screens and the farmer app).
 await page.getByRole('heading', { name: 'Fields map' }).waitFor({ timeout: 60_000 })
 
 await beat(
@@ -107,7 +103,7 @@ await beat('2-given-cloud-gap', async p => {
 await beat('3a-ground-check-lands', async p => {
   await controls(p)
   await p.getByRole('button', { name: /ground check lands/i }).click()
-  await p.getByRole('button', { name: /Request advance for Given/ }).waitFor({ timeout: 20_000 })
+  await p.getByText(/an advance is sent automatically when Given asks/).waitFor({ timeout: 20_000 })
   await closeControls(p)
 })
 await beat(
@@ -125,86 +121,66 @@ await beat(
       await p.waitForTimeout(ms)
       await p.screenshot({ path: join(out, `${name}.png`) })
     }
-    await dialog
-      .getByRole('button', { name: /Request advance for Given/ })
-      .waitFor({ timeout: 15_000 })
+    await dialog.getByText('Rules, not a score: every one is above.').waitFor({ timeout: 15_000 })
   },
   4000
 )
-await beat('4a-request-amount-and-fee', async p => {
-  // From the verdict: the request opens with the amount and the fee.
-  await p
-    .getByRole('dialog', { name: 'Given Mweemba' })
-    .getByRole('button', { name: /Request advance for Given/ })
-    .click()
-  await p.getByRole('button', { name: 'Send to Given' }).waitFor({ timeout: 10_000 })
-})
-await beat('4b-farmer-code', async p => {
-  await p.getByRole('button', { name: 'Send to Given' }).click()
-  await p.getByRole('button', { name: /Use the code from the SMS log/ }).click({ timeout: 20_000 })
-})
-await beat('4c-confirmed', async p => {
-  await p.getByRole('button', { name: 'Confirm' }).click()
-  await p.getByText('Confirmed by the farmer').waitFor({ timeout: 20_000 })
-})
-await beat('5-approval-card', async p => {
-  await p.getByRole('link', { name: 'Open approvals' }).click()
-  await p.getByRole('button', { name: 'Approve ZMW 840' }).first().waitFor({ timeout: 20_000 })
-  await frame(p, p.getByRole('heading', { name: 'Approvals' }))
-})
-await beat('6a-approve', async p => {
-  await p.getByRole('button', { name: 'Approve ZMW 840' }).first().click()
-  await p.getByRole('dialog').waitFor()
-})
-await beat('6b-sent', async p => {
-  await p.getByRole('button', { name: 'Approve and send' }).click()
-  await p.getByText('ZMW 840 sent').waitFor({ timeout: 30_000 })
-})
-await beat('6c-ledger-rows', async p => {
-  // "Sent" ends on the ledger, not on a message: Given's statement carries the two new rows.
-  await p.getByRole('button', { name: 'Done' }).click()
-  await p.getByRole('link', { name: 'Reconciliation', exact: true }).click()
-  await p
-    .getByText(/Advance fee/)
-    .first()
-    .waitFor({ timeout: 30_000 })
-  await frame(p, p.getByText(/Mweemba's statement/).first())
-})
-await beat('7a-march-drought', async p => {
-  await controls(p)
-  await p.getByRole('button', { name: /Go to March/ }).click()
-  await p.getByText('Mar 2027').first().waitFor({ timeout: 30_000 })
-  await closeControls(p)
-  await p
-    .getByText(/drought trigger/i)
-    .first()
-    .waitFor({ timeout: 30_000 })
-  await frame(p, p.getByText(/drought trigger/i).first())
+await beat('4a-farmer-app', async p => {
+  // Given's phone: the farmer app, in the second tab (here, in place of the first).
+  await p.keyboard.press('Escape')
+  await p.goto(farmer)
+  await p.getByRole('button', { name: 'Check my advance' }).waitFor({ timeout: 60_000 })
+  await p.waitForTimeout(800)
 })
 await beat(
-  '7b-fields-map-drought',
+  '4b-farmer-check-and-money',
   async p => {
-    // The drought as a picture: mid-season, Chikuni green, Hamangaba's fields in brick.
-    await p.mouse.move(12, 140)
-    await p.getByRole('link', { name: 'Fields map', exact: true }).click()
-    await p.locator('.fm-lit').waitFor({ timeout: 30_000 })
-    await p.waitForTimeout(900)
-    await p.getByRole('button', { name: 'Hamangaba', exact: true }).click()
-    await p.waitForTimeout(1500)
+    await p.getByRole('button', { name: 'Check my advance' }).click()
+    for (const [ms, name] of [
+      [5000, '4b1-farmer-passes'],
+      [6000, '4b2-farmer-verdict'],
+      [2600, '4b3-farmer-sending'],
+    ] as const) {
+      await p.waitForTimeout(ms)
+      await p.screenshot({ path: join(out, `${name}.png`) })
+    }
+    await p.getByText('sent to your registered mobile money account').waitFor({ timeout: 20_000 })
+  },
+  4500
+)
+await beat('4c-farmer-statement', async p => {
+  await p.getByRole('button', { name: 'Done' }).click()
+  await p.getByText('Advance sent').waitFor({ timeout: 10_000 })
+})
+await beat('5a-june', async p => {
+  // Back to the agribusiness: June, harvest.
+  await p.goto(`${base}/#/outgrower/reconciliation`)
+  await p.getByRole('button', { name: 'Start reconciliation' }).waitFor({ timeout: 60_000 })
+  await controls(p)
+  await p.getByRole('button', { name: /Go to June/ }).click()
+  await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
+  await closeControls(p)
+  await p.getByRole('button', { name: 'Start reconciliation' }).isEnabled({ timeout: 30_000 })
+})
+await beat(
+  '5b-reconciliation-batch',
+  async p => {
+    await p.getByRole('button', { name: 'Start reconciliation' }).click()
+    await p.waitForTimeout(4500)
+    await p.screenshot({ path: join(out, '5b1-batch-playing.png') })
+    await p.getByRole('button', { name: 'Request payout for farmers' }).waitFor({ timeout: 30_000 })
   },
   5000
 )
+await beat('6a-payout-confirm', async p => {
+  await p.getByRole('button', { name: 'Request payout for farmers' }).click()
+  await p.getByRole('button', { name: 'Send payout request' }).waitFor({ timeout: 10_000 })
+})
 await beat(
-  '8-june-statement',
+  '6b-payout-sent',
   async p => {
-    await p.getByRole('link', { name: 'Reconciliation', exact: true }).click()
-    await controls(p)
-    await p.getByRole('button', { name: /Go to June/ }).click()
-    await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
-    await closeControls(p)
-    await p.getByRole('button', { name: 'Record delivery' }).click()
-    await p.getByText('Net due to Given').waitFor({ timeout: 30_000 })
-    await p.getByText('Net due to Given').scrollIntoViewIfNeeded()
+    await p.getByRole('button', { name: 'Send payout request' }).click()
+    await p.getByText('Payout request sent to Phytos').waitFor({ timeout: 30_000 })
   },
   5000
 )
