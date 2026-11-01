@@ -16,7 +16,18 @@ export function MyReportsSection({ reports }: { reports: ReportSummary[] | null 
         {reports && <DemoBadge rows={reports} />}
       </div>
 
-      {reports === null && <p className="text-body text-fg-2">Loading your reports…</p>}
+      {reports === null && (
+        <div role="status" aria-live="polite" aria-busy="true" className="flex flex-col gap-3">
+          <span className="sr-only">Loading your reports</span>
+          {[0, 1, 2].map(row => (
+            <div key={row} className="report-skeleton" aria-hidden>
+              <span className="skeleton-line skeleton-line--short" />
+              <span className="skeleton-line skeleton-line--long" />
+              <span className="skeleton-line skeleton-line--medium" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {reports?.length === 0 && (
         <div className="flex gap-3 rounded-card border-1.5 border-dashed border-hairline-strong p-4">

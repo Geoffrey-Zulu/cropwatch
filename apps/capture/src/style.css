@@ -47,3 +47,220 @@
     @apply font-mono text-eyebrow font-medium uppercase text-fg-2;
   }
 }
+
+.startup-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 1.5rem;
+  background: var(--panel);
+  padding: 1.5rem;
+  box-shadow: var(--raise);
+}
+
+.startup-panel::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 0 0 0 100%;
+  background: radial-gradient(circle at top right, var(--signal-tint), transparent 68%);
+  content: '';
+  pointer-events: none;
+}
+
+.startup-panel--error::after {
+  background: radial-gradient(circle at top right, var(--attention-tint), transparent 68%);
+}
+
+.startup-mark {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 4.5rem;
+  height: 4.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: 1.375rem;
+  background: var(--signal-tint);
+  color: var(--signal-text);
+}
+
+.startup-panel--error .startup-mark {
+  background: var(--attention-tint);
+  color: var(--attention-text);
+}
+
+.startup-connection {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--hairline);
+  padding-top: 1.25rem;
+}
+
+.loading-pulse {
+  position: relative;
+  display: inline-flex;
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--leaf);
+}
+
+.loading-pulse::after {
+  position: absolute;
+  inset: -0.3rem;
+  border: 1px solid var(--leaf);
+  border-radius: 50%;
+  animation: phytos-pulse 1.8s ease-out infinite;
+  content: '';
+}
+
+.loading-track {
+  position: relative;
+  display: block;
+  height: 0.35rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--well);
+}
+
+.loading-track > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 36%;
+  border-radius: inherit;
+  background: var(--leaf);
+  animation: phytos-progress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.loading-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  border: 1px solid var(--hairline);
+  border-radius: 1rem;
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.loading-state--compact {
+  padding: 0.875rem;
+}
+
+.loading-state__icon {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.875rem;
+  background: var(--signal-tint);
+  color: var(--signal-text);
+}
+
+.loading-state--compact .loading-state__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.loading-rotate {
+  animation: phytos-rotate 1.15s linear infinite;
+}
+
+.report-skeleton {
+  display: flex;
+  min-height: 6rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.625rem;
+  border: 1px solid var(--hairline);
+  border-radius: 1rem;
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.skeleton-line {
+  display: block;
+  height: 0.625rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--well) 20%, var(--panel) 50%, var(--well) 80%);
+  background-size: 220% 100%;
+  animation: phytos-shimmer 1.7s ease-in-out infinite;
+}
+
+.skeleton-line--short {
+  width: 48%;
+}
+
+.skeleton-line--medium {
+  width: 68%;
+}
+
+.skeleton-line--long {
+  width: 88%;
+  height: 0.875rem;
+}
+
+.startup-details {
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.75rem;
+  color: var(--fg-2);
+}
+
+.startup-details summary {
+  min-height: 2.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+@keyframes phytos-pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.72);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.65);
+  }
+}
+
+@keyframes phytos-progress {
+  0% {
+    transform: translateX(-115%);
+  }
+  100% {
+    transform: translateX(290%);
+  }
+}
+
+@keyframes phytos-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes phytos-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-pulse::after,
+  .loading-track > span,
+  .loading-rotate,
+  .skeleton-line {
+    animation: none;
+  }
+
+  .loading-track > span {
+    width: 100%;
+    opacity: 0.5;
+  }
+}

@@ -5,6 +5,7 @@ import { DemoBadge } from '../components/DemoBadge'
 import { Notice } from '../components/Notice'
 import { AppHeader } from '../components/AppHeader'
 import { CaseCard, CaseField } from '../components/CaseCard'
+import { LoadingState } from '../components/LoadingState'
 import { StatusTag } from '../components/StatusTag'
 import { ActionBar } from '../components/ActionBar'
 import { useObservation } from '../hooks/useObservation'
@@ -46,7 +47,10 @@ export function ResultPage({
           </Notice>
         )}
         {!view && !error && (
-          <p className="text-body font-semibold text-fg-2">Opening your report…</p>
+          <LoadingState
+            title="Opening your report"
+            detail="Fetching the latest diagnosis and advice."
+          />
         )}
         {view && <ResultView view={view} liveStatus={status} />}
       </main>

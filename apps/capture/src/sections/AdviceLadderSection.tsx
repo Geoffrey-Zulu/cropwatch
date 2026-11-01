@@ -102,8 +102,8 @@ function Rung({
 // While advice is being found: the empty rail, so the layout does not jump when it lands.
 export function AdvicePending({ text }: { text: string }) {
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-body font-semibold text-fg-2">{text}…</p>
+    <div className="flex flex-col gap-3" role="status" aria-live="polite" aria-busy="true">
+      <p className="text-body font-semibold text-fg-2">{text}</p>
       <div aria-hidden className="relative flex flex-col gap-4 pl-10 opacity-60">
         <span className="absolute bottom-2 left-[13px] top-2 w-0.5 bg-hairline" />
         {[0, 1, 2].map(i => (

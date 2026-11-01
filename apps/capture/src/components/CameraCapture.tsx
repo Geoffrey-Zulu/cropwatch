@@ -1,4 +1,4 @@
-import { Camera, Images, RotateCcw } from 'lucide-react'
+import { Camera, Images, LoaderCircle, RotateCcw } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { isNativeApp, nativePhoto } from '../lib/native'
 
@@ -149,9 +149,16 @@ export function CameraCapture({
             className="aspect-[4/3] w-full object-cover"
           />
           {state === 'starting' && (
-            <p className="absolute inset-0 flex items-center justify-center text-label font-semibold text-white">
-              Starting the camera…
-            </p>
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-[rgb(14_22_19/0.42)]"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="flex items-center gap-2 rounded-tag bg-chip px-4 py-3 text-label font-semibold text-chip-fg">
+                <LoaderCircle size={18} strokeWidth={2} aria-hidden className="loading-rotate" />
+                Starting the camera
+              </p>
+            </div>
           )}
           <p className="absolute inset-x-0 top-0 bg-[rgb(14_22_19/0.72)] px-3 py-2 text-center text-label font-semibold text-white">
             Damaged leaf, close up, in daylight

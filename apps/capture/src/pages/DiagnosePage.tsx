@@ -1,10 +1,11 @@
 import type { User } from 'firebase/auth'
 import { getStorage, ref, uploadBytes } from 'firebase/storage'
-import { Send } from 'lucide-react'
+import { LoaderCircle, Send } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { findDistrict, type Crop } from '@repo/shared'
 import { CameraCapture } from '../components/CameraCapture'
 import { CropChips } from '../components/CropChips'
+import { LoadingState } from '../components/LoadingState'
 import { LocationRow, type GpsState } from '../components/LocationRow'
 import { Notice } from '../components/Notice'
 import { AppHeader } from '../components/AppHeader'
@@ -111,6 +112,18 @@ export function DiagnosePage({
           </h1>
         </div>
 
+        {sending !== 'idle' && (
+          <LoadingState
+            compact
+            title={sending === 'photo' ? 'Sending your photo' : 'Sending your report'}
+            detail={
+              sending === 'photo'
+                ? 'Keep this screen open while the photo uploads.'
+                : 'Your photo is in. We are sending the crop details now.'
+            }
+          />
+        )}
+
         <CameraCapture
           photo={photo}
           onRetake={() => {
@@ -182,7 +195,11 @@ export function DiagnosePage({
 
       <ActionBar>
         <button type="button" className="btn-primary" disabled={!ready} onClick={send}>
-          <Send size={22} strokeWidth={2} aria-hidden />
+          {sending === 'idle' ? (
+            <Send size={22} strokeWidth={2} aria-hidden />
+          ) : (
+            <LoaderCircle size={22} strokeWidth={2} aria-hidden className="loading-rotate" />
+          )}
           {sending === 'photo'
             ? 'Sending photo…'
             : sending === 'report'
