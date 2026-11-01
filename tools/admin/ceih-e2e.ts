@@ -229,8 +229,9 @@ try {
     'factor: Cap 15% of ZMW 5,600 = ZMW 840'
   )
   check(
-    c1.neighbour?.status_label === 'Not planted',
-    'beside him: the neighbour reads Not planted',
+    // "No crop seen from space" since 1 Nov; the fallback builds say "Not planted".
+    ['No crop seen from space', 'Not planted'].includes(c1.neighbour?.status_label ?? ''),
+    'beside him: the neighbour reads no crop seen',
     c1.neighbour?.status_label ?? 'none'
   )
   if (!noFields) {
