@@ -118,6 +118,18 @@ const VIEWS: View[] = [
     },
   },
   {
+    name: 'dashboard-loan-check',
+    app: 'dashboard',
+    route: 'season',
+    extra: PROJECTOR,
+    // The hunger-month loan check, skipped to its verdict (every stage on screen).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Run check' }).first().click()
+      await page.getByRole('button', { name: 'Skip' }).click()
+      await page.waitForTimeout(2600)
+    },
+  },
+  {
     name: 'dashboard-season-reconciliation',
     app: 'dashboard',
     route: 'reconciliation',

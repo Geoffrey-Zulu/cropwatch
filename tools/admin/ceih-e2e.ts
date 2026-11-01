@@ -90,6 +90,11 @@ interface Card {
   eligibility: { eligible: boolean; cap_zmw: number; factors: Factor[] }
   neighbour?: { status_label: string } | null
   curve: unknown[]
+  // The loan check and the imagery thumbnail (1 Nov): his traced field and the cap's figures.
+  ring?: [number, number][]
+  projected_yield_t_ha?: number
+  contract_price_zmw_t?: number
+  contracted_ha: number
 }
 interface Sms {
   message: string
@@ -213,6 +218,18 @@ try {
   if (!ground.live) made.observation = ground.obs_id
   const c1 = await call<Card>('season.fieldCard', { orgId: ORG, contractId: heroId })
   check(c1.eligibility.eligible, 'eligible after the ground check')
+  if (!noFields) {
+    check(
+      (c1.ring?.length ?? 0) >= 4,
+      'the loan check flies to his traced field (outline on the card)',
+      `${c1.ring?.length ?? 0} points`
+    )
+    check(
+      c1.contracted_ha * (c1.projected_yield_t_ha ?? 0) * (c1.contract_price_zmw_t ?? 0) === 5600,
+      "the loan check's arithmetic: 0.5 ha × 1.4 t/ha × ZMW 8,000/t = ZMW 5,600",
+      `${c1.contracted_ha} × ${c1.projected_yield_t_ha} × ${c1.contract_price_zmw_t}`
+    )
+  }
   check(c1.eligibility.cap_zmw === 840, 'cap ZMW 840', `${c1.eligibility.cap_zmw}`)
   check(
     c1.eligibility.factors.some(f =>

@@ -58,14 +58,13 @@ async function frame(p: Page, target: ReturnType<Page['locator']>) {
   // Clear of the header and the sticky tab band.
   if (box) await p.evaluate(y => window.scrollBy(0, y - 150), box.y)
 }
-// DEMO CONTROLS is a pill pinned at the bottom right; its panel opens upward over the page.
+// The season controls: a small unlabeled gear at the right of the tab bar (1 Nov).
+const gear = (p: Page) => p.locator('summary[aria-label="Season controls"]')
 const controls = async (p: Page) => {
-  if (!(await p.getByRole('button', { name: /Go to June/ }).isVisible()))
-    await p.getByText('DEMO CONTROLS').click()
+  if (!(await p.getByRole('button', { name: /Go to June/ }).isVisible())) await gear(p).click()
 }
 const closeControls = async (p: Page) => {
-  if (await p.getByRole('button', { name: /Go to June/ }).isVisible())
-    await p.getByText('DEMO CONTROLS').click()
+  if (await p.getByRole('button', { name: /Go to June/ }).isVisible()) await gear(p).click()
 }
 
 await page.goto(base)
@@ -104,16 +103,40 @@ await beat('2-given-cloud-gap', async p => {
   // The opened row rises under the header by itself; let it land.
   await p.waitForTimeout(700)
 })
-await beat('3-ground-check-eligible', async p => {
-  // The flip happens in view: the pinned controls sit over the page, not at its foot.
+await beat('3a-ground-check-lands', async p => {
   await controls(p)
   await p.getByRole('button', { name: /ground check lands/i }).click()
   await p.getByRole('button', { name: /Request advance for Given/ }).waitFor({ timeout: 20_000 })
   await closeControls(p)
 })
+await beat(
+  '3b-loan-check',
+  async p => {
+    // The hunger-month loan check, played: a frame in each of its four stages.
+    await p.getByRole('button', { name: 'Run check' }).first().click()
+    const dialog = p.getByRole('dialog', { name: 'Given Mweemba' })
+    await dialog.waitFor({ timeout: 10_000 })
+    for (const [ms, name] of [
+      [2600, '3b1-check-field'],
+      [3600, '3b2-check-passes'],
+      [3600, '3b3-check-rules'],
+    ] as const) {
+      await p.waitForTimeout(ms)
+      await p.screenshot({ path: join(out, `${name}.png`) })
+    }
+    await dialog
+      .getByRole('button', { name: /Request advance for Given/ })
+      .waitFor({ timeout: 15_000 })
+  },
+  4000
+)
 await beat('4a-request-amount-and-fee', async p => {
-  await p.getByRole('button', { name: /Request advance for Given/ }).click()
-  await p.getByRole('dialog').waitFor()
+  // From the verdict: the request opens with the amount and the fee.
+  await p
+    .getByRole('dialog', { name: 'Given Mweemba' })
+    .getByRole('button', { name: /Request advance for Given/ })
+    .click()
+  await p.getByRole('button', { name: 'Send to Given' }).waitFor({ timeout: 10_000 })
 })
 await beat('4b-farmer-code', async p => {
   await p.getByRole('button', { name: 'Send to Given' }).click()
