@@ -4,8 +4,8 @@ import { seasonDate, useSeasonRefresh } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
 
 // Demo controls (plan §3): drive the storyline from the dashboard alone, without a second device.
-// Folded away under a quiet pill pinned at the bottom right, so what a control changes happens in
-// view; it opens upward. Command Center accounts on a simulated season only (the API
+// Folded away under a quiet pill at the right end of the sticky tab band, so it is in reach on
+// every beat and what a control changes happens in view; it opens downward over the page. Command Center accounts on a simulated season only (the API
 // refuses anything else). Nothing here bypasses a rule: a ground check is the field officer's,
 // a new season day is the season calendar, and money still needs the code and a second person.
 export function DemoControls({ portfolio: p }: { portfolio: Portfolio }) {
@@ -18,7 +18,7 @@ export function DemoControls({ portfolio: p }: { portfolio: Portfolio }) {
   const error = ground.error ?? phase.error
 
   return (
-    <details className="group fixed bottom-4 right-4 z-30">
+    <details className="group relative ml-auto shrink-0">
       <summary
         className="inline-flex cursor-pointer list-none items-center gap-2 rounded-pill py-1.5 pl-3 pr-4 text-caption font-bold tracking-[0.06em] text-fg shadow-[var(--raise-sm),inset_0_0_0_1.5px_rgb(27_41_32/0.45)] [&::-webkit-details-marker]:hidden"
         style={{ background: 'var(--hatch), #FFFFFF' }}
@@ -26,7 +26,7 @@ export function DemoControls({ portfolio: p }: { portfolio: Portfolio }) {
         <FlaskConical size={15} aria-hidden />
         DEMO CONTROLS
       </summary>
-      <div className="island absolute bottom-full right-0 mb-2 flex w-[min(34rem,calc(100vw-2rem))] flex-col gap-3 px-5 py-4">
+      <div className="island absolute right-0 top-full z-30 mt-2 flex w-[min(34rem,calc(100vw-2rem))] flex-col gap-3 px-5 py-4">
         <p className="text-caption text-fg-2">
           Season day {seasonDate(p.today)}. Simulated season only; every rule still applies.
         </p>

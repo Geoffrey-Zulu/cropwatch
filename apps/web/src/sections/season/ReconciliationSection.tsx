@@ -88,7 +88,7 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
       aria-labelledby="delivery"
       className="island min-w-0 scroll-mt-[4.75rem] lg:scroll-mt-[11.75rem] xl:scroll-mt-[9rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+      <div className="grid items-start justify-items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div>
           <h2 id="delivery" className="serif text-title font-semibold text-fg">
             Delivery and statement
@@ -286,7 +286,7 @@ function VarianceList({ data }: { data: Reconciliation | undefined }) {
       aria-labelledby="variance"
       className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+      <div className="grid items-start justify-items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div>
           <h2 id="variance" className="serif text-title font-semibold text-fg">
             Delivered against projected
@@ -343,7 +343,7 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
       className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
       {/* Brick, as the Fields map paints a drought-flagged camp. */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+      <div className="grid items-start justify-items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div>
           <h2 className="serif flex items-center gap-2 text-title font-semibold text-fg">
             <span aria-hidden className="swatch swatch-high" />

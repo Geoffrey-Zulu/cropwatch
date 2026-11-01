@@ -55,7 +55,8 @@ async function beat(name: string, work: (p: Page) => Promise<void>, hold = 3500)
 // Put an element near the top of the screen, under the header, so its whole island shows.
 async function frame(p: Page, target: ReturnType<Page['locator']>) {
   const box = await target.boundingBox()
-  if (box) await p.evaluate(y => window.scrollBy(0, y - 110), box.y)
+  // Clear of the header and the sticky tab band.
+  if (box) await p.evaluate(y => window.scrollBy(0, y - 150), box.y)
 }
 // DEMO CONTROLS is a pill pinned at the bottom right; its panel opens upward over the page.
 const controls = async (p: Page) => {

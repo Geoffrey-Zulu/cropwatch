@@ -117,7 +117,7 @@ function OutgrowerTabs({ current, waiting }: { current: OutgrowerTab | null; wai
   return (
     <nav
       ref={nav}
-      className="toggle-group toggle-group-page self-start"
+      className="toggle-group toggle-group-page min-w-0 self-start"
       aria-label="Outgrower View"
     >
       {TABS.map(t => (
@@ -203,8 +203,10 @@ function SeasonTabs({
       <PageHeader title={title} />
       {/* The tabs stay in reach under the header, on a canvas band so nothing scrolls
           half-visible behind them: no scrolling back up between beats. */}
-      <div className="flex min-w-0 max-w-full lg:sticky lg:top-[6.9rem] lg:max-w-none lg:z-20 lg:-mx-[1.6rem] lg:-my-3 lg:bg-[rgb(244_243_236/0.94)] lg:px-[1.6rem] lg:py-3 lg:backdrop-blur-[2px] xl:top-[3.75rem]">
+      {/* DEMO CONTROLS rides at the band's right end: in reach on every beat, over no figure. */}
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-3 lg:flex-nowrap lg:sticky lg:top-[6.9rem] lg:max-w-none lg:z-20 lg:-mx-[1.6rem] lg:-my-3 lg:bg-[rgb(244_243_236/0.94)] lg:px-[1.6rem] lg:py-3 lg:backdrop-blur-[2px] xl:top-[3.75rem]">
         {tabs}
+        {commandCenter && p?.sim && <DemoControls portfolio={p} />}
       </div>
       {!p ? (
         <Loading label="Building the season">
@@ -222,9 +224,6 @@ function SeasonTabs({
             <ApprovalsSection orgId={orgId} approvals={approvals.data} sms={sms.data} />
           )}
           {tab === 'reconciliation' && <ReconciliationSection portfolio={p} />}
-          {/* Not on the Fields map, which has its own page above: the pill would cover the
-              imagery credit. */}
-          {commandCenter && p.sim && <DemoControls portfolio={p} />}
         </>
       )}
     </div>

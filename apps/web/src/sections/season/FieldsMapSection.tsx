@@ -41,7 +41,8 @@ const wide = () => window.matchMedia('(min-width: 1024px)').matches
 const clear = (): L.FitBoundsOptions =>
   wide()
     ? { paddingTopLeft: L.point(32, 236), paddingBottomRight: L.point(32, 32) }
-    : { padding: L.point(16, 16) }
+    : // Room on the left for the storyline farmer's name, which sits on his field's west edge.
+      { paddingTopLeft: L.point(130, 16), paddingBottomRight: L.point(16, 16) }
 
 // The header line: what the map shows, counted, so the white outlines are explained up front.
 function fieldCounts(fields: FieldsMap['fields']) {

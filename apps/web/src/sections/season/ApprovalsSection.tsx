@@ -32,7 +32,7 @@ export function ApprovalsSection({
   const [approving, setApproving] = useState<Approval | null>(null)
   const [declining, setDeclining] = useState<Approval | null>(null)
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_370px]">
       <section
         aria-labelledby="approvals"
         className="island min-w-0 px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
@@ -102,7 +102,7 @@ function ApprovalCard({
     ) ?? card.ground_checks[0]
   const name = firstName(card.farmer_name)
   return (
-    <article className="grid gap-x-6 gap-y-5 rounded-card bg-panel p-[1.1rem] shadow-[inset_0_0_0_1px_var(--hairline)] lg:grid-cols-[13rem_minmax(0,1fr)_minmax(15rem,18rem)]">
+    <article className="grid gap-x-6 gap-y-5 rounded-card bg-panel p-[1.1rem] shadow-[inset_0_0_0_1px_var(--hairline)] lg:grid-cols-[190px_minmax(0,1fr)_minmax(260px,290px)]">
       <div className="min-w-0">
         {/* On a phone the photo stays small: the farmer's name and the record come first. */}
         <div className="max-lg:max-w-[15rem]">

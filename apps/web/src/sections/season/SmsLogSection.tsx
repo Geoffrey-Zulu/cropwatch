@@ -14,7 +14,10 @@ export function SmsLogSection({ sms }: { sms: SmsLogView[] | undefined }) {
   return (
     <section aria-labelledby="sms-log" className="island self-start px-[1.3rem] py-[1.2rem]">
       <div className="flex items-center justify-between gap-2">
-        <h2 id="sms-log" className="flex items-center gap-2 text-section font-semibold text-fg">
+        <h2
+          id="sms-log"
+          className="flex items-center gap-2 whitespace-nowrap text-section font-semibold text-fg"
+        >
           <MessageSquare size={18} aria-hidden />
           SMS log
         </h2>
