@@ -25,6 +25,7 @@ import { currentPosition, type Point } from '../lib/location'
 import { CEIH_EXAMPLE, ceihLedger, kwacha } from '../lib/ceih'
 import { DemoBadge } from '../components/DemoBadge'
 import { TownMap } from '../components/TownMap'
+import { FieldEvidence } from '../components/FieldEvidence'
 import './ceih.css'
 
 const steps = [
@@ -139,6 +140,7 @@ export function CeihPage({
   navigate: (route: Route) => void
 }) {
   const [season, setSeason] = useState(() => readSeason(uid))
+  const [cropMode, setCropMode] = useState<'field' | 'example'>('field')
   const [point, setPoint] = useState(() => readPoint(uid))
   const [gps, setGps] = useState<'idle' | 'locating' | 'error'>('idle')
   const [gpsError, setGpsError] = useState('')
@@ -237,15 +239,23 @@ export function CeihPage({
       <main className="season-main">
         <div className="season-account">
           <div className="season-avatar" aria-hidden>
-            G
+            {step === 'crop' && cropMode === 'field' ? <Leaf size={18} aria-hidden /> : 'G'}
           </div>
           <div>
-            <strong>Given’s season</strong>
-            <span>Soybeans · Monze · 2026/27</span>
+            <strong>
+              {step === 'crop' && cropMode === 'field' ? 'My field evidence' : 'Given’s season'}
+            </strong>
+            <span>
+              {step === 'crop' && cropMode === 'field'
+                ? 'Boundaries · Sentinel-2 · field review'
+                : 'Soybeans · Monze · 2026/27'}
+            </span>
           </div>
-          <div className="season-demo-mode">
-            <DemoBadge rows={[{ sim: true }]} />
-          </div>
+          {!(step === 'crop' && cropMode === 'field') && (
+            <div className="season-demo-mode">
+              <DemoBadge rows={[{ sim: true }]} />
+            </div>
+          )}
         </div>
         <div className="season-stage-heading">
           <div>
@@ -263,6 +273,19 @@ export function CeihPage({
         </div>
 
         {step === 'crop' && (
+          <div className="field-mode" role="group" aria-label="Crop workspace">
+            <button aria-pressed={cropMode === 'field'} onClick={() => setCropMode('field')}>
+              My field
+            </button>
+            <button aria-pressed={cropMode === 'example'} onClick={() => setCropMode('example')}>
+              Financing example
+            </button>
+          </div>
+        )}
+        {step === 'crop' && cropMode === 'field' && (
+          <FieldEvidence key={uid} uid={uid} onExample={() => setCropMode('example')} />
+        )}
+        {step === 'crop' && cropMode === 'example' && (
           <>
             <section className="field-panel" aria-label="Example soybean field">
               <div className="field-map">

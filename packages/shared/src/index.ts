@@ -15,3 +15,4 @@ export * from './text'
 
 // Weather context (Open-Meteo) for Risk Model v0 and weather advisories
 export * from './weather'
+export * from './fieldEvidence'

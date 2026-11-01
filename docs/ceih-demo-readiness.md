@@ -1,10 +1,10 @@
 # CEIH demo and pitch alignment
 
-The iOS app is an interactive CEIH prototype alongside the existing crop-report system. It is not a deployed lending or payment service.
+The iOS app combines a field-evidence service with a separate interactive CEIH financing prototype and the existing crop-report system. It is not a deployed lending or payment service. See [the SKACE satellite adaptation](field-satellite-integration.md) for the actual field workflow and provider limits.
 
 | Pitch component | What the app currently demonstrates | What remains unconnected |
 | --- | --- | --- |
-| Crop health and yield | Three field checks, real device GPS captured and stored locally, a correctly placed Monze town map, access to existing crop diagnosis | Satellite assessment, yield estimation, verified farm boundaries and server-synced CEIH visits |
+| Crop health and yield | My field: saved claimed polygons, actual Sentinel-2 scene metadata and previews, optional cloud-masked Copernicus NDVI when configured. Financing example: three illustrative checks and yield/price inputs. Existing crop diagnosis remains accessible. | Working CDSE configuration for field NDVI, agronomic yield estimation, attested boundaries and signed field visits |
 | Eligibility and capping | A 10%, 15% or 20% example cap with an amount constrained to that limit; transparent principal and 5% fee | Lender approval, risk policy enforcement and a live farmer contract |
 | Digital disbursement | Airtel or MTN example wallet selection, review, confirmation and a recorded demo advance | Provider integration, identity verification, transaction execution and settlement callbacks |
 | Harvest reconciliation | Gross crop value less inputs, advance and fee; the proposed 2% company fee is shown separately | Depot intake, actual weights/prices, shared ledger, payout execution and reconciliation with payment providers |

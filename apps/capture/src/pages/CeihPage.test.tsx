@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { CeihPage } from './CeihPage'
+vi.mock('../components/FieldEvidence', () => ({ FieldEvidence: () => null }))
 
 beforeEach(() => {
   localStorage.clear()
@@ -16,6 +17,7 @@ afterEach(cleanup)
 it('walks through checked crops, capped eligibility, a simulated advance and harvest deductions', () => {
   const navigate = vi.fn()
   const { rerender } = render(<CeihPage uid="example-user" step="crop" navigate={navigate} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Financing example' }))
   for (const checkbox of screen.getAllByRole('checkbox')) fireEvent.click(checkbox)
   rerender(<CeihPage uid="example-user" step="eligibility" navigate={navigate} />)
   const review = screen.getByRole('button', { name: 'Continue to wallet' })

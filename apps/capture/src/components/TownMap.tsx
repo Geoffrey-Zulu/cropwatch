@@ -1,15 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import { MapPin } from 'lucide-react'
 import type { Point } from '../lib/location'
-import { mapViewport } from '../lib/townMap'
+import { fieldMapView, mapViewport } from '../lib/townMap'
 
 const tileTemplate =
   import.meta.env.VITE_MAP_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
-export function TownMap({ center, online }: { center: Point; online: boolean }) {
+export function TownMap({
+  center,
+  online,
+  boundary,
+  label = 'Monze, Zambia',
+}: {
+  center: Point
+  online: boolean
+  boundary?: [number, number][]
+  label?: string
+}) {
   const viewport = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [failed, setFailed] = useState(false)
+  const view =
+    boundary && boundary.length >= 4
+      ? fieldMapView(boundary, width || 350, 182)
+      : { center, zoom: 12, points: null }
   useEffect(() => {
     if (!viewport.current || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(entries =>
@@ -26,17 +40,19 @@ export function TownMap({ center, online }: { center: Point; online: boolean }) 
       ref={viewport}
       className="town-map"
       role="group"
-      aria-label="Map overview of Monze town, Zambia. No farm boundary is shown."
+      aria-label={`${label}. ${boundary ? 'Claimed field boundary, not an attested parcel.' : 'Regional overview, not a farm boundary.'}`}
     >
       <div className="field-map-fallback">
         <MapPin size={26} aria-hidden />
-        <strong>Monze, Zambia</strong>
-        <span>16.28° S · 27.48° E</span>
+        <strong>{label}</strong>
+        <span>
+          {view.center.latitude.toFixed(5)}, {view.center.longitude.toFixed(5)}
+        </span>
         {(!online || failed) && <small>Map unavailable. GPS capture still works.</small>}
       </div>
       {online && !failed && width > 0 && (
         <div className="town-map-tiles" aria-hidden>
-          {mapViewport(center, width, 182).map(tile => (
+          {mapViewport(view.center, width, 182, view.zoom).map(tile => (
             <img
               key={`${tile.zoom}/${tile.x}/${tile.y}`}
               src={tileTemplate
@@ -52,6 +68,17 @@ export function TownMap({ center, online }: { center: Point; online: boolean }) 
             />
           ))}
         </div>
+      )}
+      {view.points && width > 0 && (
+        <svg className="field-boundary-overlay" viewBox={`0 0 ${width} 182`} aria-hidden>
+          <polygon
+            points={view.points}
+            fill="#2c744327"
+            stroke="#245d37"
+            strokeWidth="2"
+            strokeDasharray="5 3"
+          />
+        </svg>
       )}
       <a
         className="town-map-credit"
