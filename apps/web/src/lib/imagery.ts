@@ -4,7 +4,11 @@ export const IMAGERY = {
   esri: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Imagery: Esri, Maxar, Earthstar Geographics',
-    maxNativeZoom: 18,
+    // Over the Monze camps Esri has photos to zoom 17; at 18 and 19 it answers with a grey "Map
+    // data not yet available" tile (HTTP 200, so no fallback fires). Closer than 17, Leaflet
+    // enlarges the zoom-17 tiles. Whether a fitted map asked for 18 hung on a few pixels of
+    // width (a Mac has no scrollbar), so the cap holds on every screen (1 Nov).
+    maxNativeZoom: 17,
   },
   eox: {
     url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg',
