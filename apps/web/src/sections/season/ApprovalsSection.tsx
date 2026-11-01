@@ -104,14 +104,17 @@ function ApprovalCard({
   return (
     <article className="grid gap-x-6 gap-y-5 rounded-card bg-panel p-[1.1rem] shadow-[inset_0_0_0_1px_var(--hairline)] lg:grid-cols-[13rem_minmax(0,1fr)_minmax(15rem,18rem)]">
       <div className="min-w-0">
-        {check ? (
-          <PhotoSection path={check.photo_paths[0] ?? null} sim={check.sim} />
-        ) : (
-          <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card bg-ground px-4 text-center text-label text-fg-2 shadow-[inset_0_0_0_1px_var(--hairline)]">
-            <Satellite aria-hidden />
-            Established from space: clear passes, no ground photo needed
-          </div>
-        )}
+        {/* On a phone the photo stays small: the farmer's name and the record come first. */}
+        <div className="max-lg:max-w-[15rem]">
+          {check ? (
+            <PhotoSection path={check.photo_paths[0] ?? null} sim={check.sim} />
+          ) : (
+            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card bg-ground px-4 text-center text-label text-fg-2 shadow-[inset_0_0_0_1px_var(--hairline)]">
+              <Satellite aria-hidden />
+              Established from space: clear passes, no ground photo needed
+            </div>
+          )}
+        </div>
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-label">
           <dt className="text-fg-2">Farmer</dt>
           <dd className="font-semibold text-fg">{card.farmer_name}</dd>
