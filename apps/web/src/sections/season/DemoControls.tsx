@@ -18,7 +18,7 @@ export function DemoControls({ portfolio: p }: { portfolio: Portfolio }) {
   const error = ground.error ?? phase.error
 
   return (
-    <details className="group relative ml-auto shrink-0">
+    <details className="group relative shrink-0">
       {/* A small unlabeled gear: the presenter knows where it is; the room does not read it. */}
       <summary
         aria-label="Season controls"

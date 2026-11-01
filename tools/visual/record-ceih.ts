@@ -92,7 +92,7 @@ await beat(
   5000
 )
 await beat('1b-season-ledger', async p => {
-  await p.getByRole('tab', { name: 'Season ledger' }).click()
+  await p.getByRole('link', { name: 'Season ledger', exact: true }).click()
   await p.getByRole('heading', { name: 'Season ledger' }).waitFor({ timeout: 30_000 })
 })
 await beat('2-given-cloud-gap', async p => {
@@ -163,7 +163,7 @@ await beat('6b-sent', async p => {
 await beat('6c-ledger-rows', async p => {
   // "Sent" ends on the ledger, not on a message: Given's statement carries the two new rows.
   await p.getByRole('button', { name: 'Done' }).click()
-  await p.getByRole('tab', { name: 'Reconciliation' }).click()
+  await p.getByRole('link', { name: 'Reconciliation', exact: true }).click()
   await p
     .getByText(/Advance fee/)
     .first()
@@ -186,7 +186,7 @@ await beat(
   async p => {
     // The drought as a picture: mid-season, Chikuni green, Hamangaba's fields in brick.
     await p.mouse.move(12, 140)
-    await p.getByRole('tab', { name: 'Fields map' }).click()
+    await p.getByRole('link', { name: 'Fields map', exact: true }).click()
     await p.locator('.fm-lit').waitFor({ timeout: 30_000 })
     await p.waitForTimeout(900)
     await p.getByRole('button', { name: 'Hamangaba', exact: true }).click()
@@ -197,7 +197,7 @@ await beat(
 await beat(
   '8-june-statement',
   async p => {
-    await p.getByRole('tab', { name: 'Reconciliation' }).click()
+    await p.getByRole('link', { name: 'Reconciliation', exact: true }).click()
     await controls(p)
     await p.getByRole('button', { name: /Go to June/ }).click()
     await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })

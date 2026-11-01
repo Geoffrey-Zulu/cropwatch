@@ -2,7 +2,7 @@ import { AppShell } from './components/AppShell'
 import { AppSkeleton } from './components/Skeleton'
 import { useAuth } from './hooks/useAuth'
 import { useRoute } from './hooks/useRoute'
-import { OutgrowerViewPage } from './pages/OutgrowerViewPage'
+import { orgIdFor, OutgrowerViewPage, SeasonGear, SeasonNav } from './pages/OutgrowerViewPage'
 import { SignInPage } from './pages/SignInPage'
 
 // Phytos: one season for an outgrower agribusiness, on four screens (Fields map, Season ledger,
@@ -18,11 +18,16 @@ export function App() {
     return <SignInPage signedInAsFarmer={Boolean(officer)} onSignIn={signIn} onSignOut={signOut} />
   }
 
+  const orgId = orgIdFor(officer)
   return (
     <AppShell
       email={officer.email}
       role={officer.role}
       onSignOut={() => void signOut()}
+      nav={orgId ? <SeasonNav orgId={orgId} current={route.tab} /> : undefined}
+      actions={
+        orgId ? <SeasonGear orgId={orgId} commandCenter={officer.commandCenter} /> : undefined
+      }
       bleed={route.tab === 'fields'}
     >
       <OutgrowerViewPage officer={officer} />

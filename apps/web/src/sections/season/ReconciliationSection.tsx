@@ -85,7 +85,7 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
     <section
       ref={island}
       aria-labelledby="delivery"
-      className="island min-w-0 scroll-mt-[4.75rem] lg:scroll-mt-[11.75rem] xl:scroll-mt-[9rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      className="island min-w-0 scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
       <div className="grid items-start justify-items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div>
@@ -202,7 +202,7 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
 
       <h3
         ref={heading}
-        className="mt-6 scroll-mt-[4.75rem] lg:scroll-mt-[11.75rem] xl:scroll-mt-[9rem] text-section font-semibold text-fg"
+        className="mt-6 scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] text-section font-semibold text-fg"
       >
         {s ? `${s.farmer_name}'s statement` : 'Statement'}
       </h3>

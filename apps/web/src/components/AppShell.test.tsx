@@ -2,9 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { AppShell, initials } from './AppShell'
 
-const shell = () =>
+const shell = (nav?: React.ReactNode) =>
   render(
-    <AppShell email="agronomist@phytos.test" role="agronomist" onSignOut={() => undefined}>
+    <AppShell
+      email="agronomist@phytos.test"
+      role="agronomist"
+      onSignOut={() => undefined}
+      nav={nav}
+      actions={<button type="button">Season controls</button>}
+    >
       <p>page</p>
     </AppShell>
   )
@@ -19,13 +25,16 @@ describe('AppShell header (design-system/phytos/patterns.md rule 1)', () => {
     expect(screen.getByRole('menuitem', { name: /sign out/i })).toBeInTheDocument()
   })
 
-  it('carries no page nav: the four screens are the tabs on each page', () => {
+  it('carries the screens in the header and the phone strip, and the gear before the avatar', () => {
+    shell(<a href="#/outgrower/season">Season ledger</a>)
+    expect(screen.getAllByRole('navigation', { name: 'Screens' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Season ledger' })).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'Season controls' })).toBeInTheDocument()
+  })
+
+  it('without screens, carries no nav', () => {
     shell()
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /fields map/i })).toHaveAttribute(
-      'href',
-      '#/outgrower/fields'
-    )
   })
 })
 

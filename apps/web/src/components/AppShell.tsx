@@ -2,20 +2,28 @@ import { LogOut } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { PhytosLogo } from './PhytosLogo'
 
-// The frame in mockup A's language (Field-airy): a white header with the Phytos lockup on the
-// left and the account avatar on the right (initials, never a raw email in the chrome). The four
-// screens are the Outgrower View's tabs, under the header on each page. The Fields map is a
-// full-bleed stage; the other screens sit on the cream canvas at a readable width.
+// The frame in mockup A's language (Field-airy): a white header with the Phytos lockup, the four
+// screens as pills beside it (the current one field green on its tint), and on the right the
+// presenter's gear and the account avatar (initials, never a raw email in the chrome). The
+// header is sticky, so the screens stay in reach on scroll. Below 1024 px the screens move to a
+// pill strip under the header that scrolls sideways. The Fields map is a full-bleed stage; the
+// other screens sit on the cream canvas at a readable width.
 export function AppShell({
   email,
   role,
   onSignOut,
+  nav,
+  actions,
   bleed = false,
   children,
 }: {
   email: string
   role: string
   onSignOut: () => void
+  // The screens: links, shown in the header and in the phone strip.
+  nav?: ReactNode
+  // Before the avatar (the season controls' gear).
+  actions?: ReactNode
   // The page is a map that fills the screen under the header: no column, no padding.
   bleed?: boolean
   children: ReactNode
@@ -31,10 +39,25 @@ export function AppShell({
           >
             <PhytosLogo />
           </a>
-          <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-4">
+          {nav && (
+            <nav aria-label="Screens" className="hidden min-w-0 items-center gap-[0.2rem] lg:flex">
+              {nav}
+            </nav>
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-3">
+            {actions}
             <AccountMenu email={email} role={role} onSignOut={onSignOut} />
           </div>
         </header>
+        {nav && (
+          <nav
+            aria-label="Screens"
+            data-screens-strip
+            className="flex gap-[0.2rem] overflow-x-auto bg-panel px-3 pb-[0.6rem] pt-[0.55rem] shadow-[0_1px_0_rgb(27_41_32/0.06)] [scrollbar-width:none] lg:hidden"
+          >
+            {nav}
+          </nav>
+        )}
       </div>
       <main className={`canvas min-w-0 flex-1 ${bleed ? '' : 'px-4 py-6 md:px-[1.6rem] md:py-8'}`}>
         {bleed ? children : <div className="mx-auto max-w-[1320px]">{children}</div>}

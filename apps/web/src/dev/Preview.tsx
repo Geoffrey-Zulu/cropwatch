@@ -17,7 +17,7 @@ import type {
 } from '@repo/shared'
 import { AppShell } from '../components/AppShell'
 import type { Officer } from '../hooks/useAuth'
-import { OutgrowerViewPage } from '../pages/OutgrowerViewPage'
+import { orgIdFor, OutgrowerViewPage, SeasonGear, SeasonNav } from '../pages/OutgrowerViewPage'
 import { trpc } from '../lib/trpc'
 
 interface Fixtures {
@@ -113,6 +113,8 @@ export function Preview({ route }: { route: string }) {
           email={officer.email}
           role={officer.role}
           onSignOut={() => undefined}
+          nav={<SeasonNav orgId={orgIdFor(officer)!} current={tab} />}
+          actions={<SeasonGear orgId={orgIdFor(officer)!} commandCenter />}
           bleed={tab === 'fields'}
         >
           <OutgrowerViewPage officer={officer} tab={tab} />

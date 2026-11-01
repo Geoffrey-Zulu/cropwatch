@@ -472,7 +472,7 @@ export function FieldsMapView({
       className="relative lg:h-[calc(100dvh-3.75rem)] lg:min-h-[36rem] lg:overflow-hidden"
     >
       {intro && (
-        <div className="flex flex-col gap-4 px-4 pt-6 md:px-[1.6rem] md:pt-8 lg:island lg:absolute lg:left-[1.6rem] lg:top-[1.35rem] lg:z-[5] lg:flex-row lg:items-center lg:gap-5 lg:py-2 lg:pl-6 lg:pr-2">
+        <div className="flex flex-col gap-4 px-4 pt-6 md:px-[1.6rem] md:pt-8 lg:island lg:absolute lg:left-[1.6rem] lg:top-[1.35rem] lg:z-[5] lg:flex-row lg:items-center lg:gap-5 lg:px-6 lg:py-2.5">
           {intro}
         </div>
       )}

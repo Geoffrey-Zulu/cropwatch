@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronDown, Download } from 'lucide-react'
+import { ChevronDown, Download } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { zmw, type Portfolio, type SeasonRow } from '@repo/shared'
 import { Sparkline } from '../../components/NdviChart'
@@ -7,7 +7,7 @@ import { useDrawerLinks } from '../../hooks/useRoute'
 import { download, rosterCsv, seasonDate } from '../../lib/season'
 import { ADVANCE_STATE, EligibilityChip, FieldCardSection } from './FieldCardSection'
 
-const PHASE = {
+export const PHASE = {
   january: 'January: the advance',
   march: 'March: mid-season',
   june: 'June: harvest',
@@ -63,19 +63,6 @@ export function PortfolioHeader({ portfolio: p }: { portfolio: Portfolio }) {
           },
         ]}
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-caption text-fg-2">
-          <CalendarDays
-            size={16}
-            aria-hidden
-            className="mr-1.5 inline-block align-[-0.2em] text-signal-text"
-          />
-          Season day <span className="font-semibold text-fg">{seasonDate(p.today)}</span> ·{' '}
-          {PHASE[p.phase]} ·{' '}
-          {/* One of the two markers (CLAUDE.md invariant 5, 1 Nov): the season is simulated. */}
-          {p.sim ? `Simulated season ${p.season}` : `Season ${p.season}`}
-        </p>
-      </div>
     </div>
   )
 }
@@ -183,7 +170,7 @@ export function SeasonLedgerSection({
                 id={`row-${r.contract_id}`}
                 href={isOpen ? close() : open({ kind: 'contract', id: r.contract_id })}
                 aria-expanded={isOpen}
-                className={`grid scroll-mt-[4.75rem] lg:scroll-mt-[13.5rem] xl:scroll-mt-[10.25rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
+                className={`grid scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
                   isOpen ? 'bg-signal-tint' : 'border-b border-hairline hover:bg-well'
                 }`}
               >
