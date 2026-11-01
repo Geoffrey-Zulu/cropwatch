@@ -320,3 +320,14 @@ From here to the 06:30 freeze: polish only, and nothing that touches the demo pa
 - **Tag `ceih-night-7`:** commit `827620c`.
 
 No more builds before the freeze: the definition of done holds, and each deploy is a risk on this line. Production is watched every 15 minutes until 06:30. The freeze recording at 06:30 also puts daylight times on the ground check and the request, where the night recordings showed 01:00 to 03:00.
+
+## Freeze (06:30 to 06:50)
+
+- **Production green at every 15-minute watch**, 04:01 to 06:16.
+- **Freeze checks on production:**
+  - demo check: beats 1 to 6 in 8.7 s (90 s when it overlapped the visual pass on this line);
+  - old outbreak check: dispatched in 7.1 s, HIGH.
+- **Final backup recorded on production** at 1280×800: `Desktop/Phytos CEIH recording 2026-11-01 final production 1280/`. It has the continuous run, a take per beat and a frame per beat; all 14 frames were looked at.
+- **Full visual pass:** 72 shots, no issues (`docs/ui-review/2026-11-01-freeze/`). The capture app, the national map and the other views were checked for knock-on effects of tonight's shared changes (the dialog header, the shell); none found.
+- **Season re-armed** for the morning.
+- **Production stays on `ceih-night-7`.** [`morning-report.md`](morning-report.md) has the state, the decisions and the rehearsal script.

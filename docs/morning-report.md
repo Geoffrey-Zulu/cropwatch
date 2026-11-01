@@ -4,7 +4,38 @@ For Team Phytos, before the final pitch. What changed overnight and why, where p
 
 ## Where production stands
 
-<!-- filled at the 06:30 freeze -->
+**Green, frozen at 06:30, tag `ceih-night-7`** (commit `827620c`, API revision `cropwatch-api-00032-8w4`, MIN_INSTANCES 1). Production stayed green at every check through the night: a watch every 15 minutes from 04:00 to 06:30 found the API and the dashboard up each time.
+
+**Freeze checks (06:31 to 06:45), all on production:**
+
+- **Demo check:** all checks pass, beats 1 to 6 in 8.7 s. A run that overlapped the visual pass took 90 s, because this laptop's line was saturated; alone it was the fastest of the night.
+- **Old outbreak check:** report to dispatch in 7.1 s, Lusaka HIGH.
+- **Full storyline recorded:** 14 beats, no page errors, every frame looked at. The ground check and the request now read 06:41, not the small hours.
+- **Visual pass:** all 72 shots, both apps, laptop, phone and projector sizes. No issues; the shots are in `docs/ui-review/2026-11-01-freeze/`.
+- **Season:** re-armed after the recording, at day 12 Jan 2027, armed until 3 Nov.
+
+**Backup video:** `Desktop/Phytos CEIH recording 2026-11-01 final production 1280/`:
+
+- `ceih-storyline.mp4`, the continuous run (86 s);
+- `takes/`, one MP4 per beat (4 to 10 s each);
+- a PNG per beat.
+
+**Fallbacks:**
+
+- No. 1 is the same build on the preview `ceih-night7`: https://crop-watch01--ceih-night7-fcfiu79x.web.app.
+- No. 2 is CEIH without the Fields map: https://crop-watch01--ceih-preview-2d9ec7jj.web.app.
+- After those, the outbreak story at `stable-2026-10-31`, with its recordings.
+
+All three previews share production's Firestore, so one re-arm serves them all.
+
+**Tags tonight:**
+
+- `ceih-2026-10-31`: the first production cutover;
+- `ceih-night-1` to `ceih-night-7`: one per production deploy, each green.
+
+Any of them can be redeployed with `git checkout <tag> && MIN_INSTANCES=1 bash infra/deploy.sh`.
+
+**Known, not changed (freeze):** the "Field visits" tab, which is not on the demo path, still shows the org name in capitals. It is a one-line fix after the pitch.
 
 ## What changed overnight, and why
 
