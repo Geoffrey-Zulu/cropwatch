@@ -71,7 +71,8 @@ await page.goto(base)
 await page.locator('input[type=email]').fill(email)
 await page.locator('input[type=password]').fill(password)
 await page.getByRole('button', { name: 'Sign in' }).click()
-await page.getByRole('heading', { name: 'National map' }).waitFor({ timeout: 30_000 })
+// Sign-in lands on the Fields map (1 Nov: the four screens).
+await page.getByRole('heading', { name: 'Fields map' }).waitFor({ timeout: 60_000 })
 
 await beat(
   '1a-fields-map',
