@@ -404,7 +404,9 @@ describe('the CEIH season service', () => {
       to: '2026-10-02',
       mm: 5.4,
     })
-    expect(calls.at(-1)).toMatch(/^https:\/\/archive-api\.open-meteo\.com\/v1\/archive\?latitude=/)
+    expect(calls[calls.length - 1]).toMatch(
+      /^https:\/\/archive-api\.open-meteo\.com\/v1\/archive\?latitude=/
+    )
     // Cached: a second read makes no call.
     const before = calls.length
     await live.liveRain(david, ORG, 'c-given')
