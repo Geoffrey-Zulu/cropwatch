@@ -34,6 +34,8 @@ Without working CDSE credentials, acquisition dates, scene cloud cover and previ
 
 The deployed API is `https://phytos-api.samuelkaoma.dev`. On 1 November 2026, a disposable authenticated integration probe saved a public Monze test polygon, retrieved 12 intersecting scenes, read the stored report back and deleted the test field. Requests without a Firebase token returned 401. This verifies the authenticated catalogue and persistence path, not Copernicus NDVI processing. The probe's temporary anonymous account was also removed.
 
+At 09:13 Africa/Lusaka on 1 November 2026, fresh project-level Copernicus credentials were accepted and connected through service environment references (`${{project.CDSE_CLIENT_ID}}` and `${{project.CDSE_CLIENT_SECRET}}`). After redeployment, a second disposable 4.758 ha Monze polygon returned 12 catalogue scenes and 18 qualified NDVI intervals from the deployed service. The latest interval was 27 October to 1 November, with NDVI 0.22235 and 462 valid sampled pixels (100% of its sampling grid). The stored report was retrieved successfully, and the temporary field and anonymous account were deleted. This verifies live NDVI processing, not the crop, ownership, yield or creditworthiness of a real farm. Officer review remains required.
+
 Configure fresh credentials at **Dokploy → Phytos field evidence → production → Field evidence API → Environment**. Preserve `PHYTOS_GIT_REF`, add `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET`, then redeploy the compose service. Both keys belong to a Copernicus Data Space Sentinel Hub OAuth client; they are not the account password or S3 access keys.
 
 ## How to use it
