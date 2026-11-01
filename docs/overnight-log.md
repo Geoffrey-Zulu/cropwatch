@@ -331,3 +331,20 @@ No more builds before the freeze: the definition of done holds, and each deploy 
 - **Full visual pass:** 72 shots, no issues (`docs/ui-review/2026-11-01-freeze/`). The capture app, the national map and the other views were checked for knock-on effects of tonight's shared changes (the dialog header, the shell); none found.
 - **Season re-armed** for the morning.
 - **Production stays on `ceih-night-7`.** [`morning-report.md`](morning-report.md) has the state, the decisions and the rehearsal script.
+
+## Geoffrey's demo-day orders (06:53 to 09:30)
+
+Blocks A to F, then the top bar, then the combobox, sources and live rainfall. Details in [`morning-report.md`](morning-report.md).
+
+- **Tags:**
+  - `pre-ceih-only`: the recovery point with every old surface;
+  - `ceih-final`: the four screens and the loan check;
+  - `ceih-final-2`: the final build, with the top bar, the combobox, one source line per card and live rainfall.
+- **Production** is API `cropwatch-api-00036-v88`.
+- **Checks on production:**
+  - the demo check, beats 1 to 6 in 6.7 s;
+  - an Add farm test: the ledger opened on the new row, and its card read "Rain, 1 Oct 2026 to 30 Oct 2026: 41.2 mm · Open-Meteo, fetched live". The test farm was removed by the re-arm.
+- **Backup:** the final run recorded: 15 beats, no page errors, 96 s continuous plus a take per beat.
+- **Two snags, both caught and fixed before production:**
+  - a gate failure on one test line (`Array.at` is not available at the functions package's target);
+  - a recording that stalled because the live season had been moved to March by someone else, so it was re-armed and re-run.

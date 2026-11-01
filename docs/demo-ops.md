@@ -51,7 +51,8 @@ Optional, outside the 3:00: **trace a farm**. On the Fields map, paste "lat, lng
 
 Each beat answers in about 1 to 4.5 s on the deployed revision (recorded 31 Oct). Backup recordings (a continuous run as `.webm` and `.mp4`, a take a beat in `takes/`, a frame a beat), at 1280×800:
 
-- `Desktop/Phytos CEIH recording 2026-11-01 final production 1280/`: **the backup for the pitch**, the final production build (`ceih-night-7`), storyline v3, recorded at the 06:30 freeze. The rehearsal script's recovery rule plays its `takes/`.
+- `Desktop/Phytos CEIH recording 2026-11-01 final layout production 1280/`: **the backup for the pitch**: the four screens in the top bar, the loan check in beat 3, recorded on production at 09:25 (tag `ceih-final-2`).
+- `Desktop/Phytos CEIH recording 2026-11-01 final production 1280/`: the 06:30 freeze run, before the four-screen product, the final production build (`ceih-night-7`), storyline v3, recorded at the 06:30 freeze. The rehearsal script's recovery rule plays its `takes/`.
 - `Desktop/Phytos CEIH recording 2026-10-31 production 1280/`: the first production run, before the overnight review.
 - `Desktop/Phytos CEIH recording 2026-10-31 fields-preview/`: the same build on the Block 2 preview.
 - `Desktop/Phytos CEIH recording 2026-10-31/`: the first take, opening on the Season ledger.
