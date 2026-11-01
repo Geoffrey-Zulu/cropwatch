@@ -12,19 +12,60 @@ export interface AuthState {
 export function useAuth(): AuthState {
   const [state, setState] = useState<AuthState>({ user: auth.currentUser, error: null })
 
-  useEffect(
-    () =>
-      onAuthStateChanged(auth, user => {
+  useEffect(() => {
+    let active = true
+    let signInRequested = false
+    const timeoutId = window.setTimeout(() => {
+      if (active) {
+        setState(current => current.user
+          ? current
+          : { user: null, error: 'Firebase sign-in timed out. Check your connection and try again.' })
+      }
+    }, 15_000)
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      user => {
+        if (!active) return
         if (user) {
+          window.clearTimeout(timeoutId)
           setState({ user, error: null })
           return
         }
-        signInAnonymously(auth).catch((error: Error) =>
-          setState({ user: null, error: error.message })
+        if (signInRequested) return
+        signInRequested = true
+        signInAnonymously(auth).then(
+          ({ user: signedInUser }) => {
+            if (!active) return
+            window.clearTimeout(timeoutId)
+            setState({ user: signedInUser, error: null })
+          },
+          (reason: unknown) => {
+            if (!active) return
+            window.clearTimeout(timeoutId)
+            setState({
+              user: null,
+              error: reason instanceof Error ? reason.message : String(reason),
+            })
+          },
         )
-      }),
-    []
-  )
+      },
+      reason => {
+        if (!active) return
+        window.clearTimeout(timeoutId)
+        setState({
+          user: null,
+          error: reason instanceof Error ? reason.message : String(reason),
+        })
+      },
+    )
+
+    return () => {
+      active = false
+      window.clearTimeout(timeoutId)
+      unsubscribe()
+    }
+  }, [])
 
   return state
 }
