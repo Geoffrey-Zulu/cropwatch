@@ -221,3 +221,42 @@ Reviewers: a judge seeing the demo cold, a Zambian agribusiness credit manager, 
 - **Seen in the production frames, for cycle 4:**
   - when Given's row rises, the sticky tabs sit over the ledger's filter row;
   - the DEMO CONTROLS pill overlaps the last line of Joseph's panel.
+
+## Cycle 4 (02:15 to 02:45): the last pass and the run sheet
+
+**Reviews:**
+
+- **Judge:** 8.5/10. Fixed:
+  - the sticky tabs now sit on a canvas band, so nothing is half visible behind them;
+  - the maker-checker wording says exactly what is enforced ("an approver who did not verify the field");
+  - the claim pack says an insurer receives camp totals only;
+  - "within the 70% rule" replaces "no variance";
+  - the imagery credit says the field outlines are simulated;
+  - the README gives the build timeline as the history shows it, and names the demo's stand-in login;
+  - the architecture page points to the CEIH season;
+  - the template's contributing guide and upgrade log moved to `docs/archive/`;
+  - the decision docs are worded neutrally.
+- **Judge, not done:** making `main` (the public default branch, still on the template README) current is morning decision 1, a 2-minute fast-forward.
+- **Pitch mentor:** the final run sheet, 3:00 with 10 s of slack, 25 presses, no scrolling. It is now the rehearsal script in [`morning-report.md`](morning-report.md), with beat 5 worded to match what is enforced.
+
+**Checks:**
+
+- **Gate:** typecheck, lint, build and every test pass.
+- **Preview `night4`:**
+  - demo check: beats 1 to 6 in 12.2 s;
+  - old outbreak check: dispatched in 6.2 s, HIGH;
+  - recording: no page errors.
+- **Production deploy (02:33 to 02:38):** clean, API `00026-qhk`.
+  - demo check: beats 1 to 6 in 13.3 s;
+  - old outbreak check: dispatched in 6.2 s, HIGH.
+- **Tag `ceih-night-4`:** commit `e37a164`.
+
+**The definition of done now holds:**
+
+- the opener lands;
+- the timed run is 2:50 plus slack;
+- every figure traces to the seed or the ledger;
+- the views follow the kit;
+- the repo reads clean once `main` is fast-forwarded.
+
+The advance moment takes more than two presses because its safeguards (the fee before the code, the code, the second person) each need one, and those are on the never-cut list. From here, polish only.
