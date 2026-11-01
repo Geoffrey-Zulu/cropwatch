@@ -427,6 +427,9 @@ export const TimelineEntrySchema = z.object({
 })
 export type TimelineEntry = z.infer<typeof TimelineEntrySchema>
 
+// A traced field as [longitude, latitude] pairs (the Fields map, the card's imagery thumbnail).
+const RingSchema = z.array(z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]))
+
 export const FieldCardSchema = z.object({
   contract_id: z.string(),
   farmer_id: z.string(),
@@ -437,8 +440,13 @@ export const FieldCardSchema = z.object({
   planting_date: DateSchema,
   today: TimestampSchema,
   contracted_ha: z.number(),
+  // The cap's arithmetic (the loan check counts it up): hectares × yield × price.
+  projected_yield_t_ha: z.number().optional(),
+  contract_price_zmw_t: Zmw.optional(),
   projected_value_zmw: Zmw,
   input_loan_zmw: Zmw,
+  // The traced field, only for a caller who may see field outlines (invariant 6, canSeeFields).
+  ring: RingSchema.optional(),
   status: SatelliteStatusSchema,
   status_label: z.string(),
   curve: z.array(CurvePointSchema),
@@ -574,8 +582,6 @@ export type DeliveryInput = z.infer<typeof DeliveryInputSchema>
 export const FIELD_STATES = ['established', 'not_planted', 'stress', 'shock', 'cloud_gap'] as const
 export const FieldStateSchema = z.enum(FIELD_STATES)
 export type FieldState = z.infer<typeof FieldStateSchema>
-
-const RingSchema = z.array(z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]))
 
 export const FieldsMapSchema = z.object({
   org_id: z.string(),

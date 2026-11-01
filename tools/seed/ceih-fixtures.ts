@@ -312,10 +312,10 @@ function views(data: SeasonData) {
   return {
     portfolio: buildPortfolio(data, today),
     fields: buildFieldsMap(data, today, true),
-    approvals: buildApprovals(data, today, 'uid-preview'),
+    approvals: buildApprovals(data, today, 'uid-preview', true),
     smsLog: buildSmsLog(data),
     reconciliation: buildReconciliation(data, today),
-    fieldCards: Object.fromEntries(cards.map(id => [id, buildFieldCard(data, id, today)])),
+    fieldCards: Object.fromEntries(cards.map(id => [id, buildFieldCard(data, id, today, true)])),
     statements: { [heroContract.id]: buildStatement(data, heroContract.id, today) },
   }
 }

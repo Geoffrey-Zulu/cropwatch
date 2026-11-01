@@ -237,7 +237,12 @@ export function seasonService({
 
     async fieldCard(caller, orgId, contractId) {
       const { data, today } = await load(caller, orgId)
-      const card = buildFieldCard(data, contractId, today)
+      const card = buildFieldCard(
+        data,
+        contractId,
+        today,
+        canSeeFields(caller, orgId, data.org.sim)
+      )
       if (!card) throw new SeasonError('not_found', 'No such contract.')
       return card
     },
@@ -356,7 +361,7 @@ export function seasonService({
 
     async approvals(caller, orgId) {
       const { data, today } = await load(caller, orgId)
-      return buildApprovals(data, today, caller.uid)
+      return buildApprovals(data, today, caller.uid, canSeeFields(caller, orgId, data.org.sim))
     },
 
     async statement(caller, orgId, contractId) {

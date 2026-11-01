@@ -4,7 +4,7 @@ import {
   CircleCheck,
   CloudOff,
   Package,
-  Satellite,
+  Scan,
   Sparkles,
   Sprout,
   Sun,
@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { useState } from 'react'
+import { FieldThumb, IMAGERY_CREDIT } from '../../components/FieldThumb'
 import {
   CROP_LABELS,
   eligibilityLabel,
@@ -72,7 +73,7 @@ export function FieldCardSection({
 }
 
 const SOURCE_ICON = {
-  satellite: Satellite,
+  satellite: Scan,
   officer: UserRound,
   farmer: Sprout,
   ai: Sparkles,
@@ -112,8 +113,14 @@ export function FieldCardView({
               {card.contracted_ha} ha {cropWord(card.crop)} · field from the officer&apos;s pin
             </p>
           </div>
-          {/* In the ledger the island's pill scrolls away as the row rises: the curve keeps its
-              own. In the drawer the header carries it. */}
+          {/* The farm itself, on real imagery: what "from space" is looking at. */}
+          {card.ring && (
+            <FieldThumb
+              ring={card.ring}
+              size={narrow ? 84 : 96}
+              label={`Imagery of ${card.farmer_name}'s field, its traced outline on top`}
+            />
+          )}
         </div>
         <div className="mt-3">
           <NdviChart
@@ -125,6 +132,8 @@ export function FieldCardView({
           />
         </div>
 
+        {card.ring && <p className="mt-1 text-[0.72rem] text-fg-2">{IMAGERY_CREDIT}</p>}
+
         <h3 className="mt-6 text-section font-semibold text-fg">Season record</h3>
         <p className="text-caption text-fg-2">Every entry with its source</p>
         <ol className="mt-2 flex flex-col">
@@ -132,18 +141,30 @@ export function FieldCardView({
             const Icon =
               KIND_ICON[t.kind] ??
               (t.text.startsWith('No clear pass') ? CloudOff : SOURCE_ICON[t.source])
+            // A clear pass is shown as the farm it saw, not as a glyph.
+            const seen = t.source === 'satellite' && !KIND_ICON[t.kind] && Icon !== CloudOff
             return (
               <li
                 key={`${t.at}-${i}`}
                 className="grid grid-cols-[2rem_4.6rem_minmax(0,1fr)] items-start gap-x-2 border-t border-hairline py-2 first:border-t-0"
               >
-                <span
-                  className={`grid h-7 w-7 place-items-center rounded-pill ${t.source === 'satellite' ? 'bg-signal-tint text-signal-text' : 'bg-well text-fg-2'}`}
-                  title={t.source}
-                >
-                  <Icon size={15} aria-hidden />
-                  <span className="sr-only">{t.source}</span>
-                </span>
+                {seen && card.ring ? (
+                  <FieldThumb
+                    ring={card.ring}
+                    size={28}
+                    inset={0.72}
+                    label="Seen from space"
+                    className="!rounded-pill"
+                  />
+                ) : (
+                  <span
+                    className={`grid h-7 w-7 place-items-center rounded-pill ${t.source === 'satellite' ? 'bg-signal-tint text-signal-text' : 'bg-well text-fg-2'}`}
+                    title={t.source}
+                  >
+                    <Icon size={15} aria-hidden />
+                    <span className="sr-only">{t.source}</span>
+                  </span>
+                )}
                 <span className="pt-0.5 text-caption text-fg-2">
                   {seasonDate(t.at).replace(/ \d{4}$/, '')}
                 </span>

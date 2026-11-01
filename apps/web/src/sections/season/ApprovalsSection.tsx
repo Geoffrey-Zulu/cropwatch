@@ -1,13 +1,7 @@
-import {
-  CircleAlert,
-  CircleCheck,
-  Clock,
-  MessageSquare,
-  Satellite,
-  ShieldCheck,
-} from 'lucide-react'
+import { CircleAlert, CircleCheck, Clock, MessageSquare, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { establishmentNdvi, zmw, type Approval, type SmsLogView } from '@repo/shared'
+import { FieldThumb, IMAGERY_CREDIT } from '../../components/FieldThumb'
 import { NdviChart } from '../../components/NdviChart'
 import { SkeletonRows } from '../../components/Skeleton'
 import { firstName, seasonDate, seasonTime } from '../../lib/season'
@@ -69,6 +63,9 @@ export function ApprovalsSection({
             ))}
           </ol>
         )}
+        {approvals?.some(a => a.card.ring) && (
+          <p className="mt-4 text-[0.72rem] text-fg-2">{IMAGERY_CREDIT}</p>
+        )}
       </section>
       <SmsLogSection sms={sms} />
       {approving && (
@@ -106,11 +103,22 @@ function ApprovalCard({
         <div className="max-lg:max-w-[15rem]">
           {check ? (
             <PhotoSection path={check.photo_paths[0] ?? null} sim={check.sim} />
+          ) : card.ring ? (
+            // The farm the passes saw, on real imagery: the evidence a satellite-only advance rests on.
+            <figure>
+              <FieldThumb
+                ring={card.ring}
+                size={190}
+                label={`Imagery of ${card.farmer_name}'s field, its traced outline on top`}
+              />
+              <figcaption className="mt-1.5 text-caption text-fg-2">
+                Established from space: clear passes, no ground photo needed
+              </figcaption>
+            </figure>
           ) : (
-            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-card bg-ground px-4 text-center text-label text-fg-2 shadow-[inset_0_0_0_1px_var(--hairline)]">
-              <Satellite aria-hidden />
+            <p className="rounded-card bg-ground px-4 py-6 text-center text-label text-fg-2 shadow-[inset_0_0_0_1px_var(--hairline)]">
               Established from space: clear passes, no ground photo needed
-            </div>
+            </p>
           )}
         </div>
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-label">

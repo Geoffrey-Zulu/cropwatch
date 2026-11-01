@@ -380,19 +380,29 @@ describe('the CEIH season service', () => {
   })
 
   it('keeps the season to its own org, and never sends a pin, a polygon or a whole number', async () => {
-    const { service } = setup()
+    const { data, service } = setup()
     expect((await refusal(service.portfolio(otherOrg, ORG))).code).toBe('forbidden')
     expect((await refusal(service.groundCheck(banda, ORG))).code).toBe('forbidden')
-    const views = JSON.stringify([
-      await service.portfolio(david, ORG),
-      await service.fieldCard(david, ORG, 'c-given'),
-      await service.approvals(david, ORG),
-      await service.smsLog(david, ORG),
-    ])
+    // The traced outline goes to a caller who may see outlines (checked below); nothing else
+    // carries a location.
+    const views = JSON.stringify(
+      [
+        await service.portfolio(david, ORG),
+        await service.fieldCard(david, ORG, 'c-given'),
+        await service.approvals(david, ORG),
+        await service.smsLog(david, ORG),
+      ],
+      (key, value: unknown) => (key === 'ring' ? undefined : value)
+    )
     expect(views).not.toContain(String(PIN.latitude))
     expect(views).not.toContain('Polygon')
     expect(views).not.toContain('+260971000000')
     expect(views).not.toMatch(/probab|score|—/i)
+    // The traced field goes only to a caller who may see outlines: on a real org, a Command
+    // Center account reads the card without it.
+    expect((await service.fieldCard(david, ORG, 'c-given')).ring?.length).toBeGreaterThan(3)
+    data.org = { ...data.org, sim: false }
+    expect((await service.fieldCard(david, ORG, 'c-given')).ring).toBeUndefined()
   })
 })
 

@@ -469,7 +469,9 @@ function timeline(
 export function buildFieldCard(
   data: SeasonData,
   contractId: string,
-  today: string
+  today: string,
+  // The caller may see field outlines: the card carries the traced field.
+  precise = false
 ): FieldCard | null {
   const contract = data.contracts.find(c => c.id === contractId)
   if (!contract) return null
@@ -488,7 +490,10 @@ export function buildFieldCard(
     planting_date: contract.data.planting_date,
     today,
     contracted_ha: contract.data.contracted_ha,
+    projected_yield_t_ha: contract.data.projected_yield_t_ha,
+    contract_price_zmw_t: contract.data.contract_price_zmw_t,
     projected_value_zmw: contract.data.projected_value_zmw,
+    ...(precise ? { ring: polygonRing(contract.data.field_polygon) ?? undefined } : {}),
     input_loan_zmw: contract.data.input_loan_zmw,
     status,
     status_label: SATELLITE_STATUS_LABELS[status],
@@ -539,14 +544,19 @@ function neighbourOf(data: SeasonData, farmerId: string, today: string): FieldCa
   }
 }
 
-export function buildApprovals(data: SeasonData, today: string, callerUid: string): Approval[] {
+export function buildApprovals(
+  data: SeasonData,
+  today: string,
+  callerUid: string,
+  precise = false
+): Approval[] {
   return data.advances
     .filter(
       a => ['requested', 'farmer_confirmed'].includes(a.data.state) && a.data.requested_at <= today
     )
     .sort((a, b) => b.data.requested_at.localeCompare(a.data.requested_at))
     .flatMap(a => {
-      const card = buildFieldCard(data, a.data.contract_id, today)
+      const card = buildFieldCard(data, a.data.contract_id, today, precise)
       if (!card) return []
       return [
         {
