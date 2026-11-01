@@ -447,3 +447,32 @@
     animation: none;
   }
 }
+
+/* Tracing on the Fields map: corners you can drag, the first one grows when a click would close
+   the field, and a pasted spot is pinned. */
+.fm-vertex-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 2px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--signal), 0 1px 4px rgb(27 41 32 / 0.35);
+  cursor: grab;
+}
+.fm-vertex-first {
+  width: 14px;
+  height: 14px;
+  margin: 1px;
+  box-shadow: 0 0 0 3px var(--signal), 0 1px 4px rgb(27 41 32 / 0.35);
+}
+.fm-vertex-snap .fm-vertex-first {
+  background: var(--signal);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--signal);
+}
+.fm .fm-spot {
+  stroke: #fff;
+  stroke-width: 3px;
+  fill: var(--fg);
+  fill-opacity: 1;
+}

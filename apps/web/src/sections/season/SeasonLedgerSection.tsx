@@ -109,7 +109,11 @@ export function SeasonLedgerSection({
     )
   }, [camp, p])
   const [all, setAll] = useState(false)
-  const visible = all ? rows : rows.slice(0, 12)
+  // An opened row is always on the page (a farm just enrolled from the map may sort far down).
+  const first = rows.slice(0, 12)
+  const extra =
+    !all && opened ? rows.find(r => r.contract_id === opened && !first.includes(r)) : undefined
+  const visible = all ? rows : extra ? [extra, ...first.slice(0, 11)] : first
 
   return (
     <section

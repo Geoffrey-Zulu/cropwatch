@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Check, LoaderCircle, PenLine, Undo2, X } from 'lucide-react'
+import { Check, LoaderCircle, LocateFixed, PenLine, Undo2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   polygonAreaHa,
@@ -33,6 +33,54 @@ const STATE_LABEL: Record<FieldState, string> = {
 const STATE_ORDER: FieldState[] = ['established', 'not_planted', 'stress', 'shock', 'cloud_gap']
 
 type Ring = [number, number][]
+
+// The camp whose centre is nearest a traced field: a new farm's curve follows that camp.
+function nearestCamp(camps: FieldsMap['camps'], ring: Ring) {
+  if (!ring.length) return null
+  const lng = ring.reduce((n, p) => n + p[0], 0) / ring.length
+  const lat = ring.reduce((n, p) => n + p[1], 0) / ring.length
+  let best: string | null = null
+  let d = Infinity
+  for (const c of camps) {
+    const dd = (c.center.latitude - lat) ** 2 + (c.center.longitude - lng) ** 2
+    if (dd < d) [best, d] = [c.camp, dd]
+  }
+  return best
+}
+
+// Paste "lat, lng" and go: the map eases there before tracing.
+function GoTo({ onGo }: { onGo: (text: string) => boolean }) {
+  const [text, setText] = useState('')
+  const [bad, setBad] = useState(false)
+  return (
+    <form
+      className="flex items-center gap-1.5"
+      onSubmit={event => {
+        event.preventDefault()
+        setBad(!onGo(text))
+      }}
+    >
+      <label className="sr-only" htmlFor="fm-goto">
+        Go to coordinates, latitude and longitude
+      </label>
+      <input
+        id="fm-goto"
+        className={`field !h-10 w-[11.5rem] tabular-nums ${bad ? '!border-high' : ''}`}
+        placeholder="-16.171, 27.374"
+        inputMode="decimal"
+        value={text}
+        onChange={event => {
+          setText(event.target.value)
+          setBad(false)
+        }}
+      />
+      <button type="submit" className="btn-quiet !h-10" aria-label="Go to these coordinates">
+        <LocateFixed size={17} aria-hidden />
+        Go
+      </button>
+    </form>
+  )
+}
 
 // Wide: the map is the page, with the title, the tabs and the controls floating over its top left
 // and the key at its bottom left. A fly-in lands the fields clear of them.
@@ -142,6 +190,11 @@ export function FieldsMapView({
   const [drawing, setDrawing] = useState(false)
   const [points, setPoints] = useState<Ring>([])
   const [enrolling, setEnrolling] = useState<Ring | null>(null)
+  // While a corner is dragged: the outline as it stands, for the live hectares.
+  const [dragRing, setDragRing] = useState<Ring | null>(null)
+  // A spot flown to from pasted coordinates: tracing starts there, not at a camp.
+  const [spot, setSpot] = useState<[number, number] | null>(null)
+  const spotLayer = useRef<L.LayerGroup | null>(null)
   const heroCamp =
     data.fields.find(f => f.contract_id === data.hero_contract_id)?.camp ??
     data.camps[0]?.camp ??
@@ -296,13 +349,28 @@ export function FieldsMapView({
     const m = map.current
     if (!m || !drawing) return
     m.doubleClickZoom.disable()
-    const add = (e: L.LeafletMouseEvent) => setPoints(p => [...p, [e.latlng.lng, e.latlng.lat]])
+    // Within 14 px of the first corner, a click closes the field (snap-to-close).
+    const nearFirst = (e: L.LeafletMouseEvent) => {
+      const first = pointsRef.current[0]
+      if (!first || pointsRef.current.length < 3) return false
+      return (
+        m.latLngToContainerPoint(L.latLng(first[1], first[0])).distanceTo(e.containerPoint) < 14
+      )
+    }
+    const add = (e: L.LeafletMouseEvent) => {
+      if (nearFirst(e)) return finishRef.current()
+      setPoints(p => [...p, [e.latlng.lng, e.latlng.lat]])
+    }
+    const hover = (e: L.LeafletMouseEvent) =>
+      firstVertex.current?.getElement()?.classList.toggle('fm-vertex-snap', nearFirst(e))
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && stopDrawing()
     m.on('click', add)
+    m.on('mousemove', hover)
     document.addEventListener('keydown', esc)
     m.getContainer().style.cursor = 'crosshair'
     return () => {
       m.off('click', add)
+      m.off('mousemove', hover)
       document.removeEventListener('keydown', esc)
       m.doubleClickZoom.enable()
       m.getContainer().style.cursor = ''
@@ -313,38 +381,88 @@ export function FieldsMapView({
     const g = drawLayer.current
     if (!g) return
     g.clearLayers()
+    firstVertex.current = null
     if (points.length === 0) return
     const latlngs = toLatLngs(points)
-    if (points.length >= 3) L.polygon(latlngs, { className: 'fm-draft' }).addTo(g)
-    else L.polyline(latlngs, { className: 'fm-draft' }).addTo(g)
-    points.forEach((p, i) =>
-      L.circleMarker(L.latLng(p[1], p[0]), { radius: i === 0 ? 7 : 5, className: 'fm-vertex' })
+    const draft =
+      points.length >= 3
+        ? L.polygon(latlngs, { className: 'fm-draft' }).addTo(g)
+        : L.polyline(latlngs, { className: 'fm-draft' }).addTo(g)
+    // Corners drag to adjust: the outline and the hectares follow live; the drop commits it.
+    const working: Ring = points.map(p => [p[0], p[1]])
+    points.forEach((p, i) => {
+      const marker = L.marker(L.latLng(p[1], p[0]), {
+        draggable: true,
+        keyboard: false,
+        icon: L.divIcon({
+          className: '',
+          html: `<span class="fm-vertex-dot${i === 0 ? ' fm-vertex-first' : ''}"></span>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        }),
+      })
         .on('click', e => {
           L.DomEvent.stopPropagation(e)
-          if (i === 0 && points.length >= 3) finish()
+          if (i === 0 && points.length >= 3) finishRef.current()
+        })
+        .on('drag', e => {
+          const at = (e.target as L.Marker).getLatLng()
+          working[i] = [at.lng, at.lat]
+          draft.setLatLngs(toLatLngs(working))
+          setDragRing(working.map(q => [q[0], q[1]]))
+        })
+        .on('dragend', () => {
+          setDragRing(null)
+          setPoints(working.map(q => [q[0], q[1]]))
         })
         .addTo(g)
-    )
-    // finish and stopDrawing only read state through setters.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (i === 0) firstVertex.current = marker
+    })
   }, [points])
 
   function stopDrawing() {
     setDrawing(false)
     setPoints([])
+    setDragRing(null)
   }
   function finish() {
-    setEnrolling(points)
+    setEnrolling(pointsRef.current)
     setDrawing(false)
   }
   function startDrawing() {
+    // At a pasted spot, trace there; otherwise in the storyline's camp.
     const target = camp ?? heroCamp
-    if (target && target !== camp) setCamp(target)
+    if (!spot && target && target !== camp) setCamp(target)
     setPoints([])
     setDrawing(true)
   }
+  // "lat, lng" (or two decimals with a space): fly there with the map's ease-out, pin it.
+  function goTo(text: string) {
+    const m = map.current
+    const nums = text.match(/-?\d+(?:\.\d+)?/g)?.map(Number)
+    if (!m || !nums || nums.length !== 2) return false
+    const [lat, lng] = nums
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return false
+    const target = L.latLng(lat, lng)
+    if (!spotLayer.current) spotLayer.current = L.layerGroup().addTo(m)
+    spotLayer.current.clearLayers()
+    L.circleMarker(target, { radius: 7, className: 'fm-spot', interactive: false }).addTo(
+      spotLayer.current
+    )
+    setSpot([lng, lat])
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce) m.setView(target, 17)
+    else m.flyTo(target, 17, { duration: 1.4, easeLinearity: 0.15 })
+    return true
+  }
+  // The map's handlers read the latest corners and finish through refs.
+  const pointsRef = useRef(points)
+  pointsRef.current = points
+  const finishRef = useRef(finish)
+  finishRef.current = finish
+  const firstVertex = useRef<L.Marker | null>(null)
 
-  const ha = polygonAreaHa(points)
+  const ha = polygonAreaHa(dragRing ?? points)
   const shown = camp ? data.fields.filter(f => f.camp === camp) : data.fields
   const counts = STATE_ORDER.map(s => [s, shown.filter(f => f.state === s).length] as const)
 
@@ -390,6 +508,7 @@ export function FieldsMapView({
               Add farm
             </button>
           )}
+          {data.precise && <GoTo onGo={goTo} />}
         </div>
       </div>
 
@@ -427,7 +546,8 @@ export function FieldsMapView({
           <div className="island absolute right-14 top-3 z-[500] flex max-w-[20rem] flex-col gap-2 px-4 py-3">
             <p className="text-label font-semibold text-fg">Trace the field&apos;s boundary</p>
             <p className="text-caption text-fg-2">
-              Click each corner; the first corner or Finish closes it.
+              Click each corner, drag one to adjust; the first corner or Finish closes it. Esc
+              cancels.
             </p>
             <p className="serif text-[1.6rem] font-semibold tabular-nums text-fg">
               {ha.toFixed(2)}{' '}
@@ -483,7 +603,7 @@ export function FieldsMapView({
       {enrolling && (
         <EnrolDialog
           orgId={data.org_id}
-          camp={camp ?? heroCamp ?? ''}
+          camp={nearestCamp(data.camps, enrolling) ?? camp ?? heroCamp ?? ''}
           ring={enrolling}
           onClose={() => {
             setEnrolling(null)
@@ -492,7 +612,10 @@ export function FieldsMapView({
           onDone={id => {
             setEnrolling(null)
             setPoints([])
-            openRef.current(id)
+            spotLayer.current?.clearLayers()
+            setSpot(null)
+            // Trace, details, next screen: the ledger, the new farm's row open and in view.
+            window.location.hash = `#/outgrower/season?contract=${encodeURIComponent(id)}`
           }}
         />
       )}
@@ -521,8 +644,9 @@ function EnrolDialog({
   const [price, setPrice] = useState('8000')
   const [consent, setConsent] = useState(false)
   const enrol = trpc.season.enrolField.useMutation({
-    onSuccess: made => {
-      void refresh()
+    onSuccess: async made => {
+      // The ledger opens on the new row, so wait for the season to include it.
+      await refresh()
       onDone(made.contract_id)
     },
   })
