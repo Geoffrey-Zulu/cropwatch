@@ -8,7 +8,55 @@ For Team Phytos, before the final pitch. What changed overnight and why, where p
 
 ## What changed overnight, and why
 
-<!-- filled at the 06:30 freeze -->
+Five reviewers read the production app: a judge seeing it cold, a Zambian agribusiness credit manager, a Chikuni field officer, a designer holding it against mockup A, and a pitch mentor timing the run. They ran in three rounds. Each round's findings were triaged against the fixed idea and the invariants, built, checked on a preview, then deployed. Nothing was added to the product's scope.
+
+**The opening lands:**
+
+- The Fields map is the page, as in mockup A: the map fills the screen, and the title, tabs and controls float on it as islands.
+- Given is named on his field, and the field is drawn so no neighbour hides it.
+- Cloud gaps are ink dashes rather than white boxes.
+- The header counts what the map shows: "40 fields · 23 established · 14 under cloud".
+
+**The payoffs happen in view:**
+
+- DEMO CONTROLS sits in the sticky tab bar, so the eligibility flip, the drought and the harvest change on screen, not at the foot of the page.
+- "Sent" is followed by the ledger rows, which carry the transfer reference.
+- Before June the Reconciliation tab leads with the statement; in June the form, then the net due, scroll into view.
+- The drought is shown on the map in March, with Hamangaba in brick.
+- The run needs no scrolling or Home key: 25 presses in 2:50.
+
+**A credit manager would trust it more:**
+
+- Approval and disbursement re-run the rules on the day, so a camp paused by the drought rule cannot be paid.
+- On a real org, only its own credit team can approve, send or record deliveries.
+- The cards show the fee's rate, and what the farmer owes at harvest against his projected crop.
+- The cap factor names the projected crop value and the ceiling.
+- The fee rounds down, like the cap.
+- The farmer's code never shows in the SMS log.
+- The consent line says whether the SMS was really sent.
+- Shortfall rows show kwacha, and the list never cuts silently.
+
+**The words are the field officer's:**
+
+- "Verified" is kept for a field visit; satellite readings are "seen from space".
+- "No crop seen from space" replaces "not planted".
+- "Within 150 m of the field" replaces "inside the field".
+- Each rule shows a tick or a cross.
+- Given's check records stage R1, which agrees with his planting date.
+
+**Honest everywhere:**
+
+- The imagery credit says the field outlines are simulated.
+- Maker-checker is worded as what is enforced: an approver who did not verify the field.
+- The claim pack says an insurer receives camp totals only.
+- The README says what is real and what is simulated, including the stand-in login.
+
+**The repository reads clean:**
+
+- A new README.
+- Template leftovers and superseded working documents moved to `docs/archive/`.
+- Screenshots, recordings and scratch files untracked (kept on disk).
+- No AI attribution in any commit since 22:56.
 
 ## Decisions waiting for Geoffrey
 
