@@ -25,7 +25,7 @@ export function App() {
 
   switch (route.page) {
     case 'ceih':
-      return <CeihPage uid={user.uid} step={route.step} navigate={navigate} />
+      return <CeihPage key={user.uid} uid={user.uid} step={route.step} navigate={navigate} />
     case 'diagnose':
       return (
         <Suspense

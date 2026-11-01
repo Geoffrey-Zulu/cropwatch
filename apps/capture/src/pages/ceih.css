@@ -1,0 +1,1264 @@
+.season-app {
+  --season-ink: #202e28;
+  --season-muted: #657269;
+  --season-green: #276147;
+  --season-line: #e5eae4;
+  --season-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  min-height: 100dvh;
+  background: #f3f5f1;
+  color: var(--season-ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Instrument Sans Variable', sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.season-app button,
+.season-app a {
+  -webkit-tap-highlight-color: transparent;
+}
+.season-app button {
+  touch-action: manipulation;
+  transition:
+    transform 140ms var(--season-ease),
+    background-color 140ms ease;
+}
+.season-app button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.season-app[data-input='keyboard'] button:active {
+  transform: none;
+}
+.season-app button:disabled {
+  cursor: default;
+}
+.season-header {
+  padding-top: env(safe-area-inset-top);
+  background: #f3f5f1;
+}
+.season-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 29rem;
+  min-height: 60px;
+  margin: auto;
+  padding: 0 22px;
+}
+.season-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #274b38;
+  font-size: 21px;
+  font-weight: 720;
+  letter-spacing: -0.8px;
+}
+.season-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 30px;
+  border-radius: 10px 10px 10px 3px;
+  background: #e0e9dc;
+}
+.season-brand-divider {
+  display: block;
+  width: 1px;
+  height: 16px;
+  background: #cdd7cb;
+  margin: 0 2px 0 5px;
+}
+.season-brand-divider + * {
+  font-weight: 400;
+}
+.season-brand strong {
+  font-size: 22px;
+  font-weight: 720;
+  letter-spacing: -0.8px;
+}
+.season-brand small {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.season-brand {
+  font-size: 15px;
+  letter-spacing: -0.3px;
+}
+.season-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #4a5b4f;
+}
+.season-main {
+  max-width: 29rem;
+  margin: auto;
+  padding: 10px 20px calc(105px + env(safe-area-inset-bottom));
+}
+.season-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 22px;
+}
+.season-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  color: #566347;
+  background: #e5e8d8;
+  font-size: 16px;
+  font-weight: 600;
+  flex: none;
+}
+.season-account > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.season-account strong {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.15px;
+}
+.season-account > div:nth-child(2) > span {
+  color: var(--season-muted);
+  font-size: 11px;
+}
+.season-demo-mode {
+  margin-left: auto;
+  max-width: 94px;
+}
+.season-demo-mode p {
+  background: #eee9db;
+  background-image: none;
+  border: none;
+  color: #716544;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  padding: 4px 7px;
+  border-radius: 5px;
+  text-align: center;
+}
+.season-stage-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin: 0 0 19px;
+}
+.season-stage-heading p {
+  color: var(--season-muted);
+  font-size: 11px;
+  font-weight: 550;
+  margin-bottom: 5px;
+}
+.season-stage-heading p > span {
+  color: #bdc7bb;
+  margin: 0 6px;
+}
+.season-stage-heading h1 {
+  font-size: 29px;
+  line-height: 1.15;
+  font-weight: 680;
+  letter-spacing: -1.1px;
+}
+.season-stage-count {
+  padding-bottom: 2px;
+  color: #435547;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.season-stage-count > span {
+  color: #65725f;
+  font-size: 11px;
+}
+.season-section {
+  margin-top: 25px;
+}
+.season-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.season-section-title h2,
+.season-panel > h2 {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+}
+.season-section-title > span {
+  font-size: 11px;
+  color: var(--season-muted);
+}
+.season-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: #f3eddf;
+  color: #7c6940;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.season-tag--green {
+  color: #36604b;
+  background: #e8f0e5;
+}
+.season-status-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.season-overline {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: #65725f;
+}
+.field-panel {
+  overflow: hidden;
+  border-radius: 19px;
+  background: white;
+  border: 1px solid #e3e9df;
+}
+.field-map {
+  position: relative;
+  height: 182px;
+  background: #e6ecdf;
+}
+.town-map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.town-map-tiles {
+  position: absolute;
+  inset: 0;
+}
+.town-map-tiles img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+.town-map-credit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #fffffff2;
+  padding: 2px 4px;
+  color: #56674d;
+  font-size: 9px;
+}
+.field-map iframe {
+  position: relative;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.field-map-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  color: #697e60;
+  font-size: 12px;
+}
+.field-map-fallback > span,
+.field-map-fallback > small {
+  font-size: 10px;
+}
+.field-map-open {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: #fffffff5;
+  color: #41593a;
+  box-shadow: 0 1px 5px #24352112;
+  font-size: 10px;
+  font-weight: 600;
+}
+.field-map-label {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  background: #fffffff5;
+  box-shadow: 0 1px 5px #24352112;
+  border-radius: 7px;
+  color: #4b5a49;
+  font-size: 10px;
+  font-weight: 550;
+}
+.field-panel-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 17px 17px 14px;
+  gap: 8px;
+}
+.field-panel-body h2 {
+  margin-top: 3px;
+  font-size: 20px;
+  letter-spacing: -0.55px;
+  font-weight: 650;
+}
+.field-measures {
+  display: flex;
+  padding: 0 17px 18px;
+}
+.field-measures > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-measures > div + div {
+  padding-left: 14px;
+  border-left: 1px solid var(--season-line);
+}
+.field-measures strong {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
+.field-measures small {
+  font-size: 11px;
+  font-weight: 450;
+}
+.field-measures span {
+  font-size: 10px;
+  color: var(--season-muted);
+}
+.field-check-list {
+  overflow: hidden;
+  border: 1px solid var(--season-line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 0 15px;
+}
+.field-check-list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  text-align: left;
+}
+.field-check-list button + button {
+  border-top: 1px solid #edf0e9;
+}
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border: 1.5px solid #c2cdbd;
+  border-radius: 50%;
+  background: #fff;
+  color: transparent;
+  flex: none;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+.field-checkbox.is-checked {
+  background: var(--season-green);
+  border-color: var(--season-green);
+  color: #fff;
+}
+.field-check-list strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.field-check-list small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--season-muted);
+}
+.visit-location {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 18px;
+}
+.visit-location > svg {
+  color: #718568;
+  flex: none;
+}
+.visit-location h3 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.visit-location p {
+  font-size: 11px;
+  color: var(--season-muted);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.visit-location > div > span {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--season-muted);
+}
+.season-small-button {
+  border: 1px solid #d9e1d3;
+  background: white;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: auto;
+  flex: none;
+}
+.season-map-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  color: #456b45;
+  font-size: 11px;
+  min-height: 44px;
+  margin-left: 31px;
+  text-decoration: underline;
+}
+.season-tool-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #e9efe4;
+  width: 100%;
+  text-align: left;
+  border-radius: 13px;
+  padding: 12px;
+  margin-top: 19px;
+  min-height: 67px;
+}
+.season-tool-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 11px;
+  background: #dce7d4;
+  color: #4c7143;
+  flex: none;
+}
+.season-tool-row > span:nth-child(2) {
+  flex: 1;
+}
+.season-tool-row strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 650;
+}
+.season-tool-row small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #61745b;
+}
+.season-next > p {
+  text-align: center;
+  color: var(--season-muted);
+  font-size: 11px;
+  margin-top: 24px;
+}
+.season-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 53px;
+  padding: 12px 15px;
+  border-radius: 13px;
+  background: var(--season-green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.15px;
+  margin-top: 20px;
+}
+.season-primary:disabled {
+  color: #7a8576;
+  background: #e1e6dc;
+}
+.season-next .season-primary {
+  margin-top: 10px;
+}
+.season-text-button {
+  display: block;
+  min-height: 44px;
+  margin: 4px auto 0;
+  padding: 8px;
+  color: #56704f;
+  font-size: 12px;
+  font-weight: 550;
+}
+.season-scope {
+  margin-top: 11px;
+  color: #6f7d6a;
+  font-size: 11px;
+}
+.season-scope summary {
+  cursor: pointer;
+  padding: 11px 0;
+  min-height: 44px;
+  text-align: center;
+  list-style-position: inside;
+}
+.season-scope > p {
+  line-height: 1.6;
+  padding: 5px 7px 12px;
+}
+.season-money {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  letter-spacing: -0.25px;
+}
+.season-money--large {
+  display: block;
+  font-size: clamp(34px, 9vw, 43px);
+  line-height: 1.15;
+  letter-spacing: -1.7px;
+  font-weight: 630;
+}
+.eligibility-balance {
+  padding: 18px 19px 19px;
+  border-radius: 19px;
+  border: 1px solid #e0e7db;
+  background: #fff;
+}
+.eligibility-balance-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.season-currency {
+  color: #65725f;
+  font-size: 10px;
+  font-weight: 550;
+  letter-spacing: 0.07em;
+}
+.balance-caption {
+  font-size: 12px;
+  color: var(--season-muted);
+  margin-top: 24px;
+  margin-bottom: 7px;
+}
+.eligibility-balance > .season-money--large {
+  color: #28583b;
+}
+.balance-description {
+  color: var(--season-muted);
+  font-size: 11px;
+  margin-top: 8px;
+}
+.capital-allocation {
+  height: 9px;
+  background: #e8eee2;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 25px;
+}
+.capital-allocation > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  background: #658a49;
+  transition: transform 180ms var(--season-ease);
+}
+.season-app[data-input='keyboard'] .capital-allocation > span {
+  transition: none;
+}
+.capital-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+  font-size: 10px;
+  color: #65725f;
+  margin-top: 9px;
+}
+.capital-legend > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.capital-legend i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: #658a49;
+}
+.amount-selector {
+  padding: 16px 18px 13px;
+  background: #fff;
+  border: 1px solid var(--season-line);
+  border-radius: 16px;
+}
+.amount-selector > .season-money {
+  display: block;
+  font-size: 27px;
+  letter-spacing: -0.8px;
+  font-weight: 580;
+}
+.amount-selector > span:nth-child(2) {
+  display: block;
+  color: #65725f;
+  font-size: 10px;
+  margin-top: 2px;
+}
+.amount-selector input {
+  width: 100%;
+  min-height: 44px;
+  accent-color: #386b45;
+  margin-top: 11px;
+}
+.amount-selector > div {
+  display: flex;
+  justify-content: space-between;
+  color: #65725f;
+  font-size: 10px;
+}
+.season-panel {
+  background: #fff;
+  padding: 17px;
+  border: 1px solid var(--season-line);
+  border-radius: 16px;
+  margin-top: 17px;
+}
+.season-panel > h2 {
+  margin-bottom: 7px;
+}
+.statement-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  font-size: 12px;
+}
+.statement-line > span {
+  color: var(--season-muted);
+}
+.statement-line > strong {
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.statement-line + .statement-line {
+  border-top: 1px solid #edf0e9;
+}
+.statement-line--total {
+  border-top: 1px solid #dbe3d4 !important;
+  padding-bottom: 1px;
+  margin-top: 2px;
+}
+.statement-line--total > span {
+  font-weight: 600;
+  color: #2e4733;
+}
+.statement-line--total > strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+.cap-policy {
+  margin-top: 14px;
+}
+.cap-policy summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  min-height: 48px;
+  color: #667a5e;
+  font-size: 11px;
+  cursor: pointer;
+}
+.cap-policy summary::-webkit-details-marker {
+  display: none;
+}
+.cap-policy summary > span {
+  flex: 1;
+}
+.cap-policy summary > strong {
+  font-weight: 600;
+}
+.cap-policy[open] summary > svg:last-child {
+  transform: rotate(90deg);
+}
+.cap-policy > p {
+  color: var(--season-muted);
+  line-height: 1.6;
+  font-size: 11px;
+  margin: 1px 0 10px;
+}
+.policy-options {
+  display: flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: #e5eade;
+  gap: 3px;
+}
+.policy-options button {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 550;
+}
+.policy-options button[aria-pressed='true'] {
+  background: #fff;
+  box-shadow: 0 1px 3px #2030180c;
+  color: #305c35;
+}
+.advance-card {
+  padding: 19px 20px 17px;
+  color: #f4f6ed;
+  background: #254b39;
+  border-radius: 20px;
+}
+.advance-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #c6d9bf;
+}
+.advance-card-top > span:first-child {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.advance-card-top > span:last-child {
+  font-size: 10px;
+  border: 1px solid #ffffff33;
+  border-radius: 4px;
+  padding: 3px 5px;
+  letter-spacing: 0.08em;
+}
+.advance-card > p {
+  margin: 24px 0 7px;
+  font-size: 11px;
+  color: #c3d2bb;
+}
+.advance-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  border-top: 1px solid #ffffff1f;
+  margin-top: 26px;
+  padding-top: 14px;
+  font-size: 10px;
+  color: #c3d2bb;
+}
+.advance-card-bottom > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.advance-card-bottom > span:last-child {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.season-inline-note {
+  color: var(--season-muted);
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 14px 4px 0;
+}
+.wallet-options {
+  background: #fff;
+  border: 1px solid var(--season-line);
+  border-radius: 16px;
+  padding: 0 14px;
+}
+.wallet-options > button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 15px 0;
+  text-align: left;
+}
+.wallet-options > button + button {
+  border-top: 1px solid var(--season-line);
+}
+.wallet-provider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 11px;
+  font-size: 16px;
+  font-weight: 650;
+}
+.wallet-provider--airtel {
+  background: #f9e8e6;
+  color: #bd443a;
+}
+.wallet-provider--mtn {
+  background: #f8f0ce;
+  color: #8c7624;
+}
+.wallet-options strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.wallet-options small {
+  display: block;
+  color: #65725f;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.wallet-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid #c7d1c0;
+  border-radius: 50%;
+  margin-left: auto;
+}
+.wallet-options button[aria-pressed='true'] .wallet-radio {
+  border-color: #427147;
+}
+.wallet-options button[aria-pressed='true'] .wallet-radio > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #427147;
+}
+.advance-cost {
+  margin-top: 22px;
+}
+.weather-cover {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 17px 2px 0;
+  color: #728268;
+}
+.weather-cover h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: #506647;
+}
+.weather-cover p {
+  font-size: 10px;
+  margin-top: 3px;
+}
+.weather-cover > span {
+  margin-left: auto;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.transfer-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 15px 5px 0;
+}
+.transfer-success > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dfead6;
+  color: #4c743c;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  flex: none;
+}
+.transfer-success strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b6535;
+}
+.transfer-success p {
+  color: #75826d;
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.harvest-status {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 17px;
+  padding: 17px 0 4px;
+}
+.statement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5b7750;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #d6dfcd;
+  border-radius: 14px;
+}
+.harvest-status h2 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.harvest-status p {
+  font-size: 10px;
+  color: #65725f;
+  margin-top: 4px;
+}
+.harvest-status > .season-tag {
+  margin-left: auto;
+}
+.harvest-receipt {
+  border-radius: 17px 17px 4px 4px;
+  border: 1px solid #dfe5d8;
+  background: #fff;
+  padding: 20px 19px 0;
+  box-shadow: 0 5px 12px #1b321405;
+}
+.receipt-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #65725f;
+}
+.receipt-payee {
+  padding: 21px 0 18px;
+  border-bottom: 1px dashed #dce3d3;
+  margin-bottom: 4px;
+}
+.receipt-payee > span {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.receipt-payee > p {
+  font-size: 11px;
+  color: #65725f;
+  margin-top: 5px;
+}
+.receipt-deductions {
+  border-top: 1px solid #e5eade;
+  padding-top: 16px;
+}
+.receipt-deductions > p {
+  color: #65725f;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  margin-bottom: 3px;
+}
+.receipt-deductions .statement-line {
+  padding: 11px 0;
+}
+.receipt-deductions .statement-line + .statement-line {
+  border: none;
+}
+.receipt-net {
+  border-top: 1px dashed #d3ddca;
+  padding: 19px 0 20px;
+  margin-top: 12px;
+}
+.receipt-net > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 550;
+  color: #667e58;
+  margin-bottom: 10px;
+}
+.receipt-net > div > span:last-child {
+  font-size: 10px;
+  color: #65725f;
+  letter-spacing: 0.08em;
+}
+.receipt-net > .season-money--large {
+  color: #335c35;
+  font-size: 35px;
+  letter-spacing: -1.3px;
+}
+.receipt-net > p {
+  font-size: 10px;
+  margin-top: 7px;
+  color: #65725f;
+}
+.receipt-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 0 -19px;
+  padding: 11px;
+  border-top: 1px solid #e8eddf;
+  background: #fafbf7;
+  color: #65725f;
+  font-size: 10px;
+}
+.business-fee {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 22px 2px 4px;
+}
+.business-fee-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #dce4d2;
+  border-radius: 9px;
+  color: #718963;
+  flex: none;
+}
+.business-fee strong {
+  font-size: 11px;
+  font-weight: 600;
+}
+.business-fee p {
+  font-size: 11px;
+  color: #65725f;
+  margin-top: 3px;
+}
+.business-fee small {
+  display: block;
+  color: #65725f;
+  font-size: 10px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.season-saved-status {
+  text-align: center;
+  font-size: 11px;
+  color: #6f8361;
+  margin-top: 10px;
+}
+.season-error {
+  font-size: 12px;
+  color: #9a4833;
+  margin: 10px 0;
+}
+.season-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 7px 12px max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid #dfe7d7;
+  background: #fafcf7f7;
+}
+.season-nav > div {
+  display: flex;
+  max-width: 29rem;
+  margin: auto;
+}
+.season-nav button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 53px;
+  border-radius: 12px;
+  color: #65725f;
+  font-size: 10px;
+}
+.season-nav button[aria-current='page'] {
+  color: #315c36;
+  font-weight: 650;
+}
+.season-nav-icon {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 46px;
+  padding: 4px 0;
+  border-radius: 10px;
+}
+.season-nav button[aria-current='page'] .season-nav-icon {
+  background: #e4eddc;
+}
+.season-nav-icon > i {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  background: #598047;
+  border-radius: 50%;
+  border: 1px solid #fafcf7;
+}
+.transfer-sheet {
+  --season-green: #276147;
+  --season-muted: #657269;
+  --season-line: #e5eae4;
+  color: #202e28;
+  width: 100%;
+  max-width: 29rem;
+  max-height: 90dvh;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 25px 25px 0 0;
+  background: #fafbf7;
+  box-shadow: 0 -8px 40px #17241212;
+  font-family: -apple-system, BlinkMacSystemFont, 'Instrument Sans Variable', sans-serif;
+}
+.transfer-sheet::backdrop {
+  background: #11221e63;
+}
+.transfer-sheet-body {
+  position: relative;
+  padding: 10px 25px max(20px, env(safe-area-inset-bottom));
+}
+.sheet-handle {
+  width: 34px;
+  height: 4px;
+  border-radius: 4px;
+  background: #d7dfd2;
+  margin: 0 auto 28px;
+}
+.sheet-close {
+  position: absolute;
+  right: 11px;
+  top: 20px;
+}
+.sheet-wallet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 53px;
+  height: 53px;
+  border-radius: 18px;
+  background: #e7eddf;
+  color: #507044;
+  margin-bottom: 19px;
+}
+.transfer-sheet h2 {
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+}
+.sheet-description {
+  color: #65725f;
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 7px 0 24px;
+  max-width: 260px;
+}
+.transfer-sheet .season-money--large {
+  color: #2e5735;
+  margin-bottom: 22px;
+}
+.sheet-destination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid #e2e8da;
+  border-radius: 13px;
+  background: white;
+  margin-bottom: 14px;
+}
+.sheet-destination strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sheet-destination div > span {
+  display: block;
+  color: #65725f;
+  font-size: 10px;
+  margin-top: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .season-primary:hover:not(:disabled) {
+    background: #1e513a;
+  }
+  .season-icon-button:hover {
+    background: #e7ede0;
+  }
+}
+@supports (backdrop-filter: blur(12px)) {
+  .season-nav {
+    backdrop-filter: blur(12px);
+  }
+}
+@starting-style {
+  .transfer-sheet[open]:not([data-input='keyboard']) {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+.transfer-sheet[open] {
+  transition:
+    opacity 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .season-app button,
+  .capital-allocation > span,
+  .transfer-sheet[open] {
+    transition: none;
+  }
+  .season-app button:active:not(:disabled) {
+    transform: none;
+  }
+  @starting-style {
+    .transfer-sheet[open] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

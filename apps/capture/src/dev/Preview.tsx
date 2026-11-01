@@ -1,6 +1,8 @@
 // Development only (main.tsx loads it behind import.meta.env.DEV): every screen state from
 // fixtures, for design review and screenshots without Firebase. #/preview/<state>.
 import type { User } from 'firebase/auth'
+import { useState } from 'react'
+import type { CeihStep } from '../hooks/useRoute'
 import { CeihPage } from '../pages/CeihPage'
 import { OFFICER_REFERRAL, type ObservationView } from '@repo/shared'
 import { AppHeader } from '../components/AppHeader'
@@ -152,9 +154,8 @@ export function Preview({ state }: { state: string }) {
     case 'ceihI':
     case 'ceihH':
       return (
-        <CeihPage
-          uid="ceih-preview"
-          step={
+        <CeihPreview
+          initialStep={
             state === 'ceihE'
               ? 'eligibility'
               : state === 'ceihI'
@@ -163,7 +164,6 @@ export function Preview({ state }: { state: string }) {
                   ? 'harvest'
                   : 'crop'
           }
-          navigate={noop}
         />
       )
     case 'diagnose':
@@ -231,6 +231,22 @@ export function Preview({ state }: { state: string }) {
         </>
       )
   }
+}
+
+function CeihPreview({ initialStep }: { initialStep: CeihStep }) {
+  const [step, setStep] = useState(initialStep)
+  return (
+    <CeihPage
+      uid="ceih-preview"
+      step={step}
+      navigate={route => {
+        if (route.page === 'ceih') {
+          setStep(route.step)
+          window.scrollTo(0, 0)
+        }
+      }}
+    />
+  )
 }
 
 function Frame({ children }: { children: React.ReactNode }) {
