@@ -11,6 +11,7 @@ import {
   type FieldCard,
 } from '@repo/shared'
 import { NdviChart } from '../../components/NdviChart'
+import { SOURCE, SourceLine } from '../../components/SourceLine'
 import { useCountUp } from '../../hooks/useCountUp'
 import { IMAGERY } from '../../lib/imagery'
 import { firstName, seasonDate } from '../../lib/season'
@@ -167,6 +168,11 @@ export function LoanCheck({
             <Stage n={2} title="The passes" active={stage >= 1} space="h-[11.6rem]">
               <PassesReveal card={card} instant={stage > 1} />
             </Stage>
+            {/* The check's one source line: the map's imagery and the passes' greenness. */}
+            <SourceLine
+              className="-mt-3"
+              parts={[card.ring && SOURCE.imagery, SOURCE.greenness(card.sim)]}
+            />
           </div>
           <div className="flex min-w-0 flex-col gap-5">
             <Stage n={3} title="The rules" active={stage >= 2} space="h-[10.5rem]">
@@ -236,7 +242,8 @@ function CheckMap({ card, still }: { card: FieldCard; still: boolean }) {
     const bounds = L.latLngBounds(latlngs)
     const m = L.map(el.current, {
       zoomControl: false,
-      attributionControl: true,
+      // Credited once, in the check's source line under the passes.
+      attributionControl: false,
       dragging: false,
       scrollWheelZoom: false,
       doubleClickZoom: false,
@@ -245,11 +252,9 @@ function CheckMap({ card, still }: { card: FieldCard; still: boolean }) {
       touchZoom: false,
       zoomSnap: 0.25,
     })
-    m.attributionControl.setPrefix(false)
     L.tileLayer(IMAGERY.esri.url, {
       maxZoom: 19,
       maxNativeZoom: IMAGERY.esri.maxNativeZoom,
-      attribution: IMAGERY.esri.attribution,
     }).addTo(m)
     const draw = (animate: boolean) => {
       L.polygon(latlngs, { className: 'lc-halo', interactive: false, fill: false }).addTo(m)

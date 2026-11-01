@@ -2,6 +2,7 @@ import { ChevronDown, Download } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { zmw, type Portfolio, type SeasonRow } from '@repo/shared'
 import { Sparkline } from '../../components/NdviChart'
+import { SourceLine, SOURCE } from '../../components/SourceLine'
 import { StatCards } from '../../components/StatCards'
 import { useDrawerLinks } from '../../hooks/useRoute'
 import { download, rosterCsv, seasonDate } from '../../lib/season'
@@ -250,6 +251,7 @@ export function SeasonLedgerSection({
         Farmer level for this agribusiness only, under each farmer&apos;s contract consent. No field
         pins are shown or exported.
       </p>
+      <SourceLine className="mt-1" parts={[SOURCE.greenness(p.sim)]} />
     </section>
   )
 }

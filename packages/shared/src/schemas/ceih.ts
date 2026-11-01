@@ -95,6 +95,8 @@ export const ContractSchema = z.object({
   status: ContractStatusSchema,
   shock_flag: ShockFlagSchema.nullable(),
   side_sell_suspected: z.boolean(),
+  // Traced and enrolled live on the Fields map (Add farm): its card shows real rainfall.
+  added_live: z.boolean().optional(),
   sim: z.boolean(),
 })
 export type Contract = z.infer<typeof ContractSchema>
@@ -447,6 +449,8 @@ export const FieldCardSchema = z.object({
   input_loan_zmw: Zmw,
   // The traced field, only for a caller who may see field outlines (invariant 6, canSeeFields).
   ring: RingSchema.optional(),
+  // Enrolled live through Add farm: the card fetches its real rainfall (liveRain.ts).
+  added_live: z.boolean().optional(),
   status: SatelliteStatusSchema,
   status_label: z.string(),
   curve: z.array(CurvePointSchema),

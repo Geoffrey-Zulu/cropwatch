@@ -14,7 +14,9 @@ import {
   X,
 } from 'lucide-react'
 import { useState } from 'react'
-import { FieldThumb, IMAGERY_CREDIT } from '../../components/FieldThumb'
+import { FieldThumb } from '../../components/FieldThumb'
+import { SOURCE, SourceLine } from '../../components/SourceLine'
+import { LiveRainLine } from './LiveRainLine'
 import { LoanCheck } from './LoanCheck'
 import {
   CROP_LABELS,
@@ -112,8 +114,8 @@ export function FieldCardView({
           <div>
             <h3 className="text-section font-semibold text-fg">Greenness from space</h3>
             <p className="text-caption text-fg-2">
-              Sentinel-2, a pass a week · planted {seasonDate(card.planting_date)} ·{' '}
-              {card.contracted_ha} ha {cropWord(card.crop)} · field from the officer&apos;s pin
+              A pass a week · planted {seasonDate(card.planting_date)} · {card.contracted_ha} ha{' '}
+              {cropWord(card.crop)} · field from the officer&apos;s pin
             </p>
           </div>
           {/* The farm itself, on real imagery: what "from space" is looking at. */}
@@ -135,7 +137,13 @@ export function FieldCardView({
           />
         </div>
 
-        {card.ring && <p className="mt-1 text-[0.72rem] text-fg-2">{IMAGERY_CREDIT}</p>}
+        {card.added_live && card.ring && (
+          <LiveRainLine orgId={orgId} card={card} ring={card.ring} />
+        )}
+        <SourceLine
+          className="mt-1"
+          parts={[card.ring && SOURCE.imagery, SOURCE.greenness(card.sim)]}
+        />
 
         <h3 className="mt-6 text-section font-semibold text-fg">Season record</h3>
         <p className="text-caption text-fg-2">Every entry with its source</p>

@@ -494,6 +494,7 @@ export function buildFieldCard(
     contract_price_zmw_t: contract.data.contract_price_zmw_t,
     projected_value_zmw: contract.data.projected_value_zmw,
     ...(precise ? { ring: polygonRing(contract.data.field_polygon) ?? undefined } : {}),
+    ...(contract.data.added_live ? { added_live: true } : {}),
     input_loan_zmw: contract.data.input_loan_zmw,
     status,
     status_label: SATELLITE_STATUS_LABELS[status],

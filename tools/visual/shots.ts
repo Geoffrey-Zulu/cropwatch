@@ -130,6 +130,18 @@ const VIEWS: View[] = [
     },
   },
   {
+    name: 'dashboard-combobox-open',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The farmer picker open, filtered by typing (the field-airy combobox, no native select).
+    prepare: async page => {
+      await page.getByRole('combobox', { name: 'Farmer' }).click()
+      await page.keyboard.type('ch')
+      await page.waitForTimeout(400)
+    },
+  },
+  {
     name: 'dashboard-season-reconciliation',
     app: 'dashboard',
     route: 'reconciliation',

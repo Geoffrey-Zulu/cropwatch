@@ -10,7 +10,9 @@ import {
   type Statement,
   type VarianceKind,
 } from '@repo/shared'
+import { Combobox } from '../../components/Combobox'
 import { SkeletonRows } from '../../components/Skeleton'
+import { SOURCE, SourceLine } from '../../components/SourceLine'
 import { seasonDate, useSeasonRefresh } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
 
@@ -111,20 +113,19 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
           })
         }}
       >
-        <label className="flex flex-col gap-1 text-label font-semibold text-fg sm:col-span-2">
+        <div className="flex flex-col gap-1 text-label font-semibold text-fg sm:col-span-2">
           Farmer
-          <select
-            className="field"
+          <Combobox
+            label="Farmer"
             value={contractId}
-            onChange={event => setContractId(event.target.value)}
-          >
-            {candidates.map(r => (
-              <option key={r.contract_id} value={r.contract_id}>
-                {r.farmer_name} · {r.camp}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setContractId}
+            options={candidates.map(r => ({
+              value: r.contract_id,
+              label: r.farmer_name,
+              detail: r.camp,
+            }))}
+          />
+        </div>
         {/* Before June the depot has nothing to weigh: the form folds to one line and the
             statement (the ledger so far) moves up into view. */}
         {!before && (
@@ -374,9 +375,13 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
           insurer receives camp totals only, no names or field locations
         </li>
       </ul>
-      <p className="mt-3 text-caption text-fg-2">
-        Rain: {pack.rainfall_source}. Greenness: the camp median of the season&apos;s passes.
-      </p>
+      <SourceLine
+        className="mt-3"
+        parts={[
+          pack.sim ? SOURCE.rainfall : `Rain: ${pack.rainfall_source}`,
+          SOURCE.greenness(pack.sim),
+        ]}
+      />
     </section>
   )
 }

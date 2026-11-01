@@ -1,5 +1,8 @@
 import { createHash, randomInt } from 'node:crypto'
 import {
+  liveRainUrl,
+  sumLiveRain,
+  type LiveRain,
   ADVANCE_APPROVER_ROLES,
   checkApprove,
   checkStillEligible,
@@ -41,6 +44,7 @@ import {
   deriveStatuses,
   medianDate as medianOf,
   polygonAreaHa,
+  polygonRing,
   ringCentroid,
   ringPolygon,
   type Eligibility,
@@ -86,6 +90,8 @@ export interface SeasonService {
   // The Fields map: outlines for this org's own credit team and field officers, camp totals for
   // anyone else (invariant 6, amended).
   fields(caller: Caller, orgId: string): Promise<FieldsMap>
+  // Real rainfall, last 30 days, for a farm added live; null when the archive has none or fails.
+  liveRain(caller: Caller, orgId: string, contractId: string): Promise<LiveRain | null>
   enrolField(
     caller: Caller,
     orgId: string,
@@ -131,6 +137,8 @@ export interface SeasonDeps {
   sms: SmsSender
   money: MobileMoney
   now?: () => Date
+  // The Open-Meteo archive (liveRain); a stub in tests.
+  fetchImpl?: typeof fetch
 }
 
 export const hashCode = (code: string) => createHash('sha256').update(code.trim()).digest('hex')
@@ -171,8 +179,12 @@ export function seasonService({
   sms,
   money,
   now = () => new Date(),
+  fetchImpl = fetch,
 }: SeasonDeps): SeasonService {
   const realNow = () => now().toISOString()
+  // Live rainfall, cached per contract and day: one archive call a farm a day at most. A failed
+  // call is not cached.
+  const rainCache = new Map<string, LiveRain | null>()
   const gateway = !sms.name.startsWith('log-only')
 
   async function load(caller: Caller, orgId: string) {
@@ -250,6 +262,31 @@ export function seasonService({
     async fields(caller, orgId) {
       const { data, today } = await load(caller, orgId)
       return buildFieldsMap(data, today, canSeeFields(caller, orgId, data.org.sim))
+    },
+
+    async liveRain(caller, orgId, contractId) {
+      const { data } = await load(caller, orgId)
+      if (!canSeeFields(caller, orgId, data.org.sim))
+        throw new SeasonError('forbidden', 'Only this agribusiness sees its farms.')
+      const contract = data.contracts.find(c => c.id === contractId)
+      if (!contract?.data.added_live) return null
+      const ring = polygonRing(contract.data.field_polygon)
+      if (!ring) return null
+      const at = now()
+      const key = `${contractId}:${at.toISOString().slice(0, 10)}`
+      if (rainCache.has(key)) return rainCache.get(key)!
+      const { latitude, longitude } = ringCentroid(ring)
+      try {
+        const response = await fetchImpl(liveRainUrl(latitude, longitude, at), {
+          signal: AbortSignal.timeout(8_000),
+        })
+        if (!response.ok) return null
+        const rain = sumLiveRain(await response.json())
+        rainCache.set(key, rain)
+        return rain
+      } catch {
+        return null
+      }
     },
 
     async enrolField(caller, orgId, input) {
@@ -335,6 +372,7 @@ export function seasonService({
             status: 'active',
             shock_flag: null,
             side_sell_suspected: false,
+            added_live: true,
             sim: data.org.sim,
           },
         },

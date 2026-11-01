@@ -1,7 +1,8 @@
 import { CircleAlert, CircleCheck, Clock, MessageSquare, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { establishmentNdvi, zmw, type Approval, type SmsLogView } from '@repo/shared'
-import { FieldThumb, IMAGERY_CREDIT } from '../../components/FieldThumb'
+import { FieldThumb } from '../../components/FieldThumb'
+import { SOURCE, SourceLine } from '../../components/SourceLine'
 import { NdviChart } from '../../components/NdviChart'
 import { SkeletonRows } from '../../components/Skeleton'
 import { firstName, seasonDate, seasonTime } from '../../lib/season'
@@ -63,8 +64,14 @@ export function ApprovalsSection({
             ))}
           </ol>
         )}
-        {approvals?.some(a => a.card.ring) && (
-          <p className="mt-4 text-[0.72rem] text-fg-2">{IMAGERY_CREDIT}</p>
+        {approvals && approvals.length > 0 && (
+          <SourceLine
+            className="mt-4"
+            parts={[
+              approvals.some(a => a.card.ring) && SOURCE.imagery,
+              SOURCE.greenness(approvals.some(a => a.sim)),
+            ]}
+          />
         )}
       </section>
       <SmsLogSection sms={sms} />

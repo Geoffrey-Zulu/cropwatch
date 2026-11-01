@@ -58,6 +58,12 @@ export const seasonRouter = router({
     .output(FieldsMapSchema)
     .query(({ ctx, input }) => run(() => ctx.services.season.fields(ctx.caller, input.orgId))),
 
+  liveRain: signedInProcedure
+    .input(Org.extend({ contractId: Id }))
+    .query(({ ctx, input }) =>
+      run(() => ctx.services.season.liveRain(ctx.caller, input.orgId, input.contractId))
+    ),
+
   enrolField: signedInProcedure
     .input(Org.merge(EnrolFieldInputSchema))
     .mutation(({ ctx, input }) => {

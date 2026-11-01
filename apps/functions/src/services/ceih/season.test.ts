@@ -367,6 +367,54 @@ describe('the CEIH season service', () => {
     expect(data.ledger.filter(l => l.data.type === 'advance')).toHaveLength(0)
   })
 
+  it('real rainfall for a farm added live: card data, dated, and nothing when the archive fails', async () => {
+    const data = season()
+    const calls: string[] = []
+    const archive = (ok: boolean) =>
+      (async (url: string) => {
+        calls.push(url)
+        if (!ok) throw new Error('offline')
+        return new Response(
+          JSON.stringify({
+            daily: {
+              time: ['2026-10-01', '2026-10-02', '2026-10-03'],
+              precipitation_sum: [4.9, 0.5, null],
+            },
+          })
+        )
+      }) as typeof fetch
+    const make = (ok: boolean) =>
+      seasonService({
+        store: memoryStore(data),
+        sms: smsLogOnly,
+        money: simulatedProvider,
+        now: () => REAL_NOW,
+        fetchImpl: archive(ok),
+      })
+    const contract = data.contracts.find(c => c.id === 'c-given')!
+    // A seeded farm: no live rainfall, and no call.
+    expect(await make(true).liveRain(david, ORG, 'c-given')).toBeNull()
+    expect(calls).toHaveLength(0)
+    contract.data = { ...contract.data, added_live: true }
+    expect(await make(false).liveRain(david, ORG, 'c-given')).toBeNull()
+    const live = make(true)
+    // The days with a value only; the dates written out by the card come from here.
+    expect(await live.liveRain(david, ORG, 'c-given')).toEqual({
+      from: '2026-10-01',
+      to: '2026-10-02',
+      mm: 5.4,
+    })
+    expect(calls.at(-1)).toMatch(/^https:\/\/archive-api\.open-meteo\.com\/v1\/archive\?latitude=/)
+    // Cached: a second read makes no call.
+    const before = calls.length
+    await live.liveRain(david, ORG, 'c-given')
+    expect(calls).toHaveLength(before)
+    // Card data only: the rules do not move.
+    expect(
+      (await live.fieldCard(david, ORG, 'c-given')).eligibility.factors.map(f => f.text).join(' ')
+    ).not.toMatch(/Open-Meteo|mm/)
+  })
+
   it('a decline never moves money and tells the farmer why', async () => {
     const { data, service } = setup()
     await service.groundCheck(david, ORG)
