@@ -403,3 +403,47 @@
 .fm-key-cloud_gap {
   border: 1.5px dashed var(--fg);
 }
+
+/* The loan check (sections/season/LoanCheck.tsx): the farm's outline draws itself over real
+   imagery, and each rule arrives with its mark. Off under reduced motion. */
+.lc-map .leaflet-container,
+.lc-map.leaflet-container {
+  background: var(--canvas-2);
+  font-family: inherit;
+}
+.lc-map .lc-halo {
+  stroke: #fff;
+  stroke-opacity: 0.95;
+  stroke-width: 6px;
+}
+.lc-map .lc-field {
+  stroke: var(--fg);
+  stroke-width: 2.6px;
+  fill: var(--signal);
+  fill-opacity: 0.28;
+}
+.lc-map .leaflet-control-attribution {
+  font-size: 0.68rem;
+  color: var(--fg-2);
+  background: rgb(255 255 255 / 0.88);
+  border-top-left-radius: 0.6rem;
+  padding: 0.05rem 0.45rem;
+}
+.lc-row {
+  animation: lc-in 320ms ease-out both;
+}
+@keyframes lc-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-row {
+    animation: none;
+  }
+}

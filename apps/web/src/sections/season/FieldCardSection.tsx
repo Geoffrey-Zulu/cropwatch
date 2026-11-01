@@ -4,6 +4,7 @@ import {
   CircleCheck,
   CloudOff,
   Package,
+  Play,
   Scan,
   Sparkles,
   Sprout,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { FieldThumb, IMAGERY_CREDIT } from '../../components/FieldThumb'
+import { LoanCheck } from './LoanCheck'
 import {
   CROP_LABELS,
   eligibilityLabel,
@@ -97,6 +99,7 @@ export function FieldCardView({
   narrow?: boolean
 }) {
   const [requesting, setRequesting] = useState(false)
+  const [checking, setChecking] = useState(false)
   const e = card.eligibility
   const advance = card.advance
   const open = advance && !['declined', 'failed'].includes(advance.state)
@@ -177,9 +180,16 @@ export function FieldCardView({
 
       <div className="flex min-w-0 flex-col gap-5">
         <section aria-labelledby={`f-${card.contract_id}`}>
-          <h3 id={`f-${card.contract_id}`} className="text-section font-semibold text-fg">
-            {card.farmer_name}: eligibility
-          </h3>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3 id={`f-${card.contract_id}`} className="text-section font-semibold text-fg">
+              {card.farmer_name}: eligibility
+            </h3>
+            {/* The hunger-month loan check, played: the field, the passes, the rules, the cap. */}
+            <button type="button" className="btn-quiet !h-9" onClick={() => setChecking(true)}>
+              <Play size={15} aria-hidden />
+              Run check
+            </button>
+          </div>
           <p className="text-caption text-fg-2">Rules, not a score. Every one is shown.</p>
           <FactorList factors={e.factors} />
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -251,6 +261,13 @@ export function FieldCardView({
         )}
       </div>
 
+      {checking && (
+        <LoanCheck
+          card={card}
+          onClose={() => setChecking(false)}
+          onRequest={() => setRequesting(true)}
+        />
+      )}
       {requesting && (
         <RequestAdvanceDialog
           orgId={orgId}
