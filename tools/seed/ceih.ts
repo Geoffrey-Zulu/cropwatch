@@ -7,7 +7,7 @@
 // 21 days, two clouded out); his neighbour Joseph Hamoonga never planted; twelve advances went out
 // within their caps (no approval queue since 1 Nov: the season's rules send them); Hamangaba is
 // armed for the drought trigger (dry from mid-February, its curves falling into March); by June
-// about 60% of the planted fields have delivered (Given's not yet), among them a few Keemba farms
+// about a quarter of the planted fields have delivered (Given's not yet), among them a few Keemba farms
 // far short with no shock and no verified problem.
 import {
   ADVANCE_FEE_PCT,
@@ -697,7 +697,8 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     }
   })
 
-  // June: about 60% of the planted fields have delivered by the June season day, Given's not yet
+  // June: about a quarter of the planted fields have delivered by the June season day (a batch
+  // short enough to narrate, Geoffrey 1 Nov), Given's not yet
   // (Reconciliation's roster: ready or not yet). The two side-sellers always have. Which ones is a
   // stream of its own, so every other draw (and the rain after it) is the same as before.
   const ready = createRandom(CEIH_SEED + 7)
@@ -722,7 +723,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     const { price_zmw_t, value_zmw } = priceDelivery(c.contract_price_zmw_t, grade, weight)
     const when = at(addDays('2027-05-26', r.int(0, 13)), r.int(7, 15), r.int(0, 59))
     const moisture = Math.round(r.between(10, 13) * 10) / 10
-    if (!sideSellers.has(i) && !ready.chance(0.66)) return
+    if (!sideSellers.has(i) && !ready.chance(0.35)) return
     const id = `sim-ceih-delivery-${pad(i + 1)}`
     deliveries.push({
       id,

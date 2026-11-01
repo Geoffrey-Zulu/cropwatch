@@ -48,7 +48,13 @@ const timings: string[] = []
 // A beat: do it, time it, let the room read it, take its picture.
 async function beat(name: string, work: (p: Page) => Promise<void>, hold = 3500) {
   const t = Date.now()
-  await work(page)
+  try {
+    await work(page)
+  } catch (error) {
+    // What the screen showed when a beat failed.
+    await page.screenshot({ path: join(out, `FAILED-${name}.png`) }).catch(() => undefined)
+    throw error
+  }
   timings.push(`${name}: ${((Date.now() - t) / 1000).toFixed(1)} s`)
   await page.waitForTimeout(hold)
   await page.screenshot({ path: join(out, `${name}.png`) })

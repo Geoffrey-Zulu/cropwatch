@@ -287,8 +287,8 @@ try {
   const ready = roster.filter(r => r.ready)
   check(roster.length > 100, 'the roster: every planted field', `${roster.length}`)
   check(
-    ready.length / roster.length > 0.5 && ready.length / roster.length < 0.7,
-    'about 60% ready, the rest not yet',
+    ready.length / roster.length > 0.15 && ready.length / roster.length < 0.45,
+    'about a quarter ready, the rest not yet',
     `${ready.length} of ${roster.length}`
   )
   check(roster.find(r => r.contract_id === heroId)?.ready === false, `${hero.farmer_name}: not yet`)

@@ -240,9 +240,15 @@ function Settlement({
                   state={i < count ? (playing && i === count - 1 ? 'active' : 'done') : 'waiting'}
                 />
               ))}
-              {waiting.map(r => (
+              {/* Not yet: the first three, then a count, so the list stays short on stage. */}
+              {waiting.slice(0, 3).map(r => (
                 <Row key={r.contract_id} row={r} state="not_yet" />
               ))}
+              {waiting.length > 3 && (
+                <p className="px-2 py-2 text-caption text-fg-2">
+                  + {waiting.length - 3} more not yet delivered
+                </p>
+              )}
             </div>
             <p className="mt-2 text-caption text-fg-2">
               {ready.length} ready · {waiting.length} not yet · amounts in ZMW · every figure is
