@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import type { Portfolio } from '@repo/shared'
 import { Loading, SkeletonRows } from '../components/Skeleton'
 import { SkeletonStatCards } from '../components/StatCards'
@@ -146,6 +146,11 @@ function SeasonTabs({
 }) {
   const { portfolio, approvals, sms } = useSeasonQueries(orgId)
   const p = portfolio.data
+  // A new screen opens at its top. A layout effect runs before the screens' own scroll-into-view
+  // effects (an opened ledger row, the statement), so those still land where they should.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [tab])
   if (portfolio.error) return <Muted>The season could not load ({portfolio.error.message}).</Muted>
   // The Fields map is the page (mockup A): the map fills the screen under the header, the org's
   // name floats on it, and the figures follow below.
