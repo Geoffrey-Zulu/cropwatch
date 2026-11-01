@@ -110,8 +110,8 @@ export function RequestAdvanceDialog({
         }
       >
         <p className="text-body text-fg">
-          {name} confirmed with the code. The advance waits for a second person on the credit team:
-          the officer who verified the field cannot approve it.
+          {name} confirmed with the code. The advance waits for approval by the credit team, by
+          someone other than the officer who verified the field.
         </p>
       </Dialog>
     )
@@ -142,7 +142,8 @@ export function RequestAdvanceDialog({
         <Figures amount={card.eligibility.cap_zmw} fee={fee} card={card} />
         <p className="mt-3 text-label text-fg-2">
           {name} gets an SMS with the amount, the fee and a code, and agrees by giving you the code;
-          nothing moves before that, and nothing moves without a second person&apos;s approval.
+          nothing moves before that, and nothing moves without approval by someone other than the
+          officer who verified the field.
         </p>
         {request.error && <p className="mt-2 text-label text-high-text">{request.error.message}</p>}
       </Dialog>

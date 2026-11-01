@@ -86,7 +86,7 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
     <section
       ref={island}
       aria-labelledby="delivery"
-      className="island min-w-0 scroll-mt-[8.5rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      className="island min-w-0 scroll-mt-[4.75rem] lg:scroll-mt-[11.75rem] xl:scroll-mt-[9rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div>
@@ -202,7 +202,10 @@ function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
         )}
       </form>
 
-      <h3 ref={heading} className="mt-6 scroll-mt-[8.5rem] text-section font-semibold text-fg">
+      <h3
+        ref={heading}
+        className="mt-6 scroll-mt-[4.75rem] lg:scroll-mt-[11.75rem] xl:scroll-mt-[9rem] text-section font-semibold text-fg"
+      >
         {s ? `${s.farmer_name}'s statement` : 'Statement'}
       </h3>
       {!s ? (
@@ -365,7 +368,10 @@ function ClaimPack({ pack }: { pack: Reconciliation['claim_packs'][number] }) {
         <li>
           {pack.contracts.length} contracts: shortfalls marked uncontrollable, advances paused
         </li>
-        <li>Claim pack ready for an insurer: camp, contracts, verified records, trigger data</li>
+        <li>
+          Claim pack: the trigger data and {pack.contracts.length} contracts with their hectares; an
+          insurer receives camp totals only, no names or field locations
+        </li>
       </ul>
       <p className="mt-3 text-caption text-fg-2">
         Rain: {pack.rainfall_source}. Greenness: Sentinel-2 camp median (demo curves).

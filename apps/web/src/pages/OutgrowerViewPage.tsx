@@ -201,8 +201,9 @@ function SeasonTabs({
   return (
     <div className="flex flex-col gap-6 pb-16">
       <PageHeader title={title} />
-      {/* The tabs stay in reach under the header: no scrolling back up between beats. */}
-      <div className="min-w-0 max-w-full self-start lg:sticky lg:top-[7.4rem] lg:z-20 xl:top-[4.4rem]">
+      {/* The tabs stay in reach under the header, on a canvas band so nothing scrolls
+          half-visible behind them: no scrolling back up between beats. */}
+      <div className="flex min-w-0 max-w-full lg:sticky lg:top-[6.9rem] lg:z-20 lg:-mx-[1.6rem] lg:-my-3 lg:bg-[rgb(244_243_236/0.94)] lg:px-[1.6rem] lg:py-3 lg:backdrop-blur-[2px] xl:top-[3.75rem]">
         {tabs}
       </div>
       {!p ? (

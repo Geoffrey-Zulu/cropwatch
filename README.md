@@ -2,7 +2,7 @@
 
 Phytos is a verification and ledger layer for outgrower agribusinesses in Zambia. An agribusiness that lends seed, inputs and cash to smallholders against a contract uses Phytos to see which contracted fields are really planted and growing, to decide by stated rules who may draw a cash advance in the hunger months, to move that advance under controls, and to settle each farmer's account at harvest from the ledger.
 
-Team Phytos built it at the GreenCode Hackathon, Lusaka, 30 October to 1 November 2026. It is a working prototype on simulated season data.
+Team Phytos built it for the GreenCode Hackathon (Lusaka, final 30 October to 1 November 2026): the crop-health path from 21 October, the CEIH season during the final. It is a working prototype on simulated season data.
 
 ## The season: C, E, I, H
 
@@ -15,7 +15,7 @@ Team Phytos built it at the GreenCode Hackathon, Lusaka, 30 October to 1 Novembe
 
 The agribusiness lends its own money; Phytos verifies and keeps the ledger. Crop insurance would come from a licensed partner and is simulated here.
 
-**What is real and what is simulated.** The rules, the advance's state machine (code check, maker-checker, ledger entry) and the ledger arithmetic run in the deployed API. The season itself (farmers, contracts, NDVI curves, rainfall, deliveries) is seeded and carries a `DEMO DATA · SIMULATED` badge everywhere it shows. Money moves through a simulated provider, SMS messages go to an on-screen log, and the imagery under the Fields map is Esri World Imagery.
+**What is real and what is simulated.** The rules, the advance's state machine (code check, maker-checker, ledger entry) and the ledger arithmetic run in the deployed API. The season itself (farmers, contracts, field outlines, NDVI curves, rainfall, deliveries) is seeded and carries a `DEMO DATA · SIMULATED` badge everywhere it shows. Money moves through a simulated provider, SMS messages go to an on-screen log, and the imagery under the Fields map is Esri World Imagery. In the demo one Command Center login stands in for the agribusiness's credit team, on the simulated org only; on a real org only its own credit team can approve, send or record deliveries, and the officer who verified a field can never approve its advance.
 
 **Guarantees** (the full list is in [`CLAUDE.md`](CLAUDE.md)): no money moves without the farmer's code after seeing amount and fee, a second person's approval and a ledger entry; eligibility and drought decisions are rules with stored, displayed factors; no outbreak or crop figure is shown as a probability; precise field locations stay with the farmer's own contracting agribusiness.
 

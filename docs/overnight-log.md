@@ -16,7 +16,7 @@ Autonomous overnight work on the CEIH demo: what was reviewed, what was built, w
   - A new README.
   - Superseded documents moved to `docs/archive/`.
   - Screenshots, recordings and scratch files untracked and ignored (still on disk).
-- **Commits:** none carry attribution trailers from 22:56. The old ones are queued in morning decision 1.
+- **Commit messages:** plain from 22:56; older messages are morning decision 2.
 
 ## Production cutover (22:56 to 23:20)
 

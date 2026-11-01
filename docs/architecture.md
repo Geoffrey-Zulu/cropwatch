@@ -1,5 +1,7 @@
 # Phytos architecture
 
+> Since 31 Oct the demo is the CEIH season (crop verification, eligibility, the advance, harvest) on the Outgrower View, built on the same stack. Its rules and data are in [`ceih-workflows-mvp.md`](ceih-workflows-mvp.md); this page describes the crop-health path it grew from.
+
 Phytos (formerly CropWatch) is a crop-health early-warning prototype for Zambia, built for the GreenCode Hackathon (Lusaka, 30 Oct to 1 Nov 2026). This page describes the system as of 29 Oct 2026. The product name changed; the GCP project and resource names did not (`crop-watch01`, `cropwatch-api`, `cropwatch.alerts`, and so on).
 
 ![Phytos architecture](architecture.svg)

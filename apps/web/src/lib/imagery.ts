@@ -3,13 +3,14 @@
 export const IMAGERY = {
   esri: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Imagery: Esri, Maxar, Earthstar Geographics',
+    // The imagery is real; the field outlines on it are the demo season's.
+    attribution: 'Imagery: Esri, Maxar, Earthstar Geographics · field outlines simulated',
     maxNativeZoom: 18,
   },
   eox: {
     url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg',
     attribution:
-      'Imagery: Sentinel-2 cloudless by EOX (s2maps.eu), contains modified Copernicus Sentinel data 2020',
+      'Imagery: Sentinel-2 cloudless by EOX (s2maps.eu), contains modified Copernicus Sentinel data 2020 · field outlines simulated',
     maxNativeZoom: 15,
   },
 } as const

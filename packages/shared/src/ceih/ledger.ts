@@ -50,7 +50,7 @@ export function variance(input: {
   if (delivered >= projected * VARIANCE_SHARE)
     return {
       kind: 'none',
-      text: `Delivered ${delivered} t against ${projected} t projected: no variance`,
+      text: `Delivered ${delivered} t against ${projected} t projected: within the 70% rule`,
     }
   const shock = input.contract.shock_flag
   if (shock && delivered >= projected * SHOCK_YIELD_SHARE * VARIANCE_SHARE)

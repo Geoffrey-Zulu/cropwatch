@@ -14,10 +14,12 @@ For Team Phytos, before the final pitch. What changed overnight and why, where p
 
 See [`morning-decisions.md`](morning-decisions.md). In short:
 
-1. Scrub the old AI trailers from pushed commits (needs a force push; after the pitch is safest).
-2. Fields map visibility: a Command Center stand-in sees outlines on the simulated org only; strict mode needs a credit account.
-3. Requester ≠ approver: a small rule change, but the live demo would then need a second account.
-4. Post-event: rotate David's password; tear down the RAG corpus.
+1. **Do first:** fast-forward `main` to `ceih`, so GitHub shows the current README and code (2 minutes, command ready).
+2. Older commit messages: a history rewrite, after the pitch if at all.
+3. Fields map visibility: a Command Center stand-in sees outlines on the simulated org only; strict mode needs a credit account.
+4. Requester ≠ approver: a small rule change, but the live demo would then need a second account.
+5. Rule items from the credit-manager review (drought cover for fields that held, moisture pricing, a code-attempt limit, disbursement order).
+6. Post-event: rotate David's password; tear down the RAG corpus.
 
 ## Rehearsal script
 

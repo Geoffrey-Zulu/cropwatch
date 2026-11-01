@@ -44,7 +44,7 @@ export function ApprovalsSection({
             </h2>
             <p className="text-label text-fg-2">
               {approvals ? `${approvals.length} waiting` : 'Loading'} · every advance needs the
-              farmer&apos;s code and a second person
+              farmer&apos;s code, and an approver who did not verify the field
             </p>
           </div>
           {approvals && <DemoBadge rows={approvals} />}

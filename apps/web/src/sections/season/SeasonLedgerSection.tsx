@@ -180,7 +180,7 @@ export function SeasonLedgerSection({
                 id={`row-${r.contract_id}`}
                 href={isOpen ? close() : open({ kind: 'contract', id: r.contract_id })}
                 aria-expanded={isOpen}
-                className={`grid scroll-mt-[4.75rem] lg:scroll-mt-[12.75rem] xl:scroll-mt-[9.75rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
+                className={`grid scroll-mt-[4.75rem] lg:scroll-mt-[13.5rem] xl:scroll-mt-[10.25rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
                   isOpen ? 'bg-signal-tint' : 'border-b border-hairline hover:bg-well'
                 }`}
               >
