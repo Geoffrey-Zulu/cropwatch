@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Banknote, CircleCheck, MessageSquareText } from 'lucide-react'
+import { Banknote, CircleCheck, MessageSquareText, Sprout } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   balance,
@@ -28,8 +28,8 @@ const cropWord = (crop: FieldCard['crop']) =>
 // The farmer app (Geoffrey, 1 Nov): Given's phone. No sign-in and no live season: it boots into
 // his snapshot and keeps every change in memory, so a refresh starts again. One dashboard in the
 // field-airy kit, scaled to a farmer: his field on the imagery, his curve, his loan, and one
-// action, "Check my advance": the same loan check the agribusiness runs, in his voice, which
-// carries on into the money when every rule holds.
+// action, "Check my advance": the same loan check the agribusiness runs, in his voice, ending on
+// whether and how much he can get; "Get advance" then sends it.
 export function FarmerPage() {
   const s = SNAPSHOT
   const card = s.card
@@ -72,6 +72,11 @@ export function FarmerPage() {
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 flex h-[3.75rem] items-center gap-3 bg-panel px-4 shadow-[0_1px_0_rgb(27_41_32/0.06),0_10px_26px_-18px_rgb(27_41_32/0.3)] md:px-[1.6rem]">
         <PhytosLogo />
+        {/* Which of the two apps the room is looking at. */}
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-well px-3 py-1 text-caption font-semibold text-fg shadow-[inset_0_0_0_1px_var(--hairline)]">
+          <Sprout size={14} aria-hidden className="text-signal" />
+          Farmer dashboard
+        </span>
         <div className="ml-auto flex items-center gap-2.5">
           <span className="hidden text-right text-caption leading-tight text-fg-2 sm:block">
             <span className="block font-semibold text-fg">{card.farmer_name}</span>

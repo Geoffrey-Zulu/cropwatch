@@ -341,6 +341,16 @@ try {
     again = 0
   }
   check(again === 0, 'a second press pays no one twice', `${again}`)
+  const cleared = await call<{ removed: number }>(
+    'season.demo.resetSettlement',
+    { orgId: ORG },
+    true
+  )
+  check(
+    cleared.removed === paid.farmers,
+    'the rerun clears the payout rows (a refresh starts the batch over)',
+    `${cleared.removed}`
+  )
   console.log(`\n  beats 1 to 6 in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
 } catch (error) {
   failures++

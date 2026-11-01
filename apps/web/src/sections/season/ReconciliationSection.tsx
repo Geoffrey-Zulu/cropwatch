@@ -30,14 +30,21 @@ const total = (rows: SettlementRow[], of: (r: SettlementRow) => number) =>
 // The whole run in about nine seconds, whatever the count; at most 160 ms a farmer.
 const stepMs = (count: number) => Math.min(160, 9000 / Math.max(1, count))
 
-export function ReconciliationSection({ portfolio: p }: { portfolio: Portfolio }) {
+export function ReconciliationSection({
+  portfolio: p,
+  commandCenter = false,
+}: {
+  portfolio: Portfolio
+  // May move the simulated season's calendar (the gear's "Go to June").
+  commandCenter?: boolean
+}) {
   const reconciliation = trpc.season.reconciliation.useQuery(
     { orgId: p.org_id },
     { refetchInterval: 6000 }
   )
   return (
     <div className="flex flex-col gap-6">
-      <Settlement portfolio={p} data={reconciliation.data} />
+      <Settlement portfolio={p} data={reconciliation.data} commandCenter={commandCenter} />
       {reconciliation.data?.claim_packs.map(pack => (
         <ClaimPack key={pack.trigger_id} pack={pack} />
       ))}
@@ -48,9 +55,11 @@ export function ReconciliationSection({ portfolio: p }: { portfolio: Portfolio }
 function Settlement({
   portfolio: p,
   data,
+  commandCenter,
 }: {
   portfolio: Portfolio
   data: Reconciliation | undefined
+  commandCenter: boolean
 }) {
   const refresh = useSeasonRefresh()
   const roster = data?.roster
@@ -72,7 +81,16 @@ function Settlement({
     },
   })
   const june = p.phase === 'june'
-  const shown = started || paid
+  // On the simulated season, before June, the one press moves the calendar to June (as the gear
+  // does, and says so under the button), then runs: deliveries only exist from June.
+  const toJune = trpc.season.demo.setPhase.useMutation()
+  const canJump = commandCenter && p.sim && !june
+  // The presenter's rerun (Geoffrey, 1 Nov): on the simulated season a refresh always opens on
+  // "Start reconciliation", and Start clears the last run's payout rows before it plays.
+  const rerun = commandCenter && p.sim
+  const reset = trpc.season.demo.resetSettlement.useMutation()
+  const busy = toJune.isPending || reset.isPending
+  const shown = started || (paid && !rerun)
   const count = paid ? ready.length : Math.min(resolved, ready.length)
   const playing = started && !paid && count < ready.length
   const done = shown && count >= ready.length
@@ -102,14 +120,18 @@ function Settlement({
     })
   }, [count, playing])
 
+  // The roster, the totals and the payout button fill the screen under the header: once the
+  // roster has rendered (after a move to June it arrives in the same render as the start).
+  useEffect(() => {
+    if (!started) return
+    island.current?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' })
+  }, [started])
+
   const start = () => {
     setStarted(true)
     setStartedAt(performance.now())
-    setResolved(reduced() ? ready.length : 0)
-    // The roster, the totals and the payout button fill the screen under the header.
-    requestAnimationFrame(() =>
-      island.current?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' })
-    )
+    // Reduced motion: everything at once (the count is capped at the ready rows).
+    setResolved(reduced() ? Number.MAX_SAFE_INTEGER : 0)
   }
 
   return (
@@ -132,15 +154,32 @@ function Settlement({
             <button
               type="button"
               className="btn-primary"
-              disabled={!june || !roster}
-              onClick={start}
+              disabled={!roster || busy || (!june && !canJump)}
+              onClick={async () => {
+                if (rerun) await reset.mutateAsync({ orgId: p.org_id })
+                if (canJump) await toJune.mutateAsync({ orgId: p.org_id, phase: 'june' })
+                // The June roster and figures in hand before the run starts.
+                if (rerun) await refresh()
+                start()
+              }}
             >
-              <Play size={17} aria-hidden />
+              {busy ? (
+                <LoaderCircle size={17} aria-hidden className="animate-spin" />
+              ) : (
+                <Play size={17} aria-hidden />
+              )}
               Start reconciliation
             </button>
             {!june && (
               <span className="text-caption text-fg-2">
-                Deliveries open in June (season day {seasonDate(p.today)})
+                {canJump
+                  ? 'Moves the season to June, harvest'
+                  : `Deliveries open in June (season day ${seasonDate(p.today)})`}
+              </span>
+            )}
+            {(toJune.error ?? reset.error) && (
+              <span className="text-caption text-high-text">
+                {(toJune.error ?? reset.error)?.message}
               </span>
             )}
           </div>
@@ -436,7 +475,7 @@ function Summary({
             <div className="lc-row">
               <p className="flex items-center gap-1.5 text-label font-semibold text-signal-text">
                 <CircleCheck size={17} aria-hidden className="shrink-0" />
-                Payout request sent to Phytos · simulated
+                Bulk payment request sent to Phytos · simulated
               </p>
               <p className="mt-0.5 text-caption tabular-nums text-fg-2">
                 {sent.length} farmers · {zmw(total(sent, r => r.payout?.amount_zmw ?? 0))} · one
@@ -465,7 +504,7 @@ function Summary({
                   ) : (
                     <Banknote size={17} aria-hidden />
                   )}
-                  Send payout request
+                  Send bulk payment
                 </button>
                 <button
                   type="button"
@@ -484,7 +523,7 @@ function Summary({
               onClick={() => setConfirming(true)}
             >
               <Banknote size={17} aria-hidden />
-              Request payout for farmers
+              Request bulk payment
             </button>
           )}
           {error && <p className="mt-2 text-caption text-high-text">{error}</p>}

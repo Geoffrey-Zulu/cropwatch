@@ -104,9 +104,9 @@ function orgTitle(name: string) {
     : name
 }
 
-// The org's name and, beside it (under it on a phone), the season line: one of the two markers
-// of a simulated season (CLAUDE.md invariant 5, 1 Nov), the season day and its phase. The Fields
-// map, the first page, carries the name alone (Geoffrey, 1 Nov).
+// The org's name and, beside it (under it on a phone), the season line: the season, its day and
+// its phase, with no "Simulated" (Geoffrey, 1 Nov afternoon; CLAUDE.md invariant 5). The Fields
+// map, the first page, carries the name alone.
 function OrgHeading({
   portfolio: p,
   seasonLine = true,
@@ -124,7 +124,7 @@ function OrgHeading({
       </h1>
       {p && seasonLine && (
         <p className="text-caption text-fg-2">
-          {p.sim ? `Simulated season ${p.season}` : `Season ${p.season}`} · Season day{' '}
+          Season {p.season} · Season day{' '}
           <span className="font-semibold text-fg">{seasonDate(p.today)}</span> · {PHASE[p.phase]}
         </p>
       )}
@@ -185,7 +185,9 @@ function SeasonTabs({
           {/* Keyed by tab: the figures count up again on every cut, as the storyline does. */}
           <PortfolioHeader key={tab} portfolio={p} />
           {tab === 'season' && <SeasonLedgerSection portfolio={p} commandCenter={commandCenter} />}
-          {tab === 'reconciliation' && <ReconciliationSection portfolio={p} />}
+          {tab === 'reconciliation' && (
+            <ReconciliationSection portfolio={p} commandCenter={commandCenter} />
+          )}
         </>
       )}
     </div>

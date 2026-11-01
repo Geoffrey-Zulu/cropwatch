@@ -13,8 +13,9 @@ export interface Sent {
   ref: string
 }
 
-// The money, after a check where every rule held (farmer app, 1 Nov): the amount and the fee are
-// on screen from the start, before the send completes; then the receipt and the SMS. Within the
+// The money, after a check where every rule held and the farmer pressed "Get advance" (farmer
+// app, 1 Nov): the amount and the fee are on screen from the start, before the send completes;
+// then the receipt and the SMS. Within the
 // cap the season's rules send it, with no approval queue (CLAUDE.md invariant 11). The provider
 // is the SimulatedProvider, said once on the money line.
 export function SendMoneySection({

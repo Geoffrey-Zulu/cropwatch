@@ -140,8 +140,8 @@ const VIEWS: View[] = [
     prepare: async page => {
       await page.getByRole('button', { name: 'Start reconciliation' }).click()
       await page.getByRole('button', { name: 'Skip' }).click()
-      await page.getByRole('button', { name: 'Request payout for farmers' }).click()
-      await page.getByRole('button', { name: 'Send payout request' }).click()
+      await page.getByRole('button', { name: 'Request bulk payment' }).click()
+      await page.getByRole('button', { name: 'Send bulk payment' }).click()
       await page.waitForTimeout(1500)
     },
   },

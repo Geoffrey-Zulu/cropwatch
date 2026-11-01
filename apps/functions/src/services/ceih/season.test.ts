@@ -185,6 +185,11 @@ function memoryStore(data: SeasonData) {
       for (const r of fresh) data.ledger.push({ id: r.id, data: r.entry })
       return fresh.length
     },
+    async removePayouts(ids) {
+      const before = data.ledger.length
+      data.ledger = data.ledger.filter(l => !ids.includes(l.id))
+      return before - data.ledger.length
+    },
     async logSms(entry) {
       data.sms.push({ id: `s-${++n}`, data: entry })
     },
@@ -368,6 +373,11 @@ describe('the CEIH season service', () => {
       simulated: true,
     })
     expect(data.ledger.filter(l => l.data.type === 'payout')).toHaveLength(1)
+    // The rerun (simulated season, Command Center only): the payout rows go, and it pays again.
+    expect((await refusal(service.resetSettlement(banda, ORG))).code).toBe('forbidden')
+    expect(await service.resetSettlement(david, ORG)).toEqual({ removed: 1 })
+    expect(data.ledger.filter(l => l.data.type === 'payout')).toHaveLength(0)
+    expect((await service.requestPayouts(david, ORG)).farmers).toBe(1)
   })
 
   it('a farmer cannot reach disbursement without the code, even if the record says approved', async () => {

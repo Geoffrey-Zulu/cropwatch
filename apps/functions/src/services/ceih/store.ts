@@ -67,6 +67,8 @@ export interface SeasonStore {
   // Harvest payouts: one ledger row a contract under a fixed id (payout__<contract>), written in
   // one transaction only where none is there yet, so two presses never pay twice. How many landed.
   addPayouts(rows: { id: string; entry: LedgerEntry }[]): Promise<number>
+  // The simulated season's rerun (demo control): these payout rows go, so the batch can run again.
+  removePayouts(ids: string[]): Promise<number>
   logSms(entry: SmsLog): Promise<void>
   setState(orgId: string, patch: Partial<CeihDemoState>): Promise<void>
   writeTrigger(
@@ -169,6 +171,15 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
         })
         return written
       })
+    },
+
+    async removePayouts(ids) {
+      fresh()
+      if (!ids.length) return 0
+      const batch = db.batch()
+      for (const id of ids) batch.delete(db.collection('ledger_entries').doc(id))
+      await batch.commit()
+      return ids.length
     },
 
     async logSms(entry) {

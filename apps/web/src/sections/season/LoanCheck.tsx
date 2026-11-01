@@ -21,8 +21,8 @@ import { firstName, seasonDate } from '../../lib/dates'
 // to the verdict. Every figure and every tick is the field card's, which the deterministic rules
 // built (packages/shared/src/ceih/eligibility.ts): nothing is computed here, and nothing is a
 // score. A click moves to the next stage; Skip goes to the verdict; reduced motion shows it all.
-// The farmer app plays the same check in the farmer's own voice (`voice="farmer"`), and, when
-// every rule holds, carries on by itself into what `then` renders: the money (1 Nov).
+// The farmer app plays the same check in the farmer's own voice (`voice="farmer"`); when every
+// rule holds, the verdict offers "Get advance", which opens what `then` renders: the money.
 
 const STAGE_MS = [3400, 3600, 3600] as const
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -129,12 +129,6 @@ export function LoanCheck({
     const t = setTimeout(next, STAGE_MS[stage])
     return () => clearTimeout(t)
   }, [stage])
-  // The verdict stays long enough to read, then the money follows.
-  useEffect(() => {
-    if (stage < 3 || !carryOn) return
-    const t = setTimeout(() => setContinued(true), 2200)
-    return () => clearTimeout(t)
-  }, [stage, carryOn])
   // Below 1280 px the stages stack (two columns there squeeze the figures): the one that is
   // playing comes into view.
   const dialog = useRef<HTMLDivElement>(null)
@@ -223,7 +217,7 @@ export function LoanCheck({
                 {stage >= 3 && (
                   <Verdict
                     card={card}
-                    carryOn={carryOn}
+                    onGet={carryOn ? () => setContinued(true) : undefined}
                     onRequest={
                       onRequest
                         ? () => {
@@ -423,13 +417,14 @@ function RulesTick({ card, instant }: { card: FieldCard; instant: boolean }) {
 // Stage 4: the cap's arithmetic counts up to the verdict.
 function Verdict({
   card,
-  carryOn,
+  onGet,
   onRequest,
   onClose,
 }: {
   card: FieldCard
-  // The check carries on into the money by itself: no buttons here.
-  carryOn: boolean
+  // The farmer's own check (Geoffrey, 1 Nov): he sees whether and how much, then takes it with
+  // "Get advance", which opens the money.
+  onGet?: () => void
   onRequest?: () => void
   onClose: () => void
 }) {
@@ -463,7 +458,9 @@ function Verdict({
       <div className="mt-3 border-t border-hairline pt-3">
         {e.eligible ? (
           <p className="flex items-baseline gap-2">
-            <span className="text-label font-semibold text-signal-text">Eligible</span>
+            <span className="text-label font-semibold text-signal-text">
+              {onGet ? 'You are eligible for' : 'Eligible'}
+            </span>
             <span className="serif text-[2rem] font-semibold leading-none tabular-nums text-fg">
               <span className="mr-1 font-body text-[0.85rem] font-[650] text-fg-2">ZMW</span>
               {cap.toLocaleString('en-GB')}
@@ -473,12 +470,25 @@ function Verdict({
           <p className="text-[1.15rem] font-semibold text-fg">{eligibilityLabel(e)}</p>
         )}
         <p className="mt-1 text-caption text-fg-2">
-          {carryOn
-            ? 'Every rule holds: within the cap, it is sent automatically.'
+          {onGet
+            ? 'Every rule holds. The fee and what you owe show before anything is sent.'
             : 'Rules, not a score: every one is above.'}
         </p>
       </div>
-      <div className={`mt-3 flex flex-wrap gap-2 ${carryOn ? 'hidden' : ''}`}>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {e.eligible && onGet && (
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={event => {
+              event.stopPropagation()
+              onGet()
+            }}
+          >
+            <Banknote size={18} aria-hidden />
+            Get advance
+          </button>
+        )}
         {e.eligible && !open && onRequest && (
           <button
             type="button"
@@ -500,7 +510,7 @@ function Verdict({
             onClose()
           }}
         >
-          Done
+          {onGet ? 'Not now' : 'Done'}
         </button>
       </div>
     </div>

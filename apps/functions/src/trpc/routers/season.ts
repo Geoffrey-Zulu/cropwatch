@@ -164,5 +164,11 @@ export const seasonRouter = router({
       .mutation(({ ctx, input }) =>
         run(() => ctx.services.season.groundCheck(ctx.caller, input.orgId))
       ),
+    // The reconciliation rerun: a refresh starts the batch over (Geoffrey, 1 Nov).
+    resetSettlement: signedInProcedure
+      .input(Org)
+      .mutation(({ ctx, input }) =>
+        run(() => ctx.services.season.resetSettlement(ctx.caller, input.orgId))
+      ),
   }),
 })

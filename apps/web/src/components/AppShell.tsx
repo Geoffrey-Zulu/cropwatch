@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react'
+import { Building2, LogOut } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { PhytosLogo } from './PhytosLogo'
 
@@ -39,6 +39,11 @@ export function AppShell({
           >
             <PhytosLogo />
           </a>
+          {/* Which of the two apps the room is looking at (the other: the farmer dashboard). */}
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-well px-3 py-1 text-caption font-semibold text-fg shadow-[inset_0_0_0_1px_var(--hairline)]">
+            <Building2 size={14} aria-hidden className="text-signal" />
+            Agro dashboard
+          </span>
           {nav && (
             <nav aria-label="Screens" className="hidden min-w-0 items-center gap-[0.2rem] lg:flex">
               {nav}

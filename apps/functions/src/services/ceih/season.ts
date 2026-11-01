@@ -136,6 +136,8 @@ export interface SeasonService {
   // Demo controls (Command Center, simulated orgs only).
   setPhase(caller: Caller, orgId: string, phase: SeasonPhase): Promise<{ today: string }>
   groundCheck(caller: Caller, orgId: string): Promise<{ obs_id: string; live: boolean }>
+  // Demo control (simulated seasons only): the payout rows removed, so the batch can run again.
+  resetSettlement(caller: Caller, orgId: string): Promise<{ removed: number }>
 }
 
 export interface SeasonDeps {
@@ -801,6 +803,14 @@ export function seasonService({
       const today = seasonNow(realNow(), offset_days)
       if (phase === 'march') await service.evaluateTriggers(caller, orgId)
       return { today }
+    },
+
+    async resetSettlement(caller, orgId) {
+      const { data } = await demoOnly(caller, orgId)
+      const ids = data.ledger
+        .filter(l => l.data.type === 'payout' && l.data.org_id === orgId && l.data.sim)
+        .map(l => l.id)
+      return { removed: await store.removePayouts(ids) }
     },
 
     async groundCheck(caller, orgId) {

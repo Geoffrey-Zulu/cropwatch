@@ -136,14 +136,15 @@ await beat(
   '4b-farmer-check-and-money',
   async p => {
     await p.getByRole('button', { name: 'Check my advance' }).click()
-    for (const [ms, name] of [
-      [5000, '4b1-farmer-passes'],
-      [6000, '4b2-farmer-verdict'],
-      [2600, '4b3-farmer-sending'],
-    ] as const) {
-      await p.waitForTimeout(ms)
-      await p.screenshot({ path: join(out, `${name}.png`) })
-    }
+    await p.waitForTimeout(5000)
+    await p.screenshot({ path: join(out, '4b1-farmer-passes.png') })
+    // The verdict: whether and how much; then he takes it.
+    await p.getByRole('button', { name: 'Get advance' }).waitFor({ timeout: 20_000 })
+    await p.waitForTimeout(2500)
+    await p.screenshot({ path: join(out, '4b2-farmer-verdict.png') })
+    await p.getByRole('button', { name: 'Get advance' }).click()
+    await p.waitForTimeout(1200)
+    await p.screenshot({ path: join(out, '4b3-farmer-sending.png') })
     await p.getByText('sent to your registered mobile money account').waitFor({ timeout: 20_000 })
   },
   4500
@@ -152,35 +153,34 @@ await beat('4c-farmer-statement', async p => {
   await p.getByRole('button', { name: 'Done' }).click()
   await p.getByText('Advance sent').waitFor({ timeout: 10_000 })
 })
-await beat('5a-june', async p => {
-  // Back to the agribusiness: June, harvest.
+await beat('5a-reconciliation', async p => {
+  // Back to the agribusiness, still in January: Reconciliation.
   await p.goto(`${base}/#/outgrower/reconciliation`)
   await p.getByRole('button', { name: 'Start reconciliation' }).waitFor({ timeout: 60_000 })
-  await controls(p)
-  await p.getByRole('button', { name: /Go to June/ }).click()
-  await p.getByText('Jun 2027').first().waitFor({ timeout: 30_000 })
-  await closeControls(p)
-  await p.getByRole('button', { name: 'Start reconciliation' }).isEnabled({ timeout: 30_000 })
+  await p.getByText('Moves the season to June').waitFor({ timeout: 30_000 })
 })
 await beat(
-  '5b-reconciliation-batch',
+  '5b-june-and-batch',
   async p => {
+    // One press: the season moves to June, then the batch plays.
     await p.getByRole('button', { name: 'Start reconciliation' }).click()
+    // The season line, not the closed gear panel's copy of the date.
+    await p.locator(':text("Jun 2027"):visible').first().waitFor({ timeout: 30_000 })
     await p.waitForTimeout(4500)
     await p.screenshot({ path: join(out, '5b1-batch-playing.png') })
-    await p.getByRole('button', { name: 'Request payout for farmers' }).waitFor({ timeout: 30_000 })
+    await p.getByRole('button', { name: 'Request bulk payment' }).waitFor({ timeout: 30_000 })
   },
   5000
 )
 await beat('6a-payout-confirm', async p => {
-  await p.getByRole('button', { name: 'Request payout for farmers' }).click()
-  await p.getByRole('button', { name: 'Send payout request' }).waitFor({ timeout: 10_000 })
+  await p.getByRole('button', { name: 'Request bulk payment' }).click()
+  await p.getByRole('button', { name: 'Send bulk payment' }).waitFor({ timeout: 10_000 })
 })
 await beat(
   '6b-payout-sent',
   async p => {
-    await p.getByRole('button', { name: 'Send payout request' }).click()
-    await p.getByText('Payout request sent to Phytos').waitFor({ timeout: 30_000 })
+    await p.getByRole('button', { name: 'Send bulk payment' }).click()
+    await p.getByText('Bulk payment request sent to Phytos').waitFor({ timeout: 30_000 })
   },
   5000
 )

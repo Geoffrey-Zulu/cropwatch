@@ -62,6 +62,7 @@ const STEPS: Step[] = [
       await go(p, farmerUrl, 'Check my advance')
       await p.getByRole('button', { name: 'Check my advance' }).click()
       await p.getByRole('button', { name: 'Skip' }).click()
+      await p.getByRole('button', { name: 'Get advance' }).click()
       await p.getByText('sent to your registered mobile money account').waitFor({ timeout: 15_000 })
       await p.waitForTimeout(900)
     },
@@ -72,6 +73,7 @@ const STEPS: Step[] = [
       await go(p, farmerUrl, 'Check my advance')
       await p.getByRole('button', { name: 'Check my advance' }).click()
       await p.getByRole('button', { name: 'Skip' }).click()
+      await p.getByRole('button', { name: 'Get advance' }).click()
       await p.getByRole('button', { name: 'Done' }).click({ timeout: 15_000 })
       await p.waitForTimeout(700)
     },
