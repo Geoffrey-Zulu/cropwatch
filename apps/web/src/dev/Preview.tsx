@@ -1,47 +1,26 @@
-// Development only (main.tsx loads it behind import.meta.env.DEV): every Command Center page
-// from seed fixtures, for design review and screenshots without an officer sign-in.
-// #/preview/<map|alerts|outbreak|observation|queue|outgrower|visit|sources|scenario|season|
-// approvals|reconciliation>; the last three are the Outgrower View's CEIH tabs; alerts,
-// outbreak and observation are drawers over the map, visit a drawer over the Outgrower View.
-// Fixtures are generated from the
-// seed into ./fixtures.local.json (gitignored).
+// Development only (main.tsx loads it behind import.meta.env.DEV): the four screens from seed
+// fixtures, for design review and screenshots without an officer sign-in.
+// #/preview/<fields|season|approvals|reconciliation>[?june]. Fixtures are generated from the
+// seed into ./fixtures.local.json (gitignored): pnpm --filter @repo/seed exec tsx ceih-fixtures.ts
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
 import type { User } from 'firebase/auth'
 import { useState } from 'react'
 import type {
   Approval,
-  FieldsMap,
-  DistrictWeather,
   FieldCard,
-  ObservationEvidence,
-  OutgrowerOverview,
+  FieldsMap,
   Portfolio,
-  Recommendation,
   Reconciliation,
   SmsLogView,
   Statement,
 } from '@repo/shared'
-import { AlertsDrawer } from '../components/AlertsDrawer'
 import { AppShell } from '../components/AppShell'
-import { ObservationDrawerView } from '../components/ObservationDrawer'
-import { OutbreakDrawerView } from '../components/OutbreakDrawer'
 import type { Officer } from '../hooks/useAuth'
-import type { LiveData } from '../hooks/useLive'
-import { KnowledgeSourcesPage } from '../pages/KnowledgeSourcesPage'
-import { NationalMapPage } from '../pages/NationalMapPage'
-import { OfficerQueuePage, queueRows } from '../pages/OfficerQueuePage'
 import { OutgrowerViewPage } from '../pages/OutgrowerViewPage'
-import { ScenarioPage } from '../pages/ScenarioPage'
 import { trpc } from '../lib/trpc'
 
 interface Fixtures {
-  live: Required<{ [K in keyof LiveData]: NonNullable<LiveData[K]> }>
-  outgrower: OutgrowerOverview
-  weather: DistrictWeather
-  evidence: ObservationEvidence
-  recommendations: Record<string, Recommendation>
-  sampleId: string
   // CEIH (tools/seed/ceih-fixtures.ts): the season in January (beat 5) and June (beat 8).
   season?: { january: SeasonFixture; june: SeasonFixture; hero: string }
 }
@@ -63,7 +42,7 @@ const fixtures = Object.values(found)[0] as Fixtures | undefined
 
 const officer: Officer = {
   user: {} as User,
-  email: 'agronomist@phytos-demo.test',
+  email: 'agronomist@phytos.test',
   role: 'agronomist',
   orgId: null,
   commandCenter: true,
@@ -74,9 +53,6 @@ function mockFetch(data: Fixtures, page: string, june: boolean): typeof fetch {
   const state = june ? data.season?.june : data.season?.january
   const hero = data.season?.hero ?? ''
   const answers: Record<string, (input: { contractId?: string } | undefined) => unknown> = {
-    'outgrower.overview': () => data.outgrower,
-    'weather.district': () => data.weather,
-    'evidence.observation': () => data.evidence,
     'season.portfolio': () => state?.portfolio,
     'season.fields': () => state?.fields,
     'season.approvals': () => state?.approvals,
@@ -102,10 +78,10 @@ function mockFetch(data: Fixtures, page: string, june: boolean): typeof fetch {
 }
 
 export function Preview({ route }: { route: string }) {
+  const page = route.split('?')[0].split('/')[0] || 'fields'
   const [clients] = useState(() => {
     if (!fixtures) return null
     const queryClient = new QueryClient()
-    const page = route.split('?')[0].split('/')[0] || 'map'
     const client = trpc.createClient({
       links: [
         httpBatchLink({
@@ -117,70 +93,29 @@ export function Preview({ route }: { route: string }) {
     })
     return { queryClient, client }
   })
-  if (!fixtures || !clients)
+  if (!fixtures?.season || !clients)
     return (
       <p className="p-6">
-        No fixtures: generate apps/web/src/dev/fixtures.local.json from the seed first.
+        No fixtures: pnpm --filter @repo/seed exec tsx ceih-fixtures.ts writes
+        apps/web/src/dev/fixtures.local.json.
       </p>
     )
 
-  const { live } = fixtures
-  const page = route.split('?')[0].split('/')[0] || 'map'
-  // The visit drawer is a hash query (useRoute): open it on the first visit in the fixtures.
-  const firstVisit = fixtures.outgrower.officers[0]?.visits[0]?.report_number
-  if (page === 'visit' && firstVisit && !window.location.hash.includes('?visit='))
-    window.history.replaceState(null, '', `#/preview/visit?visit=${firstVisit}`)
+  const tab = SEASON_PAGES.find(p => p === page) ?? 'fields'
   // The season ledger opens on Given's field card.
-  if (page === 'season' && fixtures.season && !window.location.hash.includes('?contract='))
+  if (tab === 'season' && !window.location.hash.includes('?contract='))
     window.history.replaceState(null, '', `#/preview/season?contract=${fixtures.season.hero}`)
-  const seasonTab = SEASON_PAGES.find(p => p === page)
-  const cluster = live.clusters.find(c => c.districtSlug === 'chongwe') ?? live.clusters[0] ?? null
-  const sample = live.observations.find(o => o.id === fixtures.sampleId)!
-  const overMap = ['map', 'alerts', 'outbreak', 'observation'].includes(page)
-  const active = overMap ? 'map' : page === 'visit' || seasonTab ? 'outgrower' : (page as 'map')
-  const verified = live.observations.filter(o =>
-    ['FIELD_VERIFIED', 'EXPERT_CONFIRMED'].includes(o.verification)
-  ).length
 
   return (
     <trpc.Provider client={clients.client} queryClient={clients.queryClient}>
       <QueryClientProvider client={clients.queryClient}>
         <AppShell
-          active={active}
-          commandCenter
           email={officer.email}
           role={officer.role}
-          verified={verified}
-          queue={queueRows(live.observations, live.clusters).length}
-          newAlerts={live.alerts.length}
           onSignOut={() => undefined}
-          bleed={overMap || page === 'fields'}
+          bleed={tab === 'fields'}
         >
-          {overMap && <NationalMapPage {...live} verified={verified} />}
-          {page === 'alerts' && <AlertsDrawer alerts={live.alerts} />}
-          {page === 'outbreak' && cluster && (
-            <OutbreakDrawerView
-              cluster={cluster}
-              alert={live.alerts.find(a => a.clusterId === cluster.id) ?? null}
-              risk={live.risk.find(r => r.districtSlug === cluster.districtSlug) ?? null}
-              observations={live.observations}
-            />
-          )}
-          {page === 'observation' && (
-            <ObservationDrawerView
-              observation={sample}
-              recommendation={
-                sample.recommendationId ? fixtures.recommendations[sample.recommendationId] : null
-              }
-              cluster={live.clusters.find(c => c.members.includes(sample.id)) ?? null}
-              officer={officer}
-            />
-          )}
-          {page === 'queue' && <OfficerQueuePage selectedId={null} officer={officer} {...live} />}
-          {(page === 'outgrower' || page === 'visit') && <OutgrowerViewPage officer={officer} />}
-          {seasonTab && <OutgrowerViewPage officer={officer} tab={seasonTab} />}
-          {page === 'sources' && <KnowledgeSourcesPage />}
-          {page === 'scenario' && <ScenarioPage observations={live.observations} />}
+          <OutgrowerViewPage officer={officer} tab={tab} />
         </AppShell>
       </QueryClientProvider>
     </trpc.Provider>

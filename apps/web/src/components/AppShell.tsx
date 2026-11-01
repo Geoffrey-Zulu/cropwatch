@@ -1,199 +1,44 @@
-import {
-  Bell,
-  BookOpen,
-  CircleCheck,
-  ClipboardCheck,
-  LogOut,
-  Map,
-  Sun,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { hrefFor, useDrawerLinks, type Route } from '../hooks/useRoute'
-import { SCENARIO_ENABLED } from '../lib/features'
-import { CountUp } from '../hooks/useCountUp'
 import { PhytosLogo } from './PhytosLogo'
 
-interface NavItem {
-  page: Route['page']
-  label: string
-  icon: LucideIcon
-  route: Route
-  commandCenterOnly: boolean
-}
-
-const NAV: NavItem[] = [
-  {
-    page: 'map',
-    label: 'National map',
-    icon: Map,
-    route: { page: 'map' },
-    commandCenterOnly: true,
-  },
-  {
-    page: 'queue',
-    label: 'Officer queue',
-    icon: ClipboardCheck,
-    route: { page: 'queue' },
-    commandCenterOnly: true,
-  },
-  {
-    page: 'outgrower',
-    label: 'Outgrower View',
-    icon: Users,
-    route: { page: 'outgrower' },
-    commandCenterOnly: false,
-  },
-  ...(SCENARIO_ENABLED
-    ? [
-        {
-          page: 'scenario',
-          label: 'Dry-spell scenario',
-          icon: Sun,
-          route: { page: 'scenario' },
-          commandCenterOnly: true,
-        } satisfies NavItem,
-      ]
-    : []),
-  {
-    page: 'sources',
-    label: 'Knowledge sources',
-    icon: BookOpen,
-    route: { page: 'sources' },
-    commandCenterOnly: false,
-  },
-]
-
-// The Command Center frame in mockup A's language (Field-airy, chosen 30 Oct): a white header
-// with the Phytos lockup, the pages as pills (the current one field green on its tint), and on
-// the right the live verified count, the bell and the account avatar (initials, never a raw
-// email in the chrome). Phones keep the lockup, bell and avatar in the header and move the pages
-// to a scrolling pill strip under it. The map page is a full-bleed stage; every other page sits
-// on the cream canvas at a readable width. The DEMO badge is never in the chrome: each view
-// shows it on the data it marks (CLAUDE.md invariant 5).
+// The frame in mockup A's language (Field-airy): a white header with the Phytos lockup on the
+// left and the account avatar on the right (initials, never a raw email in the chrome). The four
+// screens are the Outgrower View's tabs, under the header on each page. The Fields map is a
+// full-bleed stage; the other screens sit on the cream canvas at a readable width.
 export function AppShell({
-  active,
-  commandCenter,
   email,
   role,
-  verified,
-  queue,
-  newAlerts = null,
   onSignOut,
-  bleed,
+  bleed = false,
   children,
 }: {
-  active: Route['page']
-  commandCenter: boolean
   email: string
   role: string
-  verified: number | null
-  queue: number | null
-  // Alerts raised in the last 24 hours, for the bell; null hides the bell.
-  newAlerts?: number | null
   onSignOut: () => void
-  // The page is a map that fills the screen under the header (the national map, the Fields
-  // map): no column, no padding. Defaults to the national map only.
+  // The page is a map that fills the screen under the header: no column, no padding.
   bleed?: boolean
   children: ReactNode
 }) {
-  const full = bleed ?? active === 'map'
-  const items = NAV.filter(item => commandCenter || !item.commandCenterOnly)
-  const links = (strip: boolean) =>
-    items.map(item => {
-      const current = item.page === active
-      const count = item.page === 'queue' && queue !== null && queue > 0 ? queue : null
-      return (
-        <a
-          key={item.page}
-          href={hrefFor(item.route)}
-          aria-current={current ? 'page' : undefined}
-          className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-pill text-[0.95rem] transition-colors duration-200 ease-out ${
-            strip ? 'px-[0.85rem] py-[0.6rem]' : 'px-[0.85rem] py-2'
-          } ${
-            current
-              ? 'bg-signal-tint font-semibold text-signal-text'
-              : 'font-medium text-fg-2 hover:bg-well hover:text-fg'
-          }`}
-        >
-          {item.label}
-          {count !== null && (
-            <span className="inline-grid h-[1.3rem] min-w-[1.6rem] place-items-center rounded-pill bg-[#EDF0E8] px-1.5 text-[0.78rem] font-bold tabular-nums text-fg">
-              <span className="sr-only">, </span>
-              {count > 999 ? '999+' : count}
-              <span className="sr-only"> waiting</span>
-            </span>
-          )}
-        </a>
-      )
-    })
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="sticky top-0 z-30">
         <header className="relative flex h-[3.75rem] items-center gap-3 bg-panel px-4 shadow-[0_1px_0_rgb(27_41_32/0.06),0_10px_26px_-18px_rgb(27_41_32/0.3)] md:gap-8 md:px-[1.6rem]">
-          <a href="#/" aria-label="Phytos: national map" className="shrink-0 rounded-card">
+          <a
+            href="#/outgrower/fields"
+            aria-label="Phytos: Fields map"
+            className="shrink-0 rounded-card"
+          >
             <PhytosLogo />
           </a>
-          {/* In the header only from 1280 px: below that the five links and the verified count overlap
-              (found 31 Oct at 1024 to 1100 px), so they keep the row under the header. */}
-          <nav aria-label="Pages" className="hidden min-w-0 items-center gap-[0.2rem] xl:flex">
-            {links(false)}
-          </nav>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-4">
-            {verified !== null && <VerifiedCount count={verified} />}
-            {newAlerts !== null && <AlertsBell count={newAlerts} />}
             <AccountMenu email={email} role={role} onSignOut={onSignOut} />
           </div>
         </header>
-        <nav
-          aria-label="Pages"
-          className="flex gap-[0.2rem] overflow-x-auto bg-panel px-3 pb-[0.6rem] pt-[0.55rem] shadow-[0_1px_0_rgb(27_41_32/0.06)] [scrollbar-width:none] xl:hidden"
-        >
-          {links(true)}
-        </nav>
       </div>
-      <main className={`canvas min-w-0 flex-1 ${full ? '' : 'px-4 py-6 md:px-[1.6rem] md:py-8'}`}>
-        {full ? children : <div className="mx-auto max-w-[1320px]">{children}</div>}
+      <main className={`canvas min-w-0 flex-1 ${bleed ? '' : 'px-4 py-6 md:px-[1.6rem] md:py-8'}`}>
+        {bleed ? children : <div className="mx-auto max-w-[1320px]">{children}</div>}
       </main>
-    </div>
-  )
-}
-
-// The alerts live behind the bell (patterns-v2.md): the map page answers one question.
-function AlertsBell({ count }: { count: number }) {
-  const { open } = useDrawerLinks()
-  return (
-    <a
-      href={open({ kind: 'alerts' })}
-      aria-label={count ? `Alerts: ${count} in the last 24 hours` : 'Alerts'}
-      className="relative inline-grid h-10 w-10 place-items-center rounded-pill text-fg transition-colors duration-200 ease-out hover:bg-well"
-    >
-      <Bell aria-hidden />
-      {count > 0 && (
-        <span className="absolute right-[0.15rem] top-[0.2rem] h-[1.1rem] min-w-[1.1rem] rounded-pill bg-fg px-[0.3rem] text-center text-[0.7rem] font-bold leading-[1.1rem] text-white shadow-[0_0_0_2px_#fff]">
-          {count > 99 ? '99+' : count}
-        </span>
-      )}
-    </a>
-  )
-}
-
-// The live count of officer-verified observations: the moat, counting up as officers verify.
-function VerifiedCount({ count }: { count: number }) {
-  return (
-    <div
-      className="hidden items-center gap-2 whitespace-nowrap text-[0.95rem] text-fg-2 md:inline-flex"
-      aria-live="polite"
-      aria-label={`${count} verified observations`}
-    >
-      <CircleCheck aria-hidden className="h-[1.15rem] w-[1.15rem] text-signal" />
-      <span>
-        <b className="font-bold tabular-nums text-fg">
-          <CountUp value={count} />
-        </b>{' '}
-        verified observations
-      </span>
     </div>
   )
 }

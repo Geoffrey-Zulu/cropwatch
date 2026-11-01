@@ -4,15 +4,7 @@ import { AppShell, initials } from './AppShell'
 
 const shell = () =>
   render(
-    <AppShell
-      active="map"
-      commandCenter
-      email="agronomist@phytos-demo.test"
-      role="agronomist"
-      verified={188}
-      queue={82}
-      onSignOut={() => undefined}
-    >
+    <AppShell email="agronomist@phytos.test" role="agronomist" onSignOut={() => undefined}>
       <p>page</p>
     </AppShell>
   )
@@ -20,37 +12,26 @@ const shell = () =>
 describe('AppShell header (design-system/phytos/patterns.md rule 1)', () => {
   it('never prints the email in the chrome; it is only inside the account menu', () => {
     shell()
-    expect(screen.queryByText('agronomist@phytos-demo.test')).not.toBeInTheDocument()
+    expect(screen.queryByText('agronomist@phytos.test')).not.toBeInTheDocument()
     expect(screen.getByText('AG')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /account/i }))
-    expect(screen.getByRole('menu')).toHaveTextContent('agronomist@phytos-demo.test')
+    expect(screen.getByRole('menu')).toHaveTextContent('agronomist@phytos.test')
     expect(screen.getByRole('menuitem', { name: /sign out/i })).toBeInTheDocument()
   })
 
-  it('marks the current page and keeps nav labels in sentence case', () => {
+  it('carries no page nav: the four screens are the tabs on each page', () => {
     shell()
-    // The pages are listed twice: in the header on wide screens, as a strip on phones.
-    const current = screen.getAllByRole('link', { current: 'page' })
-    expect(current).toHaveLength(2)
-    for (const link of current) expect(link).toHaveTextContent('National map')
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /fields map/i })).toHaveAttribute(
+      'href',
+      '#/outgrower/fields'
+    )
   })
+})
 
-  it('carries the lockup only: no "Command Center" text, no prototype chip, no DEMO badge', () => {
-    shell()
-    expect(screen.getByRole('link', { name: /phytos/i })).toHaveTextContent('Phytos')
-    expect(screen.queryByText(/command center/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/prototype/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/demo data/i)).not.toBeInTheDocument()
-  })
-
-  it('shows the queue count beside its page', () => {
-    shell()
-    const queue = screen.getAllByRole('link', { name: /officer queue/i })[0]
-    expect(queue).toHaveTextContent('82')
-  })
-
-  it('reads initials from the email', () => {
-    expect(initials('jane.banda@example.org')).toBe('JB')
-    expect(initials('agronomist@phytos-demo.test')).toBe('AG')
+describe('initials', () => {
+  it('reads two letters from the address', () => {
+    expect(initials('agronomist@phytos.test')).toBe('AG')
+    expect(initials('jane.banda@phytos.test')).toBe('JB')
   })
 })

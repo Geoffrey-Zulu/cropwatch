@@ -62,64 +62,6 @@ const VIEWS: View[] = [
   { name: 'capture-4-result-advice', app: 'capture', route: 'result' },
   { name: 'capture-5-result-officer', app: 'capture', route: 'officer' },
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
-  { name: 'dashboard-map', app: 'dashboard', route: 'map', extra: PROJECTOR },
-  {
-    // The demo's own view: the pre-stage leaves the map on Lusaka and Chongwe, where the
-    // presenter's report lands. Marks keep their screen size at this zoom.
-    name: 'dashboard-map-lusaka',
-    app: 'dashboard',
-    route: 'map',
-    extra: PROJECTOR,
-    prepare: async page => {
-      await page.getByRole('button', { name: 'Lusaka and Chongwe' }).click({ force: true })
-      await page.waitForTimeout(900)
-    },
-  },
-  {
-    name: 'dashboard-map-eastern',
-    app: 'dashboard',
-    route: 'map',
-    // The region toggle flies to Eastern Province (mockup A, with the motion from B).
-    prepare: async page => {
-      await page.getByRole('button', { name: 'Eastern Province' }).click({ force: true })
-      await page.waitForTimeout(900)
-    },
-  },
-  {
-    name: 'dashboard-map-district',
-    app: 'dashboard',
-    route: 'map',
-    // A district pressed on the map: it flies there, is outlined, and its panel slides in;
-    // Chipangali shares Chipata's risk signal and says so. The click goes to the shape itself:
-    // on a phone the Chipata cluster ring covers it, and a tap there opens the cluster instead.
-    prepare: async page => {
-      await page
-        .locator(
-          'svg[aria-label^="Zambia"] path:has(title:text-is("Chipangali · shares its risk signal with Chipata"))'
-        )
-        .first()
-        .dispatchEvent('click')
-      await page.waitForTimeout(900)
-    },
-  },
-  { name: 'dashboard-alerts', app: 'dashboard', route: 'alerts' },
-  { name: 'dashboard-outbreak', app: 'dashboard', route: 'outbreak' },
-  { name: 'dashboard-observation', app: 'dashboard', route: 'observation' },
-  { name: 'dashboard-queue', app: 'dashboard', route: 'queue' },
-  // First paint: the camps and one line a field officer, before anyone presses anything.
-  { name: 'dashboard-outgrower', app: 'dashboard', route: 'outgrower' },
-  {
-    name: 'dashboard-outgrower-prioritised',
-    app: 'dashboard',
-    route: 'outgrower',
-    // As in the demo: the full visit lists appear on "Prioritise field officers".
-    prepare: async page => {
-      // No wait for the button to settle: a slow machine timed out on it (29 Oct).
-      await page.getByRole('button', { name: /prioritise field officers/i }).click({ force: true })
-      await page.waitForTimeout(500)
-    },
-  },
-  { name: 'dashboard-visit', app: 'dashboard', route: 'visit' },
   // CEIH (plan §3): the season's three tabs and the approval, from tools/seed/ceih-fixtures.ts.
   {
     name: 'dashboard-fields-map',
@@ -180,17 +122,6 @@ const VIEWS: View[] = [
     app: 'dashboard',
     route: 'reconciliation',
     extra: PROJECTOR,
-  },
-  { name: 'dashboard-sources', app: 'dashboard', route: 'sources' },
-  { name: 'dashboard-scenario', app: 'dashboard', route: 'scenario' },
-  {
-    name: 'dashboard-scenario-dry',
-    app: 'dashboard',
-    route: 'scenario',
-    prepare: async page => {
-      await page.getByRole('switch').click()
-      await page.waitForTimeout(600)
-    },
   },
 ]
 
