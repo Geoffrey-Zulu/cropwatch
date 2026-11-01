@@ -19,7 +19,12 @@ export function useAuth(): AuthState {
       if (active) {
         setState(current => current.user
           ? current
-          : { user: null, error: 'Firebase sign-in timed out. Check your connection and try again.' })
+          : {
+              user: null,
+              error: signInRequested
+                ? 'Anonymous sign-in request timed out after 15 seconds.'
+                : 'Firebase session initialization timed out after 15 seconds, before a sign-in request could start.',
+            })
       }
     }, 15_000)
 

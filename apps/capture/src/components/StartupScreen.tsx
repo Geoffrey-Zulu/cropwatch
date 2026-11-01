@@ -28,7 +28,7 @@ export function StartupScreen({
           </h1>
           <p className="mt-3 text-body text-fg-2">
             {failed
-              ? 'Phytos could not connect just now. Check your internet connection, then try again.'
+              ? 'Phytos could not finish signing in. Try again to reconnect to your reports.'
               : 'Connecting to your reports and preparing your field workspace.'}
           </p>
 
