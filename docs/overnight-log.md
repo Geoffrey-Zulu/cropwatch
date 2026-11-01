@@ -260,3 +260,18 @@ Reviewers: a judge seeing the demo cold, a Zambian agribusiness credit manager, 
 - the repo reads clean once `main` is fast-forwarded.
 
 The advance moment takes more than two presses because its safeguards (the fee before the code, the code, the second person) each need one, and those are on the never-cut list. From here, polish only.
+
+## Polish (02:40 to 03:00)
+
+- **Fixes:**
+  - the tab band spans the page;
+  - the approval card's photo stays small on a phone.
+- **Visual pass of every CEIH view** at laptop, phone and both projector sizes (`docs/ui-review/2026-11-01-night5/`): no issues.
+- **Preview `night5`:**
+  - demo check: all checks; beats 1 to 6 in 24.1 s, a cold revision;
+  - outbreak check: dispatched in 6.0 s;
+  - recording: no page errors.
+- **Production (02:57):** clean deploy, API `00028-dxp`.
+  - The re-arm just before it timed out reaching Firestore on the local line. Re-armed straight after the deploy.
+  - Demo check: beats 1 to 6 in 13.3 s. Outbreak check: dispatched in 6.8 s, HIGH.
+- **Tag `ceih-night-5`:** commit `825b788`.
