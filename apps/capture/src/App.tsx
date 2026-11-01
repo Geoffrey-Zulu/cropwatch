@@ -7,6 +7,7 @@ import { StartupScreen } from './components/StartupScreen'
 import { HomePage } from './pages/HomePage'
 import { ReportSentPage } from './pages/ReportSentPage'
 import { ResultPage } from './pages/ResultPage'
+import { CeihPage } from './pages/CeihPage'
 
 // The camera, upload and photo code load only when a report is started, keeping the first
 // screen light on 4G.
@@ -23,6 +24,8 @@ export function App() {
   }
 
   switch (route.page) {
+    case 'ceih':
+      return <CeihPage uid={user.uid} step={route.step} navigate={navigate} />
     case 'diagnose':
       return (
         <Suspense

@@ -90,11 +90,15 @@ describe('routes', () => {
       { page: 'diagnose' },
       { page: 'sent', obsId: 'abc' },
       { page: 'report', obsId: 'abc' },
+      { page: 'ceih', step: 'crop' },
+      { page: 'ceih', step: 'eligibility' },
+      { page: 'ceih', step: 'advance' },
+      { page: 'ceih', step: 'harvest' },
     ] as const) {
       expect(parseRoute(hrefFor(route))).toEqual(route)
     }
-    // The app opens on the camera.
-    expect(parseRoute('')).toEqual({ page: 'diagnose' })
+    expect(parseRoute('')).toEqual({ page: 'ceih', step: 'crop' })
+    expect(parseRoute('#/ceih/unknown')).toEqual({ page: 'ceih', step: 'crop' })
     expect(parseRoute('#/nonsense')).toEqual({ page: 'diagnose' })
     expect(parseRoute('#/home')).toEqual({ page: 'home' })
   })

@@ -1,6 +1,7 @@
 // Development only (main.tsx loads it behind import.meta.env.DEV): every screen state from
 // fixtures, for design review and screenshots without Firebase. #/preview/<state>.
 import type { User } from 'firebase/auth'
+import { CeihPage } from '../pages/CeihPage'
 import { OFFICER_REFERRAL, type ObservationView } from '@repo/shared'
 import { AppHeader } from '../components/AppHeader'
 import { ActionBar } from '../components/ActionBar'
@@ -146,6 +147,25 @@ const noop = () => {}
 
 export function Preview({ state }: { state: string }) {
   switch (state) {
+    case 'ceihC':
+    case 'ceihE':
+    case 'ceihI':
+    case 'ceihH':
+      return (
+        <CeihPage
+          uid="ceih-preview"
+          step={
+            state === 'ceihE'
+              ? 'eligibility'
+              : state === 'ceihI'
+                ? 'advance'
+                : state === 'ceihH'
+                  ? 'harvest'
+                  : 'crop'
+          }
+          navigate={noop}
+        />
+      )
     case 'diagnose':
       return <DiagnosePage user={fakeUser} navigate={noop} />
     case 'sent':

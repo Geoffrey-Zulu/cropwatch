@@ -1,5 +1,5 @@
 import type { User } from 'firebase/auth'
-import { Camera, X } from 'lucide-react'
+import { ArrowUpRight, Camera, Sprout, X } from 'lucide-react'
 import { findDistrict } from '@repo/shared'
 import { AppHeader } from '../components/AppHeader'
 import { ActionBar } from '../components/ActionBar'
@@ -23,6 +23,14 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
     <>
       <AppHeader district={district} onBack={() => navigate({ page: 'diagnose' })} />
       <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-6">
+        <button className="ceih-entry" onClick={() => navigate({ page: 'ceih', step: 'crop' })}>
+          <Sprout size={26} aria-hidden />
+          <span>
+            <strong>Your CEIH season</strong>
+            <small>Crop check, eligibility, advance and harvest</small>
+          </span>
+          <ArrowUpRight size={22} aria-hidden />
+        </button>
         <div>
           <p className="eyebrow">Crop health · Zambia</p>
           <h1 className="font-display text-display font-bold text-fg">
