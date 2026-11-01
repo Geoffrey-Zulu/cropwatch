@@ -56,6 +56,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.resetAllMocks()
 })
 it('shows actual regional acquisition dates and keeps scene cloud cover separate from field verification', async () => {
@@ -97,4 +98,27 @@ it('saves an explicitly imported polygon as a claimed field, not a town-centre p
     )
   )
   expect(await screen.findByText('Unattested')).toBeInTheDocument()
+})
+
+it('does not treat vegetation before planting as verification of the current crop', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-01T00:00:00Z'))
+  vi.mocked(fieldApi.list).mockResolvedValue([{ ...field, planting_date: '2026-10-25' }])
+  vi.mocked(fieldApi.report).mockResolvedValue({
+    ...regional,
+    field_id: field.id,
+    scope: 'field',
+    vegetation_status: 'ok',
+    readings: [
+      {
+        from: '2026-10-20T00:00:00Z',
+        to: '2026-10-24T00:00:00Z',
+        ndvi: 0.65,
+        valid_pixel_pct: 90,
+        valid_pixels: 100,
+      },
+    ],
+  })
+  render(<FieldEvidence uid="user" onExample={vi.fn()} />)
+  expect(await screen.findByText(/vegetation interval predates planting/)).toBeInTheDocument()
+  expect(screen.getByText('Officer review required')).toBeInTheDocument()
 })

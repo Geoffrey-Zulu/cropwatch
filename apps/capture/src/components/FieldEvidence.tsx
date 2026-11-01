@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Check,
@@ -48,6 +48,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
   const [report, setReport] = useState<Evidence | null>(null)
   const [draft, setDraft] = useState(() => readDraft(uid))
   const [editing, setEditing] = useState(false)
+  const form = useRef<HTMLElement>(null)
   const [busy, setBusy] = useState<'saving' | 'refreshing' | 'gps' | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -90,11 +91,28 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
       localStorage.setItem(`phytos:field-draft:${uid}`, JSON.stringify(draft))
     } catch {}
   }, [draft, uid])
+  useEffect(() => {
+    if (editing) {
+      form.current?.scrollIntoView?.({ block: 'start' })
+      form.current?.querySelector('input')?.focus({ preventScroll: true })
+    }
+  }, [editing])
   const field = fields.find(f => f.id === selected)
   const evidence = field ? report : regional
   const readings = evidence?.readings ?? []
   const latest = readings[readings.length - 1]
   const fresh = latest ? Date.now() - Date.parse(latest.to) < 21 * 86400000 : false
+  const afterPlanting = Boolean(
+    latest && field?.planting_date && Date.parse(latest.from) >= Date.parse(field.planting_date)
+  )
+  const reviewMessage =
+    latest && fresh
+      ? !field?.planting_date
+        ? 'Planting date is not recorded. A dated field visit is needed before this evidence can support the current crop.'
+        : !afterPlanting
+          ? 'The latest vegetation interval predates planting. It does not verify the current crop.'
+          : 'Recent vegetation evidence is available. The claimed boundary and field visit still require review.'
+      : 'Complete field verification with usable satellite evidence and an officer review. Missing imagery is not evidence of crop failure.'
   const center = field
     ? {
         latitude:
@@ -201,7 +219,11 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
             <span>Add a boundary to request field-specific evidence.</span>
           </div>
         )}
-        <button className="season-small-button" onClick={() => setEditing(!editing)}>
+        <button
+          className="season-small-button"
+          aria-label={editing ? 'Close field form' : 'Add a field'}
+          onClick={() => setEditing(!editing)}
+        >
           {editing ? (
             <X size={16} aria-label="Close field form" />
           ) : (
@@ -210,7 +232,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
         </button>
       </div>
       {editing && (
-        <section className="field-registration" aria-label="Register a field boundary">
+        <section ref={form} className="field-registration" aria-label="Register a field boundary">
           <h2>Record the field</h2>
           <p>
             Walk around the actual field and capture corners in order, or import its GeoJSON
@@ -344,6 +366,11 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
             </div>
           </div>
         )}
+        {field && (
+          <p className="field-planting">
+            Planting date: {field.planting_date ? date(field.planting_date) : 'not recorded'}
+          </p>
+        )}
       </section>
       <section className="satellite-evidence">
         <div className="season-section-title">
@@ -407,7 +434,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
                 <strong className="vegetation-value">{latest.ndvi.toFixed(2)}</strong>
                 <p>
                   {date(latest.from)} – {date(latest.to)} · {latest.valid_pixel_pct.toFixed(0)}%
-                  valid field pixels
+                  usable sampling-grid pixels
                 </p>
                 {readings.length > 1 && (
                   <svg
@@ -441,19 +468,16 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
               </p>
             )}
             <p className="evidence-source">
-              Cloud-masked 10 m red/NIR statistics. Minimum 50% valid coverage and 10 valid pixels.
-              No crop yield or weeding conclusion is inferred.
+              Cloud-masked red/NIR statistics sampled at about 10 m. Minimum 50% usable sampling-grid
+              pixels and 10 valid pixels. Irregular boundaries can lower this coverage. No crop yield
+              or weeding conclusion is inferred.
             </p>
           </section>
           <div className="field-review-note">
             <ShieldAlert size={20} />
             <div>
               <strong>Officer review required</strong>
-              <p>
-                {latest && fresh
-                  ? 'Recent vegetation evidence is available. The claimed boundary and field visit still require review.'
-                  : 'Complete field verification with usable satellite evidence and an officer review. Missing imagery is not evidence of crop failure.'}
-              </p>
+              <p>{reviewMessage}</p>
             </div>
           </div>
           <button className="season-primary" disabled={!!busy} onClick={refresh}>

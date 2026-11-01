@@ -180,9 +180,14 @@ describe('satellite provenance and coverage', () => {
     expect(report.review_status).toBe('officer_review_required')
   })
   it('filters cloudy/no-data intervals and keeps qualified field pixels separate from scene cloud cover', async () => {
-    const request = vi.fn(async (url: string | URL | Request) => {
+    const request = vi.fn(async (url: string | URL | Request, options?: RequestInit) => {
       if (String(url).endsWith('/search')) return catalog()
       if (String(url).endsWith('/token')) return Response.json({ access_token: 'test-only' })
+      const body = JSON.parse(String(options?.body))
+      expect(body.input.bounds.properties.crs).toContain('4326')
+      expect(body.aggregation.resx).toBeGreaterThan(0.00009)
+      expect(body.aggregation.resx).toBeLessThan(0.0001)
+      expect(body.aggregation.resy).toBeCloseTo(0.00009037, 7)
       const interval = { from: '2026-10-20T00:00:00Z', to: '2026-10-25T00:00:00Z' }
       const row = (mean: number | string, sampleCount: number, noDataCount: number) => ({
         interval,
@@ -216,5 +221,19 @@ describe('satellite provenance and coverage', () => {
     expect(report.vegetation_status).toBe('authorization_failed')
     expect(report.catalogue_status).toBe('ok')
     expect(report.readings).toEqual([])
+  })
+  it('reuses a valid OAuth token across field assessments', async () => {
+    const request = vi.fn(async (url: string | URL | Request) => {
+      if (String(url).endsWith('/search')) return catalog()
+      if (String(url).endsWith('/token'))
+        return Response.json({ access_token: 'cached-test-only', expires_in: 3600 })
+      return Response.json({ data: [] })
+    }) as unknown as typeof fetch
+    const env = { CDSE_CLIENT_ID: 'reuse-test', CDSE_CLIENT_SECRET: 'reuse-test' }
+    await collectEvidence(geometry, 'field-a', env, request)
+    await collectEvidence(geometry, 'field-b', env, request)
+    expect(
+      vi.mocked(request).mock.calls.filter(([url]) => String(url).endsWith('/token'))
+    ).toHaveLength(1)
   })
 })

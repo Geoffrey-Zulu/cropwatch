@@ -9,11 +9,28 @@ const CATALOGUE = 'https://earth-search.aws.element84.com/v1/search'
 const TOKEN =
   'https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token'
 const STATISTICS = 'https://sh.dataspace.copernicus.eu/api/v1/statistics'
-// Adapted from SKACE's Sentinel Hub client: native 10m sampling, stricter quality masking,
+// Adapted from SKACE's Sentinel Hub client: approximately 10m sampling, stricter quality masking,
 // and no synthetic fallback. Scene-level cloud cover is kept separate from field coverage.
 const EVALSCRIPT = `//VERSION=3
 function setup(){return {input:[{bands:["B04","B08","SCL","dataMask"]}],output:[{id:"ndvi",bands:1,sampleType:"FLOAT32"},{id:"dataMask",bands:1}]};}
 function evaluatePixel(s){var sum=s.B08+s.B04;var valid=s.dataMask&&[4,5,6].includes(s.SCL)&&sum>0;return {ndvi:[sum>0?(s.B08-s.B04)/sum:0],dataMask:[valid?1:0]};}`
+
+let cachedToken: {
+  clientId: string
+  clientSecret: string
+  accessToken: string
+  expiresAt: number
+} | null = null
+
+function samplingResolution(geometry: FieldInput['geometry']) {
+  const latitudes = geometry.coordinates[0].map(p => p[1])
+  const phi = (((Math.min(...latitudes) + Math.max(...latitudes)) / 2) * Math.PI) / 180
+  // Statistical API resolution uses the bounds CRS units. EPSG:4326 uses degrees,
+  // so resx/resy=10 would be ten degrees, not ten metres.
+  const metresPerLatitudeDegree = 111132.92 - 559.82 * Math.cos(2 * phi) + 1.175 * Math.cos(4 * phi)
+  const metresPerLongitudeDegree = 111412.84 * Math.cos(phi) - 93.5 * Math.cos(3 * phi)
+  return { resx: 10 / metresPerLongitudeDegree, resy: 10 / metresPerLatitudeDegree }
+}
 
 export async function collectEvidence(
   geometry: FieldInput['geometry'],
@@ -76,28 +93,45 @@ export async function collectEvidence(
     if (!fieldId || !env.CDSE_CLIENT_ID || !env.CDSE_CLIENT_SECRET) return
     report.vegetation_status = 'unavailable'
     try {
-      const tokenResponse = await fetcher(TOKEN, {
-        method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: env.CDSE_CLIENT_ID,
-          client_secret: env.CDSE_CLIENT_SECRET,
-        }),
-        signal: AbortSignal.timeout(15000),
-      })
-      if (!tokenResponse.ok) {
-        report.vegetation_status =
-          tokenResponse.status === 401 ? 'authorization_failed' : 'unavailable'
-        return
+      let accessToken =
+        cachedToken?.clientId === env.CDSE_CLIENT_ID &&
+        cachedToken.clientSecret === env.CDSE_CLIENT_SECRET &&
+        cachedToken.expiresAt > Date.now()
+          ? cachedToken.accessToken
+          : null
+      if (!accessToken) {
+        const tokenResponse = await fetcher(TOKEN, {
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type: 'client_credentials',
+            client_id: env.CDSE_CLIENT_ID,
+            client_secret: env.CDSE_CLIENT_SECRET,
+          }),
+          signal: AbortSignal.timeout(15000),
+        })
+        if (!tokenResponse.ok) {
+          report.vegetation_status =
+            tokenResponse.status === 401 ? 'authorization_failed' : 'unavailable'
+          return
+        }
+        const token = (await tokenResponse.json()) as { access_token?: string; expires_in?: number }
+        if (!token.access_token) return
+        accessToken = token.access_token
+        if (typeof token.expires_in === 'number' && token.expires_in > 60) {
+          cachedToken = {
+            clientId: env.CDSE_CLIENT_ID,
+            clientSecret: env.CDSE_CLIENT_SECRET,
+            accessToken,
+            expiresAt: Date.now() + (Math.min(token.expires_in, 3600) - 60) * 1000,
+          }
+        }
       }
-      const token = (await tokenResponse.json()) as { access_token?: string }
-      if (!token.access_token) return
       const response = await fetcher(STATISTICS, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          authorization: `Bearer ${token.access_token}`,
+          authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           input: {
@@ -114,13 +148,13 @@ export async function collectEvidence(
             timeRange: { from, to: now.toISOString() },
             aggregationInterval: { of: 'P5D' },
             evalscript: EVALSCRIPT,
-            resx: 10,
-            resy: 10,
+            ...samplingResolution(geometry),
           },
         }),
         signal: AbortSignal.timeout(60000),
       })
       if (!response.ok) {
+        if (response.status === 401) cachedToken = null
         report.vegetation_status =
           response.status === 401 || response.status === 403
             ? 'authorization_failed'

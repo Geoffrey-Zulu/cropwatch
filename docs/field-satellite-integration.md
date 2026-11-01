@@ -13,8 +13,9 @@ The inspected Dokploy compose stack did not pass CDSE credentials to its backend
 - Offline GPS-corner drafts and GeoJSON Polygon import. Saving sends the field to Phytos. The API requires a closed, non-self-crossing polygon inside Zambia, at least 0.1 ha and at most 5,000 ha. Area is an approximation, not a survey. Ownership and cadastral accuracy are not established.
 - No implicit square around a pin. A recorded boundary is explicitly labelled **claimed / unattested**. The map shows its actual coordinates.
 - Real intersecting Sentinel-2 acquisition metadata and full-tile previews from the public Earth Search catalogue. Scene cloud cover is not presented as field-level clear-pixel coverage. Monze context is labelled regional and cannot serve as a farm record.
-- An optional Copernicus Statistical API path adapted from SKACE. It samples at 10 m rather than resizing every parcel to 256 × 256 pixels, masks invalid SCL classes, and only retains finite NDVI intervals with at least 50% usable coverage and 10 valid pixels. It never generates substitute NDVI values.
+- An optional Copernicus Statistical API path adapted from SKACE. It targets approximately 10 m sampling, converting metres into EPSG:4326 degrees at the field latitude rather than resizing every parcel to 256 × 256 pixels. It masks invalid SCL classes and only retains finite NDVI intervals with at least 50% usable coverage and 10 valid pixels. It never generates substitute NDVI values. OAuth tokens are reused until shortly before expiry.
 - Separate states for missing configuration, rejected authorization, an upstream failure and no usable pixels. No data is not interpreted as a failed crop.
+- Coverage is the valid-pixel fraction of the requested sampling grid. Masked pixels outside an irregular polygon also reduce this fraction, so the 50% requirement is conservative and can reject a usable narrow or irregular field. It is not a cadastral measurement of the clear portion of a field.
 - A review status that remains **officer review required**. Satellite greenness does not establish planting, weeding, yield, contract performance, credit eligibility or an insurance trigger.
 
 ## Data and deployment
@@ -30,6 +31,10 @@ Environment settings:
 - `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET`: optional Copernicus OAuth credentials. Configure these only in Dokploy's environment, then redeploy. Never put them in a Vite environment variable, a client config file, Git, chat or an IPA.
 
 Without working CDSE credentials, acquisition dates, scene cloud cover and previews are live; **field NDVI is unavailable**. The app explicitly states this. The public catalogue supplies no service guarantee.
+
+The deployed API is `https://phytos-api.samuelkaoma.dev`. On 1 November 2026, a disposable authenticated integration probe saved a public Monze test polygon, retrieved 12 intersecting scenes, read the stored report back and deleted the test field. Requests without a Firebase token returned 401. This verifies the authenticated catalogue and persistence path, not Copernicus NDVI processing. The probe's temporary anonymous account was also removed.
+
+Configure fresh credentials at **Dokploy → Phytos field evidence → production → Field evidence API → Environment**. Preserve `PHYTOS_GIT_REF`, add `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET`, then redeploy the compose service. Both keys belong to a Copernicus Data Space Sentinel Hub OAuth client; they are not the account password or S3 access keys.
 
 ## How to use it
 

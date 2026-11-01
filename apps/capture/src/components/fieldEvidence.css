@@ -25,6 +25,11 @@
   gap: 10px;
   margin-bottom: 15px;
 }
+.field-planting {
+  padding: 0 17px 15px;
+  font-size: 10px;
+  color: #66785d;
+}
 .field-picker > div,
 .field-picker > label {
   flex: 1;

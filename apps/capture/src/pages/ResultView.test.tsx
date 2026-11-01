@@ -48,7 +48,7 @@ const recommendation = {
 describe('ResultView (progressive)', () => {
   it('waits for the diagnosis, saying what it is doing', () => {
     render(<ResultView view={base} />)
-    expect(screen.getByRole('status')).toHaveTextContent(/assessing/i)
+    expect(screen.getByText(/assessing/i)).toHaveAttribute('role', 'status')
     expect(screen.getAllByText(/looking at your photo/i).length).toBeGreaterThan(0)
     expect(screen.getByText('K3J9', { exact: false })).toBeInTheDocument()
   })
