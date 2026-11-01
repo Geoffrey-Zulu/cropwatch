@@ -434,26 +434,32 @@ function Summary({
   return (
     <aside
       aria-label="Settlement totals"
-      className="rounded-card bg-ground px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--hairline)] xl:sticky xl:top-[5.5rem]"
+      className="rounded-card bg-ground px-5 py-[1.1rem] shadow-[inset_0_0_0_1px_var(--hairline)] xl:sticky xl:top-[5.5rem]"
     >
-      <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1.5 text-label">
+      {/* Room between the lines (mentor's note, 1 Nov): on a projector the figures must never
+          touch, so each row has air and an amount never wraps. */}
+      <dl className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-2.5 text-label leading-[1.35]">
         <dt className="text-fg-2">Farmers settled</dt>
-        <dd className="text-right font-semibold tabular-nums text-fg">
+        <dd className="whitespace-nowrap text-right font-semibold tabular-nums text-fg">
           {settled.length} of {ready.length}
         </dd>
         <dt className="text-fg-2">Gross value</dt>
-        <dd className="text-right font-semibold tabular-nums text-fg">{zmw(gross)}</dd>
+        <dd className="whitespace-nowrap text-right font-semibold tabular-nums text-fg">
+          {zmw(gross)}
+        </dd>
         <dt className="text-fg-2">Recovered</dt>
-        <dd className="text-right font-semibold tabular-nums text-fg">{zmw(recovered)}</dd>
+        <dd className="whitespace-nowrap text-right font-semibold tabular-nums text-fg">
+          {zmw(recovered)}
+        </dd>
       </dl>
-      <div className="mt-3 border-t border-hairline pt-3">
+      <div className="mt-4 border-t border-hairline pt-4">
         <p className="text-label font-semibold text-fg">Total payouts due</p>
-        <p className="serif text-[1.9rem] font-semibold leading-none tabular-nums text-fg">
+        <p className="serif mt-1.5 whitespace-nowrap text-[1.9rem] font-semibold leading-[1.1] tabular-nums text-fg">
           <span className="mr-1 font-body text-[0.85rem] font-[650] text-fg-2">ZMW</span>
           {due.toLocaleString('en-GB')}
         </p>
       </div>
-      <ul className="mt-3 flex flex-col gap-1.5 text-caption text-fg">
+      <ul className="mt-4 flex flex-col gap-2.5 text-caption leading-[1.45] text-fg">
         {shock.length > 0 && (
           <li className="flex items-start gap-1.5">
             <Sun size={14} aria-hidden className="mt-0.5 shrink-0 text-attention-text" />
@@ -476,14 +482,14 @@ function Summary({
       </ul>
 
       {done && (
-        <div className="mt-3 border-t border-hairline pt-3">
+        <div className="mt-4 border-t border-hairline pt-4">
           {sent.length > 0 ? (
             <div className="lc-row">
               <p className="flex items-center gap-1.5 text-label font-semibold text-signal-text">
                 <CircleCheck size={17} aria-hidden className="shrink-0" />
                 Bulk payment request sent to Phytos · simulated
               </p>
-              <p className="mt-0.5 text-caption tabular-nums text-fg-2">
+              <p className="mt-1 text-caption tabular-nums text-fg-2">
                 {sent.length} farmers · {zmw(total(sent, r => r.payout?.amount_zmw ?? 0))} · one
                 ledger row each
               </p>
@@ -495,10 +501,10 @@ function Summary({
               <p className="text-label font-semibold text-fg">
                 Pay {payees.length} farmers {zmw(total(payees, r => r.net_zmw))}?
               </p>
-              <p className="mt-0.5 text-caption text-fg-2">
+              <p className="mt-1 text-caption text-fg-2">
                 Each to their mobile money, what the ledger says is owed. One ledger row a farmer.
               </p>
-              <div className="mt-2.5 grid gap-2">
+              <div className="mt-3 grid gap-2">
                 <button
                   type="button"
                   className="btn-primary justify-center"
