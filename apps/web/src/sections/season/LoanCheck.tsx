@@ -92,6 +92,16 @@ export function LoanCheck({
   // 0 the field, 1 the passes, 2 the rules, 3 the verdict.
   const [stage, setStage] = useState(() => (reduced() ? 3 : 0))
   const next = () => setStage(s => Math.min(3, s + 1))
+  // Moved on before the map landed (a click or Skip in stage 1): a still map, fitted at once.
+  const [stillMap, setStillMap] = useState(reduced)
+  const advance = () => {
+    if (stage === 0) setStillMap(true)
+    next()
+  }
+  const skip = () => {
+    if (stage === 0) setStillMap(true)
+    setStage(3)
+  }
   useEffect(() => {
     if (stage >= 3) return
     const t = setTimeout(next, STAGE_MS[stage])
@@ -106,7 +116,7 @@ export function LoanCheck({
   return (
     <div
       className="fixed inset-0 z-[60] grid items-start justify-items-center overflow-y-auto bg-[rgb(244_243_236/0.82)] p-3 backdrop-blur-[2px] md:p-6 md:pt-[6vh]"
-      onClick={next}
+      onClick={advance}
     >
       <div
         role="dialog"
@@ -129,7 +139,7 @@ export function LoanCheck({
               className="btn-quiet !h-9"
               onClick={event => {
                 event.stopPropagation()
-                setStage(3)
+                skip()
               }}
             >
               <ChevronsRight size={16} aria-hidden />
@@ -152,7 +162,7 @@ export function LoanCheck({
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-5">
             <Stage n={1} title="The field" active={stage >= 0} space="h-[15rem]">
-              <CheckMap card={card} instant={stage > 0} />
+              <CheckMap key={stillMap ? 'still' : 'play'} card={card} still={stillMap} />
             </Stage>
             <Stage n={2} title="The passes" active={stage >= 1} space="h-[11.6rem]">
               <PassesReveal card={card} instant={stage > 1} />
@@ -216,11 +226,9 @@ function Stage({
 }
 
 // Stage 1: real imagery, a fly from the camp's scale into the farm, then its outline draws.
-function CheckMap({ card, instant }: { card: FieldCard; instant: boolean }) {
+// `still`: fitted to the field at once, the outline already drawn (skipped, or reduced motion).
+function CheckMap({ card, still }: { card: FieldCard; still: boolean }) {
   const el = useRef<HTMLDivElement>(null)
-  const map = useRef<L.Map | null>(null)
-  // Lands on the field and draws its outline; animated unless `still`. Runs once.
-  const land = useRef<(still: boolean) => void>(() => undefined)
   const ring = card.ring
   useEffect(() => {
     if (!el.current || !ring) return
@@ -243,13 +251,11 @@ function CheckMap({ card, instant }: { card: FieldCard; instant: boolean }) {
       maxNativeZoom: IMAGERY.esri.maxNativeZoom,
       attribution: IMAGERY.esri.attribution,
     }).addTo(m)
-    map.current = m
-    let done = false
-    const draw = (still: boolean) => {
+    const draw = (animate: boolean) => {
       L.polygon(latlngs, { className: 'lc-halo', interactive: false, fill: false }).addTo(m)
       const field = L.polygon(latlngs, { className: 'lc-field', interactive: false }).addTo(m)
       const path = field.getElement() as SVGPathElement | undefined
-      if (!path || still) return
+      if (!path || !animate) return
       const length = path.getTotalLength()
       path.style.strokeDasharray = `${length}`
       path.style.strokeDashoffset = `${length}`
@@ -260,38 +266,26 @@ function CheckMap({ card, instant }: { card: FieldCard; instant: boolean }) {
       path.style.strokeDashoffset = '0'
       path.style.fillOpacity = ''
     }
-    land.current = still => {
-      if (done) return
-      done = true
-      m.off('moveend')
-      m.stop()
-      if (still) m.fitBounds(bounds, { padding: [28, 28], animate: false })
-      draw(still)
+    if (still) {
+      m.fitBounds(bounds, { padding: [28, 28], animate: false })
+      draw(false)
+      return () => {
+        m.remove()
+      }
     }
-    let timer: ReturnType<typeof setTimeout> | undefined
-    if (reduced()) land.current(true)
-    else {
-      // From the camp's scale into the farm.
-      m.fitBounds(bounds.pad(14), { animate: false })
-      timer = setTimeout(() => {
-        m.once('moveend', () => {
-          if (done) return
-          done = true
-          draw(false)
-        })
-        m.flyToBounds(bounds, { padding: [28, 28], duration: 1.5 })
-      }, 250)
-    }
+    // From the camp's scale into the farm, then the outline draws itself.
+    m.fitBounds(bounds.pad(14), { animate: false })
+    const arrive = () => draw(true)
+    const timer = setTimeout(() => {
+      m.once('moveend', arrive)
+      m.flyToBounds(bounds, { padding: [28, 28], duration: 1.5 })
+    }, 250)
     return () => {
       clearTimeout(timer)
+      m.off('moveend', arrive)
       m.remove()
-      map.current = null
     }
-  }, [ring])
-  // Skipped ahead: the field is in place and drawn at once.
-  useEffect(() => {
-    if (instant) land.current(true)
-  }, [instant])
+  }, [ring, still])
   if (!ring)
     return (
       <p className="rounded-card bg-well px-4 py-6 text-label text-fg-2">
