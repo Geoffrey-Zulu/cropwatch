@@ -60,6 +60,7 @@ import {
   buildFieldCard,
   buildPortfolio,
   buildReconciliation,
+  buildRoster,
   buildSmsLog,
   buildStatement,
   eligibilityFor,
@@ -121,6 +122,11 @@ export interface SeasonService {
   ): Promise<{ tx_ref: string | null; simulated: boolean }>
   declineAdvance(caller: Caller, orgId: string, advanceId: string, reason: string): Promise<void>
   recordDelivery(caller: Caller, orgId: string, input: DeliveryInput): Promise<Statement>
+  // Harvest (Reconciliation's batch): pays every ready farmer what the ledger says is owed.
+  requestPayouts(
+    caller: Caller,
+    orgId: string
+  ): Promise<{ farmers: number; total_zmw: number; simulated: boolean }>
   // asOf: a season day other than today (the demo's jump to June runs March's rule first).
   evaluateTriggers(
     caller: Caller,
@@ -678,6 +684,51 @@ export function seasonService({
       )
       const fresh = await store.load(orgId)
       return buildStatement(fresh!, contract.id, today)!
+    },
+
+    async requestPayouts(caller, orgId) {
+      if (!canApprove(caller, orgId))
+        throw new SeasonError('forbidden', 'Only the credit team can request payouts.')
+      const { data, today } = await load(caller, orgId)
+      assertOwnCreditTeam(caller, data.org.sim)
+      const roster = buildRoster(data, today)
+      if (!roster.some(r => r.ready))
+        throw new SeasonError('refused', 'Nothing is delivered yet: payouts open in June.')
+      // What the ledger says each ready farmer is owed, through the mobile-money provider, one
+      // ledger row each (invariant 11: rules met, a ledger row, the simulated provider).
+      const rows: { id: string; entry: LedgerEntry }[] = []
+      for (const r of roster.filter(x => x.ready && x.net_zmw > 0 && !x.payout)) {
+        const { contract, farmer } = contractOf(data, r.contract_id)
+        const id = `payout__${contract.id}`
+        const result = await money.disburse(farmer.data.phone_msisdn, r.net_zmw, id)
+        if (result.status === 'failed') continue
+        rows.push({
+          id,
+          entry: {
+            contract_id: contract.id,
+            farmer_id: farmer.id,
+            org_id: orgId,
+            at: today,
+            type: 'payout',
+            amount_zmw: r.net_zmw,
+            ref: result.tx_ref ?? id,
+            note: `Payout to ${MOMO_LABELS[farmer.data.momo_provider]}${money.simulated ? ' (simulated transfer)' : ''}`,
+            simulated: money.simulated,
+            sim: contract.data.sim,
+          },
+        })
+      }
+      const written = await store.addPayouts(rows)
+      const sum = (list: { entry: LedgerEntry }[]) =>
+        list.reduce((n, x) => n + x.entry.amount_zmw, 0)
+      if (written === rows.length)
+        return { farmers: written, total_zmw: sum(rows), simulated: money.simulated }
+      // Someone pressed first for some of them: count what this request wrote.
+      const fresh = buildRoster((await store.load(orgId))!, today)
+      const mine = rows.filter(x =>
+        fresh.some(f => f.contract_id === x.entry.contract_id && f.payout?.ref === x.entry.ref)
+      )
+      return { farmers: written, total_zmw: sum(mine), simulated: money.simulated }
     },
 
     async evaluateTriggers(caller, orgId, asOf) {

@@ -30,6 +30,7 @@ import type {
   Reconciliation,
   SatelliteMetrics,
   SeasonRow,
+  SettlementRow,
   SmsLog,
   SmsLogView,
   Statement,
@@ -661,6 +662,7 @@ export function buildReconciliation(data: SeasonData, today: string): Reconcilia
   })
   const fired = data.triggers.filter(t => t.data.fired && t.data.evaluated_at <= today)
   return {
+    roster: buildRoster(data, today),
     // The ones the credit team must look at first.
     rows: rows.sort(
       (a, b) =>
@@ -685,6 +687,62 @@ export function buildReconciliation(data: SeasonData, today: string): Reconcilia
       sim: t.data.sim,
     })),
   }
+}
+
+// The harvest settlement (Reconciliation's batch, 1 Nov): every planted field on an active
+// contract (one clear pass at the establishment NDVI at least: by June the curves read maturity as
+// stress, so the season row's state no longer tells), ready once its crop is delivered. Each
+// figure is a sum of the farmer's ledger rows, so nothing is stored twice; the payout rows are
+// read apart, so the net stays what was owed.
+export function buildRoster(data: SeasonData, today: string): SettlementRow[] {
+  const sum = (rows: LedgerEntry[], type: LedgerEntry['type']) =>
+    rows.filter(r => r.type === type).reduce((n, r) => n + r.amount_zmw, 0)
+  const rows = data.contracts.flatMap(c => {
+    if (c.data.status !== 'active') return []
+    const passes = visiblePasses(data.metrics.find(m => m.id === c.id)?.data.passes ?? [], today)
+    const threshold = establishmentNdvi(c.data.crop)
+    if (!passes.some(x => x.usable && x.ndvi !== null && x.ndvi >= threshold)) return []
+    const s = buildStatement(data, c.id, today)!
+    const ledger = visibleRows(byContract(data.ledger, c.id), today).map(r => r.data)
+    const delivered = visibleRows(byContract(data.deliveries, c.id), today)
+      .map(d => d.data)
+      .sort((a, b) => a.at.localeCompare(b.at))
+    const last = delivered[delivered.length - 1]
+    const paid = ledger.filter(r => r.type === 'payout').sort((a, b) => a.at.localeCompare(b.at))
+    const owed = ledger.filter(r => r.type !== 'payout')
+    return [
+      {
+        contract_id: c.id,
+        farmer_name: s.farmer_name,
+        camp: s.camp,
+        ready: delivered.length > 0,
+        weight_kg: last ? delivered.reduce((n, d) => n + d.weight_kg, 0) : null,
+        grade: last?.grade ?? null,
+        price_zmw_t: last?.price_zmw_t ?? null,
+        value_zmw: -sum(ledger, 'delivery'),
+        input_loan_zmw: sum(ledger, 'input_loan'),
+        advance_zmw: sum(ledger, 'advance'),
+        fee_zmw: sum(ledger, 'advance_fee'),
+        net_zmw: -balance(owed),
+        recovered_zmw: recovered(ledger),
+        variance: s.variance,
+        payout: paid.length
+          ? {
+              at: paid[paid.length - 1].at,
+              ref: paid[paid.length - 1].ref,
+              amount_zmw: sum(paid, 'payout'),
+            }
+          : null,
+        sim: s.sim,
+      },
+    ]
+  })
+  return rows.sort(
+    (a, b) =>
+      Number(b.ready) - Number(a.ready) ||
+      a.camp.localeCompare(b.camp) ||
+      a.farmer_name.localeCompare(b.farmer_name)
+  )
 }
 
 export function buildSmsLog(data: SeasonData): SmsLogView[] {

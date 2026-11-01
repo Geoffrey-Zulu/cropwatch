@@ -1,7 +1,9 @@
 // Dashboard preview fixtures for the CEIH tabs (apps/web/src/dev/Preview.tsx, the visual pass):
 // the seeded season run through the same view builders as the API, in two storyline states.
-//   January: Given's ground check has landed and his advance waits for approval (plan §4 beat 5).
-//   June: Hamangaba's drought flag is up, Given's advance is sent and his crop delivered (beat 8).
+//   January: Given's ground check has landed, so his loan check reads eligible (no approval queue
+//   since 1 Nov: his advance is the farmer app's, in memory, never this season's).
+//   June: Hamangaba's drought flag is up and about 60% of the planted fields have delivered,
+//   Given's not yet (Reconciliation's batch).
 // Merged into apps/web/src/dev/fixtures.local.json (gitignored) under "season".
 //
 //   pnpm --filter @repo/seed exec tsx ceih-fixtures.ts
@@ -15,21 +17,14 @@ import {
   buildReconciliation,
   buildSmsLog,
   buildStatement,
-  eligibilityFor,
   evaluateShock,
   medianDate,
-  feeFor,
   geohash,
-  otpMessage,
-  disbursedMessage,
-  priceDelivery,
   seasonNow,
   seasonToday,
   simPhotoPath,
-  statementMessage,
   visiblePasses,
   offsetForPhase,
-  type Advance,
   type SeasonData,
 } from '@repo/shared'
 import { CREDIT, generateCeih } from './ceih'
@@ -70,7 +65,7 @@ const hero = seed.farmers[0]
 const heroContract = seed.contracts[0]
 const real = (minutes: number) => new Date(Date.parse(REAL_NOW) + minutes * 60_000).toISOString()
 
-// Beats 3 and 4: the officer's ground check, the request with its SMS, the farmer's code.
+// The officer's ground check on Given's field.
 function january(): SeasonData {
   const data = base()
   data.observations.push({
@@ -107,109 +102,12 @@ function january(): SeasonData {
       sim: true,
     },
   })
-  const snapshot = eligibilityFor(
-    data,
-    heroContract.id,
-    seasonNow(real(-3), data.state.offset_days)
-  )
-  const fee = feeFor(snapshot.cap_zmw, CREDIT)
-  const advance: Advance = {
-    contract_id: heroContract.id,
-    farmer_id: hero.id,
-    org_id: DEMO_ORG_ID,
-    season: '2026/27',
-    state: 'farmer_confirmed',
-    requested_at: seasonNow(real(-3), data.state.offset_days),
-    requested_via: 'officer',
-    requested_by: data.state.ground_officer_id!,
-    eligibility_snapshot: snapshot,
-    amount_zmw: snapshot.cap_zmw,
-    fee_zmw: fee,
-    otp_sha256: null,
-    otp_expires_at: null,
-    farmer_confirmed: { at: seasonNow(real(-1), data.state.offset_days), otp_ok: true },
-    approval: null,
-    decline: null,
-    disbursement: null,
-    sim: true,
-  }
-  data.advances.push({ id: 'sim-ceih-advance-given', data: advance })
-  data.sms.push({
-    id: 'sms-otp',
-    data: {
-      org_id: DEMO_ORG_ID,
-      farmer_id: hero.id,
-      to: hero.data.phone_msisdn,
-      message: otpMessage({
-        org: 'Outgrower Co.',
-        farmerName: hero.data.name,
-        amountZmw: snapshot.cap_zmw,
-        feeZmw: fee,
-        code: '482913',
-      }),
-      purpose: 'otp',
-      status: 'logged',
-      gateway: 'log only',
-      at: real(-3),
-      season_at: seasonNow(real(-3), data.state.offset_days),
-      sim: true,
-    },
-  })
   return data
 }
 
-// Beats 6 to 8: the transfer, March's drought rule, June's delivery.
+// March's drought rule, then June.
 function june(): SeasonData {
   const data = january()
-  const a = data.advances.find(x => x.id === 'sim-ceih-advance-given')!
-  a.data = {
-    ...a.data,
-    state: 'disbursed',
-    approval: { approver_id: 'uid-preview', at: a.data.farmer_confirmed!.at },
-    disbursement: {
-      provider: 'simulated',
-      tx_ref: 'SIM-7Q2X4A',
-      at: a.data.farmer_confirmed!.at,
-      status: 'simulated',
-    },
-  }
-  for (const [type, amount] of [
-    ['advance', a.data.amount_zmw],
-    ['advance_fee', a.data.fee_zmw],
-  ] as const)
-    data.ledger.push({
-      id: `l-${type}`,
-      data: {
-        contract_id: heroContract.id,
-        farmer_id: hero.id,
-        org_id: DEMO_ORG_ID,
-        at: a.data.disbursement!.at,
-        type,
-        amount_zmw: amount,
-        ref: 'SIM-7Q2X4A',
-        note:
-          type === 'advance'
-            ? 'Cash advance to Airtel Money (simulated transfer)'
-            : 'Advance fee, shown before the farmer confirmed',
-        simulated: true,
-        sim: true,
-      },
-    })
-  data.sms.push({
-    id: 'sms-sent',
-    data: {
-      ...data.sms[0].data,
-      purpose: 'disbursement',
-      message: disbursedMessage({
-        amountZmw: a.data.amount_zmw,
-        feeZmw: a.data.fee_zmw,
-        wallet: 'Airtel Money',
-        txRef: 'SIM-7Q2X4A',
-        simulated: true,
-      }),
-      at: real(1),
-    },
-  })
   // March: the rule on every camp; Hamangaba's fires.
   const march = '2027-03-16T09:00:00.000Z'
   for (const camp of ['Chikuni', 'Keemba', 'Hamangaba']) {
@@ -249,56 +147,8 @@ function june(): SeasonData {
       for (const c of members)
         c.data.shock_flag = { type: 'drought', camp, triggered_at: march, evidence_ref: id }
   }
-  // June: Given delivers.
+  // June.
   data.state = { ...data.state, phase: 'june', offset_days: offsetForPhase('june', REAL_NOW) }
-  const today = seasonToday(data, real(0))
-  const { price_zmw_t, value_zmw } = priceDelivery(heroContract.data.contract_price_zmw_t, 'A', 720)
-  data.deliveries.push({
-    id: 'delivery-given',
-    data: {
-      contract_id: heroContract.id,
-      farmer_id: hero.id,
-      org_id: DEMO_ORG_ID,
-      at: today,
-      weight_kg: 720,
-      moisture_pct: 11,
-      grade: 'A',
-      price_zmw_t,
-      value_zmw,
-      clerk_id: 'uid-preview',
-      sim: true,
-    },
-  })
-  data.ledger.push({
-    id: 'l-delivery',
-    data: {
-      contract_id: heroContract.id,
-      farmer_id: hero.id,
-      org_id: DEMO_ORG_ID,
-      at: today,
-      type: 'delivery',
-      amount_zmw: -value_zmw,
-      ref: 'delivery-given',
-      note: `0.72 t grade A at ZMW ${price_zmw_t.toLocaleString('en-GB')} a tonne`,
-      simulated: false,
-      sim: true,
-    },
-  })
-  const rows = data.ledger.filter(l => l.data.contract_id === heroContract.id).map(l => l.data)
-  data.sms.push({
-    id: 'sms-statement',
-    data: {
-      ...data.sms[0].data,
-      purpose: 'statement',
-      message: statementMessage({
-        farmerName: hero.data.name,
-        lines: rows,
-        netZmw: -rows.reduce((n, r) => n + r.amount_zmw, 0),
-      }),
-      at: real(2),
-      season_at: today,
-    },
-  })
   return data
 }
 

@@ -1,7 +1,9 @@
-// The CEIH demo check (docs/ceih-overnight-plan.md §4, beats 1 to 6) against an API: signs in as
-// a Command Center account (the demo's credit-team stand-in), then plays the storyline through
-// the dashboard's own tRPC routes and checks what the screens will show. Deletes what it made
-// (Given's ground check, advance, ledger rows and SMS log) so the armed season stays armed.
+// The CEIH demo check against an API (the 1 Nov flow: map, ledger, loan check, reconciliation
+// batch): signs in as a Command Center account (the demo's credit-team stand-in), then plays the
+// agribusiness storyline through the dashboard's own tRPC routes and checks what the screens will
+// show. The farmer app has its own check (tools/visual/farmer-shot.ts): it never touches this
+// season. Afterwards it puts back what it changed (Given's ground check, the payout rows, the
+// season day) so the armed season stays armed; a re-arm after it is still the rule.
 //
 //   PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e
 //        [--api https://…run.app] [--keep] [--warm] [--no-fields]
@@ -61,6 +63,7 @@ interface Row {
   farmer_name: string
   eligibility_label: string
   eligible: boolean
+  advance: { state: string } | null
 }
 interface FieldsMapView {
   precise: boolean
@@ -76,6 +79,7 @@ interface FieldsMapView {
 interface Portfolio {
   contracts: number
   advances_out_zmw: number
+  awaiting_approval: number
   hero_contract_id: string | null
   rows: Row[]
   today: string
@@ -96,22 +100,22 @@ interface Card {
   contract_price_zmw_t?: number
   contracted_ha: number
 }
-interface Sms {
-  message: string
-  purpose: string
-  farmer_name: string | null
-}
-interface Approval {
-  advance_id: string
+interface RosterRow {
   contract_id: string
-  otp_ok: boolean
-  caller_is_verifier: boolean
-  verifier_labels: string[]
-  amount_zmw: number
+  farmer_name: string
+  camp: string
+  ready: boolean
+  value_zmw: number
+  input_loan_zmw: number
+  advance_zmw: number
   fee_zmw: number
+  net_zmw: number
+  variance: { kind: string }
+  payout: { ref: string; amount_zmw: number } | null
 }
 interface Statement {
   lines: { type: string; amount_zmw: number; simulated: boolean }[]
+  balance_zmw: number
 }
 
 // One Esri imagery tile over a camp at zoom 16: the venue network reaches the Fields map's imagery.
@@ -162,7 +166,7 @@ Warm in ${((Date.now() - t) / 1000).toFixed(1)} s.`)
 }
 
 const started = new Date().toISOString()
-const made = { observation: null as string | null, advance: null as string | null }
+const made = { observation: null as string | null, june: false }
 let heroFarmer = ''
 const t0 = Date.now()
 
@@ -261,84 +265,82 @@ try {
     )
   }
 
-  console.log('\nBeat 4: the request, the fee before the code')
-  const req = await call<{ advance_id: string; amount_zmw: number; fee_zmw: number }>(
-    'season.requestAdvance',
-    { orgId: ORG, contractId: heroId },
+  console.log('\nBeat 4: within the cap, no approval queue')
+  check(
+    p0.awaiting_approval === 0,
+    'nothing waits for a second person',
+    `${p0.awaiting_approval} waiting`
+  )
+  check(
+    p0.rows.filter(r => r.advance).every(r => r.advance?.state === 'disbursed'),
+    'every seeded advance went out within its cap'
+  )
+
+  console.log('\nBeat 5: June, the reconciliation batch')
+  await call('season.demo.setPhase', { orgId: ORG, phase: 'june' }, true)
+  made.june = true
+  const rec = await call<{ roster?: RosterRow[]; claim_packs: { camp: string }[] }>(
+    'season.reconciliation',
+    { orgId: ORG }
+  )
+  const roster = rec.roster ?? []
+  const ready = roster.filter(r => r.ready)
+  check(roster.length > 100, 'the roster: every planted field', `${roster.length}`)
+  check(
+    ready.length / roster.length > 0.5 && ready.length / roster.length < 0.7,
+    'about 60% ready, the rest not yet',
+    `${ready.length} of ${roster.length}`
+  )
+  check(roster.find(r => r.contract_id === heroId)?.ready === false, `${hero.farmer_name}: not yet`)
+  check(
+    ready.every(r => r.net_zmw === r.value_zmw - r.input_loan_zmw - r.advance_zmw - r.fee_zmw),
+    'each row: value less inputs, less advance and fee, is the net'
+  )
+  const shock = ready.filter(r => r.variance.kind === 'shock')
+  const unexplained = ready.filter(r => r.variance.kind === 'unexplained')
+  check(
+    shock.length > 0 && shock.every(r => r.camp === 'Hamangaba'),
+    'Hamangaba shortfalls: uncontrollable',
+    `${shock.length}`
+  )
+  check(unexplained.length >= 2, 'unexplained shortfalls flagged', `${unexplained.length}`)
+  check(
+    rec.claim_packs.some(c => c.camp === 'Hamangaba'),
+    'the drought claim pack is there'
+  )
+  const owed = ready.filter(r => r.net_zmw > 0 && !r.payout)
+  const due = owed.reduce((n, r) => n + r.net_zmw, 0)
+  check(
+    owed.length > 0,
+    'payouts due',
+    `${owed.length} farmers, ZMW ${due.toLocaleString('en-GB')}`
+  )
+
+  console.log('\nBeat 6: one payout request (simulated)')
+  const paid = await call<{ farmers: number; total_zmw: number; simulated: boolean }>(
+    'season.requestPayouts',
+    { orgId: ORG },
     true
   )
-  made.advance = req.advance_id
   check(
-    req.amount_zmw === 840 && req.fee_zmw === 42,
-    'ZMW 840, fee ZMW 42',
-    `${req.amount_zmw}, ${req.fee_zmw}`
+    paid.farmers === owed.length && paid.total_zmw === due && paid.simulated,
+    'the request pays every farmer owed, simulated',
+    `${paid.farmers} farmers, ZMW ${paid.total_zmw.toLocaleString('en-GB')}`
   )
-  const sms1 = await call<Sms[]>('season.smsLog', { orgId: ORG })
-  const otp = sms1.find(s => s.purpose === 'otp' && s.farmer_name === hero.farmer_name)
+  const one = owed[0]
+  const st = await call<Statement>('season.statement', { orgId: ORG, contractId: one.contract_id })
   check(
-    Boolean(otp?.message.includes('ZMW 840') && otp.message.includes('Fee ZMW 42')),
-    'the SMS before confirmation carries amount and fee'
+    st.lines.some(l => l.type === 'payout' && l.amount_zmw === one.net_zmw && l.simulated),
+    `ledger: ${one.farmer_name}'s payout, labelled simulated`
   )
-  const code = otp && /code: (\d{6})/.exec(otp.message)?.[1]
-  check(Boolean(code), 'the code is in the SMS log')
-  let refused = false
+  check(st.balance_zmw === 0, 'his statement closes at zero', `${st.balance_zmw}`)
+  let again = 0
   try {
-    await call('season.approveAdvance', { orgId: ORG, advanceId: req.advance_id }, true)
+    again = (await call<{ farmers: number }>('season.requestPayouts', { orgId: ORG }, true)).farmers
   } catch {
-    refused = true
+    again = 0
   }
-  check(refused, 'no approval before the farmer confirms')
-  await call('season.confirmAdvance', { orgId: ORG, advanceId: req.advance_id, code }, true)
-
-  console.log('\nBeat 5: the approval card')
-  const queue = await call<Approval[]>('season.approvals', { orgId: ORG })
-  const card = queue.find(a => a.advance_id === req.advance_id)
-  check(Boolean(card?.otp_ok), 'in the queue, confirmed with the code')
-  check(
-    card?.caller_is_verifier === false,
-    'this account did not verify the field, so it may approve'
-  )
-  check(
-    Boolean(card?.verifier_labels.includes('Officer M. Banda')),
-    'the card names the verifying officer',
-    card?.verifier_labels.join(', ')
-  )
-
-  console.log('\nBeat 6: the money moves (simulated)')
-  const sent = await call<{ tx_ref: string | null; simulated: boolean }>(
-    'season.approveAdvance',
-    { orgId: ORG, advanceId: req.advance_id },
-    true
-  )
-  check(
-    sent.simulated && Boolean(sent.tx_ref?.startsWith('SIM-')),
-    'simulated transfer',
-    sent.tx_ref ?? ''
-  )
-  const st = await call<Statement>('season.statement', { orgId: ORG, contractId: heroId })
-  check(
-    st.lines.some(l => l.type === 'advance' && l.amount_zmw === 840 && l.simulated),
-    'ledger: the advance, labelled simulated'
-  )
-  check(
-    st.lines.some(l => l.type === 'advance_fee' && l.amount_zmw === 42),
-    'ledger: the fee'
-  )
-  const sms2 = await call<Sms[]>('season.smsLog', { orgId: ORG })
-  check(
-    sms2.some(
-      s =>
-        s.purpose === 'disbursement' &&
-        /^Phytos( DEMO)?: ZMW 840 sent to your Airtel Money \(simulated transfer/.test(s.message)
-    ),
-    'SMS: "ZMW 840 sent to your Airtel Money…"'
-  )
-  const p1 = await call<Portfolio>('season.portfolio', { orgId: ORG })
-  check(
-    p1.advances_out_zmw === p0.advances_out_zmw + 840,
-    'portfolio: advances out up ZMW 840',
-    `${p0.advances_out_zmw} → ${p1.advances_out_zmw}`
-  )
+  check(again === 0, 'a second press pays no one twice', `${again}`)
   console.log(`\n  beats 1 to 6 in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
 } catch (error) {
   failures++
@@ -348,10 +350,19 @@ try {
   else await cleanUp()
 }
 
-// Everything this run wrote for the storyline farmer, so the season is armed again.
+// Everything this run wrote, so the season is armed again: Given's ground check and his rows,
+// the payout rows, and the season day back to January (the drought trigger it fired is dated
+// March, so January does not see it; a re-arm removes it).
 async function cleanUp() {
   const writes: Write[] = []
   if (made.observation) writes.push({ delete: `observations/${made.observation}` })
+  if (made.june) {
+    for (const path of await queryPaths('ledger_entries', 'type', 'payout')) {
+      const doc = (await getDocument(path)) as { org_id?: string; sim?: boolean } | null
+      if (doc?.org_id === ORG && doc.sim) writes.push({ delete: path })
+    }
+    await call('season.demo.setPhase', { orgId: ORG, phase: 'january' }, true)
+  }
   if (heroFarmer) {
     for (const path of await queryPaths('advances', 'farmer_id', heroFarmer))
       writes.push({ delete: path })

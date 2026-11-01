@@ -180,6 +180,11 @@ function memoryStore(data: SeasonData) {
       data.deliveries.push({ id, data: delivery })
       for (const row of ledger) data.ledger.push({ id: `l-${++n}`, data: row })
     },
+    async addPayouts(rows) {
+      const fresh = rows.filter(r => !data.ledger.some(l => l.id === r.id))
+      for (const r of fresh) data.ledger.push({ id: r.id, data: r.entry })
+      return fresh.length
+    },
     async logSms(entry) {
       data.sms.push({ id: `s-${++n}`, data: entry })
     },
@@ -313,6 +318,56 @@ describe('the CEIH season service', () => {
     expect(data.sms.find(s => s.data.purpose === 'statement')!.data.message).toContain(
       'Net due to you ZMW 2,928'
     )
+  })
+
+  it('settles the harvest from the ledger and pays each ready farmer once', async () => {
+    const { data, service } = setup()
+    // Before June nothing is delivered: no payout to request.
+    expect((await service.reconciliation(david, ORG)).roster![0].ready).toBe(false)
+    expect((await refusal(service.requestPayouts(david, ORG))).code).toBe('refused')
+    // A field officer may not move money.
+    expect((await refusal(service.requestPayouts(banda, ORG))).code).toBe('forbidden')
+
+    await service.setPhase(david, ORG, 'june')
+    await service.recordDelivery(david, ORG, {
+      contract_id: 'c-given',
+      weight_kg: 720,
+      moisture_pct: 11,
+      grade: 'A',
+    })
+    const [row] = (await service.reconciliation(david, ORG)).roster!
+    expect(row).toMatchObject({
+      ready: true,
+      weight_kg: 720,
+      grade: 'A',
+      price_zmw_t: 8000,
+      value_zmw: 5760,
+      input_loan_zmw: 1950,
+      advance_zmw: 0,
+      fee_zmw: 0,
+      net_zmw: 5760 - 1950,
+      recovered_zmw: 1950,
+      payout: null,
+    })
+
+    const paid = await service.requestPayouts(david, ORG)
+    expect(paid).toEqual({ farmers: 1, total_zmw: 3810, simulated: true })
+    const payout = data.ledger.filter(l => l.data.type === 'payout')
+    expect(payout).toHaveLength(1)
+    expect(payout[0].data).toMatchObject({ amount_zmw: 3810, simulated: true })
+    expect(payout[0].data.note).toContain('simulated transfer')
+    // The book closes at zero, and the net still reads what was owed before the payout.
+    const after = (await service.reconciliation(david, ORG)).roster![0]
+    expect(after.net_zmw).toBe(3810)
+    expect(after.payout).toMatchObject({ amount_zmw: 3810, ref: payout[0].data.ref })
+    expect((await service.statement(david, ORG, 'c-given')).balance_zmw).toBe(0)
+    // A second press writes nothing.
+    expect(await service.requestPayouts(david, ORG)).toEqual({
+      farmers: 0,
+      total_zmw: 0,
+      simulated: true,
+    })
+    expect(data.ledger.filter(l => l.data.type === 'payout')).toHaveLength(1)
   })
 
   it('a farmer cannot reach disbursement without the code, even if the record says approved', async () => {

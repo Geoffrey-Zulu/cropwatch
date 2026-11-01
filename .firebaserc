@@ -6,7 +6,8 @@
     "crop-watch01": {
       "hosting": {
         "dashboard": ["crop-watch01"],
-        "capture": ["crop-watch01-capture"]
+        "capture": ["crop-watch01-capture"],
+        "farmer": ["crop-watch01-farmer"]
       }
     }
   }

@@ -140,6 +140,12 @@ export const seasonRouter = router({
       return run(() => ctx.services.season.recordDelivery(ctx.caller, orgId, delivery))
     }),
 
+  requestPayouts: signedInProcedure
+    .input(Org)
+    .mutation(({ ctx, input }) =>
+      run(() => ctx.services.season.requestPayouts(ctx.caller, input.orgId))
+    ),
+
   evaluateTriggers: signedInProcedure
     .input(Org)
     .mutation(({ ctx, input }) =>

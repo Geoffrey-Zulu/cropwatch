@@ -5,7 +5,6 @@ import { SkeletonStatCards } from '../components/StatCards'
 import type { Officer } from '../hooks/useAuth'
 import { useRoute, type OutgrowerTab } from '../hooks/useRoute'
 import { seasonDate, useSeasonQueries } from '../lib/season'
-import { ApprovalsSection } from '../sections/season/ApprovalsSection'
 import { DemoControls } from '../sections/season/DemoControls'
 import { FieldsMapSection } from '../sections/season/FieldsMapSection'
 import { ReconciliationSection } from '../sections/season/ReconciliationSection'
@@ -26,15 +25,13 @@ const Muted = ({ children }: { children: React.ReactNode }) => (
 const TABS: { tab: OutgrowerTab; label: string }[] = [
   { tab: 'fields', label: 'Fields map' },
   { tab: 'season', label: 'Season ledger' },
-  { tab: 'approvals', label: 'Approvals' },
   { tab: 'reconciliation', label: 'Reconciliation' },
 ]
 
-// The four screens, as the header's pills (AppShell renders them in the header and, on a phone,
-// in a strip under it). Approvals carries the count waiting for a second person.
-export function SeasonNav({ orgId, current }: { orgId: string; current: OutgrowerTab }) {
-  const { approvals } = useSeasonQueries(orgId)
-  const waiting = approvals.data?.filter(a => a.otp_ok).length ?? 0
+// The three screens, as the header's pills (AppShell renders them in the header and, on a phone,
+// in a strip under it). Advances need no approval queue: within the cap, the season's rules send
+// them (CLAUDE.md invariant 11, 1 Nov).
+export function SeasonNav({ current }: { current: OutgrowerTab }) {
   // On a phone the strip scrolls sideways: bring the current screen to its middle, never cut it
   // off. Measured from the boxes, again once the fonts have settled the widths.
   useEffect(() => {
@@ -68,13 +65,6 @@ export function SeasonNav({ orgId, current }: { orgId: string; current: Outgrowe
             }`}
           >
             {t.label}
-            {t.tab === 'approvals' && waiting > 0 && (
-              <span className="inline-grid h-[1.3rem] min-w-[1.6rem] place-items-center rounded-pill bg-[#EDF0E8] px-1.5 text-[0.78rem] font-bold tabular-nums text-fg">
-                <span className="sr-only">, </span>
-                {waiting}
-                <span className="sr-only"> waiting</span>
-              </span>
-            )}
           </a>
         )
       })}
@@ -115,8 +105,15 @@ function orgTitle(name: string) {
 }
 
 // The org's name and, beside it (under it on a phone), the season line: one of the two markers
-// of a simulated season (CLAUDE.md invariant 5, 1 Nov), the season day and its phase.
-function OrgHeading({ portfolio: p }: { portfolio: Portfolio | undefined }) {
+// of a simulated season (CLAUDE.md invariant 5, 1 Nov), the season day and its phase. The Fields
+// map, the first page, carries the name alone (Geoffrey, 1 Nov).
+function OrgHeading({
+  portfolio: p,
+  seasonLine = true,
+}: {
+  portfolio: Portfolio | undefined
+  seasonLine?: boolean
+}) {
   return (
     <div className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-0.5">
       <h1
@@ -125,7 +122,7 @@ function OrgHeading({ portfolio: p }: { portfolio: Portfolio | undefined }) {
       >
         {orgTitle(p?.name ?? 'Season')}
       </h1>
-      {p && (
+      {p && seasonLine && (
         <p className="text-caption text-fg-2">
           {p.sim ? `Simulated season ${p.season}` : `Season ${p.season}`} · Season day{' '}
           <span className="font-semibold text-fg">{seasonDate(p.today)}</span> · {PHASE[p.phase]}
@@ -144,7 +141,7 @@ function SeasonTabs({
   tab: OutgrowerTab
   commandCenter: boolean
 }) {
-  const { portfolio, approvals, sms } = useSeasonQueries(orgId)
+  const { portfolio } = useSeasonQueries(orgId)
   const p = portfolio.data
   // A new screen opens at its top. A layout effect runs before the screens' own scroll-into-view
   // effects (an opened ledger row, the statement), so those still land where they should.
@@ -160,7 +157,7 @@ function SeasonTabs({
         <FieldsMapSection
           orgId={orgId}
           commandCenter={commandCenter}
-          intro={<OrgHeading portfolio={p} />}
+          intro={<OrgHeading portfolio={p} seasonLine={false} />}
         />
         <div className="mx-auto max-w-[1320px] px-4 py-6 md:px-[1.6rem] md:py-8">
           {p ? (
@@ -188,9 +185,6 @@ function SeasonTabs({
           {/* Keyed by tab: the figures count up again on every cut, as the storyline does. */}
           <PortfolioHeader key={tab} portfolio={p} />
           {tab === 'season' && <SeasonLedgerSection portfolio={p} commandCenter={commandCenter} />}
-          {tab === 'approvals' && (
-            <ApprovalsSection orgId={orgId} approvals={approvals.data} sms={sms.data} />
-          )}
           {tab === 'reconciliation' && <ReconciliationSection portfolio={p} />}
         </>
       )}

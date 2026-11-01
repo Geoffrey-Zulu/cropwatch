@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --clearScreen false",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && vite build --mode farmer",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",

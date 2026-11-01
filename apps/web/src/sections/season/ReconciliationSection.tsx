@@ -1,340 +1,496 @@
-import { LoaderCircle, Sun, Truck } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
 import {
-  GRADE_PRICE_FACTOR,
-  GRADES,
-  zmw,
-  type Grade,
-  type Portfolio,
-  type Reconciliation,
-  type Statement,
-  type VarianceKind,
-} from '@repo/shared'
-import { Combobox } from '../../components/Combobox'
+  AlertTriangle,
+  Banknote,
+  ChevronsRight,
+  CircleCheck,
+  LoaderCircle,
+  Play,
+  Sun,
+} from 'lucide-react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { zmw, type Portfolio, type Reconciliation, type SettlementRow } from '@repo/shared'
 import { SkeletonRows } from '../../components/Skeleton'
 import { SOURCE, SourceLine } from '../../components/SourceLine'
+import { useCountUp } from '../../hooks/useCountUp'
 import { seasonDate, useSeasonRefresh } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
 
-// Tab 3 (plan §3): the depot's delivery entry, priced at the contract price for its grade; the
-// statement, every line from the ledger; and the variance, shock-explained against unexplained.
+// Tab 3 (Geoffrey, 1 Nov): the harvest settled as a batch. "Start reconciliation" shows every
+// farmer with a crop in the ground, ready (delivered, in the ledger) or not yet; the ready ones
+// then resolve one by one: the crop at the contract price, less the inputs, less the advance and
+// its fee, the net owed. The totals gather beside them, with the drought camp's shortfalls held
+// as uncontrollable and the unexplained ones flagged. One request then pays them all. Every
+// figure is the ledger's (packages/shared/src/ceih/views.ts, buildRoster): nothing is computed
+// here but sums, and nothing is stored twice.
+
+const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const n = (v: number) => v.toLocaleString('en-GB')
+const total = (rows: SettlementRow[], of: (r: SettlementRow) => number) =>
+  rows.reduce((sum, r) => sum + of(r), 0)
+// The whole run in about nine seconds, whatever the count; at most 160 ms a farmer.
+const stepMs = (count: number) => Math.min(160, 9000 / Math.max(1, count))
+
 export function ReconciliationSection({ portfolio: p }: { portfolio: Portfolio }) {
   const reconciliation = trpc.season.reconciliation.useQuery(
     { orgId: p.org_id },
     { refetchInterval: 6000 }
   )
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-      <DeliveryAndStatement portfolio={p} />
-      <div className="flex min-w-0 flex-col gap-6">
-        {reconciliation.data?.claim_packs.map(pack => (
-          <ClaimPack key={pack.trigger_id} pack={pack} />
-        ))}
-        <VarianceList data={reconciliation.data} />
-      </div>
+    <div className="flex flex-col gap-6">
+      <Settlement portfolio={p} data={reconciliation.data} />
+      {reconciliation.data?.claim_packs.map(pack => (
+        <ClaimPack key={pack.trigger_id} pack={pack} />
+      ))}
     </div>
   )
 }
 
-function DeliveryAndStatement({ portfolio: p }: { portfolio: Portfolio }) {
+function Settlement({
+  portfolio: p,
+  data,
+}: {
+  portfolio: Portfolio
+  data: Reconciliation | undefined
+}) {
   const refresh = useSeasonRefresh()
-  const candidates = p.rows.filter(r => r.verified.state !== 'not_planted')
-  const [contractId, setContractId] = useState(
-    p.hero_contract_id ?? candidates[0]?.contract_id ?? ''
-  )
-  const [weight, setWeight] = useState('720')
-  const [moisture, setMoisture] = useState('11')
-  const [grade, setGrade] = useState<Grade>('A')
-  const statement = trpc.season.statement.useQuery(
-    { orgId: p.org_id, contractId },
-    { enabled: Boolean(contractId), refetchInterval: 6000 }
-  )
-  // The payoff in view without a scroll on stage: on opening, the statement (before June) or the
-  // depot's form (June); when June arrives, the form; after a delivery, the net due.
+  const roster = data?.roster
+  const ready = useMemo(() => roster?.filter(r => r.ready) ?? [], [roster])
+  const waiting = useMemo(() => roster?.filter(r => !r.ready) ?? [], [roster])
+  // Once the payout is requested the settlement is final: shown whole on every visit.
+  const paid = ready.some(r => r.payout)
+  const [started, setStarted] = useState(false)
+  // When the run started: the count follows the clock, so a slow frame never stretches the run.
+  const [startedAt, setStartedAt] = useState(0)
+  const [resolved, setResolved] = useState(0)
+  const [confirming, setConfirming] = useState(false)
   const island = useRef<HTMLElement>(null)
-  const heading = useRef<HTMLHeadingElement>(null)
-  const show = (el: Element | null, block: ScrollLogicalPosition = 'start') => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    el?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block })
-  }
-  const record = trpc.season.recordDelivery.useMutation({
+  const list = useRef<HTMLDivElement>(null)
+  const pay = trpc.season.requestPayouts.useMutation({
     onSuccess: async () => {
+      setConfirming(false)
       await refresh()
-      setTimeout(() => show(document.getElementById('net-due'), 'center'), 150)
     },
   })
-  const s = statement.data
-  const kg = Number(weight)
-  const price = s ? Math.round(s.contract_price_zmw_t * GRADE_PRICE_FACTOR[grade]) : 0
-  const delivered = s?.lines.some(l => l.type === 'delivery') ?? false
-  const before = p.phase !== 'june'
-  const landed = useRef(false)
-  const loaded = Boolean(statement.data)
+  const june = p.phase === 'june'
+  const shown = started || paid
+  const count = paid ? ready.length : Math.min(resolved, ready.length)
+  const playing = started && !paid && count < ready.length
+  const done = shown && count >= ready.length
+
+  // The ready farmers resolve one after another, after a beat to read the roster.
   useEffect(() => {
-    if (!loaded || landed.current) return
-    landed.current = true
-    show(before ? heading.current : island.current)
-    // Once, when the statement first arrives.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded])
-  const wasBefore = useRef(before)
+    if (!playing) return
+    const step = stepMs(ready.length)
+    const t = setInterval(
+      () => {
+        const due = Math.floor((performance.now() - startedAt - 600) / step) + 1
+        setResolved(Math.min(ready.length, Math.max(0, due)))
+      },
+      Math.max(30, step / 2)
+    )
+    return () => clearInterval(t)
+  }, [playing, startedAt, ready.length])
+  // The farmer just settled stays in the middle of the list (the list scrolls, not the page).
   useEffect(() => {
-    if (wasBefore.current && !before) show(island.current)
-    wasBefore.current = before
-  }, [before])
+    const box = list.current
+    if (!box || !playing || count === 0) return
+    const row = box.querySelector<HTMLElement>(`[data-row="${count - 1}"]`)
+    if (!row) return
+    box.scrollTo({
+      top: row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2,
+      behavior: reduced() ? 'auto' : 'smooth',
+    })
+  }, [count, playing])
+
+  const start = () => {
+    setStarted(true)
+    setStartedAt(performance.now())
+    setResolved(reduced() ? ready.length : 0)
+    // The roster, the totals and the payout button fill the screen under the header.
+    requestAnimationFrame(() =>
+      island.current?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' })
+    )
+  }
 
   return (
     <section
       ref={island}
-      aria-labelledby="delivery"
-      className="island min-w-0 scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
+      aria-labelledby="settlement"
+      className="island min-w-0 scroll-mt-[7.6rem] px-[1.2rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.45rem] lg:scroll-mt-[4.75rem]"
     >
-      <div className="grid items-start justify-items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div>
-          <h2 id="delivery" className="serif text-title font-semibold text-fg">
-            Delivery and statement
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="settlement" className="serif text-title font-semibold text-fg">
+            Harvest settlement
           </h2>
           <p className="text-label text-fg-2">
-            The depot enters the weight; the ledger does the arithmetic
+            The crop at the contract price, less what was lent: every figure from the ledger
           </p>
         </div>
+        {!shown && (
+          <div className="flex flex-col items-end gap-1">
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={!june || !roster}
+              onClick={start}
+            >
+              <Play size={17} aria-hidden />
+              Start reconciliation
+            </button>
+            {!june && (
+              <span className="text-caption text-fg-2">
+                Deliveries open in June (season day {seasonDate(p.today)})
+              </span>
+            )}
+          </div>
+        )}
+        {playing && (
+          <button
+            type="button"
+            className="btn-quiet !h-9"
+            onClick={() => setResolved(ready.length)}
+          >
+            <ChevronsRight size={16} aria-hidden />
+            Skip
+          </button>
+        )}
       </div>
 
-      <form
-        className="mt-4 grid gap-3 sm:grid-cols-2"
-        onSubmit={event => {
-          event.preventDefault()
-          record.mutate({
-            orgId: p.org_id,
-            contract_id: contractId,
-            weight_kg: kg,
-            moisture_pct: Number(moisture),
-            grade,
-          })
-        }}
-      >
-        <div className="flex flex-col gap-1 text-label font-semibold text-fg sm:col-span-2">
-          Farmer
-          <Combobox
-            label="Farmer"
-            value={contractId}
-            onChange={setContractId}
-            options={candidates.map(r => ({
-              value: r.contract_id,
-              label: r.farmer_name,
-              detail: r.camp,
-            }))}
+      {!roster ? (
+        <SkeletonRows rows={4} lines={1} label="Loading the season's deliveries" />
+      ) : !shown ? (
+        <p className="mt-3 text-label text-fg-2">
+          {roster.length} farmers with a crop in the ground this season.
+        </p>
+      ) : (
+        <div className="mt-4 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="min-w-0">
+            <div
+              aria-hidden
+              className="hidden grid-cols-[minmax(0,1fr)_5.4rem_6.6rem_5.8rem_5.6rem_7.4rem_6.6rem] gap-x-3 border-b border-hairline px-2 pb-1.5 lg:grid"
+            >
+              {[
+                'Farmer',
+                'Status',
+                'Delivered',
+                'Value',
+                'Less inputs',
+                'Less advance, fee',
+                'Net',
+              ].map(h => (
+                <span
+                  key={h}
+                  className={`th ${['Delivered', 'Farmer', 'Status'].includes(h) ? '' : 'text-right'}`}
+                >
+                  {h}
+                </span>
+              ))}
+            </div>
+            <div
+              ref={list}
+              role="list"
+              aria-label="Farmers to settle"
+              className="relative max-h-[24rem] overflow-y-auto overscroll-contain"
+            >
+              {ready.map((r, i) => (
+                <Row
+                  key={r.contract_id}
+                  row={r}
+                  index={i}
+                  state={i < count ? (playing && i === count - 1 ? 'active' : 'done') : 'waiting'}
+                />
+              ))}
+              {waiting.map(r => (
+                <Row key={r.contract_id} row={r} state="not_yet" />
+              ))}
+            </div>
+            <p className="mt-2 text-caption text-fg-2">
+              {ready.length} ready · {waiting.length} not yet · amounts in ZMW · every figure is
+              summed from the ledger rows; nothing is stored twice.
+            </p>
+          </div>
+          <Summary
+            ready={ready}
+            settled={ready.slice(0, count)}
+            done={done}
+            confirming={confirming}
+            setConfirming={setConfirming}
+            pay={() => pay.mutate({ orgId: p.org_id })}
+            paying={pay.isPending}
+            error={pay.error?.message}
           />
         </div>
-        {/* Before June the depot has nothing to weigh: the form folds to one line and the
-            statement (the ledger so far) moves up into view. */}
-        {!before && (
+      )}
+    </section>
+  )
+}
+
+type RowState = 'waiting' | 'active' | 'done' | 'not_yet'
+
+// Memoised: a step re-renders the two rows whose state changed, not the whole roster.
+const Row = memo(function Row({
+  row: r,
+  index,
+  state,
+}: {
+  row: SettlementRow
+  index?: number
+  state: RowState
+}) {
+  const settled = state === 'done' || state === 'active'
+  const chip =
+    state === 'not_yet' ? (
+      <span className="inline-flex shrink-0 items-center rounded-pill bg-well px-2.5 py-[0.12rem] text-caption font-semibold text-fg-2 shadow-[inset_0_0_0_1px_var(--hairline)]">
+        Not yet
+      </span>
+    ) : (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-signal-tint px-2.5 py-[0.12rem] text-caption font-semibold text-signal-text">
+        {settled && <CircleCheck size={13} aria-hidden />}
+        Ready
+      </span>
+    )
+  const delivered =
+    r.weight_kg !== null ? `${(r.weight_kg / 1000).toFixed(2)} t · grade ${r.grade}` : ''
+  return (
+    <div
+      role="listitem"
+      data-row={index}
+      className={`border-b border-hairline px-2 py-2 transition-colors duration-300 ease-out last:border-b-0 ${state === 'active' ? 'bg-signal-tint' : ''}`}
+    >
+      {/* Wide: one line, the arithmetic in columns. */}
+      <div className="hidden grid-cols-[minmax(0,1fr)_5.4rem_6.6rem_5.8rem_5.6rem_7.4rem_6.6rem] items-center gap-x-3 text-label lg:grid">
+        <span className="truncate">
+          <span className="font-semibold text-fg">{r.farmer_name}</span>
+          <span className="text-fg-2"> · {r.camp}</span>
+        </span>
+        <span>{chip}</span>
+        {state === 'not_yet' ? (
+          <span className="col-span-5 text-caption text-fg-2">Not delivered yet</span>
+        ) : settled ? (
           <>
-            <label className="flex flex-col gap-1 text-label font-semibold text-fg">
-              Weight (kg)
-              <input
-                className="field tabular-nums"
-                inputMode="numeric"
-                value={weight}
-                onChange={event => setWeight(event.target.value.replace(/[^\d]/g, ''))}
+            <span className="lc-row tabular-nums text-fg">{delivered}</span>
+            <Fig className="text-right" value={r.value_zmw} />
+            <Fig className="text-right text-fg-2" value={r.input_loan_zmw} />
+            <Fig className="text-right text-fg-2" value={r.advance_zmw + r.fee_zmw} />
+            <Net row={r} />
+          </>
+        ) : (
+          <>
+            {[0, 1, 2, 3, 4].map(k => (
+              <span
+                key={k}
+                className={`h-3 rounded bg-well ${k === 0 ? 'w-16' : 'ml-auto w-12'}`}
               />
-            </label>
-            <label className="flex flex-col gap-1 text-label font-semibold text-fg">
-              Moisture (%)
-              <input
-                className="field tabular-nums"
-                inputMode="decimal"
-                value={moisture}
-                onChange={event => setMoisture(event.target.value.replace(/[^\d.]/g, ''))}
-              />
-            </label>
-            <fieldset className="sm:col-span-2">
-              <legend className="text-label font-semibold text-fg">Grade</legend>
-              <div className="toggle-group mt-1" role="group">
-                {GRADES.map(g => (
-                  <button
-                    key={g}
-                    type="button"
-                    className="toggle !py-1.5"
-                    aria-pressed={grade === g}
-                    onClick={() => setGrade(g)}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-            <p className="text-label text-fg-2 sm:col-span-2">
-              {kg > 0 && price > 0
-                ? `${(kg / 1000).toFixed(2)} t × ZMW ${price.toLocaleString('en-GB')} (grade ${grade}) = ${zmw((kg / 1000) * price)}`
-                : 'Enter the weight to price it'}
-            </p>
+            ))}
           </>
         )}
-        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-          {/* Once delivered the statement is final: no button left to read as an action. */}
-          {!delivered && !before && (
+      </div>
+      {/* Narrow: the name and the net, the arithmetic under them. */}
+      <div className="flex flex-col gap-0.5 lg:hidden">
+        <div className="flex items-center justify-between gap-2 text-label">
+          <span className="min-w-0 truncate">
+            <span className="font-semibold text-fg">{r.farmer_name}</span>
+            <span className="text-fg-2"> · {r.camp}</span>
+          </span>
+          {settled ? <Net row={r} /> : chip}
+        </div>
+        {state === 'not_yet' ? (
+          <span className="text-caption text-fg-2">Not delivered yet</span>
+        ) : (
+          settled && (
+            <span className="lc-row text-caption tabular-nums text-fg-2">
+              {delivered}: {n(r.value_zmw)}, less {n(r.input_loan_zmw)} inputs, less{' '}
+              {n(r.advance_zmw + r.fee_zmw)} advance and fee
+            </span>
+          )
+        )}
+      </div>
+      {settled && r.payout && (
+        <p className="lc-row mt-1 flex items-center gap-1.5 text-caption text-fg-2">
+          <Banknote size={14} aria-hidden className="shrink-0 text-signal" />
+          Payout {zmw(r.payout.amount_zmw)} requested {seasonDate(r.payout.at)} · ref {r.payout.ref}{' '}
+          · simulated
+        </p>
+      )}
+    </div>
+  )
+})
+
+// A figure that counts up from zero as its row settles.
+function Fig({ value, className = '' }: { value: number; className?: string }) {
+  const shown = useCountUp(value, 420, 0)
+  return <span className={`lc-row tabular-nums text-fg ${className}`}>{n(shown)}</span>
+}
+
+// What is owed to the farmer, or the shortfall, marked by what explains it.
+function Net({ row: r }: { row: SettlementRow }) {
+  const shown = useCountUp(Math.abs(r.net_zmw), 420, 0)
+  const kind = r.variance.kind
+  const Mark = kind === 'shock' ? Sun : kind === 'unexplained' ? AlertTriangle : null
+  const tone =
+    r.net_zmw >= 0
+      ? 'text-fg'
+      : kind === 'shock'
+        ? 'text-attention-text'
+        : kind === 'unexplained'
+          ? 'text-high-text'
+          : 'text-fg'
+  return (
+    <span
+      className={`lc-row inline-flex items-center justify-end gap-1 whitespace-nowrap text-right font-semibold tabular-nums ${tone}`}
+      title={r.variance.text}
+    >
+      {Mark && <Mark size={14} aria-hidden className="shrink-0" />}
+      {r.net_zmw < 0 ? `short ${n(shown)}` : n(shown)}
+    </span>
+  )
+}
+
+function Summary({
+  ready,
+  settled,
+  done,
+  confirming,
+  setConfirming,
+  pay,
+  paying,
+  error,
+}: {
+  ready: SettlementRow[]
+  settled: SettlementRow[]
+  done: boolean
+  confirming: boolean
+  setConfirming: (on: boolean) => void
+  pay: () => void
+  paying: boolean
+  error: string | undefined
+}) {
+  const gross = useCountUp(
+    total(settled, r => r.value_zmw),
+    250
+  )
+  const recovered = useCountUp(
+    total(settled, r => r.recovered_zmw),
+    250
+  )
+  const due = useCountUp(
+    total(
+      settled.filter(r => r.net_zmw > 0),
+      r => r.net_zmw
+    ),
+    250
+  )
+  const shock = settled.filter(r => r.variance.kind === 'shock')
+  const unexplained = settled.filter(r => r.variance.kind === 'unexplained')
+  const shockCamps = [...new Set(shock.map(r => r.camp))].join(', ')
+  const payees = ready.filter(r => r.net_zmw > 0 && !r.payout)
+  const sent = ready.filter(r => r.payout)
+  return (
+    <aside
+      aria-label="Settlement totals"
+      className="rounded-card bg-ground px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--hairline)] xl:sticky xl:top-[5.5rem]"
+    >
+      <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1.5 text-label">
+        <dt className="text-fg-2">Farmers settled</dt>
+        <dd className="text-right font-semibold tabular-nums text-fg">
+          {settled.length} of {ready.length}
+        </dd>
+        <dt className="text-fg-2">Gross value</dt>
+        <dd className="text-right font-semibold tabular-nums text-fg">{zmw(gross)}</dd>
+        <dt className="text-fg-2">Recovered</dt>
+        <dd className="text-right font-semibold tabular-nums text-fg">{zmw(recovered)}</dd>
+      </dl>
+      <div className="mt-3 border-t border-hairline pt-3">
+        <p className="text-label font-semibold text-fg">Total payouts due</p>
+        <p className="serif text-[1.9rem] font-semibold leading-none tabular-nums text-fg">
+          <span className="mr-1 font-body text-[0.85rem] font-[650] text-fg-2">ZMW</span>
+          {due.toLocaleString('en-GB')}
+        </p>
+      </div>
+      <ul className="mt-3 flex flex-col gap-1.5 text-caption text-fg">
+        {shock.length > 0 && (
+          <li className="flex items-start gap-1.5">
+            <Sun size={14} aria-hidden className="mt-0.5 shrink-0 text-attention-text" />
+            <span>
+              {shockCamps} drought: {shock.length} short{' '}
+              {shock.length === 1 ? 'delivery' : 'deliveries'}, uncontrollable
+            </span>
+          </li>
+        )}
+        {unexplained.length > 0 && (
+          <li className="flex items-start gap-1.5">
+            <AlertTriangle size={14} aria-hidden className="mt-0.5 shrink-0 text-high-text" />
+            <span>
+              {unexplained.length} unexplained{' '}
+              {unexplained.length === 1 ? 'shortfall' : 'shortfalls'}, flagged for the credit team:{' '}
+              {unexplained.map(r => r.farmer_name).join(', ')}
+            </span>
+          </li>
+        )}
+      </ul>
+
+      {done && (
+        <div className="mt-3 border-t border-hairline pt-3">
+          {sent.length > 0 ? (
+            <div className="lc-row">
+              <p className="flex items-center gap-1.5 text-label font-semibold text-signal-text">
+                <CircleCheck size={17} aria-hidden className="shrink-0" />
+                Payout request sent to Phytos · simulated
+              </p>
+              <p className="mt-0.5 text-caption tabular-nums text-fg-2">
+                {sent.length} farmers · {zmw(total(sent, r => r.payout?.amount_zmw ?? 0))} · one
+                ledger row each
+              </p>
+            </div>
+          ) : payees.length === 0 ? (
+            <p className="text-caption text-fg-2">Nothing owed to a farmer yet.</p>
+          ) : confirming ? (
+            <div className="lc-row rounded-card bg-panel px-3.5 py-3 shadow-[inset_0_0_0_1px_var(--hairline)]">
+              <p className="text-label font-semibold text-fg">
+                Pay {payees.length} farmers {zmw(total(payees, r => r.net_zmw))}?
+              </p>
+              <p className="mt-0.5 text-caption text-fg-2">
+                Each to their mobile money, what the ledger says is owed. One ledger row a farmer.
+              </p>
+              <div className="mt-2.5 grid gap-2">
+                <button
+                  type="button"
+                  className="btn-primary justify-center"
+                  disabled={paying}
+                  onClick={pay}
+                >
+                  {paying ? (
+                    <LoaderCircle size={17} aria-hidden className="animate-spin" />
+                  ) : (
+                    <Banknote size={17} aria-hidden />
+                  )}
+                  Send payout request
+                </button>
+                <button
+                  type="button"
+                  className="btn-quiet justify-center"
+                  disabled={paying}
+                  onClick={() => setConfirming(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
             <button
-              type="submit"
-              className="btn-primary"
-              disabled={record.isPending || before || !(kg > 0)}
+              type="button"
+              className="btn-primary w-full justify-center"
+              onClick={() => setConfirming(true)}
             >
-              {record.isPending ? (
-                <LoaderCircle size={18} aria-hidden className="animate-spin" />
-              ) : (
-                <Truck size={18} aria-hidden />
-              )}
-              Record delivery
+              <Banknote size={17} aria-hidden />
+              Request payout for farmers
             </button>
           )}
-          {before && (
-            <span className="text-caption text-fg-2">
-              Deliveries open in June (season day {seasonDate(p.today)})
-            </span>
-          )}
-          {delivered && (
-            <span className="text-caption text-fg-2">Delivered: the statement below is final</span>
-          )}
+          {error && <p className="mt-2 text-caption text-high-text">{error}</p>}
         </div>
-        {record.error && (
-          <p className="text-label text-high-text sm:col-span-2">{record.error.message}</p>
-        )}
-      </form>
-
-      <h3
-        ref={heading}
-        className="mt-6 scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] text-section font-semibold text-fg"
-      >
-        {s ? `${s.farmer_name}'s statement` : 'Statement'}
-      </h3>
-      {!s ? (
-        <SkeletonRows rows={4} lines={1} label="Loading the statement" />
-      ) : (
-        <StatementTable statement={s} />
       )}
-    </section>
-  )
-}
-
-function StatementTable({ statement: s }: { statement: Statement }) {
-  const net = -s.balance_zmw
-  return (
-    <>
-      <table className="mt-2 w-full text-left text-label">
-        <tbody>
-          {s.lines.map((l, i) => (
-            <tr key={`${l.ref}-${i}`} className="border-b border-hairline">
-              <td className="py-2 pr-3">
-                <span className="text-fg">{l.label}</span>
-                <span className="block text-caption text-fg-2">
-                  {seasonDate(l.at)} · {l.note}
-                  {/* The transfer's reference, so the row can be traced to the "sent" receipt. */}
-                  {l.type === 'advance' && l.ref.startsWith('SIM-') ? ` · ref ${l.ref}` : ''}
-                  {/* "simulated" only on money that moved: a transfer or a payout (invariant 5). */}
-                  {l.simulated &&
-                  ['advance', 'payout', 'insurance_payout'].includes(l.type) &&
-                  !l.note.includes('simulated')
-                    ? ' · simulated'
-                    : ''}
-                </span>
-              </td>
-              <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-fg">
-                {l.amount_zmw < 0 ? zmw(-l.amount_zmw) : `less ${zmw(l.amount_zmw)}`}
-              </td>
-            </tr>
-          ))}
-          <tr id="net-due" className="border-t-[1.5px] border-fg">
-            <td className="pt-3 font-semibold text-fg">
-              {net >= 0 ? `Net due to ${s.farmer_name.split(' ')[0]}` : 'Still owed by the farmer'}
-              <span className="block text-caption font-normal text-fg-2">
-                {s.settled
-                  ? net > 0
-                    ? 'Paying it moves money, so it waits for approval'
-                    : 'Carried to next season'
-                  : 'Before harvest: what is owed so far'}
-              </span>
-            </td>
-            <td className="serif whitespace-nowrap pt-3 text-right text-[1.6rem] font-semibold tabular-nums text-fg">
-              <span className="mr-1 font-body text-[0.8rem] font-[650] text-fg-2">ZMW</span>
-              {Math.abs(net).toLocaleString('en-GB')}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p className="mt-3 text-label text-fg-2">{s.variance.text}</p>
-      <p className="mt-1 text-caption text-fg-2">
-        Every figure is summed from the ledger rows; nothing is stored twice.
-      </p>
-    </>
-  )
-}
-
-const KIND: Record<VarianceKind, { label: string; className: string }> = {
-  unexplained: {
-    label: 'Unexplained',
-    className: 'bg-well text-high-text shadow-[inset_0_0_0_1px_var(--hairline)]',
-  },
-  shock: { label: 'Shock, uncontrollable', className: 'bg-attention-tint text-attention-text' },
-  verified_issue: {
-    label: 'Verified problem',
-    className: 'bg-well text-fg shadow-[inset_0_0_0_1px_var(--hairline)]',
-  },
-  none: { label: 'On projection', className: 'bg-signal-tint text-signal-text' },
-}
-
-function VarianceList({ data }: { data: Reconciliation | undefined }) {
-  // Never cut silently: the first eight, then every row on request.
-  const [all, setAll] = useState(false)
-  return (
-    <section
-      aria-labelledby="variance"
-      className="island px-[1.45rem] py-[1.3rem] md:px-[1.65rem] md:py-[1.55rem]"
-    >
-      <div className="grid items-start justify-items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div>
-          <h2 id="variance" className="serif text-title font-semibold text-fg">
-            Delivered against projected
-          </h2>
-          <p className="text-label text-fg-2">Shortfalls the credit team must look at first</p>
-        </div>
-      </div>
-      {!data ? (
-        <SkeletonRows rows={4} lines={2} label="Loading the deliveries" />
-      ) : data.rows.length === 0 ? (
-        <p className="mt-3 text-label text-fg-2">No deliveries yet: they open in June.</p>
-      ) : (
-        <ul className="mt-3 flex flex-col">
-          {(all ? data.rows : data.rows.slice(0, 8)).map(r => (
-            <li key={r.contract_id} className="border-b border-hairline py-2.5 last:border-b-0">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-label font-semibold text-fg">
-                  {r.farmer_name} <span className="font-normal text-fg-2">· {r.camp}</span>
-                </span>
-                <span
-                  className={`rounded-pill px-2.5 py-[0.15rem] text-caption font-semibold ${KIND[r.variance.kind].className}`}
-                >
-                  {KIND[r.variance.kind].label}
-                </span>
-              </div>
-              <p className="mt-0.5 text-caption text-fg-2">{r.variance.text}</p>
-              {/* The book in kwacha after this delivery: net_zmw > 0 is owed to the farmer. */}
-              <p className="mt-0.5 text-caption font-semibold tabular-nums text-fg">
-                {r.net_zmw > 0
-                  ? `Net due to the farmer ${zmw(r.net_zmw)}`
-                  : r.net_zmw < 0
-                    ? `Still owes ${zmw(-r.net_zmw)}`
-                    : 'Settled'}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-      {data && data.rows.length > 8 && (
-        <button type="button" className="btn-quiet mt-3" onClick={() => setAll(v => !v)}>
-          {all ? 'Show the first 8' : `Show all ${data.rows.length}`}
-        </button>
-      )}
-    </section>
+    </aside>
   )
 }
 

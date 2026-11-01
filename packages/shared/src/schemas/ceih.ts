@@ -554,6 +554,31 @@ export const ClaimPackSchema = z.object({
 })
 export type ClaimPack = z.infer<typeof ClaimPackSchema>
 
+// One farmer in the harvest settlement (Reconciliation's batch, 1 Nov): ready once the crop is
+// delivered and in the ledger. Every figure is summed from the farmer's ledger rows; payout rows
+// are left out of net_zmw, so it reads what is owed before the payout and stays put after it.
+export const SettlementRowSchema = z.object({
+  contract_id: z.string(),
+  farmer_name: z.string(),
+  camp: z.string(),
+  ready: z.boolean(),
+  weight_kg: z.number().nullable(),
+  grade: GradeSchema.nullable(),
+  price_zmw_t: Zmw.nullable(),
+  // The crop delivered at the contract price for its grade; 0 before it is delivered.
+  value_zmw: Zmw,
+  input_loan_zmw: Zmw,
+  advance_zmw: Zmw,
+  fee_zmw: Zmw,
+  // value - loan - advance - fee: positive is owed to the farmer, negative a shortfall.
+  net_zmw: Zmw,
+  recovered_zmw: Zmw,
+  variance: z.object({ kind: VarianceKindSchema, text: z.string() }),
+  payout: z.object({ at: TimestampSchema, ref: z.string(), amount_zmw: Zmw }).nullable(),
+  sim: z.boolean(),
+})
+export type SettlementRow = z.infer<typeof SettlementRowSchema>
+
 export const ReconciliationSchema = z.object({
   rows: z.array(
     z.object({
@@ -568,6 +593,8 @@ export const ReconciliationSchema = z.object({
     })
   ),
   claim_packs: z.array(ClaimPackSchema),
+  // Every planted field, ready first (optional: added 1 Nov).
+  roster: z.array(SettlementRowSchema).optional(),
 })
 export type Reconciliation = z.infer<typeof ReconciliationSchema>
 

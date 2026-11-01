@@ -62,7 +62,8 @@ const VIEWS: View[] = [
   { name: 'capture-4-result-advice', app: 'capture', route: 'result' },
   { name: 'capture-5-result-officer', app: 'capture', route: 'officer' },
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
-  // CEIH (plan §3): the season's three tabs and the approval, from tools/seed/ceih-fixtures.ts.
+  // CEIH (1 Nov): the agribusiness's three screens, from tools/seed/ceih-fixtures.ts. The farmer
+  // app has its own player: farmer-shot.ts.
   {
     name: 'dashboard-fields-map',
     app: 'dashboard',
@@ -101,22 +102,6 @@ const VIEWS: View[] = [
     },
   },
   { name: 'dashboard-season-ledger', app: 'dashboard', route: 'season', extra: PROJECTOR },
-  { name: 'dashboard-season-approvals', app: 'dashboard', route: 'approvals', extra: PROJECTOR },
-  {
-    name: 'dashboard-season-approve',
-    app: 'dashboard',
-    route: 'approvals',
-    extra: PROJECTOR,
-    // The modal that restates amount, fee and the farmer's code before money moves.
-    prepare: async page => {
-      await page
-        .getByRole('button', { name: /^approve zmw 840$/i })
-        .first()
-        .click()
-      await page.getByRole('dialog').waitFor()
-      await page.waitForTimeout(500)
-    },
-  },
   {
     name: 'dashboard-loan-check',
     app: 'dashboard',
@@ -130,22 +115,35 @@ const VIEWS: View[] = [
     },
   },
   {
-    name: 'dashboard-combobox-open',
-    app: 'dashboard',
-    route: 'reconciliation',
-    extra: PROJECTOR,
-    // The farmer picker open, filtered by typing (the field-airy combobox, no native select).
-    prepare: async page => {
-      await page.getByRole('combobox', { name: 'Farmer' }).click()
-      await page.keyboard.type('ch')
-      await page.waitForTimeout(400)
-    },
-  },
-  {
     name: 'dashboard-season-reconciliation',
     app: 'dashboard',
     route: 'reconciliation',
     extra: PROJECTOR,
+  },
+  {
+    name: 'dashboard-reconciliation-run',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The batch run to its end: every ready farmer resolved, the summary and the payout button.
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Start reconciliation' }).click()
+      await page.waitForTimeout(11_000)
+    },
+  },
+  {
+    name: 'dashboard-reconciliation-sent',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The payout request confirmed and sent (simulated).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Start reconciliation' }).click()
+      await page.getByRole('button', { name: 'Skip' }).click()
+      await page.getByRole('button', { name: 'Request payout for farmers' }).click()
+      await page.getByRole('button', { name: 'Send payout request' }).click()
+      await page.waitForTimeout(1500)
+    },
   },
 ]
 

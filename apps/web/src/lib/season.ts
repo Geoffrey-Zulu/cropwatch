@@ -1,16 +1,14 @@
 import type { SeasonRow } from '@repo/shared'
 import { trpc } from './trpc'
 
-// CEIH on the dashboard: the season's views poll every few seconds so a ground check, a farmer's
-// code or a transfer shows up while the presenter talks; every action refreshes them at once.
+// CEIH on the dashboard: the season's views poll every few seconds so a ground check or a new
+// season day shows up while the presenter talks; every action refreshes them at once.
 export const SEASON_POLL_MS = 6000
 
 export function useSeasonQueries(orgId: string) {
   const options = { refetchInterval: SEASON_POLL_MS, staleTime: 2000 }
   return {
     portfolio: trpc.season.portfolio.useQuery({ orgId }, options),
-    approvals: trpc.season.approvals.useQuery({ orgId }, options),
-    sms: trpc.season.smsLog.useQuery({ orgId }, options),
   }
 }
 
@@ -19,24 +17,8 @@ export function useSeasonRefresh() {
   return () => utils.season.invalidate()
 }
 
-// "12 Jan 2027"
-export const seasonDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
-
-// "14:05", the time of day on the season calendar (real time of day; Lusaka is UTC+2).
-export const seasonTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Africa/Lusaka',
-  })
-
-export const firstName = (name: string) => name.split(' ')[0]
+// The dates and names live in ./dates, which pulls in no API client (the farmer app uses it).
+export { firstName, seasonDate, seasonTime } from './dates'
 
 // The roster as CSV for the credit team: farmer level for this agribusiness (under the farmers'
 // contract consent), camp level for places: no pin, no polygon, no phone number.

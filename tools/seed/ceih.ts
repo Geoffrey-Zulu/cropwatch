@@ -4,9 +4,11 @@
 // the demo's season calendar (January for the advance); ceih_demo/{org} maps it to the real clock.
 //
 // The storylines (plan §4): Given Mweemba is one ground check short of eligible (one clear pass in
-// 21 days, two clouded out); his neighbour Joseph Hamoonga never planted; two advances wait for
-// approval; Hamangaba is armed for the drought trigger (dry from mid-February, its curves falling
-// into March); a few Keemba farms deliver far short in June with no shock and no verified problem.
+// 21 days, two clouded out); his neighbour Joseph Hamoonga never planted; twelve advances went out
+// within their caps (no approval queue since 1 Nov: the season's rules send them); Hamangaba is
+// armed for the drought trigger (dry from mid-February, its curves falling into March); by June
+// about 60% of the planted fields have delivered (Given's not yet), among them a few Keemba farms
+// far short with no shock and no verified problem.
 import {
   ADVANCE_FEE_PCT,
   CAP_PCT_DEFAULT,
@@ -638,7 +640,9 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     const fee = feeFor(amount, CREDIT)
     const confirmed = addMinutes(requested, r.int(3, 20))
     const id = `sim-ceih-advance-${pad(i + 1)}`
-    const disbursed = f.archetype === 'disbursed'
+    // Every confirmed advance went out: within the cap, the season's rules send it (CLAUDE.md
+    // invariant 11, 1 Nov). The two "awaiting" farmers asked later, on 11 to 12 January.
+    const disbursed = true
     const approvedAt = addMinutes(confirmed, r.int(30, 300))
     const txRef = `SIM-${(1000 + i).toString(36).toUpperCase()}${pad(i + 1)}`
     advances.push({
@@ -693,7 +697,10 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     }
   })
 
-  // June: deliveries for every planted field but Given's (his is entered live).
+  // June: about 60% of the planted fields have delivered by the June season day, Given's not yet
+  // (Reconciliation's roster: ready or not yet). The two side-sellers always have. Which ones is a
+  // stream of its own, so every other draw (and the rain after it) is the same as before.
+  const ready = createRandom(CEIH_SEED + 7)
   const deliveries: CeihSeed['deliveries'] = []
   farmers.forEach((f, i) => {
     if (['given', 'neighbour', 'not_planted'].includes(f.archetype)) return
@@ -714,6 +721,8 @@ export function generateCeih(options: CeihOptions): CeihSeed {
     ] as const)
     const { price_zmw_t, value_zmw } = priceDelivery(c.contract_price_zmw_t, grade, weight)
     const when = at(addDays('2027-05-26', r.int(0, 13)), r.int(7, 15), r.int(0, 59))
+    const moisture = Math.round(r.between(10, 13) * 10) / 10
+    if (!sideSellers.has(i) && !ready.chance(0.66)) return
     const id = `sim-ceih-delivery-${pad(i + 1)}`
     deliveries.push({
       id,
@@ -723,7 +732,7 @@ export function generateCeih(options: CeihOptions): CeihSeed {
         org_id: DEMO_ORG_ID,
         at: when,
         weight_kg: weight,
-        moisture_pct: Math.round(r.between(10, 13) * 10) / 10,
+        moisture_pct: moisture,
         grade,
         price_zmw_t,
         value_zmw,

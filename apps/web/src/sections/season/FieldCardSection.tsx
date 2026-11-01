@@ -31,7 +31,6 @@ import { NdviChart } from '../../components/NdviChart'
 import { Bar, Loading } from '../../components/Skeleton'
 import { firstName, seasonDate } from '../../lib/season'
 import { trpc } from '../../lib/trpc'
-import { RequestAdvanceDialog } from './AdvanceDialogs'
 
 // A season ledger row opened (plan §3, Tab 1): the field's curve against its camp, the Verified
 // Season Record entry by entry with its source, and the eligibility factors. Rules, never a score.
@@ -92,15 +91,14 @@ const KIND_ICON: Partial<Record<TimelineEntry['kind'], typeof Package>> = {
 export function FieldCardView({
   orgId,
   card,
-  commandCenter,
   narrow = false,
 }: {
   orgId: string
   card: FieldCard
-  commandCenter: boolean
+  // Kept for callers: the card is informational now, the same for every role.
+  commandCenter?: boolean
   narrow?: boolean
 }) {
-  const [requesting, setRequesting] = useState(false)
   const [checking, setChecking] = useState(false)
   const e = card.eligibility
   const advance = card.advance
@@ -214,6 +212,8 @@ export function FieldCardView({
               </span>
             )}
           </div>
+          {/* Informational (Geoffrey, 1 Nov): within the cap the season's rules send an advance
+              when the farmer asks from his phone; there is no request or approval here. */}
           {open ? (
             <p className="mt-3 text-label text-fg-2">
               Advance {zmw(advance.amount_zmw)}:{' '}
@@ -221,20 +221,11 @@ export function FieldCardView({
             </p>
           ) : (
             e.eligible && (
-              <button
-                type="button"
-                className="btn-primary mt-4"
-                onClick={() => setRequesting(true)}
-              >
-                <Banknote aria-hidden size={18} />
-                Request advance for {firstName(card.farmer_name)}
-              </button>
+              <p className="mt-3 text-label text-fg-2">
+                Within the cap, an advance is sent automatically when {firstName(card.farmer_name)}{' '}
+                asks.
+              </p>
             )
-          )}
-          {open && advance.state === 'requested' && (
-            <button type="button" className="btn-quiet mt-3" onClick={() => setRequesting(true)}>
-              Enter {firstName(card.farmer_name)}&apos;s code
-            </button>
           )}
         </section>
 
@@ -269,29 +260,15 @@ export function FieldCardView({
         )}
       </div>
 
-      {checking && (
-        <LoanCheck
-          card={card}
-          onClose={() => setChecking(false)}
-          onRequest={() => setRequesting(true)}
-        />
-      )}
-      {requesting && (
-        <RequestAdvanceDialog
-          orgId={orgId}
-          card={card}
-          commandCenter={commandCenter}
-          onClose={() => setRequesting(false)}
-        />
-      )}
+      {checking && <LoanCheck card={card} onClose={() => setChecking(false)} />}
     </div>
   )
 }
 
 export const ADVANCE_STATE: Record<string, string> = {
   requested: 'waiting for the farmer’s code',
-  farmer_confirmed: 'confirmed by the farmer, waiting for approval',
-  approved: 'approved, sending',
+  farmer_confirmed: 'confirmed by the farmer, sending',
+  approved: 'within the rules, sending',
   disbursed: 'sent',
   declined: 'declined',
   failed: 'transfer failed',

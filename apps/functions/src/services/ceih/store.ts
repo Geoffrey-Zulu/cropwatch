@@ -64,6 +64,9 @@ export interface SeasonStore {
     ledger: LedgerEntry[],
     sideSell: boolean
   ): Promise<void>
+  // Harvest payouts: one ledger row a contract under a fixed id (payout__<contract>), written in
+  // one transaction only where none is there yet, so two presses never pay twice. How many landed.
+  addPayouts(rows: { id: string; entry: LedgerEntry }[]): Promise<number>
   logSms(entry: SmsLog): Promise<void>
   setState(orgId: string, patch: Partial<CeihDemoState>): Promise<void>
   writeTrigger(
@@ -150,6 +153,22 @@ export function firestoreSeasonStore(db: Firestore): SeasonStore {
         side_sell_suspected: sideSell,
       } satisfies Partial<Contract>)
       await batch.commit()
+    },
+
+    async addPayouts(rows) {
+      fresh()
+      if (!rows.length) return 0
+      const refs = rows.map(r => db.collection('ledger_entries').doc(r.id))
+      return db.runTransaction(async tx => {
+        const snaps = await tx.getAll(...refs)
+        let written = 0
+        snaps.forEach((snap, i) => {
+          if (snap.exists) return
+          tx.create(refs[i], LedgerEntrySchema.parse(rows[i].entry))
+          written++
+        })
+        return written
+      })
     },
 
     async logSms(entry) {

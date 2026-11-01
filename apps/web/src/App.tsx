@@ -5,8 +5,8 @@ import { useRoute } from './hooks/useRoute'
 import { orgIdFor, OutgrowerViewPage, SeasonGear, SeasonNav } from './pages/OutgrowerViewPage'
 import { SignInPage } from './pages/SignInPage'
 
-// Phytos: one season for an outgrower agribusiness, on four screens (Fields map, Season ledger,
-// Approvals, Reconciliation). Sign-in lands on the Fields map. Command Center roles stand in for
+// Phytos: one season for an outgrower agribusiness, on three screens (Fields map, Season ledger,
+// Reconciliation). Sign-in lands on the Fields map. The farmer's side is its own app (farmer.html). Command Center roles stand in for
 // the credit team on the simulated org; an agribusiness's own credit team and field officers see
 // their org; anyone else is asked to sign in as an officer.
 export function App() {
@@ -24,7 +24,7 @@ export function App() {
       email={officer.email}
       role={officer.role}
       onSignOut={() => void signOut()}
-      nav={orgId ? <SeasonNav orgId={orgId} current={route.tab} /> : undefined}
+      nav={orgId ? <SeasonNav current={route.tab} /> : undefined}
       actions={
         orgId ? <SeasonGear orgId={orgId} commandCenter={officer.commandCenter} /> : undefined
       }

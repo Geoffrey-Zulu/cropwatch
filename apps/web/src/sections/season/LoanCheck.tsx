@@ -14,13 +14,15 @@ import { NdviChart } from '../../components/NdviChart'
 import { SOURCE, SourceLine } from '../../components/SourceLine'
 import { useCountUp } from '../../hooks/useCountUp'
 import { IMAGERY } from '../../lib/imagery'
-import { firstName, seasonDate } from '../../lib/season'
+import { firstName, seasonDate } from '../../lib/dates'
 
 // The hunger-month loan check, played rather than shown (Geoffrey, 1 Nov): the farm on real
 // imagery, the satellite passes along his curve, the rules one by one, then the cap's arithmetic
 // to the verdict. Every figure and every tick is the field card's, which the deterministic rules
 // built (packages/shared/src/ceih/eligibility.ts): nothing is computed here, and nothing is a
 // score. A click moves to the next stage; Skip goes to the verdict; reduced motion shows it all.
+// The farmer app plays the same check in the farmer's own voice (`voice="farmer"`), and, when
+// every rule holds, carries on by itself into what `then` renders: the money (1 Nov).
 
 const STAGE_MS = [3400, 3600, 3600] as const
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -36,6 +38,17 @@ const RECORD: EligibilityFactor['code'][] = [
   'shock',
   'one_advance',
 ]
+
+const COPY = {
+  credit: {
+    meta: 'Hunger-month loan check',
+    stages: ['The field', 'The passes', 'The rules', 'The verdict'],
+  },
+  farmer: {
+    meta: 'Your hunger-month advance',
+    stages: ['Your field', 'Your crop from space', 'The season’s rules', 'Your cap'],
+  },
+} as const
 
 interface Rule {
   met: boolean
@@ -84,12 +97,20 @@ export function LoanCheck({
   card,
   onClose,
   onRequest,
+  voice = 'credit',
+  then,
 }: {
   card: FieldCard
   onClose: () => void
   // Shown on the verdict when the farmer is eligible and has no advance open.
   onRequest?: () => void
+  voice?: keyof typeof COPY
+  // Eligible: after the verdict the check carries on by itself into this (the farmer's money).
+  then?: (close: () => void) => React.ReactNode
 }) {
+  const copy = COPY[voice]
+  const carryOn = Boolean(then) && card.eligibility.eligible
+  const [continued, setContinued] = useState(false)
   // 0 the field, 1 the passes, 2 the rules, 3 the verdict.
   const [stage, setStage] = useState(() => (reduced() ? 3 : 0))
   const next = () => setStage(s => Math.min(3, s + 1))
@@ -108,6 +129,22 @@ export function LoanCheck({
     const t = setTimeout(next, STAGE_MS[stage])
     return () => clearTimeout(t)
   }, [stage])
+  // The verdict stays long enough to read, then the money follows.
+  useEffect(() => {
+    if (stage < 3 || !carryOn) return
+    const t = setTimeout(() => setContinued(true), 2200)
+    return () => clearTimeout(t)
+  }, [stage, carryOn])
+  // Below 1280 px the stages stack (two columns there squeeze the figures): the one that is
+  // playing comes into view.
+  const dialog = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (window.innerWidth >= 1280) return
+    const target = continued
+      ? dialog.current
+      : dialog.current?.querySelector(`[data-stage="${stage + 1}"]`)
+    target?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' })
+  }, [stage, continued])
   useEffect(() => {
     const key = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
     document.addEventListener('keydown', key)
@@ -120,15 +157,16 @@ export function LoanCheck({
       onClick={advance}
     >
       <div
+        ref={dialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby="loan-check"
-        className="slide-in island w-full max-w-[74rem] px-[1.4rem] pb-[1.3rem] pt-[1.2rem] md:px-[1.7rem]"
+        className="slide-in island scroll-mt-3 w-full max-w-[74rem] px-[1.4rem] pb-[1.3rem] pt-[1.2rem] md:px-[1.7rem]"
       >
         <header className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <p className="meta">
-              Hunger-month loan check · {card.camp} · {card.contracted_ha} ha {cropWord(card.crop)}
+              {copy.meta} · {card.camp} · {card.contracted_ha} ha {cropWord(card.crop)}
             </p>
             <h2 id="loan-check" className="serif text-title font-semibold text-fg">
               {card.farmer_name}
@@ -160,42 +198,47 @@ export function LoanCheck({
           </button>
         </header>
 
-        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-          <div className="flex min-w-0 flex-col gap-5">
-            <Stage n={1} title="The field" active={stage >= 0} space="h-[15rem]">
-              <CheckMap key={stillMap ? 'still' : 'play'} card={card} still={stillMap} />
-            </Stage>
-            <Stage n={2} title="The passes" active={stage >= 1} space="h-[11.6rem]">
-              <PassesReveal card={card} instant={stage > 1} />
-            </Stage>
-            {/* The check's one source line: the map's imagery and the passes' greenness. */}
-            <SourceLine
-              className="-mt-3"
-              parts={[card.ring && SOURCE.imagery, SOURCE.greenness(card.sim)]}
-            />
+        {continued && then ? (
+          then(onClose)
+        ) : (
+          <div className="mt-4 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+            <div className="flex min-w-0 flex-col gap-5">
+              <Stage n={1} title={copy.stages[0]} active={stage >= 0} space="h-[15rem]">
+                <CheckMap key={stillMap ? 'still' : 'play'} card={card} still={stillMap} />
+              </Stage>
+              <Stage n={2} title={copy.stages[1]} active={stage >= 1} space="h-[11.6rem]">
+                <PassesReveal card={card} instant={stage > 1} />
+              </Stage>
+              {/* The check's one source line: the map's imagery and the passes' greenness. */}
+              <SourceLine
+                className="-mt-3"
+                parts={[card.ring && SOURCE.imagery, SOURCE.greenness(card.sim)]}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-5">
+              <Stage n={3} title={copy.stages[2]} active={stage >= 2} space="h-[10.5rem]">
+                <RulesTick card={card} instant={stage > 2} />
+              </Stage>
+              <Stage n={4} title={copy.stages[3]} active={stage >= 3} space="h-[12rem]">
+                {stage >= 3 && (
+                  <Verdict
+                    card={card}
+                    carryOn={carryOn}
+                    onRequest={
+                      onRequest
+                        ? () => {
+                            onClose()
+                            onRequest()
+                          }
+                        : undefined
+                    }
+                    onClose={onClose}
+                  />
+                )}
+              </Stage>
+            </div>
           </div>
-          <div className="flex min-w-0 flex-col gap-5">
-            <Stage n={3} title="The rules" active={stage >= 2} space="h-[10.5rem]">
-              <RulesTick card={card} instant={stage > 2} />
-            </Stage>
-            <Stage n={4} title="The verdict" active={stage >= 3} space="h-[12rem]">
-              {stage >= 3 && (
-                <Verdict
-                  card={card}
-                  onRequest={
-                    onRequest
-                      ? () => {
-                          onClose()
-                          onRequest()
-                        }
-                      : undefined
-                  }
-                  onClose={onClose}
-                />
-              )}
-            </Stage>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -218,7 +261,8 @@ function Stage({
   return (
     <section
       aria-label={title}
-      className={`transition-opacity duration-300 ease-out ${active ? 'opacity-100' : 'opacity-30'}`}
+      data-stage={n}
+      className={`scroll-mt-3 transition-opacity duration-300 ease-out ${active ? 'opacity-100' : 'opacity-30'}`}
     >
       <h3 className="mb-2 flex items-center gap-2 text-label font-semibold text-fg">
         <span className="grid h-6 w-6 place-items-center rounded-pill bg-signal-tint text-caption font-bold text-signal-text">
@@ -379,10 +423,13 @@ function RulesTick({ card, instant }: { card: FieldCard; instant: boolean }) {
 // Stage 4: the cap's arithmetic counts up to the verdict.
 function Verdict({
   card,
+  carryOn,
   onRequest,
   onClose,
 }: {
   card: FieldCard
+  // The check carries on into the money by itself: no buttons here.
+  carryOn: boolean
   onRequest?: () => void
   onClose: () => void
 }) {
@@ -394,7 +441,7 @@ function Verdict({
   const open = card.advance && !['declined', 'failed'].includes(card.advance.state)
   return (
     <div className="lc-row rounded-card bg-ground px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--hairline)]">
-      <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 text-label">
+      <dl className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1.5 text-label">
         <dt className="text-fg-2">
           {card.contracted_ha} ha
           {card.projected_yield_t_ha !== undefined && card.contract_price_zmw_t !== undefined
@@ -402,12 +449,16 @@ function Verdict({
             : ''}{' '}
           projected crop
         </dt>
-        <dd className="text-right font-semibold tabular-nums text-fg">{zmw(value)}</dd>
+        <dd className="whitespace-nowrap text-right font-semibold tabular-nums text-fg">
+          {zmw(value)}
+        </dd>
         <dt className="text-fg-2">
           Cap: {Math.round(card.credit.cap_pct * 100)}% of the crop
           {held ? `, held at the ${zmw(card.credit.hard_ceiling_zmw)} ceiling` : ''}
         </dt>
-        <dd className="text-right font-semibold tabular-nums text-fg">{zmw(cap)}</dd>
+        <dd className="whitespace-nowrap text-right font-semibold tabular-nums text-fg">
+          {zmw(cap)}
+        </dd>
       </dl>
       <div className="mt-3 border-t border-hairline pt-3">
         {e.eligible ? (
@@ -421,9 +472,13 @@ function Verdict({
         ) : (
           <p className="text-[1.15rem] font-semibold text-fg">{eligibilityLabel(e)}</p>
         )}
-        <p className="mt-1 text-caption text-fg-2">Rules, not a score: every one is above.</p>
+        <p className="mt-1 text-caption text-fg-2">
+          {carryOn
+            ? 'Every rule holds: within the cap, it is sent automatically.'
+            : 'Rules, not a score: every one is above.'}
+        </p>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className={`mt-3 flex flex-wrap gap-2 ${carryOn ? 'hidden' : ''}`}>
         {e.eligible && !open && onRequest && (
           <button
             type="button"

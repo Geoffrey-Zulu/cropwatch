@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 
-// The product is four screens, the Outgrower View's tabs (CLAUDE.md, 1 Nov). A field card opens
-// as a query on the hash, so the screen underneath keeps its place and the back button closes it.
+// The agribusiness's three screens, the Outgrower View's tabs (CLAUDE.md, 1 Nov). A field card
+// opens as a query on the hash, so the screen underneath keeps its place and the back button
+// closes it.
 //   #/ or #/outgrower/fields          the Fields map (sign-in lands here)
 //   #/outgrower/season?contract=<id>  the Season ledger with a field card open
-//   #/outgrower/approvals             #/outgrower/reconciliation
+//   #/outgrower/reconciliation
 // Any other link (the retired surfaces live at tag pre-ceih-only) lands on the Fields map.
 export type Drawer = { kind: 'contract'; id: string }
 
-export const OUTGROWER_TABS = ['fields', 'season', 'approvals', 'reconciliation'] as const
+export const OUTGROWER_TABS = ['fields', 'season', 'reconciliation'] as const
 export type OutgrowerTab = (typeof OUTGROWER_TABS)[number]
 
 export type Route = { page: 'outgrower'; tab: OutgrowerTab; drawer?: Drawer }

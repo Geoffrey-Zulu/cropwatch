@@ -15,8 +15,7 @@ export const PHASE = {
 } as const
 
 // The portfolio over the season's tabs (plan §3): what the agribusiness has out and where it
-// stands. Exposure figures are the point now (CLAUDE.md, CEIH note), always under the DEMO pill
-// while simulated.
+// stands. Exposure figures are the point now (CLAUDE.md, CEIH note).
 export function PortfolioHeader({ portfolio: p }: { portfolio: Portfolio }) {
   return (
     <div className="flex flex-col gap-2">
@@ -49,7 +48,7 @@ export function PortfolioHeader({ portfolio: p }: { portfolio: Portfolio }) {
             label: 'Advances out',
             prefix: 'ZMW',
             value: p.advances_out_zmw,
-            delta: `${p.rows.filter(r => r.advance?.state === 'disbursed').length} sent · ${p.awaiting_approval} waiting approval`,
+            delta: `${p.rows.filter(r => r.advance?.state === 'disbursed').length} sent, each within its cap`,
           },
           {
             label: 'Recovered',
@@ -147,10 +146,12 @@ export function SeasonLedgerSection({
         </div>
       </div>
 
+      {/* The seven columns from 1280 px (the projector) up; below that each row folds to two
+          lines, so the table never runs wider than the screen. */}
       <div className="mt-4" role="table" aria-label="Season ledger">
         <div
           role="row"
-          className="hidden grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] gap-x-4 border-b border-hairline px-3 pb-2 lg:grid"
+          className="hidden grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] gap-x-4 border-b border-hairline px-3 pb-2 xl:grid"
         >
           {['Farmer', 'Camp', 'Field status', 'Eligible', 'Advance', 'Exposure', 'NDVI'].map(h => (
             <span
@@ -171,7 +172,7 @@ export function SeasonLedgerSection({
                 id={`row-${r.contract_id}`}
                 href={isOpen ? close() : open({ kind: 'contract', id: r.contract_id })}
                 aria-expanded={isOpen}
-                className={`grid scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out lg:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] lg:items-center ${
+                className={`grid scroll-mt-[7.6rem] lg:scroll-mt-[4.75rem] grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-card px-3 py-3 transition-colors duration-200 ease-out xl:grid-cols-[minmax(10rem,1.3fr)_6.5rem_minmax(9rem,1fr)_minmax(12rem,1.3fr)_minmax(9rem,1fr)_7rem_6.5rem] xl:items-center ${
                   isOpen ? 'bg-signal-tint' : 'border-b border-hairline hover:bg-well'
                 }`}
               >
@@ -186,19 +187,19 @@ export function SeasonLedgerSection({
                     className={`shrink-0 text-fg-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-signal-text' : ''}`}
                   />
                 </span>
-                <span role="cell" className="text-label text-fg-2 max-lg:hidden">
+                <span role="cell" className="text-label text-fg-2 max-xl:hidden">
                   {r.camp}
                 </span>
                 <span
                   role="cell"
-                  className="text-right text-label font-semibold tabular-nums text-fg lg:order-none max-lg:col-start-2 max-lg:row-start-1"
+                  className="text-right text-label font-semibold tabular-nums text-fg xl:order-none max-xl:col-start-2 max-xl:row-start-1"
                 >
-                  <span className="font-normal text-fg-2 lg:hidden">Exposure </span>
-                  <span className="lg:hidden">{zmw(r.exposure_zmw)}</span>
+                  <span className="font-normal text-fg-2 xl:hidden">Exposure </span>
+                  <span className="xl:hidden">{zmw(r.exposure_zmw)}</span>
                 </span>
                 <span
                   role="cell"
-                  className="text-label leading-[1.3] text-fg max-lg:col-span-2 max-lg:row-start-3 lg:col-start-3 lg:row-start-1"
+                  className="text-label leading-[1.3] text-fg max-xl:col-span-2 max-xl:row-start-3 xl:col-start-3 xl:row-start-1"
                 >
                   {r.verified.label}
                   {r.verified.date && (
@@ -209,23 +210,23 @@ export function SeasonLedgerSection({
                 </span>
                 <span
                   role="cell"
-                  className="max-lg:col-span-2 max-lg:row-start-2 lg:col-start-4 lg:row-start-1"
+                  className="max-xl:col-span-2 max-xl:row-start-2 xl:col-start-4 xl:row-start-1"
                 >
                   <EligibilityChip eligible={r.eligible} label={r.eligibility_label} />
                 </span>
                 <span
                   role="cell"
-                  className="text-label leading-[1.3] text-fg max-lg:hidden lg:col-start-5 lg:row-start-1"
+                  className="text-label leading-[1.3] text-fg max-xl:hidden xl:col-start-5 xl:row-start-1"
                 >
                   <AdvanceCell row={r} />
                 </span>
                 <span
                   role="cell"
-                  className="hidden text-right text-label font-semibold tabular-nums text-fg lg:col-start-6 lg:row-start-1 lg:block"
+                  className="hidden text-right text-label font-semibold tabular-nums text-fg xl:col-start-6 xl:row-start-1 xl:block"
                 >
                   {zmw(r.exposure_zmw)}
                 </span>
-                <span role="cell" className="hidden lg:col-start-7 lg:row-start-1 lg:block">
+                <span role="cell" className="hidden xl:col-start-7 xl:row-start-1 xl:block">
                   <Sparkline values={r.spark} label={`${r.farmer_name}: NDVI at the last passes`} />
                 </span>
               </a>

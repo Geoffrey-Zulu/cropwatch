@@ -1,6 +1,6 @@
-// Development only (main.tsx loads it behind import.meta.env.DEV): the four screens from seed
+// Development only (main.tsx loads it behind import.meta.env.DEV): the three screens from seed
 // fixtures, for design review and screenshots without an officer sign-in.
-// #/preview/<fields|season|approvals|reconciliation>[?june]. Fixtures are generated from the
+// #/preview/<fields|season|reconciliation>[?june]. Fixtures are generated from the
 // seed into ./fixtures.local.json (gitignored): pnpm --filter @repo/seed exec tsx ceih-fixtures.ts
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
@@ -35,7 +35,7 @@ interface SeasonFixture {
   statements: Record<string, Statement>
 }
 
-const SEASON_PAGES = ['fields', 'season', 'approvals', 'reconciliation'] as const
+const SEASON_PAGES = ['fields', 'season', 'reconciliation'] as const
 
 const found = import.meta.glob('./fixtures.local.json', { eager: true, import: 'default' })
 const fixtures = Object.values(found)[0] as Fixtures | undefined
@@ -60,6 +60,23 @@ function mockFetch(data: Fixtures, page: string, june: boolean): typeof fetch {
     'season.reconciliation': () => state?.reconciliation,
     'season.fieldCard': i => state?.fieldCards[i?.contractId ?? hero] ?? state?.fieldCards[hero],
     'season.statement': i => state?.statements[i?.contractId ?? hero] ?? state?.statements[hero],
+    // Reconciliation's payout request, kept in memory for the visit (one payout row a farmer).
+    'season.requestPayouts': () => {
+      const due = (state?.reconciliation.roster ?? []).filter(
+        r => r.ready && r.net_zmw > 0 && !r.payout
+      )
+      for (const r of due)
+        r.payout = {
+          at: state!.portfolio.today,
+          ref: `SIM-${r.contract_id.slice(-6).toUpperCase()}`,
+          amount_zmw: r.net_zmw,
+        }
+      return {
+        farmers: due.length,
+        total_zmw: due.reduce((n, r) => n + r.net_zmw, 0),
+        simulated: true,
+      }
+    },
   }
   return async input => {
     const url = new URL(String(input instanceof Request ? input.url : input))
@@ -113,7 +130,7 @@ export function Preview({ route }: { route: string }) {
           email={officer.email}
           role={officer.role}
           onSignOut={() => undefined}
-          nav={<SeasonNav orgId={orgIdFor(officer)!} current={tab} />}
+          nav={<SeasonNav current={tab} />}
           actions={<SeasonGear orgId={orgIdFor(officer)!} commandCenter />}
           bleed={tab === 'fields'}
         >
