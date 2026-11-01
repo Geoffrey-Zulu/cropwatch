@@ -162,6 +162,27 @@ function SeasonTabs({
 }) {
   const { portfolio, approvals, sms } = useSeasonQueries(orgId)
   const p = portfolio.data
+  // The tab band paints its canvas only once it is stuck and the page scrolls under it: at rest
+  // it is no stripe of its own, just the tabs on the page.
+  const band = useRef<HTMLDivElement>(null)
+  const [stuck, setStuck] = useState(false)
+  const loaded = Boolean(p)
+  useEffect(() => {
+    const el = band.current
+    if (!el) return
+    const check = () => {
+      const top = parseFloat(getComputedStyle(el).top)
+      setStuck(Number.isFinite(top) && el.getBoundingClientRect().top <= top + 1)
+    }
+    const frame = requestAnimationFrame(check)
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', check)
+      window.removeEventListener('resize', check)
+    }
+  }, [tab, loaded])
   if (portfolio.error) return <Muted>The season could not load ({portfolio.error.message}).</Muted>
   const title = orgTitle(p?.name ?? 'Season')
   const tabs = (
@@ -204,7 +225,10 @@ function SeasonTabs({
       {/* The tabs stay in reach under the header, on a canvas band so nothing scrolls
           half-visible behind them: no scrolling back up between beats. */}
       {/* DEMO CONTROLS rides at the band's right end: in reach on every beat, over no figure. */}
-      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-3 lg:flex-nowrap lg:sticky lg:top-[6.9rem] lg:max-w-none lg:z-20 lg:-mx-[1.6rem] lg:-my-3 lg:bg-[rgb(244_243_236/0.94)] lg:px-[1.6rem] lg:py-3 lg:backdrop-blur-[2px] xl:top-[3.75rem]">
+      <div
+        ref={band}
+        className={`flex min-w-0 max-w-full flex-wrap items-center gap-3 lg:sticky lg:top-[6.9rem] lg:z-20 lg:-mx-[1.6rem] lg:-my-3 lg:max-w-none lg:flex-nowrap lg:px-[1.6rem] lg:py-3 xl:top-[3.75rem] ${stuck ? 'lg:bg-[rgb(244_243_236/0.94)] lg:backdrop-blur-[2px]' : ''}`}
+      >
         {tabs}
         {commandCenter && p?.sim && <DemoControls portfolio={p} />}
       </div>
