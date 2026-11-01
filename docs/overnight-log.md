@@ -161,3 +161,63 @@ Reviewers: a judge seeing the demo cold, a Zambian agribusiness credit manager, 
   - old outbreak check: dispatched in 6.1 s, Lusaka HIGH;
   - the storyline recorded with no page errors: `Desktop/Phytos CEIH recording 2026-11-01 night2 production 1280/`.
 - **Tag `ceih-night-2`:** commit `b353297`. Re-armed.
+
+## Cycle 3 (01:30 to 02:05): second review round and its fixes
+
+**Review round 2** on the night2 production frames (same five personas):
+
+- **Judge:** 8/10, every figure reconciles across the beats. Found a real chart bug on the approval card: in compact mode the single pass after the clouds was not drawn, so the field looked flat at the moment of approval.
+- **Credit manager:** would pilot it on one camp. One blocker: a Command Center role could approve, send and record deliveries on a _real_ org, not only a simulated one.
+- **Field officer:** the camp workflow now reads right, with small wording leftovers.
+- **Design:** "it now reads as mockup A", with polish left.
+- **Pitch mentor:** a 3:00 run sheet, but with two Home-key presses and two manual scrolls, because the statement sat below the fold and the tabs scrolled away.
+
+**Built** (commit `3440ac5`):
+
+1. **Security:** on a real org, only its own credit team approves, sends, declines or records deliveries. A Command Center stand-in works on a simulated season only. New test.
+2. **The approval card's chart** draws the latest reading and any pass alone between clouds.
+3. **Given's field** is drawn last, so no neighbour's halo covers it, with a wider halo. His name sits on his own west edge, not over Joseph's grey field.
+4. **A tick or a cross per rule.** The failing rule reads from the back of the room.
+5. **Field officer wording:**
+   - "No crop seen from space" everywhere a satellite stood in for a visit;
+   - "Behind the camp", and "Cloud gap: 1 of 2 clear passes";
+   - "On track from space" in the record (establishment is the rule's word);
+   - "69 established" on the tile;
+   - "Photo taken: within 150 m";
+   - satellite-only approvals say "No field visit: established from space";
+   - no zero counts in the map header.
+6. **The run without Home keys or scrolls:**
+   - the tabs stay under the header;
+   - before June the delivery form folds to one line, so the statement is in view;
+   - the statement and, after a delivery, the net due scroll into view.
+7. **The ledger row carries the transfer reference** ("ref SIM-…"), so it traces to the "sent" receipt.
+8. **The fee rounds down,** like the cap: 5% of 2,350 is 117, not 118. There is now one harvest date, June.
+9. **Design:**
+   - the intro is one crisp island (no glow);
+   - the map key has a title, with counts aligned;
+   - the DEMO pill sits top right in dialogs and islands;
+   - the fee shows its unit;
+   - sparklines are bolder;
+   - a loading tile reads as loading;
+   - the current tab is kept in view on a phone;
+   - the tile prefetch covers every camp, zoom by zoom.
+
+**Checks:**
+
+- **Gate:** typecheck, lint, build and every test pass.
+- **Visual pass** (`docs/ui-review/2026-11-01-night3/`):
+  - The first run found sideways scroll on phone (579 px): the new sticky wrapper around the tabs had grown to the strip's width. Fixed, re-shot, no issues.
+  - Every changed shot looked at.
+- **Preview `night3`:**
+  - demo check: beats 1 to 6 in 10.4 s, after the check itself learned the neighbour's new wording;
+  - old outbreak check: dispatched in 6.2 s, HIGH;
+  - full recording: 14 beats, no page errors.
+- **Production deploy (02:03 to 02:08):** clean. API `00024-pt2`, dashboard `index-C6Si9-Ua.js`.
+- **Checks on production, all green:**
+  - demo check: beats 1 to 6 in 12.7 s;
+  - old outbreak check: dispatched in 6.5 s, HIGH;
+  - recording: no page errors, `Desktop/Phytos CEIH recording 2026-11-01 night3 production 1280/`.
+- **Tag `ceih-night-3`:** commit `33325b1`. Re-armed.
+- **Seen in the production frames, for cycle 4:**
+  - when Given's row rises, the sticky tabs sit over the ledger's filter row;
+  - the DEMO CONTROLS pill overlaps the last line of Joseph's panel.

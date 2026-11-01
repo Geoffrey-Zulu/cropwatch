@@ -26,7 +26,19 @@ Enforcing it is a small rule change (`checkApprove` also refusing `requested_by`
 - (a) Leave it for the pitch, and say "a second person approves" while presenting with two people at one laptop.
 - (b) Create a credit-team account for the demo org, and I enforce the rule and switch beats 5 and 6 to it.
 
-## 4. Post-event
+## 4. Rule and robustness items from the credit-manager review (not built overnight)
+
+These change rules or the money path, so they wait for the team. Each is small.
+
+- **Drought cover for fields that held.** The drought flag marks every shortfall in the camp uncontrollable, including the 3 of 40 fields whose own curve held. A tighter rule would mark only fields whose own passes fell, and read "camp flagged, field held: review" for the rest. This is a rule change (invariant 12), so it is yours.
+- **Moisture.** Moisture is recorded but not priced: 720 kg at 22% is paid as dry grade A. It needs a standard (13% for soya?) and a maximum. This is a rule change.
+- **A limit on code attempts.** Today a wrong code is refused but can be retried for the code's 30 minutes. Proposed: decline after 5 wrong codes and tell the farmer.
+- **Disbursement order.** The provider is called before the advance is claimed. That is harmless on the simulated provider, but it must change before any real adapter: commit a pending disbursement first, and pass the advance id as the idempotency key.
+- **One delivery per contract.** A second load cannot be recorded.
+- **"soya" is fixed** in three card strings; a maize contract would read wrong.
+- **Maturity read as stress.** In June most Chikuni fields show "stress" on the map, because greenness falls at maturity. The storyline shows the map in March, but the status rule should learn the season's end.
+
+## 5. Post-event
 
 - Rotate David's password (it was used by the demo scripts through environment variables).
 - `infra/rag-teardown.sh` after the hackathon (RagManagedDb bills while it exists).
