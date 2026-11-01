@@ -50,4 +50,5 @@ These change rules or the money path, so they wait for the team. Each is small.
 ## 6. Post-event
 
 - Rotate David's password (it was used by the demo scripts through environment variables).
+- Two throwaway test users left by crashed outbreak checks (uids `5f3GGJ2cGQQDUU172OaPFszKEEL2`, `wnUsJdcum1PVpdHiKV9Jc3IbhBm1`, role farmer) can be deleted from Firebase Auth; their reports are already removed.
 - `infra/rag-teardown.sh` after the hackathon (RagManagedDb bills while it exists).

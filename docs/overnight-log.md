@@ -305,3 +305,18 @@ The advance moment takes more than two presses because its safeguards (the fee b
 - Tag `ceih-night-6`. Re-armed.
 
 From here to the 06:30 freeze: polish only, and nothing that touches the demo path.
+
+## Tab band polish (03:35 to 04:00)
+
+- **Fix:** the sticky tab band paints its canvas only once it is stuck and the page scrolls under it, so at rest there is no lighter stripe of its own. Shot at rest and scrolled.
+- **Preview `night7`:**
+  - demo check: beats 1 to 6 in 15.8 s;
+  - recording: no page errors;
+  - outbreak check: green on the third try. The first two died on this laptop's connection to Firestore (`UND_ERR_CONNECT_TIMEOUT`) after creating their test reports.
+- **Cleanup:** those two reports (`X4rxgUP1NlXetMwdecS1`, `rYPuGceRCQsk-Dy_8eFO`) were removed with `retract-report --commit`, which also retracted them in BigQuery and trimmed the clusters. Production now has no real report from tonight. Each crashed run also left its throwaway test user in Firebase Auth (uids `5f3GGJ2cGQQDUU172OaPFszKEEL2`, `wnUsJdcum1PVpdHiKV9Jc3IbhBm1`, role farmer). They were not deleted: accounts are Geoffrey's to manage.
+- **Production (03:55):** clean, API `00032-8w4`.
+  - demo check: beats 1 to 6 in 10.8 s;
+  - outbreak check: dispatched in 8.2 s.
+- **Tag `ceih-night-7`:** commit `827620c`.
+
+No more builds before the freeze: the definition of done holds, and each deploy is a risk on this line. Production is watched every 15 minutes until 06:30. The freeze recording at 06:30 also puts daylight times on the ground check and the request, where the night recordings showed 01:00 to 03:00.
