@@ -33,7 +33,7 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
         </button>
         <div>
           <p className="eyebrow">Crop health · Zambia</p>
-          <h1 className="font-display text-display font-bold text-fg">
+          <h1 className="mt-1 font-display text-display font-semibold text-fg">
             Photograph a sick crop. Get advice from Zambian guides.
           </h1>
         </div>
@@ -41,20 +41,20 @@ export function HomePage({ user, navigate }: { user: User; navigate: (route: Rou
         {push.alert && (
           <div
             role="alert"
-            className="flex gap-3 rounded-card border border-attention-text border-l-4 bg-attention-tint p-3"
+            className="flex gap-3 rounded-card bg-attention-tint p-4 shadow-island-sm"
           >
             <div className="min-w-0 flex-1">
-              <p className="font-mono text-eyebrow font-semibold uppercase">
+              <p className="text-eyebrow font-bold text-attention-text">
                 {push.alert.sim ? 'Demo alert' : 'New alert'}
               </p>
-              <p className="text-body font-extrabold">{push.alert.title}</p>
+              <p className="text-body font-bold">{push.alert.title}</p>
               <p className="text-body">{push.alert.body}</p>
             </div>
             <button
               type="button"
               onClick={push.dismissAlert}
               aria-label="Dismiss alert"
-              className="h-10 w-10 shrink-0"
+              className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ease-out active:bg-[rgb(127_86_5/0.1)]"
             >
               <X size={24} strokeWidth={2} aria-hidden />
             </button>

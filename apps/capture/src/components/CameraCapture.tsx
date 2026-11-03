@@ -114,7 +114,7 @@ export function CameraCapture({
       />
 
       {preview ? (
-        <div className="relative overflow-hidden rounded-card bg-fg">
+        <div className="relative overflow-hidden rounded-card bg-fg shadow-island">
           <img src={preview} alt="Your photo" className="aspect-[4/3] w-full object-cover" />
           <button type="button" onClick={onRetake} className="btn-quiet absolute bottom-3 right-3">
             <RotateCcw size={20} strokeWidth={2} aria-hidden />
@@ -126,12 +126,12 @@ export function CameraCapture({
           type="button"
           onClick={() => (isNativeApp() ? void pickNative('camera') : fallback.current?.click())}
           disabled={picking}
-          className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-card border-1.5 border-dashed border-hairline-strong bg-panel px-6 text-center transition-colors duration-150 active:bg-well"
+          className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-card bg-panel px-6 text-center shadow-island transition-colors duration-300 ease-out active:bg-well"
         >
-          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-signal text-signal-ink">
+          <span className="inline-flex h-[72px] w-[72px] items-center justify-center rounded-full bg-signal text-signal-ink shadow-[0_10px_22px_-10px_rgb(45_91_57/0.7)]">
             <Camera size={30} strokeWidth={2} aria-hidden />
           </span>
-          <span className="font-display text-title font-bold text-fg">
+          <span className="font-display text-title font-semibold text-fg">
             Take a photo of the damaged leaf
           </span>
           <span className="text-label font-semibold text-fg-2">
@@ -139,7 +139,7 @@ export function CameraCapture({
           </span>
         </button>
       ) : (
-        <div className="relative overflow-hidden rounded-card bg-fg">
+        <div className="relative overflow-hidden rounded-card bg-fg shadow-island">
           <video
             ref={video}
             muted
@@ -160,14 +160,14 @@ export function CameraCapture({
               </p>
             </div>
           )}
-          <p className="absolute inset-x-0 top-0 bg-[rgb(14_22_19/0.72)] px-3 py-2 text-center text-label font-semibold text-white">
+          <p className="absolute inset-x-3 top-3 mx-auto w-fit rounded-full bg-white/90 px-4 py-2 text-center text-label font-semibold text-fg shadow-island-sm backdrop-blur-sm">
             Damaged leaf, close up, in daylight
           </p>
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-3 pb-3">
+          <div className="absolute inset-x-0 bottom-0 grid grid-cols-[1fr_auto_1fr] items-center px-3 pb-3">
             <button
               type="button"
               onClick={() => gallery.current?.click()}
-              className="inline-flex min-h-12 items-center gap-1.5 rounded-card bg-[rgb(14_22_19/0.8)] px-3 text-label font-semibold text-white"
+              className="inline-flex min-h-12 items-center gap-1.5 justify-self-start rounded-full bg-white/90 px-4 text-label font-semibold text-fg shadow-island-sm backdrop-blur-sm transition-colors duration-300 ease-out active:bg-white"
             >
               <Images size={20} strokeWidth={2} aria-hidden />
               Gallery
@@ -177,12 +177,12 @@ export function CameraCapture({
               onClick={shoot}
               disabled={state !== 'live'}
               aria-label="Take photo"
-              className="inline-flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white bg-signal text-signal-ink disabled:opacity-60"
+              className="inline-flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white bg-signal text-signal-ink shadow-[0_12px_28px_-10px_rgb(0_0_0/0.6)] transition-transform duration-300 ease-out active:scale-95 disabled:opacity-60"
             >
               <Camera size={30} strokeWidth={2} aria-hidden />
             </button>
             {/* Balances the gallery button so the shutter stays centred. */}
-            <span aria-hidden className="w-[92px]" />
+            <span aria-hidden />
           </div>
         </div>
       )}

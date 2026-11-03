@@ -318,7 +318,7 @@ The v2 structure is the keeper. These four changes amend the decisions above; no
   - The officer queue's routed list is headed "AI could not identify".
   - The publisher, year and country column on Knowledge sources is in the body sans, not mono.
 
-**Post-event:** the map as a full canvas, with panels floating over it, is on the roadmap in `docs/hackathon-backlog.md`.
+**Post-event:** the map as a full canvas, with panels floating over it, was on the roadmap in `docs/archive/hackathon-backlog.md`.
 
 ## Polish (30 Oct, Geoffrey's batch on the v2.1 structure)
 

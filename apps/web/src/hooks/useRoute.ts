@@ -1,78 +1,33 @@
 import { useEffect, useState } from 'react'
 
-// Detail opens in a drawer over the page you are on (patterns-v2.md): the drawer is a query on
-// the hash, so the page underneath keeps its context and the back button closes it.
-//   #/                 national map          #/queue/<id>      queue with a report selected
-//   #/?outbreak=<id>   map + outbreak drawer  #/queue?observation=<id>
-//   #/?alerts          map + alerts drawer    #/outgrower?visit=<report number>
-export type Drawer =
-  // `via`: opened from the alerts drawer, so the outbreak offers "Back to alerts".
-  | { kind: 'outbreak'; id: string; via?: 'alerts' }
-  | { kind: 'observation'; id: string }
-  | { kind: 'visit'; id: string }
-  | { kind: 'alerts' }
+// The agribusiness's three screens, the Outgrower View's tabs (CLAUDE.md, 1 Nov). A field card
+// opens as a query on the hash, so the screen underneath keeps its place and the back button
+// closes it.
+//   #/ or #/outgrower/fields          the Fields map (sign-in lands here)
+//   #/outgrower/season?contract=<id>  the Season ledger with a field card open
+//   #/outgrower/reconciliation
+// Any other link (the retired surfaces live at tag pre-ceih-only) lands on the Fields map.
+export type Drawer = { kind: 'contract'; id: string }
 
-export type Route = (
-  | { page: 'map' }
-  | { page: 'queue'; id?: string }
-  | { page: 'outgrower' }
-  | { page: 'sources' }
-  | { page: 'scenario' }
-) & { drawer?: Drawer }
+export const OUTGROWER_TABS = ['fields', 'season', 'reconciliation'] as const
+export type OutgrowerTab = (typeof OUTGROWER_TABS)[number]
 
-const DRAWERS = ['outbreak', 'observation', 'visit'] as const
-
-function parseDrawer(query: string): Drawer | undefined {
-  const params = new URLSearchParams(query)
-  if (params.has('alerts')) return { kind: 'alerts' }
-  for (const kind of DRAWERS) {
-    const id = params.get(kind)
-    if (id && kind === 'outbreak' && params.get('via') === 'alerts')
-      return { kind, id, via: 'alerts' }
-    if (id) return { kind, id }
-  }
-  return undefined
-}
+export type Route = { page: 'outgrower'; tab: OutgrowerTab; drawer?: Drawer }
 
 // Hash routes: the static host serves one page, and a refresh lands on the same screen.
 export function parseRoute(hash: string): Route {
   const [path, query = ''] = hash.replace(/^#/, '').split('?')
   const [, page, id] = path.split('/')
-  const drawer = parseDrawer(query)
-  const withDrawer = <R extends Route>(route: R): R => (drawer ? { ...route, drawer } : route)
-  // Links from before 30 Oct: the detail pages are drawers over the map now.
-  if (page === 'outbreaks' && id) return { page: 'map', drawer: { kind: 'outbreak', id } }
-  if (page === 'observations' && id) return { page: 'map', drawer: { kind: 'observation', id } }
-  if (page === 'queue') return withDrawer(id ? { page: 'queue', id } : { page: 'queue' })
-  if (page === 'outgrower') return withDrawer({ page: 'outgrower' })
-  if (page === 'sources') return withDrawer({ page: 'sources' })
-  if (page === 'scenario') return withDrawer({ page: 'scenario' })
-  return withDrawer({ page: 'map' })
-}
-
-function pathFor(route: Route) {
-  switch (route.page) {
-    case 'map':
-      return '#/'
-    case 'queue':
-      return route.id ? `#/queue/${route.id}` : '#/queue'
-    case 'outgrower':
-      return '#/outgrower'
-    case 'sources':
-      return '#/sources'
-    case 'scenario':
-      return '#/scenario'
-  }
+  const tab = (page === 'outgrower' && OUTGROWER_TABS.find(t => t === id)) || 'fields'
+  const contract = new URLSearchParams(query).get('contract')
+  return contract
+    ? { page: 'outgrower', tab, drawer: { kind: 'contract', id: contract } }
+    : { page: 'outgrower', tab }
 }
 
 export function hrefFor(route: Route) {
-  const { drawer } = route
-  if (!drawer) return pathFor(route)
-  const query =
-    drawer.kind === 'alerts'
-      ? 'alerts'
-      : `${drawer.kind}=${encodeURIComponent(drawer.id)}${drawer.kind === 'outbreak' && drawer.via ? `&via=${drawer.via}` : ''}`
-  return `${pathFor(route)}?${query}`
+  const path = `#/outgrower/${route.tab}`
+  return route.drawer ? `${path}?contract=${encodeURIComponent(route.drawer.id)}` : path
 }
 
 export function useRoute() {
@@ -85,7 +40,7 @@ export function useRoute() {
   return route
 }
 
-// Links that open a drawer over the current page, or close it.
+// Links that open a field card over the current screen, or close it.
 export function useDrawerLinks() {
   const route = useRoute()
   return {

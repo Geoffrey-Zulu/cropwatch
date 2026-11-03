@@ -1,337 +1,65 @@
-# CropWatch / Phytos
+# Phytos
 
-Crop-health reporting, cited advice, outbreak surveillance and officer priorities for Zambia.
+Phytos is a verification and ledger layer for outgrower agribusinesses in Zambia. An agribusiness that lends seed, inputs and cash to smallholders against a contract uses Phytos to see which contracted fields are really planted and growing, to decide by stated rules who may draw a cash advance in the hunger months, to move that advance under controls, and to settle each farmer's account at harvest from the ledger.
 
-The working product is based on upstream `d9-dashboard-v2`. Upstream `main` still contains an earlier implementation. This fork's audit and iOS work lives on `cropwatch-audit-ios`.
+Team Phytos built it for the GreenCode Hackathon (Lusaka, final 30 October to 1 November 2026): the crop-health path from 21 October, the CEIH season during the final. It is a working prototype on simulated season data.
 
-- [Full audit and functionality comparison with SKACE](docs/SKACE_COMPARISON_AUDIT.md)
-- [iPhone app and simulator / signed IPA build instructions](docs/IOS_BUILD.md)
-- [Validation results and remaining release work](docs/AUDIT_VALIDATION.md)
+## The season: C, E, I, H
 
-`apps/web` is the officer dashboard, `apps/capture` is the farmer PWA and Capacitor iOS client, and `apps/functions` is the Cloud Run API. `apps/mobile` contains Flutter setup documentation only. Existing Firebase configuration still points to the original `crop-watch01` backend.
+The product is four screens: **Fields map, Season ledger, Approvals, Reconciliation**. Sign-in lands on the Fields map.
 
-The original template documentation follows.
+| Step                      | What happens                                                                                                                                                                                              | Where it shows                                                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **C** · Crop verification | Every contracted field has a weekly greenness curve (Sentinel-2 NDVI) against its camp's median, and a field officer's geofenced photo settles a field the clouds hide.                                   | Fields map (real satellite imagery, field outlines coloured by state; trace a new farm) and the field card |
+| **E** · Eligibility       | Fixed rules, every factor shown: established from space or on the ground, no open severe issue, one advance a season, a cap of 15% of the projected crop value. No score.                                 | The field card's **Run check**: the field, the passes, the rules one by one, then the cap                  |
+| **I** · The advance       | The farmer sees the amount and the fee and confirms with an SMS code; a second person, who did not verify the field, approves; the transfer runs and a ledger row is written.                             | Season ledger → Approvals                                                                                  |
+| **H** · Harvest           | The depot records the delivery; the statement (inputs, advance, fee, crop) is summed from ledger rows. A rainfall and greenness rule flags a drought camp, so shortfalls there are marked uncontrollable. | Reconciliation                                                                                             |
 
-## The Hytel Way: Monorepo Stack
+The agribusiness lends its own money; Phytos verifies and keeps the ledger. Crop insurance would come from a licensed partner and is simulated here.
 
-A production-ready monorepo template featuring React, TypeScript, Tailwind CSS, Shadcn UI, tRPC, and TanStack Query. Built with pnpm and Turborepo for optimal developer experience.
+**What is real and what is simulated.** The rules, the advance's state machine (code check, maker-checker, ledger entry) and the ledger arithmetic run in the deployed API. The season itself (farmers, contracts, field outlines, NDVI curves, rainfall, deliveries) is seeded and every screen says so: "Simulated season 2026/27" beside the season day, and "simulated" on every transfer and payout. Money moves through a simulated provider, SMS messages go to an on-screen log, and the imagery under the Fields map is Esri World Imagery. In the demo one Command Center login stands in for the agribusiness's credit team, on the simulated org only; on a real org only its own credit team can approve, send or record deliveries, and the officer who verified a field can never approve its advance.
 
-## Stack Overview
+**Guarantees** (the full list is in [`CLAUDE.md`](CLAUDE.md)): no money moves without the farmer's code after seeing amount and fee, approval by someone other than the officer who verified the field, and a ledger entry; eligibility and drought decisions are rules with stored, displayed factors; no outbreak or crop figure is shown as a probability; precise field locations stay with the farmer's own contracting agribusiness.
 
-Think of building a web app like putting on a theater production!
+Phytos grew from a crop-health path: a photo from the capture app is assessed by Gemini, advice is filtered deterministically against Zambia's registered pesticide list, and officers verify it. That path's API and the capture app stay (the season's ground checks use them); its screens (a national map, an officer queue, a dry-spell scenario, knowledge sources) were retired on 1 Nov and live at tag `pre-ceih-only`.
 
-| Tool               | Role            | Analogy                                        |
-| ------------------ | --------------- | ---------------------------------------------- |
-| **pnpm**           | Package Manager | The super-organized prop master                |
-| **Turborepo**      | Build System    | The stage manager coordinating tasks           |
-| **React + Vite**   | Frontend        | The stage and lighting system                  |
-| **TypeScript**     | Type Safety     | The script ensuring everyone knows their lines |
-| **Tailwind CSS**   | Styling         | The costume designer's fabric swatches         |
-| **Shadcn UI**      | Components      | Pre-made costume patterns                      |
-| **tRPC**           | API Layer       | The messenger between actors                   |
-| **TanStack Query** | Data Fetching   | Smart caching (remembers the script!)          |
-| **Vitest**         | Testing         | Dress rehearsals before the show               |
-| **Zod**            | Validation      | The bouncer checking IDs                       |
+## Stack
 
-## Monorepo Structure
+- **Monorepo**: pnpm 12 and Turborepo, TypeScript throughout, Zod schemas shared by front end and API.
+- **`apps/web`**: the four screens (Vite, React 18, Tailwind, tRPC client, Leaflet for the Fields map and the loan check).
+- **`apps/functions`**: the API (Hono on Cloud Run): tRPC for the dashboard and a REST surface at `/api/v1` (OpenAPI in [`packages/shared/src/contracts/openapi.json`](packages/shared/src/contracts/openapi.json)).
+- **`apps/capture`**: the capture PWA for field photos.
+- **`packages/shared`**: schemas, controlled vocabularies and the CEIH rules as pure, tested functions (`src/ceih/`).
+- **`tools/`**: the seed (the simulated season), end-to-end demo checks, the visual pass and the regulatory and corpus loaders.
+- **Google Cloud and Firebase** (project `crop-watch01`, `europe-west1`): Firestore, Storage, Auth, Hosting, Cloud Run, Pub/Sub, BigQuery, and Gemini through the Google Gen AI SDK.
+- `apps/mobile` is a Flutter client outside the pnpm workspace.
 
-```
-├── .github/
-│   ├── workflows/        # CI/CD pipelines (ready to use!)
-│   ├── CODEOWNERS        # Auto-assign reviewers
-│   └── ISSUE_TEMPLATE/   # Issue & PR templates
-│
-├── apps/
-│   ├── web/              # React frontend (Vite + Tailwind)
-│   │   ├── src/
-│   │   │   ├── App.tsx   # Main application component
-│   │   │   ├── hooks/    # Custom React hooks
-│   │   │   ├── lib/      # Utilities (tRPC client, query client)
-│   │   │   └── providers/# Context providers
-│   │   └── public/       # Static assets
-│   │
-│   └── functions/        # tRPC backend
-│       └── src/trpc/     # API routers and procedures
-│
-├── packages/
-│   ├── ui/               # Shared React components
-│   │   ├── components/
-│   │   │   ├── Header.tsx
-│   │   │   ├── Counter.tsx
-│   │   │   └── ui/       # Shadcn UI components (Button, Card)
-│   │   └── lib/utils.ts  # Tailwind class merging utility
-│   │
-│   ├── shared/           # Shared Zod schemas & types
-│   │   └── src/schemas/  # User schemas, validation rules
-│   │
-│   ├── eslint-config/    # Shared ESLint configuration
-│   └── typescript-config/# Shared TypeScript configuration
-│
-├── docs/ci-cd/           # CI/CD documentation
-├── scripts/              # Setup scripts (WIF, etc.)
-├── turbo.json            # Turborepo pipeline configuration
-├── pnpm-workspace.yaml   # Workspace definition
-└── package.json          # Root scripts
-```
+## Run it
 
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20+
-- pnpm 8+
-
-### Installation
+Prerequisites: Node 24.15 or later and pnpm 12.9.1.
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd hytel-react-boilerplate
-
-# Install dependencies
 pnpm install
+pnpm typecheck && pnpm lint && pnpm build && pnpm test
 ```
 
-### Development
+Dashboard against the deployed API (sign-in needs a Command Center account):
 
 ```bash
-# Start the development server
-pnpm dev
-# Opens at http://localhost:5173
-
-# Run all quality checks
-pnpm precheck
-
-# Run tests
-pnpm test
-
-# Build for production
-pnpm build
-
-# Lint code
-pnpm lint
-
-# Format code
-pnpm format
+cp .env.example .env    # then fill in the values it describes
+pnpm --filter web dev   # http://localhost:5173
 ```
 
-## Key Features
+The API runs locally with `pnpm --filter @repo/functions dev` and Application Default Credentials (`gcloud auth application-default login`). Infrastructure is created and deployed only through the idempotent scripts in [`infra/`](infra/): `setup.sh`, `deploy.sh`, and `deploy-preview.sh` for a tagged preview that takes no production traffic.
 
-### Shared Components (`packages/ui`)
+## Documents
 
-Components in `@repo/ui` can be used by any app in the monorepo:
+- [`docs/ceih-workflows-mvp.md`](docs/ceih-workflows-mvp.md): the CEIH specification; [`docs/ceih-overnight-plan.md`](docs/ceih-overnight-plan.md): how it was built.
+- [`docs/demo-ops.md`](docs/demo-ops.md): the demo runbook, the beat list and the checks.
+- [`docs/technicaldoc.md`](docs/technicaldoc.md) and [`docs/architecture.md`](docs/architecture.md): data model, contracts and architecture.
+- [`docs/buildplan.md`](docs/buildplan.md): the build log, day by day.
+- [`docs/archive/`](docs/archive/): superseded working documents, kept for the record.
 
-```tsx
-import { Header } from '@repo/ui/Header'
-import { Button } from '@repo/ui/Button'
-import { Card, CardHeader, CardContent } from '@repo/ui/Card'
-```
+## iOS and live field evidence
 
-### Type-Safe API (`apps/functions`)
-
-tRPC provides end-to-end type safety:
-
-```tsx
-// Backend (apps/functions)
-export const userRouter = router({
-  create: publicProcedure
-    .input(CreateUserSchema)
-    .mutation(({ input }) => ({ id: 'new-id', ...input })),
-})
-
-// Frontend (apps/web)
-const { mutate } = trpc.user.create.useMutation()
-```
-
-### Shared Schemas (`packages/shared`)
-
-Zod schemas shared between frontend and backend:
-
-```tsx
-import { UserSchema, CreateUserSchema } from '@repo/shared'
-
-// Type-safe validation everywhere!
-const user = UserSchema.parse(data)
-```
-
-## Scripts Reference
-
-| Command              | Description                                   |
-| -------------------- | --------------------------------------------- |
-| `pnpm dev`           | Start development servers                     |
-| `pnpm build`         | Build all packages for production             |
-| `pnpm test`          | Run all tests                                 |
-| `pnpm test:coverage` | Run tests with coverage report                |
-| `pnpm lint`          | Lint all packages                             |
-| `pnpm lint:fix`      | Auto-fix lint issues                          |
-| `pnpm format`        | Format code with Prettier                     |
-| `pnpm format:check`  | Check code formatting                         |
-| `pnpm typecheck`     | Run TypeScript type checking                  |
-| `pnpm precheck`      | Run all checks (lint, typecheck, build, test) |
-| `pnpm changeset`     | Create a changeset for versioning             |
-| `pnpm sync:lint`     | Check dependency version consistency          |
-| `pnpm sync:fix`      | Fix dependency version mismatches             |
-
----
-
-## CI/CD Pipeline
-
-This template includes a **fully configured CI/CD pipeline** using GitHub Actions and Workload Identity Federation (WIF) for secure deployments.
-
-### Branch Strategy
-
-| Branch  | Environment | Deployment                 |
-| ------- | ----------- | -------------------------- |
-| `dev`   | Development | Auto on push               |
-| `stage` | Staging     | Auto on push               |
-| `main`  | Production  | Manual (with confirmation) |
-
-### GitHub Actions Workflows
-
-| Workflow                | Trigger         | Purpose                              |
-| ----------------------- | --------------- | ------------------------------------ |
-| `ci.yml`                | PR & push       | Lint, typecheck, build, test         |
-| `deploy-dev.yml`        | Push to `dev`   | Deploy to development                |
-| `deploy-stage.yml`      | Push to `stage` | Deploy to staging                    |
-| `deploy-main.yml`       | Manual          | Deploy to production                 |
-| `release.yml`           | Push to `main`  | Automated versioning with Changesets |
-| `dependency-review.yml` | PR              | Check for vulnerable dependencies    |
-
-### Workload Identity Federation (WIF)
-
-All deployments use **keyless authentication** with GCP:
-
-- No stored service account keys
-- Short-lived tokens (expire in ~1 hour)
-- Full audit trail in GCP
-
-### Required GitHub Secrets
-
-Configure these in your repository settings:
-
-| Secret                           | Description           |
-| -------------------------------- | --------------------- |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | WIF provider path     |
-| `GCP_SA_EMAIL`                   | Service account email |
-
-### Setup Instructions
-
-1. **Configure WIF** using `scripts/setup-wif.sh`
-2. **Add secrets** to GitHub repository settings
-3. **Create environments** (`dev`, `stage`, `main`) in GitHub settings
-4. **Push to branches** to trigger deployments
-
-See [docs/ci-cd/CI-CD-Pipeline-Guide.md](docs/ci-cd/CI-CD-Pipeline-Guide.md) for detailed setup instructions.
-
----
-
-## Development Tools
-
-### Git Hooks (Husky)
-
-Pre-commit hooks automatically run:
-
-- ESLint on staged `.ts`/`.tsx` files
-- Prettier on staged files
-
-### Changesets
-
-Semantic versioning for the monorepo:
-
-```bash
-# Create a changeset when you make changes
-pnpm changeset
-
-# The release workflow handles version bumps automatically
-```
-
-### Syncpack
-
-Dependency consistency across packages:
-
-```bash
-pnpm sync:lint   # Check for mismatches
-pnpm sync:fix    # Auto-fix mismatches
-pnpm sync:list   # List all versions
-```
-
----
-
-## Testing
-
-Each package has its own tests:
-
-```bash
-# Run all tests
-pnpm test
-
-# Run tests for specific package
-pnpm --filter web test
-pnpm --filter @repo/ui test
-pnpm --filter @repo/shared test
-pnpm --filter @repo/functions test
-
-# Run with coverage
-pnpm test:coverage
-```
-
----
-
-## Adding New Packages
-
-### New App
-
-```bash
-mkdir apps/new-app
-cd apps/new-app
-pnpm init
-```
-
-### New Shared Package
-
-```bash
-mkdir packages/new-package
-cd packages/new-package
-pnpm init
-```
-
-Packages are auto-discovered via `pnpm-workspace.yaml` (configured for `apps/*` and `packages/*`).
-
----
-
-## Version Requirements
-
-| Tool         | Minimum Version        |
-| ------------ | ---------------------- |
-| Node.js      | 20.x                   |
-| pnpm         | 8.x                    |
-| Turbo        | 2.x                    |
-| TypeScript   | 5.x                    |
-| Vitest       | 2.x                    |
-| ESLint       | 8.x                    |
-| Prettier     | 3.x                    |
-| Firebase CLI | 13.x (for deployment)  |
-| gcloud CLI   | Latest (for WIF setup) |
-
----
-
-## Useful Links
-
-- [Turborepo Documentation](https://turbo.build/repo/docs)
-- [Shadcn UI Components](https://ui.shadcn.com)
-- [tRPC Documentation](https://trpc.io)
-- [TanStack Query](https://tanstack.com/query)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Vite](https://vitejs.dev)
-- [Changesets](https://github.com/changesets/changesets)
-- [Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation)
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and guidelines.
-
----
-
-Built with ❤️ using Turborepo
+This branch also keeps the Capacitor iOS client, its Firebase startup fix, owner-scoped field boundaries and the live Copernicus field-evidence service. See [iOS builds](docs/IOS_BUILD.md), [satellite integration](docs/field-satellite-integration.md) and [mobile CEIH scope](docs/ceih-demo-readiness.md).

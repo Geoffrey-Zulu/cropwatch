@@ -29,7 +29,7 @@ overrides:
   'undici@>=8.0.0 <8.12.2': 8.12.2
 
 # Accepted advisories. Everything listed here is a deliberate, documented risk
-# acceptance, not a way to quiet the auditor. See UPGRADE-NOTES.md.
+# acceptance, not a way to quiet the auditor. See docs/archive/template-upgrade-notes.md.
 auditConfig:
   ignoreGhsas:
     # braces: stack-exhaustion DoS through deeply nested glob patterns.

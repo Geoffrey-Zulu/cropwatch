@@ -618,3 +618,116 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 | `pnpm` gate | Green (399 tests)                                                             |
 | Demo check  | Passed after every deploy and reseed (9.4 s to 15.8 s report → dispatched)    |
 | Live verify | The venue alert reads "Verified cluster alert · 1 of 5 verified" after Verify |
+
+### D10 · Sat 31 Oct evening to Sun 1 Nov: the CEIH pivot
+
+Mentor decision, Saturday evening: Phytos becomes the verification and ledger layer for an agribusiness's season (Crop verification, Eligibility, Instant disbursement, Harvest reconciliation). The spec is `docs/ceih-workflows-mvp.md`; `docs/ceih-overnight-plan.md` sequences it and wins where they disagree. The demo is the dashboard only, composed from the field-airy kit. Work is on branch `ceih`.
+
+**Step 0: safety, branch, CLAUDE.md**
+
+- The `tools/regulatory` spot-check files were already committed in `bf521b0`; git saw only OneDrive timestamp noise. `Claude outputs/` (personal PDFs) is gitignored.
+- **Fallback tag `stable-2026-10-31`** (pushed) is the field-airy rebuild, `fc64f26`, which passed the gate, the demo check and the visual pass on the `rebuild` preview channel. **Production is not cut over:** the production deploy needs Geoffrey's permission, so crop-watch01.web.app still serves the `stable-2026-10-30c` UI. The API is shared, so the demo check covers both.
+- Branch `ceih` from `fc64f26`.
+- CLAUDE.md: invariant 6 amended as written; the two new invariants are **11 and 12** (the spec numbers them 9 and 10, which would have overwritten the live "no auto-learning" and "alert class" rules); the technicaldoc supersessions and the invariant 2 note.
+
+| Check                 | Result                                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Demo check (live API) | Passed: Lusaka HIGH, report → dispatched 8.1 s, cleaned up                                                  |
+| Production cutover    | **Waiting on Geoffrey's permission** (`bash infra/deploy.sh` from `stable-2026-10-31`, then the demo check) |
+
+**Checkpoint (mentors, Saturday evening):** a static, lettered preview of the CEIH dashboard (`apps/web/public/mockups/d-ceih.html`: Overview, C, E, I, H, farmer channel) on the `ceih-preview` channel only. Shots in `docs/ui-review/2026-10-31-ceih-preview/`.
+
+**Phase 1: data model, constants, seed**
+
+- `packages/shared`:
+  - Zod schemas for farmers, contracts, satellite passes, advances (frozen eligibility snapshot), ledger entries, deliveries, weather triggers, the rainfall series, the SMS log, the demo state and the dashboard views (`schemas/ceih.ts`). The views have no field for a pin, a polygon, a full phone number or an OTP.
+  - Observations gain optional `farmer_id`, `geofence_ok`, `source` and `season_at`. The contract change is additive: `openapi.json` regenerated, `ObservationSource` registered as a component.
+  - `constants/ceih.ts`: every threshold and amount a named PLACEHOLDER constant (NDVI 0.35 for soya, camp tolerance 0.08, 21-day window, 2 clear passes, severity 40, cap 15% (10 to 20%), ceiling ZMW 2,500, fee 5%). Role `credit` appended.
+  - Pure rules in `src/ceih/`: geofence (circle of the claimed hectares around the pin, point-in-polygon plus 150 m), NDVI status, the eligibility engine with displayed factors, the advance state machine, the ledger, the shock rule, and the demo's season calendar.
+- **Season calendar:** whole days added to the real date, so January's demo day lands on 12 Jan 2027 while times of day stay real. March and June are jumps of the same offset; every record carries its season date and nothing after "today" is shown.
+- **Satellite passes** are stored as the `passes` array of `satellite_metrics/{contractId}`, not one document a pass: one read a field, every pass kept.
+- **Seed:** `--ceih` (with `--given-pin`, `--demo-phone`) writes 120 soya contracts in Chikuni, Keemba and Hamangaba, with:
+  - 39 weekly passes each;
+  - 21 ground observations on farmer records;
+  - 12 advances (10 sent, 2 waiting for approval);
+  - inputs ledgered;
+  - 113 June deliveries, hidden until June;
+  - a demo rainfall series.
+- **Contract price:** ZMW 8,000 a tonne (PLACEHOLDER), so Given's 0.5 ha at 1.4 t/ha is ZMW 5,600 and his cap ZMW 840.
+- **Ground observations** never go to BigQuery, so the outbreak rules never see them.
+
+| Check        | Result                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate  | Green (typecheck, lint, build, 429 tests; 29 new CEIH tests in shared)                                                                                                                                                                                                                                                                                                     |
+| Seed dry run | Given: "Not eligible: cloud gap, ground check required" (1 clear pass in 21 days, 2 clouded out), cap ZMW 840; with one ground check: eligible at ZMW 840. A satellite-verified farmer: eligible, "Cap 15% of ZMW 15,000 = ZMW 2,250". Joseph: not planted. 42 eligible. Shock rule at 16 Mar: Hamangaba fires (8.7 mm, 37 of 40 fields falling), Chikuni and Keemba quiet |
+| Seed commit  | Collections in Firestore; a second run removed 0 stale documents (idempotent). The venue was re-armed in the same run (armed until 3 Nov 03:05 UTC)                                                                                                                                                                                                                        |
+
+**Phase 2: eligibility engine and API**
+
+- **Season service** (`apps/functions/src/services/ceih/`). Reads build every view from one load of the org's season (`views.ts`, pure). Actions re-check their rule on fresh data:
+  - request (eligible and within the cap; the OTP SMS carries amount and fee);
+  - confirm (SHA-256 of the code, 30-minute expiry);
+  - approve (the credit team, or a Command Center account standing in for it; never an officer in the eligibility snapshot's `verifier_ids`);
+  - disburse (`checkDisburse` again, then `SimulatedProvider`, the advance and its ledger rows in one transaction, then the SMS);
+  - decline, delivery (priced at the grade, the statement SMS), and the shock rule on every camp.
+- **Advances:** every state change is compare-and-set in a transaction, so a double click cannot send money twice.
+- **Payouts:** a harvest payout moves money, so it waits for approval (invariant 11, "no exceptions"). Statements show the net due; the seed no longer writes payout rows.
+- **SMS:** every message goes to `sms_log`. A real SMS goes only through a configured gateway, and for a simulated farmer only to the demo number on the allow-list.
+- **Geofence link:** a new report that falls inside an active contract's polygon for the same crop lands on that farmer's record (`farmer_id`, `geofence_ok`, `source`, `season_at`). It runs as a field update after the report is saved, never holding up the reply.
+- **tRPC `season` router:** portfolio, field card, approvals, statement, reconciliation, SMS log, the actions, and demo controls (set phase, ground check; Command Center accounts on simulated seasons only).
+- **REST `/api/v1` additions:** `POST /farmers`, `/contracts/import` (CSV), `/contracts/{id}/inputs` (two calls: code, then acknowledgement), `/advances`, `/advances/{id}/confirm|approve|disburse`, `/deliveries`, `/satellite/ingest`, `/triggers/evaluate`; `GET /farmers/{id}/eligibility`, `/contracts/{id}/statement|satellite`, `/org/{id}/portfolio` (camp-level only). A refused rule answers 409 `conflict`; no new error codes.
+- **Contract:** the 14 CEIH REST paths are documented in `openapi.json` (API 1.1.0, added after Phase 4: additive, no existing path or schema changed). The request and response shapes live in `packages/shared/src/schemas/ceihApi.ts`, shared by the handlers. `moisture_pct` and `cloud_pct` are allowed by name in the contract test as measurements, not likelihoods.
+
+| Check                   | Result                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate             | Green (typecheck, lint, build, 435 tests)                                                                                                                                                                                                                                                                                                                                      |
+| §6 acceptance in Vitest | Factors on every call; no advance reaches disbursement without `otp_ok` and an approver outside `verifier_ids` (including a tampered "approved" record); every movement a ledger row and the statement summed from rows; the SMS before confirmation carries amount and fee; geofence-false and unusable passes never count; views carry no pin, polygon, full number or score |
+
+**Phase 3: the dashboard**
+
+- **The Outgrower View** grows Season ledger, Approvals and Reconciliation under a portfolio header (Fraunces figures counting up from 0 on open). Field visits keeps its old content, and its "loan and credit views: roadmap only" line is gone.
+  - **Season ledger:** the roster, with camp filter and CSV export (farmer level for the org, no locations). Each row opens into the field card:
+    - the NDVI chart (field against the camp median, cloud gaps as breaks over hatched bands, the 0.35 line, planting and today);
+    - the Verified Season Record by source;
+    - the eligibility factors;
+    - the neighbour who never planted;
+    - request an advance on the farmer's behalf: amount and fee first, then the farmer's code, with "use the code from the SMS log" as a demo-only button.
+  - **Approvals:** cards with the photo, stage, geofence and verifier, the factors frozen at request, amount and fee, and the SMS the farmer saw. Approve is disabled for the verifying officer, with the reason in words. The approve dialog restates amount, fee, the code and the simulated provider. Decline asks for a reason, which goes to the farmer.
+  - **Reconciliation:**
+    - the delivery form, priced at the grade;
+    - the statement from ledger rows, with the net due waiting for approval;
+    - shortfalls, unexplained first, with shock-explained and verified problems;
+    - the claim pack, marked "insurance payout SIMULATED".
+  - **Kit:** composed from the field-airy kit. New components are the NDVI chart (drawn in pixels from its width) and a light-scrim dialog; no new colours. Demo controls fold away under a DEMO pill: ground check, March, June, back to January.
+- **Shared view builders:** moved to `packages/shared/src/ceih/views.ts`, so the API and the preview fixtures (`tools/seed/ceih-fixtures.ts`) build the same views.
+- **Demo check:** `pnpm --filter @repo/admin-tools ceih-e2e [--api …]` walks beats 1 to 6 through the dashboard's tRPC routes as a Command Center account, then deletes what it made.
+- **Found live and fixed:** the drought rule fired on every camp at harvest, because a dry June with maturing fields satisfies both sources. It now watches the growing season only: 30 to 125 days after the camp's median planting (PLACEHOLDER).
+
+| Check                                    | Result                                                                                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate                              | Green                                                                                                                                      |
+| Visual pass                              | The three tabs and the approval dialog at laptop, phone, 1280 and 1920: no issues, every shot looked at. `docs/ui-review/2026-10-31-ceih/` |
+| `ceih-e2e`, local API on the live season | 24 checks, all passed; cleaned up                                                                                                          |
+| The storyline live in the dashboard      | Beats 1 to 8 played signed in as David on live data (local API); shots in the review folder; re-armed after                                |
+
+**Phase 4: arming and deploy**
+
+- **Arming:** `seed --ceih --live-demo …` arms both paths in one run:
+  - Given is one ground check short;
+  - 2 advances wait for approval;
+  - Hamangaba is armed, not fired;
+  - the venue cluster is armed for the fallback.
+- **Deploy:** the production deploy (`infra/deploy.sh`) needs Geoffrey's go, so the build went out on a preview instead with `infra/deploy-preview.sh` (new, idempotent):
+  - the API as a tagged Cloud Run revision with no traffic (`cropwatch-api-00015-xop`, tag `ceih`, MIN_INSTANCES 1);
+  - the dashboard and the capture app on the `ceih-preview` channel, built against that revision.
+  - Production traffic stayed on `cropwatch-api-00014-88d` at 100%, and the production sites are unchanged.
+- **Warm-up:** `ceih-e2e --warm` (REST eligibility and satellite, Given armed).
+- **Recording:** the backup is `record-ceih` (a clean profile at 1280×800, all eight beats, a frame a beat), saved to `Desktop/Phytos CEIH recording 2026-10-31/`.
+- **Runbook:** CEIH section in `docs/demo-ops.md`.
+
+| Check                                                          | Result                                                                 |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `ceih-e2e` on the deployed revision                            | 24 checks, all passed; beats 1 to 6 in 9.6 s; cleaned up               |
+| Old path on the same revision (`outbreak-e2e`)                 | All passed: report → dispatched 8.0 s, Lusaka HIGH                     |
+| The storyline on the deployed preview, clean profile, 1280×800 | Beats 1 to 8, no page errors, each beat 0.1 to 4.5 s; frames looked at |
+| Production                                                     | Untouched; cutover waits for Geoffrey                                  |

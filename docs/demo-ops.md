@@ -3,9 +3,70 @@
 The checklist and the timed run for the live Phytos demo at the GreenCode final (3-minute pitch). Start the morning checklist **at least two hours before** the pitch, from a laptop with the repo, pnpm 12.9.1 and `gcloud` logged in as `zulugeoffrey034@gmail.com`. Every command runs from the repo root. Each step says what "good" looks like; if a step fails, fix it before moving on.
 
 - Capture app (presenter's phone): https://crop-watch01-capture.web.app
-- Command Center (laptop): https://crop-watch01.web.app
+- Agribusiness app (laptop, tab 1): https://crop-watch01.web.app
+- Farmer app (laptop, tab 2; Given's phone, no sign-in, resets on refresh): https://crop-watch01-farmer.web.app
 - API: `https://cropwatch-api-24960589333.europe-west1.run.app/api/v1`
-- Printed one-page version of the morning checklist: [`morning-checklist.pdf`](morning-checklist.pdf) (source `morning-checklist.html`). Saturday's test plan: [`hackathon-backlog.md`](hackathon-backlog.md).
+- The morning ritual for the CEIH demo is below ("Morning ritual (CEIH)"). The printed checklist and the Saturday test plan from before the pivot are in [`archive/`](archive/).
+
+## The final shape (1 Nov afternoon): two tabs
+
+The run sheet is v5 in [`morning-report.md`](morning-report.md) ("Rehearsal script v5"): the agribusiness app in tab 1 (Fields map, Season ledger, Reconciliation; no Approvals screen) and Given's farmer app in tab 2. The demo check is `ceih-e2e` (ledger, ground check, cap, June batch, one payout request); the farmer app's check is `pnpm --filter @repo/visual exec tsx farmer-shot.ts https://crop-watch01-farmer.web.app/`, and every screen's overflow audit is `tsx overflow.ts` against the dev preview. Re-arm after every run of either the demo check or the recording. Storyline v4 below is retired.
+
+## CEIH pivot (31 Oct): the dashboard-only demo
+
+Plan: [`ceih-overnight-plan.md`](ceih-overnight-plan.md) (storyline v2, §4). The demo is the dashboard: Outgrower View → Season ledger, Approvals, Reconciliation. The old path below stays as the fallback and passes on the same API.
+
+**Where it runs (production since 31 Oct 23:06, tag `ceih-2026-10-31`, API revision `cropwatch-api-00017-c5w`):**
+
+| What                                            | URL                                                                                                                                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard (the demo)                            | https://crop-watch01.web.app → `#/outgrower/fields`                                                                                                                              |
+| Capture app (optional live photo)               | https://crop-watch01-capture.web.app                                                                                                                                             |
+| API                                             | https://cropwatch-api-24960589333.europe-west1.run.app                                                                                                                           |
+| Fallback no. 1: the Block 2 preview, same build | https://crop-watch01--ceih-fields-bn4uxra8.web.app (API tag `fields`: https://fields---cropwatch-api-7d3oc7ppba-ew.a.run.app)                                                    |
+| Fallback no. 2: CEIH without the Fields map     | https://crop-watch01--ceih-preview-2d9ec7jj.web.app → `#/outgrower/season` (API tag `ceih`: https://ceih---cropwatch-api-7d3oc7ppba-ew.a.run.app; demo check with `--no-fields`) |
+| Static preview for mentors                      | https://crop-watch01.web.app/mockups/d-ceih.html                                                                                                                                 |
+
+The previews share production's Firestore, so one re-arm serves all three builds. Leave the `ceih` and `fields` tags and their channels alone (they expire 7 Nov). `infra/deploy.sh` sends all production traffic to the new revision and keeps the tags. Sign in as a Command Center account (david@phytos.com): it stands in for the credit team, and it is not the officer who verifies the field, so it may approve.
+
+**Morning ritual (CEIH):**
+
+1. Re-arm both paths in one run: `pnpm --filter @repo/seed seed --live-demo --demo-issue tuta_absoluta --demo-center=-15.388311,28.346069 --demo-district Lusaka --ceih --commit`. Good: "Firestore CEIH: 120 farmers and contracts …; season day 2027-01-1x". Add `--demo-phone +2609…` to let Given's SMS reach the judge's phone once the Africa's Talking secrets exist; add `--given-pin <venue lat,lng>` only for the live capture-app beat (his field must be where the photo is taken).
+2. Demo check: `PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/admin-tools ceih-e2e` (production by default; `--api <url>` for a fallback). Good: "All checks passed", beats 1 to 6 in about 10 to 16 s, "Cleaned up … the season is armed again".
+3. Warm-up just before the pitch: the same `ceih-e2e … --warm` (the Fields map and one Esri imagery tile over Chikuni, the ledger, Given's card, REST eligibility and satellite; changes nothing). Good: "Fields map: Chikuni armed, two grey holes", "the Fields map loads imagery", "Warm in … s".
+4. Open the dashboard in a clean browser profile at the projector's resolution, signed in, on `#/outgrower/fields`, and let the map land once: the browser then holds the Chikuni tiles (the page also prefetches zooms 13 to 17 over every camp). If the venue blocks Esri, the map switches to EOX Sentinel-2 by itself; if both fail it shows the fields on the plain canvas, and the story still holds.
+
+**Storyline v4 (1 Nov, the four screens), what to press.** Pre-stage: the dashboard on `#/outgrower/fields` with **All camps** pressed, the map landed once. The four screens are the pills in the top bar beside the Phytos logo; the season controls are the small gear at the right end of the top bar, before the avatar, on every screen, and their panel opens downward. The timed script with every line is in [`morning-report.md`](morning-report.md).
+
+| Beat      | On screen                                                                                                                                                                                                               | Press                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 1a        | Fields map: the fly into Chikuni; green fields, two grey "no crop seen" holes, one amber stress field, dashed cloud gaps; **Given Mweemba** named on his field                                                          | "Chikuni"                                                                                                    |
+| 1b        | Season ledger, the portfolio counting up; Given first: "Not eligible: cloud gap, ground check required"                                                                                                                 | The "Season ledger" tab                                                                                      |
+| 2         | His card rises under the header: the farm on real imagery, the curve until the December clouds, a cross on the rule that fails                                                                                          | His row                                                                                                      |
+| 3a        | The officer's ground check lands: the row reads "Eligible · cap ZMW 840"                                                                                                                                                | Gear → "The field officer's ground check lands" → gear                                                       |
+| 3b        | **The loan check, played:** the map flies to his traced field and the outline draws itself; the passes arrive along his curve with the cloud gap; the rules tick on one by one; the cap counts up to "Eligible ZMW 840" | "Run check" (on his card); about 11 s, a click moves on, "Skip" goes to the verdict                          |
+| 4         | Amount, fee (5% flat) and what he owes at harvest, before anything is sent; the code read back                                                                                                                          | "Request advance for Given" (on the verdict) → "Send to Given" → "Use the code from the SMS log" → "Confirm" |
+| 5         | The approval card: record, factors, "owed at harvest ZMW 2,832 of ZMW 5,600 projected"; the officer who verified cannot approve; the code masked in the SMS log                                                         | "Open approvals"                                                                                             |
+| 6         | "ZMW 840 sent" (simulated transfer), then the ledger: Given's statement with the advance and fee rows                                                                                                                   | "Approve ZMW 840" → "Approve and send" → "Done" → the "Reconciliation" tab                                   |
+| 7a        | March: Hamangaba's drought trigger (8.3 mm against the 60 mm rule, camp greenness falling), advances there paused                                                                                                       | Gear → "Go to March: drought rule" → gear                                                                    |
+| 7b        | The drought as a picture: Hamangaba's 40 fields in brick, Chikuni still green                                                                                                                                           | The "Fields map" tab → "Hamangaba"                                                                           |
+| 8 (close) | June: Given's statement, delivery 720 kg grade A, net due ZMW 2,928; the drought's shortfalls uncontrollable, Keemba's unexplained                                                                                      | The "Reconciliation" tab → gear → "Go to June: harvest" → gear → "Record delivery"                           |
+
+Optional, outside the 3:00: **trace a farm**. On the Fields map, paste "lat, lng" in the box beside "Add farm" and press "Go" (the map eases there and pins it), then "Add farm", click the corners (drag one to adjust; a click on the first corner closes it), fill in the details and save: the Season ledger opens on the new farm's row. It leaves a farmer behind: re-arm afterwards.
+
+Each beat answers in about 1 to 4.5 s on the deployed revision (recorded 31 Oct). Backup recordings (a continuous run as `.webm` and `.mp4`, a take a beat in `takes/`, a frame a beat), at 1280×800:
+
+- `Desktop/Phytos CEIH recording 2026-11-01 final layout production 1280/`: **the backup for the pitch**: the four screens in the top bar, the loan check in beat 3, recorded on production at 09:25 (tag `ceih-final-2`).
+- `Desktop/Phytos CEIH recording 2026-11-01 final production 1280/`: the 06:30 freeze run, before the four-screen product, the final production build (`ceih-night-7`), storyline v3, recorded at the 06:30 freeze. The rehearsal script's recovery rule plays its `takes/`.
+- `Desktop/Phytos CEIH recording 2026-10-31 production 1280/`: the first production run, before the overnight review.
+- `Desktop/Phytos CEIH recording 2026-10-31 fields-preview/`: the same build on the Block 2 preview.
+- `Desktop/Phytos CEIH recording 2026-10-31/`: the first take, opening on the Season ledger.
+
+Recorded with `PHYTOS_RECORD_EMAIL=… PHYTOS_RECORD_PASSWORD=… pnpm --filter @repo/visual record-ceih --out <folder> [--dashboard <url>] [--size 1920x1080]` (default dashboard: production; ffmpeg cuts the takes). It moves the season to June: re-arm after recording.
+
+The Fields map, the field card's imagery thumbnail and the loan check's map show farm-level outlines only to this agribusiness under contract consent (its credit and field-officer roles; a Command Center account stands in on the simulated org); anyone else sees camp totals, and exports carry nothing precise.
+
+**Cutover: done** (31 Oct 23:06, `MIN_INSTANCES=1 bash infra/deploy.sh` from `ceih`). **Fallback until Sunday 09:00:** if beats 1 to 6 are not green on the deployed build, present `stable-2026-10-31` (field-airy, the outbreak story) with its recordings and tell the CEIH story on slides.
 
 ## Before the day (freeze tag freeze-2026-10-30)
 
@@ -44,6 +105,29 @@ If the wifi or the API fails on stage, play the matching recording and keep talk
 PHYTOS_RECORD_EMAIL=<officer email> PHYTOS_RECORD_PASSWORD=<password> pnpm --filter @repo/visual record-demo --out <folder> --photo path/to/leaf-mines.jpg
 pnpm --filter @repo/admin-tools retract-report --obs <the id it prints> --commit
 ```
+
+### Field-airy rebuild: preview and cutover (31 Oct)
+
+The rebuild (mockup A, with B's map motion) runs on the "rebuild" Hosting preview channels. Production stays on the stable UI all Saturday for the mentor walkthroughs.
+
+- Dashboard preview: https://crop-watch01--rebuild-we2jq4zo.web.app
+- Capture preview: https://crop-watch01-capture--rebuild-dmzdlrt4.web.app
+
+Both channels expire 6 Nov and are allowed by the API's CORS. To redeploy the previews from the current branch:
+
+```bash
+URL=$(gcloud run services describe cropwatch-api --region europe-west1 --project crop-watch01 --account zulugeoffrey034@gmail.com --format='value(status.url)')
+VITE_API_BASE="$URL" VITE_FEATURE_SCENARIO=true pnpm --filter web build
+VITE_API_URL="https://cropwatch-api-24960589333.europe-west1.run.app/api/v1" pnpm --filter capture build
+firebase hosting:channel:deploy rebuild --only dashboard,capture --expires 7d --project crop-watch01 --account zulugeoffrey034@gmail.com
+```
+
+**Cutover**, only when the rebuild passes the full gate, the demo check and the visual pass: run `bash infra/deploy.sh` (it rebuilds and deploys both production sites), then the demo check. **Fallback** until 09:00 Sunday: check out the tag `stable-2026-10-30c` and run `bash infra/deploy.sh`.
+
+### Still to do before Sunday (people)
+
+- **Recording 3,** the SMS or alert buzz on the phone, filmed at the next human run.
+- **The in-app alert buzz,** tested on the demo phone: "Send alerts for Lusaka to this phone" in the capture app, then one demo check at the venue pin (step 3). The phone should buzz with the alert.
 
 ## Morning-of checklist
 
@@ -121,7 +205,9 @@ Good: `all checks passed`, including the advice check (every chemical option pas
 - **Dashboard laptop:** signed in as the agronomist, on the national map, focus "Lusaka and Chongwe", bell drawer closed.
 - **Kit:** hotspot charged; backup recordings on the desktop.
 
-## The run: Sunday 3-minute final script
+## Fallback only: the 30 Oct outbreak script
+
+**Not the demo.** The CEIH run is "Storyline v3" at the top of this page, and its timed rehearsal script is in [`morning-report.md`](morning-report.md). This script is the fallback if the CEIH build cannot be shown (present `stable-2026-10-31`).
 
 Agreed 30 Oct, with the wording revised the same day so every line matches the build. Two presenters: **P1** on the phone (the farmer, then the officer); **P2** narrates at the dashboard (projected).
 

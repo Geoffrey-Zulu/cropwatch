@@ -28,6 +28,8 @@ GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
 GEMINI_LOCATION="${GEMINI_LOCATION:-eu}"
 MIN_INSTANCES="${MIN_INSTANCES:-0}"
 CAPTURE_SITE="${PROJECT_ID}-capture"
+# The farmer app (apps/web/farmer.html): no API calls, no sign-in; its own Hosting site.
+FARMER_SITE="${PROJECT_ID}-farmer"
 BQ_DATASET="cropwatch"
 ALERTS_TOPIC="cropwatch.alerts"
 ALERTS_SUB="cropwatch-alerts-dispatch"
@@ -126,7 +128,10 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS};BQ_DATASET=${BQ_DATASET};ALERTS_TOPIC=${ALERTS_TOPIC};AT_SENDER_ID=${AT_SENDER_ID}" \
   "${SECRETS_FLAG[@]}" \
   --format=none
-ok "deployed ${URL}"
+# A preview tag (deploy-preview.sh) pins the traffic split, and a new revision then gets none:
+# send all traffic to this revision explicitly. The preview tags stay.
+gcloud run services update-traffic "$SERVICE" --region="$REGION" --to-latest --format=none
+ok "deployed ${URL} (all traffic on the new revision)"
 
 # -----------------------------------------------------------------------------
 step "Eventarc: ${TRIGGER} (Storage finalize on gs://${BUCKET} → ${SERVICE})"
@@ -213,18 +218,30 @@ code="$(curl -sS -o /dev/null -w '%{http_code}' "${CAPTURE_URL}/manifest.webmani
 ok "${CAPTURE_URL} (manifest 200)"
 
 # -----------------------------------------------------------------------------
-step "Command Center dashboard → Firebase Hosting site ${PROJECT_ID}"
+step "Dashboard → ${PROJECT_ID}, farmer app → ${FARMER_SITE}"
+if firebase hosting:sites:get "$FARMER_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+  --non-interactive >/dev/null 2>&1; then
+  ok "farmer site exists"
+else
+  firebase hosting:sites:create "$FARMER_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+    --non-interactive >/dev/null
+  ok "farmer site created"
+fi
 # The dry-spell scenario (prototype) is behind a build-time flag: FEATURE_SCENARIO=false hides it.
 FEATURE_SCENARIO="${FEATURE_SCENARIO:-true}"
 VITE_API_BASE="${URL}" VITE_FEATURE_SCENARIO="${FEATURE_SCENARIO}" pnpm --filter web build >/dev/null ||
   die "dashboard build failed (run: pnpm --filter web build)"
-ok "built apps/web (dry-spell scenario: ${FEATURE_SCENARIO})"
-firebase deploy --only hosting:dashboard \
+ok "built apps/web: the dashboard and the farmer app"
+firebase deploy --only hosting:dashboard,hosting:farmer \
   --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
 DASHBOARD_URL="https://${PROJECT_ID}.web.app"
 code="$(curl -sS -o /dev/null -w '%{http_code}' "${DASHBOARD_URL}/geo/zambia-districts.json")"
 [[ "$code" == "200" ]] || die "dashboard district boundaries answered HTTP ${code}"
 ok "${DASHBOARD_URL} (boundaries 200)"
+FARMER_URL="https://${FARMER_SITE}.web.app"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "${FARMER_URL}/")"
+[[ "$code" == "200" ]] || die "farmer app answered HTTP ${code}"
+ok "${FARMER_URL} (200)"
 
 cat <<EOF
 
@@ -235,4 +252,5 @@ Deployed ${SERVICE} (${TAG}) to ${REGION}:
   Pub/Sub    ${ALERTS_SUB} → /internal/events/alerts
   Capture    ${CAPTURE_URL}
   Dashboard  ${DASHBOARD_URL}
+  Farmer     ${FARMER_URL}
 EOF

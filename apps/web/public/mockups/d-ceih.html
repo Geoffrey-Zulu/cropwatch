@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phytos · Season ledger preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,0..100,0..1&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Phytos · CEIH preview (static, non-functional)
+   Mockup A "Field-airy" language: the same tokens as
+   a-field-airy.html. Four moments of docs/ceih-overnight-plan.md
+   §4, top to bottom. Every figure is hardcoded demo data.
+   ============================================================ */
+:root {
+  --canvas-1: #F4F3EC;
+  --canvas-2: #E6E5DA;
+  --land: #D6E2C4;
+  --coast: #93A784;
+  --elev: #EEC14A;
+  --elev-stripe: #B98516;
+  --high: #A23B21;
+  --high-text: #9A3720;
+  --elev-text: #7F5605;
+  --ink: #1B2920;
+  --ink-2: #55645A;
+  --ink-3: #7C887F;
+  --rule: #E8ECE4;
+  --hover: #F4F6F1;
+  --accent: #2D5B39;
+  --accent-tint: #EAF1E3;
+  --island: #FFFFFF;
+  --shadow:
+    0 0 0 1px rgba(27, 41, 32, .035),
+    0 1px 2px rgba(27, 41, 32, .05),
+    0 8px 18px -6px rgba(27, 41, 32, .08),
+    0 26px 52px -14px rgba(27, 41, 32, .16);
+  --shadow-sm:
+    0 0 0 1px rgba(27, 41, 32, .04),
+    0 1px 2px rgba(27, 41, 32, .06),
+    0 8px 18px -8px rgba(27, 41, 32, .18);
+  --hatch: repeating-linear-gradient(135deg, rgba(27,41,32,.075) 0 3px, transparent 3px 7px);
+  --r-xl: 1.6rem;
+  --r-lg: 1.1rem;
+  --r-pill: 999px;
+  --gap: 1.6rem;
+  --header-h: 3.75rem;
+  --sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --serif: "Fraunces", Georgia, serif;
+}
+html { font-size: 15px; }
+@media (min-width: 1600px) { html { font-size: 17px; } }
+@media (min-width: 1880px) { html { font-size: 19px; } }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: var(--sans); color: var(--ink); background: var(--canvas-2); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
+.serif { font-family: var(--serif); font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 72; }
+
+/* ---------------- header (as mockup A) ---------------- */
+.top {
+  position: sticky; top: 0; z-index: 20; height: var(--header-h);
+  display: flex; align-items: center; gap: 2rem; padding: 0 var(--gap);
+  background: var(--island);
+  box-shadow: 0 1px 0 rgba(27, 41, 32, .06), 0 10px 26px -18px rgba(27, 41, 32, .3);
+}
+.brand { display: flex; align-items: center; gap: .6rem; text-decoration: none; color: var(--ink); flex: none; }
+.brand-mark { width: 2.05rem; height: 2.05rem; flex: none; }
+.brand-word { font-family: var(--serif); font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 72; font-weight: 640; font-size: 1.6rem; letter-spacing: -.012em; line-height: 1; }
+.nav { display: flex; align-items: center; gap: .2rem; min-width: 0; }
+.nav a { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .85rem; border-radius: var(--r-pill); font-size: .95rem; font-weight: 500; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
+.nav a:hover { color: var(--ink); background: var(--hover); }
+.nav a[aria-current="page"] { color: var(--accent); background: var(--accent-tint); font-weight: 600; }
+.hdr-right { margin-left: auto; display: flex; align-items: center; gap: 1rem; flex: none; }
+.season-day { display: inline-flex; align-items: center; gap: .5rem; font-size: .95rem; color: var(--ink-2); white-space: nowrap; }
+.season-day b { color: var(--ink); font-weight: 700; }
+.season-day svg { width: 1.15rem; height: 1.15rem; color: var(--accent); }
+.avatar { width: 2.3rem; height: 2.3rem; border-radius: var(--r-pill); display: grid; place-items: center; background: #EFE6D1; color: #4A3B1A; font-weight: 700; font-size: .85rem; letter-spacing: .02em; }
+
+/* ---------------- page ---------------- */
+.stage { min-height: calc(100vh - var(--header-h)); padding: 1.35rem var(--gap) 3rem; background: radial-gradient(115% 100% at 55% 30%, var(--canvas-1) 0%, var(--canvas-1) 45%, var(--canvas-2) 100%); }
+.wrap { max-width: 82rem; margin: 0 auto; display: flex; flex-direction: column; gap: var(--gap); }
+.island { background: var(--island); border-radius: var(--r-xl); box-shadow: var(--shadow); }
+.intro { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; }
+.intro h1 { margin: 0; font-family: var(--serif); font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 96; font-weight: 600; font-size: 2.35rem; line-height: 1.05; letter-spacing: -.02em; white-space: nowrap; }
+.toggle { display: inline-flex; max-width: 100%; overflow-x: auto; padding: .3rem; gap: .15rem; border-radius: var(--r-pill); box-shadow: var(--shadow-sm); background: var(--island); scrollbar-width: none; }
+.toggle button { border: 0; background: transparent; cursor: pointer; padding: .55rem 1rem; border-radius: var(--r-pill); font-size: .92rem; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.toggle button:hover { color: var(--ink); background: var(--hover); }
+.toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+.toggle.small button { padding: .42rem .8rem; font-size: .86rem; }
+.toggle a { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem 1rem .5rem .55rem; border-radius: var(--r-pill); font-size: .92rem; font-weight: 500; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
+.toggle a:hover { color: var(--ink); background: var(--hover); }
+.toggle a[aria-current="page"] { background: var(--accent); color: #fff; font-weight: 600; }
+.letter { display: inline-grid; place-items: center; width: 1.55rem; height: 1.55rem; border-radius: var(--r-pill); background: var(--accent-tint); color: var(--accent); font-size: .8rem; font-weight: 700; flex: none; }
+.toggle a[aria-current="page"] .letter { background: #fff; color: var(--accent); }
+.kicker .letter { width: 1.75rem; height: 1.75rem; margin-right: .5rem; background: var(--accent); color: #fff; font-size: .88rem; vertical-align: middle; }
+.page[hidden] { display: none; }
+.toggle a.plain { padding: .5rem 1rem; }
+.side.elig-grid { display: grid; align-items: start; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.4rem 1.8rem; margin-top: 1.1rem; }
+.card.card { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.elig-grid .neighbour .mini { max-width: 30rem; }
+.pager { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .4rem; }
+.pager svg { width: 1.05rem; height: 1.05rem; }
+.preview-note { flex-basis: 100%; margin: 0; font-size: .95rem; color: var(--ink-2); display: flex; gap: .5rem; align-items: flex-start; }
+.preview-note svg { width: 1.05rem; height: 1.05rem; flex: none; margin-top: .12rem; color: var(--ink-3); }
+
+.moment { display: flex; flex-direction: column; gap: .7rem; }
+.kicker { margin: 0 0 0 .2rem; font-size: .86rem; font-weight: 700; color: var(--ink-2); letter-spacing: .01em; }
+.kicker b { color: var(--accent); }
+.head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .75rem 1rem; }
+.head h2 { margin: 0; font-family: var(--serif); font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 48; font-weight: 600; font-size: 1.6rem; letter-spacing: -.012em; line-height: 1.1; }
+.sub { margin: .3rem 0 0; font-size: .95rem; color: var(--ink-2); }
+.head-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+
+/* demo marker, on the data */
+.demo { display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .9rem .45rem .75rem; border-radius: var(--r-pill); background: var(--hatch), #FFFFFF; box-shadow: var(--shadow-sm), inset 0 0 0 1.5px rgba(27,41,32,.6); font-size: .76rem; font-weight: 700; letter-spacing: .07em; color: var(--ink); white-space: nowrap; }
+.demo svg { width: .9rem; height: .9rem; }
+
+.btn-primary, .btn-quiet { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.65rem; padding: 0 1.25rem; border-radius: var(--r-pill); border: 0; cursor: pointer; font-size: .95rem; font-weight: 600; white-space: nowrap; }
+.btn-primary, .btn-quiet { text-decoration: none; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-quiet { background: var(--island); color: var(--ink); box-shadow: var(--shadow-sm); font-weight: 500; }
+.btn-quiet:hover { background: var(--hover); }
+.btn-primary svg, .btn-quiet svg { width: 1.1rem; height: 1.1rem; }
+
+.chip { display: inline-flex; align-items: center; gap: .3rem; padding: .18rem .62rem; border-radius: var(--r-pill); font-size: .84rem; font-weight: 650; white-space: nowrap; border: 1px solid transparent; }
+.chip.ok { background: var(--accent-tint); color: var(--accent); }
+.chip.no { background: var(--hover); color: var(--ink-2); border-color: var(--rule); }
+.chip.hold { background: #FBF3DC; color: var(--elev-text); }
+.chip svg { width: .9rem; height: .9rem; }
+
+/* ---------------- 1 · portfolio ledger ---------------- */
+.portfolio { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: hidden; }
+.cell { padding: 1.05rem 1.3rem 1.1rem; box-shadow: inset 1px 0 0 var(--rule), inset 0 1px 0 var(--rule); min-width: 0; }
+.fig { font-family: var(--serif); font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 72; font-weight: 600; font-size: 2rem; line-height: 1.05; letter-spacing: -.025em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.fig small { font-family: var(--sans); font-size: .85rem; font-weight: 650; letter-spacing: 0; color: var(--ink-2); margin-right: .25rem; }
+.lab { margin-top: .35rem; font-size: .93rem; font-weight: 600; line-height: 1.3; }
+.lsub { margin-top: .12rem; font-size: .84rem; color: var(--ink-2); line-height: 1.3; }
+.pf-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; align-items: center; padding: .8rem 1.3rem; box-shadow: inset 0 1px 0 var(--rule); font-size: .86rem; color: var(--ink-2); }
+
+/* ---------------- 2 · season ledger ---------------- */
+.ledger { padding: 1.55rem 1.65rem 1.2rem; }
+.roster { margin-top: 1.1rem; }
+.rhead, .rrow { display: grid; grid-template-columns: minmax(10rem, 1.3fr) 6.5rem minmax(10rem, 1.1fr) minmax(13.5rem, 1.35fr) minmax(9rem, .95fr) 7.5rem 6rem; column-gap: 1rem; align-items: center; }
+.rhead { padding: 0 .9rem .55rem; font-size: .84rem; font-weight: 650; color: var(--ink-2); box-shadow: 0 1px 0 var(--rule); }
+.rhead .num, .rrow .num { text-align: right; }
+.rrow { position: relative; padding: .72rem .9rem; border-radius: var(--r-lg); font-size: .95rem; }
+.rrow + .rrow, .card + .rrow { box-shadow: 0 -1px 0 var(--rule); }
+.rrow:hover { background: var(--hover); }
+.rrow.open { background: var(--accent-tint); box-shadow: none; }
+.who { font-weight: 650; line-height: 1.3; display: flex; align-items: center; gap: .45rem; }
+.who svg { width: .95rem; height: .95rem; color: var(--ink-3); flex: none; transition: transform .25s ease-out; }
+.rrow.open .who svg { transform: rotate(180deg); color: var(--accent); }
+.dim { color: var(--ink-2); }
+.ver { line-height: 1.3; }
+.ver small { display: block; font-size: .82rem; color: var(--ink-2); }
+.adv { line-height: 1.3; }
+.adv small { display: block; font-size: .82rem; color: var(--ink-2); }
+.money { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.spk { width: 6rem; height: 1.6rem; display: block; overflow: visible; }
+.lab-m { display: none; }
+.roster .chip { white-space: normal; line-height: 1.3; }
+
+/* field card, under Given's row */
+.card { margin: .35rem 0 .7rem; padding: 1.3rem 1.35rem 1.35rem; border-radius: var(--r-lg); background: var(--island); box-shadow: inset 0 0 0 1px var(--rule); display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 1.4rem 1.8rem; }
+.card h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.card h3 + p { margin: .2rem 0 0; font-size: .88rem; color: var(--ink-2); }
+.chart { width: 100%; height: auto; display: block; margin-top: .6rem; overflow: visible; }
+.chart text { font-family: var(--sans); font-size: 11px; fill: var(--ink-2); }
+.chart .tag { font-weight: 650; fill: var(--ink); }
+.keyline { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; margin-top: .55rem; font-size: .86rem; color: var(--ink-2); }
+.keyline span { display: inline-flex; align-items: center; gap: .4rem; }
+.keyline i { display: inline-block; width: 1.3rem; height: 0; border-top: 2.5px solid var(--accent); }
+.keyline i.med { border-top: 2px dashed var(--ink-3); }
+.keyline i.gap { width: .9rem; height: .7rem; border: 0; border-radius: .2rem; background: var(--hatch), var(--canvas-1); box-shadow: inset 0 0 0 1px rgba(27,41,32,.12); }
+
+.timeline { list-style: none; margin: .7rem 0 0; padding: 0; }
+.timeline li { display: grid; grid-template-columns: 1.9rem 5.4rem 1fr; column-gap: .55rem; align-items: start; padding: .42rem 0; font-size: .9rem; line-height: 1.35; }
+.timeline li + li { box-shadow: 0 -1px 0 var(--rule); }
+.src { width: 1.75rem; height: 1.75rem; border-radius: var(--r-pill); display: grid; place-items: center; background: var(--hover); color: var(--ink-2); }
+.src.sat { background: var(--accent-tint); color: var(--accent); }
+.src svg { width: 1rem; height: 1rem; }
+.when { color: var(--ink-2); font-size: .86rem; padding-top: .12rem; line-height: 1.3; }
+.factors { list-style: none; margin: .7rem 0 0; padding: 0; }
+.factors li { position: relative; padding-left: 1.05rem; font-size: .95rem; line-height: 1.4; }
+.factors li + li { margin-top: .45rem; }
+.factors li::before { content: ""; position: absolute; left: 0; top: .52rem; width: .38rem; height: .38rem; border-radius: 50%; background: var(--accent); }
+.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: 1rem; }
+.verdict .fig { font-size: 1.7rem; }
+.side { display: flex; flex-direction: column; gap: 1.2rem; }
+.neighbour { border-radius: var(--r-lg); padding: 1rem 1.1rem 1.05rem; background: var(--canvas-1); box-shadow: inset 0 0 0 1px var(--rule); }
+.neighbour p { margin: .25rem 0 0; font-size: .92rem; line-height: 1.4; }
+.neighbour .mini { width: 100%; height: auto; display: block; margin-top: .5rem; overflow: visible; }
+.ledger-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; padding: .9rem .9rem 0; margin-top: .4rem; box-shadow: inset 0 1px 0 var(--rule); font-size: .86rem; color: var(--ink-2); }
+
+/* ---------------- 3 · approval ---------------- */
+.approvals { padding: 1.55rem 1.65rem 1.65rem; }
+.appr { margin-top: 1.1rem; display: grid; grid-template-columns: 15rem minmax(0, 1.25fr) minmax(16rem, 1fr); gap: 1.4rem; align-items: start; }
+.photo { aspect-ratio: 4 / 3; border-radius: var(--r-lg); background: var(--hatch), var(--canvas-1); box-shadow: inset 0 0 0 1px rgba(27,41,32,.1); display: grid; place-items: center; text-align: center; color: var(--ink-2); font-size: .86rem; padding: 1rem; }
+.photo svg { width: 2rem; height: 2rem; color: var(--ink-3); display: block; margin: 0 auto .45rem; }
+.facts { margin: .8rem 0 0; display: grid; grid-template-columns: auto 1fr; gap: .35rem .9rem; font-size: .9rem; }
+.facts dt { color: var(--ink-2); }
+.facts dd { margin: 0; font-weight: 600; }
+.ok-mark { display: inline-flex; align-items: center; gap: .3rem; color: var(--accent); }
+.ok-mark svg { width: 1rem; height: 1rem; }
+.money-box { border-radius: var(--r-lg); padding: 1.1rem 1.2rem 1.2rem; background: var(--canvas-1); box-shadow: inset 0 0 0 1px var(--rule); }
+.money-box dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: .55rem 1rem; align-items: baseline; }
+.money-box dt { font-size: .95rem; }
+.money-box dd { margin: 0; text-align: right; }
+.money-box .fig { font-size: 1.85rem; }
+.money-box .total { padding-top: .55rem; box-shadow: inset 0 1px 0 var(--rule); }
+.sms { margin: 1rem 0 0; padding: .8rem .95rem; border-radius: 1rem 1rem 1rem .3rem; background: var(--island); box-shadow: var(--shadow-sm); font-size: .88rem; line-height: 1.45; }
+.sms-label { display: flex; align-items: center; gap: .4rem; margin-top: 1rem; font-size: .82rem; font-weight: 650; color: var(--ink-2); }
+.sms-label svg { width: .95rem; height: .95rem; }
+.confirmed { display: flex; align-items: center; gap: .45rem; margin-top: .7rem; font-size: .9rem; font-weight: 600; color: var(--accent); }
+.confirmed svg { width: 1.05rem; height: 1.05rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.1rem; }
+.checker { display: flex; gap: .55rem; align-items: flex-start; margin: .9rem 0 0; font-size: .9rem; color: var(--ink-2); line-height: 1.4; }
+.checker svg { width: 1.15rem; height: 1.15rem; flex: none; color: var(--accent); margin-top: .05rem; }
+.checker b { color: var(--ink); }
+
+/* ---------------- 4 · reconciliation ---------------- */
+.recon { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); overflow: hidden; }
+.recon > section { padding: 1.55rem 1.65rem 1.5rem; min-width: 0; }
+.recon > section + section { box-shadow: inset 1px 0 0 var(--rule); }
+.stmt { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: .95rem; }
+.stmt td { padding: .55rem 0; vertical-align: baseline; }
+.stmt tr + tr td { box-shadow: inset 0 1px 0 var(--rule); }
+.stmt .amt { text-align: right; font-weight: 650; white-space: nowrap; padding-left: 1rem; }
+.stmt .note { display: block; font-size: .82rem; color: var(--ink-2); }
+.stmt .net td { padding-top: .8rem; box-shadow: inset 0 1.5px 0 var(--ink); }
+.stmt .net .fig { font-size: 1.75rem; }
+.variance { display: flex; gap: .5rem; align-items: flex-start; margin-top: .9rem; font-size: .9rem; color: var(--ink-2); }
+.variance svg { width: 1.05rem; height: 1.05rem; color: var(--accent); flex: none; margin-top: .1rem; }
+.shock-name { display: flex; align-items: center; gap: .55rem; margin-top: 1rem; font-size: 1.1rem; font-weight: 700; }
+.sw { width: .9rem; height: .9rem; border-radius: .28rem; flex: none; display: inline-block; }
+.sw.elev { background: repeating-linear-gradient(135deg, var(--elev-stripe) 0 2px, var(--elev) 2px 5px); }
+.shock-line { margin: .3rem 0 0; font-size: .95rem; font-weight: 650; color: var(--elev-text); }
+.evidence { list-style: none; margin: .9rem 0 0; padding: 0; }
+.evidence li { position: relative; padding-left: 1.05rem; font-size: .92rem; line-height: 1.4; }
+.evidence li + li { margin-top: .4rem; }
+.evidence li::before { content: ""; position: absolute; left: 0; top: .52rem; width: .38rem; height: .38rem; border-radius: 50%; background: var(--elev-stripe); }
+
+/* ---------------- farmer channel aside ---------------- */
+.channel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.4rem 2rem; align-items: center; padding: 1.4rem 1.65rem; }
+.phone { width: 11.5rem; border-radius: 1.6rem; padding: .9rem .75rem 1.1rem; background: var(--canvas-1); box-shadow: var(--shadow-sm), inset 0 0 0 1.5px rgba(27,41,32,.18); }
+.screen { border-radius: .7rem; background: var(--island); box-shadow: inset 0 0 0 1px var(--rule); padding: .7rem .75rem; font-size: .8rem; line-height: 1.5; }
+.screen b { display: block; margin-bottom: .25rem; font-size: .82rem; }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; margin-top: .7rem; }
+.keys span { height: 1.2rem; border-radius: var(--r-pill); background: var(--island); box-shadow: inset 0 0 0 1px var(--rule); }
+.channel h2 { font-size: 1.3rem; }
+.channel p { margin: .35rem 0 0; font-size: .95rem; color: var(--ink-2); line-height: 1.45; max-width: 40rem; }
+
+/* ---------------- tablet ---------------- */
+@media (max-width: 1200px) {
+  .portfolio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .appr { grid-template-columns: 13rem minmax(0, 1fr); }
+  .appr .money-col { grid-column: 1 / -1; }
+  .rhead, .rrow { grid-template-columns: minmax(9rem, 1.3fr) 6rem minmax(9.5rem, 1fr) minmax(11rem, 1.2fr) minmax(8rem, .9fr) 7rem; }
+  .rhead .spk-col, .rrow .spk-col { display: none; }
+}
+/* ---------------- phone: islands stack, rows become cards ---------------- */
+@media (max-width: 760px) {
+  :root { --gap: 1rem; --header-h: 3.5rem; --r-xl: 1.35rem; }
+  body { background: var(--canvas-1); }
+  .top { gap: .75rem; padding: 0 .75rem 0 1rem; }
+  .brand-word { font-size: 1.5rem; }
+  .top .nav, .season-day .long { display: none; }
+  .stage { padding: 1.1rem var(--gap) 2.5rem; }
+  .intro h1 { font-size: 2.1rem; }
+  .portfolio { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cell { padding: .95rem 1.05rem; }
+  .fig { font-size: 1.65rem; }
+  .ledger, .approvals { padding: 1.3rem 1.05rem 1.1rem; }
+  .rhead { display: none; }
+  .rrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "who money" "elig elig" "ver adv"; row-gap: .45rem; column-gap: .8rem; padding: .85rem .8rem; }
+  .rrow:not(.open) { border-radius: 0; }
+  .chart text { font-size: 19px; }
+  .chart .tag { font-size: 19px; }
+  .card .chart .cloud-ico, .card .chart .gap-count { display: none; }
+  .rrow .who { grid-area: who; }
+  .rrow .money { grid-area: money; }
+  .rrow .c-elig { grid-area: elig; }
+  .rrow .c-ver { grid-area: ver; }
+  .rrow .c-adv { grid-area: adv; text-align: right; }
+  .rrow .c-camp, .rrow .spk-col { display: none; }
+  .rrow .c-ver, .rrow .c-adv { font-size: .88rem; }
+  .rrow .num { text-align: right; }
+  .lab-m { display: inline; color: var(--ink-2); font-weight: 500; }
+  .card { grid-template-columns: 1fr; padding: 1.05rem .95rem; }
+  .side.elig-grid { grid-template-columns: 1fr; }
+  .card.card { grid-template-columns: 1fr; }
+  .appr { grid-template-columns: 1fr; }
+  .photo { aspect-ratio: 16 / 9; }
+  .recon { grid-template-columns: 1fr; }
+  .recon > section { padding: 1.3rem 1.05rem; }
+  .recon > section + section { box-shadow: inset 0 1px 0 var(--rule); }
+  .channel { grid-template-columns: 1fr; justify-items: start; padding: 1.3rem 1.05rem; }
+  .timeline li { grid-template-columns: 1.9rem 4.6rem 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-leaf" viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#2D5B39"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8 12.3 2.7 2.7L16.2 9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 16.5v-5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.6 18.2A1.9 1.9 0 0 0 6.3 21h11.4a1.9 1.9 0 0 0 1.7-2.8L14 9V3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15h9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v4M16 3v4M3.5 10h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-sat" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></g></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g></symbol>
+  <symbol id="i-sprout" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></g></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M9.94 14.06 4 12l5.94-2.06L12 4l2.06 5.94L20 12l-5.94 2.06L12 20Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></g></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></g></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></g></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></g></symbol>
+</svg>
+
+<header class="top">
+  <a class="brand" href="#" aria-label="Phytos home">
+    <svg class="brand-mark" aria-hidden="true"><use href="#i-leaf"/></svg>
+    <span class="brand-word">Phytos</span>
+  </a>
+  <nav class="nav" aria-label="Main">
+    <a href="#">National map</a>
+    <a href="#">Officer queue</a>
+    <a href="#" aria-current="page">Outgrower View</a>
+    <a href="#">Knowledge sources</a>
+  </nav>
+  <div class="hdr-right">
+    <span class="season-day"><svg aria-hidden="true"><use href="#i-cal"/></svg><span><span class="long">Season day </span><b>12 Jan 2027</b></span></span>
+    <span class="avatar" role="img" aria-label="Account: DA">DA</span>
+  </div>
+</header>
+
+<main class="stage">
+<div class="wrap">
+
+  <div class="intro">
+    <h1>DEMO OUTGROWER CO.</h1>
+    <nav class="toggle" aria-label="Preview pages">
+      <a class="plain" href="#overview">Overview</a>
+      <a href="#c"><span class="letter">C</span>Crop verification</a>
+      <a href="#e"><span class="letter">E</span>Eligibility</a>
+      <a href="#i"><span class="letter">I</span>Instant disbursement</a>
+      <a href="#h"><span class="letter">H</span>Harvest reconciliation</a>
+      <a class="plain" href="#farmer">Farmer channel</a>
+    </nav>
+    <p class="preview-note"><svg aria-hidden="true"><use href="#i-info"/></svg><span>Static preview of tomorrow's demo: C, E, I and H across one season, January to June. Nothing here is live.</span></p>
+  </div>
+
+  <!-- ============ 1 · portfolio ============ -->
+  <section class="moment page" data-page="overview" aria-labelledby="m1">
+    <p class="kicker" id="m1">Overview · <b>January</b> · the season at a glance</p>
+    <div class="island portfolio">
+      <div class="cell"><div class="fig">120</div><div class="lab">Contracts</div><div class="lsub">Soya, 3 camps in Monze</div></div>
+      <div class="cell"><div class="fig"><small>ZMW</small>806,400</div><div class="lab">Projected value</div><div class="lsub">Hectares × yield × price</div></div>
+      <div class="cell"><div class="fig"><small>ZMW</small>228,600</div><div class="lab">Input loans out</div><div class="lsub">Delivered and acknowledged</div></div>
+      <div class="cell"><div class="fig"><small>ZMW</small>8,460</div><div class="lab">Advances out</div><div class="lsub">10 sent · 2 waiting approval</div></div>
+      <div class="cell"><div class="fig"><small>ZMW</small>0</div><div class="lab">Recovered</div><div class="lsub">Harvest from May</div></div>
+      <div class="cell"><div class="fig">0</div><div class="lab">Shock-flagged camps</div><div class="lsub">Rain and NDVI must agree</div></div>
+      <div class="pf-foot">
+        <span>84 fields verified · 41 eligible for an advance · season 2026/27</span>
+        <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
+      </div>
+    </div>
+    <div class="pager"><a class="btn-quiet" href="#c">Next: C · Crop verification <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ 2 · season ledger ============ -->
+  <section class="moment page" data-page="c" aria-labelledby="m2">
+    <p class="kicker" id="m2"><span class="letter">C</span>Crop verification · <b>January</b> · seen from space, checked on the ground</p>
+    <div class="island ledger">
+      <div class="head">
+        <div>
+          <h2>Season ledger</h2>
+          <p class="sub">120 contracts · verified from space, checked on the ground</p>
+        </div>
+        <div class="head-tools">
+          <div class="toggle small" role="group" aria-label="Camp">
+            <button aria-pressed="true">All camps</button>
+            <button aria-pressed="false">Chikuni</button>
+            <button aria-pressed="false">Keemba</button>
+            <button aria-pressed="false">Hamangaba</button>
+          </div>
+          <button class="btn-quiet"><svg aria-hidden="true"><use href="#i-down"/></svg>Export CSV</button>
+          <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
+        </div>
+      </div>
+
+      <div class="roster" role="table" aria-label="Season ledger, 6 of 120 contracts">
+        <div class="rhead" role="row">
+          <span role="columnheader">Farmer</span>
+          <span role="columnheader">Camp</span>
+          <span role="columnheader">Verified</span>
+          <span role="columnheader">Eligible</span>
+          <span role="columnheader">Advance</span>
+          <span role="columnheader" class="num">Exposure</span>
+          <span role="columnheader" class="spk-col">NDVI</span>
+        </div>
+
+        <div class="rrow open" role="row">
+          <span class="who" role="cell">Given Mweemba <svg aria-hidden="true"><use href="#i-chev"/></svg></span>
+          <span class="dim c-camp" role="cell">Chikuni</span>
+          <span class="ver c-ver" role="cell">Satellite and officer<small>10 Jan 2027</small></span>
+          <span class="c-elig" role="cell"><span class="chip ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Eligible · cap ZMW 840</span></span>
+          <span class="adv c-adv" role="cell">Waiting approval<small>ZMW 840 requested</small></span>
+          <span class="money num" role="cell"><span class="lab-m">Exposure </span>ZMW 1,950</span>
+          <span class="spk-col" role="cell"><svg class="spk" viewBox="0 0 96 26" aria-hidden="true"><polyline points="2,22 10,22 18,21.5 26,20.5 34,18.5 42,15" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="74,9 84,6 94,4.5" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+
+        <!-- Given's field card -->
+        <div class="card" aria-label="Given Mweemba, field card">
+          <div>
+            <h3>Greenness from space, Given's field</h3>
+            <p>Sentinel-2 passes, weekly. Planted 18 Nov · 2.0 ha soya · polygon from the officer's pin</p>
+            <svg class="chart" viewBox="0 0 560 222" role="img" aria-label="NDVI rising with the camp median from 0.14 in November to 0.52 on 10 January, with two passes clouded out in December.">
+              <rect x="309" y="16" width="97" height="174" fill="#F4F3EC"/>
+              <rect x="309" y="16" width="97" height="174" fill="url(#hatch)"/>
+              <defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="7" fill="rgba(27,41,32,.075)"/></pattern></defs>
+              <g stroke="#E8ECE4" stroke-width="1"><line x1="44" y1="190" x2="540" y2="190"/><line x1="44" y1="141.4" x2="540" y2="141.4"/><line x1="44" y1="92.9" x2="540" y2="92.9"/><line x1="44" y1="44.3" x2="540" y2="44.3"/></g>
+              <line x1="44" y1="105" x2="540" y2="105" stroke="#7C887F" stroke-width="1" stroke-dasharray="2 4"/>
+              <text x="36" y="194" text-anchor="end">0</text><text x="36" y="145.4" text-anchor="end">0.2</text><text x="36" y="96.9" text-anchor="end">0.4</text><text x="36" y="48.3" text-anchor="end">0.6</text>
+              <text x="48" y="101">Established at 0.35</text>
+              <text x="44" y="210">1 Nov</text><text x="250.7" y="210" text-anchor="middle">1 Dec</text><text x="464.2" y="210" text-anchor="middle">1 Jan</text>
+              <line x1="161.1" y1="24" x2="161.1" y2="190" stroke="#7C887F" stroke-width="1" stroke-dasharray="3 3"/>
+              <text x="166" y="30" class="tag">Planted 18 Nov</text>
+              <use class="cloud-ico" href="#i-cloud" x="345" y="24" width="24" height="24" style="color:#7C887F"/>
+              <text x="357.5" y="62" text-anchor="middle">Clouded out</text>
+              <text class="gap-count" x="357.5" y="76" text-anchor="middle">2 passes</text>
+              <polyline points="44,156 92.2,153.6 140.4,151.1 188.7,146.3 236.9,136.6 285.1,122 333.3,109.9 381.6,97.7 429.8,88 478,78.3 526.2,71" fill="none" stroke="#7C887F" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="44,156 92.2,153.6 140.4,153.6 188.7,146.3 236.9,136.6 285.1,119.6" fill="none" stroke="#2D5B39" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="429.8,83.1 478,71 526.2,63.7" fill="none" stroke="#2D5B39" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <g fill="#2D5B39" stroke="#fff" stroke-width="1.6"><circle cx="44" cy="156" r="3.6"/><circle cx="92.2" cy="153.6" r="3.6"/><circle cx="140.4" cy="153.6" r="3.6"/><circle cx="188.7" cy="146.3" r="3.6"/><circle cx="236.9" cy="136.6" r="3.6"/><circle cx="285.1" cy="119.6" r="3.6"/><circle cx="429.8" cy="83.1" r="4.2"/><circle cx="478" cy="71" r="4.2"/><circle cx="526.2" cy="63.7" r="4.2"/></g>
+              <text x="526.2" y="54" text-anchor="end" class="tag">0.52</text>
+              <line x1="540" y1="24" x2="540" y2="190" stroke="#1B2920" stroke-width="1.2"/>
+              <text x="536" y="20" text-anchor="end" class="tag">Today 12 Jan</text>
+            </svg>
+            <div class="keyline">
+              <span><i></i>Given's field</span>
+              <span><i class="med"></i>Chikuni camp median</span>
+              <span><i class="gap"></i>No clear pass</span>
+            </div>
+
+          </div>
+          <div>
+            <h3>Verification timeline</h3>
+            <p>Every entry with its source</p>
+            <ol class="timeline">
+              <li><span class="src"><svg aria-hidden="true"><use href="#i-box"/></svg></span><span class="when">22 Oct</span><span>Inputs handed over and acknowledged with the farmer's SMS code · Officer M. Banda</span></li>
+              <li><span class="src"><svg aria-hidden="true"><use href="#i-sprout"/></svg></span><span class="when">18 Nov</span><span>Planted, reported by the farmer</span></li>
+              <li><span class="src sat"><svg aria-hidden="true"><use href="#i-sat"/></svg></span><span class="when">6 Dec</span><span>Established, on track · NDVI 0.29 vs camp 0.28</span></li>
+              <li><span class="src sat"><svg aria-hidden="true"><use href="#i-cloud"/></svg></span><span class="when">13 and 20 Dec</span><span>No clear pass: clouded out</span></li>
+              <li><span class="src sat"><svg aria-hidden="true"><use href="#i-sat"/></svg></span><span class="when">27 Dec to 10 Jan</span><span>3 clear passes, rising with the camp</span></li>
+              <li><span class="src"><svg aria-hidden="true"><use href="#i-user"/></svg></span><span class="when">10 Jan</span><span>Field verified by Officer M. Banda · stage V4 · photo inside the field</span></li>
+              <li><span class="src"><svg aria-hidden="true"><use href="#i-spark"/></svg></span><span class="when">10 Jan</span><span>Photo assessed by AI: no pest identified, high confidence</span></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="rrow" role="row">
+          <span class="who" role="cell">Joseph Hamoonga <svg aria-hidden="true"><use href="#i-chev"/></svg></span>
+          <span class="dim c-camp" role="cell">Chikuni</span>
+          <span class="ver c-ver" role="cell">Not planted<small>Flat since 1 Nov</small></span>
+          <span class="c-elig" role="cell"><span class="chip no">Not eligible: not planted</span></span>
+          <span class="adv c-adv" role="cell">None<small>Visit task created</small></span>
+          <span class="money num" role="cell"><span class="lab-m">Exposure </span>ZMW 1,600</span>
+          <span class="spk-col" role="cell"><svg class="spk" viewBox="0 0 96 26" aria-hidden="true"><polyline points="2,21 10,21.5 18,20.8 26,21.3 34,21 42,21.4" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round"/><polyline points="74,21 84,21.5 94,21.2" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="rrow" role="row">
+          <span class="who" role="cell">Mutinta Siamwiza <svg aria-hidden="true"><use href="#i-chev"/></svg></span>
+          <span class="dim c-camp" role="cell">Keemba</span>
+          <span class="ver c-ver" role="cell">Satellite<small>10 Jan 2027</small></span>
+          <span class="c-elig" role="cell"><span class="chip no">Advance sent</span></span>
+          <span class="adv c-adv" role="cell">ZMW 1,000 sent<small>Simulated transfer · 4 Jan</small></span>
+          <span class="money num" role="cell"><span class="lab-m">Exposure </span>ZMW 3,350</span>
+          <span class="spk-col" role="cell"><svg class="spk" viewBox="0 0 96 26" aria-hidden="true"><polyline points="2,22 10,21 18,19 26,16 34,13 42,10.5 58,8 74,6.5 84,5 94,4" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+        <div class="rrow" role="row">
+          <span class="who" role="cell">Brian Muleya <svg aria-hidden="true"><use href="#i-chev"/></svg></span>
+          <span class="dim c-camp" role="cell">Chikuni</span>
+          <span class="ver c-ver" role="cell">Cloud gap<small>1 clear pass in 21 days</small></span>
+          <span class="c-elig" role="cell"><span class="chip no">Not eligible: ground check required</span></span>
+          <span class="adv c-adv" role="cell">None<small>Visit on Monday's list</small></span>
+          <span class="money num" role="cell"><span class="lab-m">Exposure </span>ZMW 1,750</span>
+          <span class="spk-col" role="cell"><svg class="spk" viewBox="0 0 96 26" aria-hidden="true"><polyline points="2,22 10,21.5 18,20 26,18 34,15" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="84,7 94,6" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round"/><circle cx="94" cy="6" r="1.8" fill="#2D5B39"/></svg></span>
+        </div>
+        <div class="rrow" role="row">
+          <span class="who" role="cell">Charity Moono <svg aria-hidden="true"><use href="#i-chev"/></svg></span>
+          <span class="dim c-camp" role="cell">Hamangaba</span>
+          <span class="ver c-ver" role="cell">Satellite<small>10 Jan 2027</small></span>
+          <span class="c-elig" role="cell"><span class="chip ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Eligible · cap ZMW 1,260</span></span>
+          <span class="adv c-adv" role="cell">None yet<small>Not requested</small></span>
+          <span class="money num" role="cell"><span class="lab-m">Exposure </span>ZMW 2,400</span>
+          <span class="spk-col" role="cell"><svg class="spk" viewBox="0 0 96 26" aria-hidden="true"><polyline points="2,22 10,21 18,19.5 26,17 34,14 42,11 58,8.5 74,7 84,6 94,5.5" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+        <div class="rrow" role="row">
+          <span class="who" role="cell">Peter Hachintu <svg aria-hidden="true"><use href="#i-chev"/></svg></span>
+          <span class="dim c-camp" role="cell">Keemba</span>
+          <span class="ver c-ver" role="cell">Stress on this field<small>Falling while the camp rises</small></span>
+          <span class="c-elig" role="cell"><span class="chip hold">Paused: severe issue open</span></span>
+          <span class="adv c-adv" role="cell">None<small>Waits for the officer's treatment record</small></span>
+          <span class="money num" role="cell"><span class="lab-m">Exposure </span>ZMW 1,800</span>
+          <span class="spk-col" role="cell"><svg class="spk" viewBox="0 0 96 26" aria-hidden="true"><polyline points="2,22 10,21 18,19 26,16 34,13 42,11 58,12.5 74,15 84,17 94,18.5" fill="none" stroke="#2D5B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </div>
+      <div class="ledger-foot">
+        <span>6 of 120 contracts · farmer level for this agribusiness only, under the farmer's contract consent</span>
+        <span>No field pins are shown or exported</span>
+      </div>
+    </div>
+    <div class="pager"><a class="btn-quiet" href="#e">Next: E · Eligibility <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ E · eligibility ============ -->
+  <section class="moment page" data-page="e" aria-labelledby="m-e">
+    <p class="kicker" id="m-e"><span class="letter">E</span>Eligibility · <b>January</b> · rules, not a score</p>
+    <div class="island ledger">
+      <div class="head">
+        <div>
+          <h2>Eligibility</h2>
+          <p class="sub">Given beside his neighbour: same camp, same clouds, different fields</p>
+        </div>
+        <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
+      </div>
+      <div class="side elig-grid">
+            <div>
+              <h3>Given Mweemba: eligibility factors</h3>
+              <p>Rules, not a score. Every one is shown.</p>
+              <ul class="factors">
+                <li>Satellite: 3 clear passes, NDVI 0.52 vs camp 0.49</li>
+                <li>Field verified by Officer M. Banda, stage V4</li>
+                <li>No open severe issues</li>
+                <li>Cap 15% of ZMW 5,600 = ZMW 840</li>
+              </ul>
+              <div class="verdict">
+                <span class="chip ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Eligible</span>
+                <span class="fig"><small>cap ZMW</small>840</span>
+              </div>
+              <button class="btn-primary" style="margin-top:1rem">Request advance for Given</button>
+            </div>
+
+            <div class="neighbour" aria-label="Joseph Hamoonga, neighbour">
+              <h3>Next to him: Joseph Hamoonga</h3>
+              <p class="dim" style="margin-top:.15rem;font-size:.86rem">Chikuni · 1.5 ha soya · same camp, same clouds</p>
+              <svg class="mini" viewBox="0 0 260 104" role="img" aria-label="Flat NDVI near bare soil while the camp median rises.">
+                <g stroke="#E8ECE4"><line x1="10" y1="95" x2="252" y2="95"/><line x1="10" y1="47" x2="252" y2="47"/></g>
+                <polyline points="10,78.2 33.3,77 56.7,75.8 80,73.4 103.3,68.6 126.7,61.4 150,55.4 173.3,49.4 196.7,44.6 220,39.8 243.3,36.2" fill="none" stroke="#7C887F" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+                <polyline points="10,78.2 33.3,77 56.7,79.4 80,77 103.3,78.2 126.7,75.8" fill="none" stroke="#2D5B39" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="196.7,77 220,78.2 243.3,77" fill="none" stroke="#2D5B39" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="246" y="30" text-anchor="end" style="font:11px Figtree,sans-serif;fill:#55645A">camp 0.49</text>
+                <text x="246" y="72" text-anchor="end" style="font:600 11px Figtree,sans-serif;fill:#1B2920">0.15</text>
+              </svg>
+              <p><span class="chip no">Not planted</span></p>
+              <p style="font-weight:600">Not planted. No advance. Visit task created.</p>
+              <p class="dim" style="font-size:.86rem">Flat near bare soil 8 weeks after the camp's planting date.</p>
+            </div>
+          </div>
+    </div>
+    <div class="pager"><a class="btn-quiet" href="#i">Next: I · Instant disbursement <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ 3 · approval ============ -->
+  <section class="moment page" data-page="i" aria-labelledby="m3">
+    <p class="kicker" id="m3"><span class="letter">I</span>Instant disbursement · <b>January</b> · a second person approves</p>
+    <div class="island approvals">
+      <div class="head">
+        <div>
+          <h2>Approvals</h2>
+          <p class="sub">2 waiting · every advance needs the farmer's code and a second person</p>
+        </div>
+        <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
+      </div>
+
+      <div class="appr">
+        <div>
+          <div class="photo" role="img" aria-label="Officer photo placeholder"><span><svg aria-hidden="true"><use href="#i-camera"/></svg>Officer photo<br>10 Jan · 14:03</span></div>
+          <dl class="facts">
+            <dt>Farmer</dt><dd>Given Mweemba</dd>
+            <dt>Camp</dt><dd>Chikuni, Monze</dd>
+            <dt>Stage</dt><dd>V4</dd>
+            <dt>Geofence</dt><dd><span class="ok-mark"><svg aria-hidden="true"><use href="#i-check"/></svg>Inside the field</span></dd>
+            <dt>Verified by</dt><dd>Officer M. Banda</dd>
+          </dl>
+        </div>
+
+        <div>
+          <h3 style="margin:0;font-size:1rem">Verified Season Record</h3>
+          <svg class="chart" viewBox="0 0 560 222" role="img" aria-label="The same NDVI curve: rising with the camp median, with a December cloud gap.">
+            <rect x="309" y="16" width="97" height="174" fill="#F4F3EC"/>
+            <rect x="309" y="16" width="97" height="174" fill="url(#hatch)"/>
+            <g stroke="#E8ECE4" stroke-width="1"><line x1="44" y1="190" x2="540" y2="190"/><line x1="44" y1="141.4" x2="540" y2="141.4"/><line x1="44" y1="92.9" x2="540" y2="92.9"/><line x1="44" y1="44.3" x2="540" y2="44.3"/></g>
+            <text x="36" y="194" text-anchor="end">0</text><text x="36" y="145.4" text-anchor="end">0.2</text><text x="36" y="96.9" text-anchor="end">0.4</text><text x="36" y="48.3" text-anchor="end">0.6</text>
+            <text x="44" y="210">1 Nov</text><text x="250.7" y="210" text-anchor="middle">1 Dec</text><text x="464.2" y="210" text-anchor="middle">1 Jan</text>
+            <use href="#i-cloud" x="345" y="24" width="24" height="24" style="color:#7C887F"/>
+            <polyline points="44,156 92.2,153.6 140.4,151.1 188.7,146.3 236.9,136.6 285.1,122 333.3,109.9 381.6,97.7 429.8,88 478,78.3 526.2,71" fill="none" stroke="#7C887F" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="44,156 92.2,153.6 140.4,153.6 188.7,146.3 236.9,136.6 285.1,119.6" fill="none" stroke="#2D5B39" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="429.8,83.1 478,71 526.2,63.7" fill="none" stroke="#2D5B39" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="526.2" y="54" text-anchor="end" class="tag">0.52</text>
+            <line x1="540" y1="24" x2="540" y2="190" stroke="#1B2920" stroke-width="1.2"/>
+          </svg>
+          <ul class="factors">
+            <li>Satellite: 3 clear passes, NDVI 0.52 vs camp 0.49</li>
+            <li>Field verified by Officer M. Banda, stage V4</li>
+            <li>No open severe issues</li>
+            <li>Cap 15% of ZMW 5,600 = ZMW 840</li>
+          </ul>
+        </div>
+
+        <div class="money-col">
+          <div class="money-box">
+            <dl>
+              <dt>Advance requested</dt><dd class="fig"><small>ZMW</small>840</dd>
+              <dt>Fee</dt><dd class="fig"><small>ZMW</small>42</dd>
+              <dt class="total">Deducted at harvest</dt><dd class="total money">ZMW 882</dd>
+            </dl>
+            <p class="sms-label"><svg aria-hidden="true"><use href="#i-msg"/></svg>SMS to Given, before he confirmed</p>
+            <p class="sms">Phytos DEMO: DEMO OUTGROWER CO. offers you a cash advance of ZMW 840. Fee ZMW 42, deducted at harvest. To agree, give your officer this code: ••••••</p>
+            <p class="confirmed"><svg aria-hidden="true"><use href="#i-check"/></svg>Given confirmed with his code · 14:05</p>
+          </div>
+          <div class="actions">
+            <button class="btn-primary">Approve ZMW 840</button>
+            <button class="btn-quiet">Decline with a reason</button>
+          </div>
+          <p class="checker"><svg aria-hidden="true"><use href="#i-shield"/></svg><span><b>The verifying officer cannot approve.</b> Officer M. Banda verified this field, so a second person signs off. On approval the transfer runs on the simulated provider; the SMS is real.</span></p>
+        </div>
+      </div>
+    </div>
+    <div class="pager"><a class="btn-quiet" href="#h">Next: H · Harvest reconciliation <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ 4 · reconciliation ============ -->
+  <section class="moment page" data-page="h" aria-labelledby="m4">
+    <p class="kicker" id="m4"><span class="letter">H</span>Harvest reconciliation · <b>March and June</b> · the season settles</p>
+    <div class="island recon">
+      <section aria-label="Given's statement">
+        <div class="head">
+          <div>
+            <h2>Given's statement</h2>
+            <p class="sub">Delivered 8 Jun · 2.9 t grade A at ZMW 2,000 a tonne</p>
+          </div>
+          <span class="demo"><svg aria-hidden="true"><use href="#i-flask"/></svg>DEMO DATA · SIMULATED</span>
+        </div>
+        <table class="stmt">
+          <tbody>
+            <tr><td>Crop delivered<span class="note">2.9 t × ZMW 2,000, grade A, 11% moisture</span></td><td class="amt">ZMW 5,800</td></tr>
+            <tr><td>Inputs on loan<span class="note">Seed, inoculant, fertiliser · 22 Oct</span></td><td class="amt">less ZMW 1,950</td></tr>
+            <tr><td>Cash advance<span class="note">12 Jan · simulated transfer</span></td><td class="amt">less ZMW 840</td></tr>
+            <tr><td>Advance fee<span class="note">Shown before he confirmed</span></td><td class="amt">less ZMW 42</td></tr>
+            <tr class="net"><td><b>Net payout to Given</b><span class="note">Simulated transfer · statement sent by SMS, every line</span></td><td class="amt"><span class="fig"><small>ZMW</small>2,968</span></td></tr>
+          </tbody>
+        </table>
+        <p class="variance"><svg aria-hidden="true"><use href="#i-scale"/></svg><span>Delivered 2.9 t against 2.8 t projected: no variance. Every figure comes from the ledger rows; nothing is stored twice.</span></p>
+      </section>
+
+      <section aria-label="Shock-flagged camp">
+        <h2 class="head" style="margin:0"><span style="font-family:var(--serif);font-variation-settings:'SOFT' 100,'WONK' 0,'opsz' 48;font-weight:600;font-size:1.6rem;letter-spacing:-.012em;line-height:1.1">Shock-flagged camp</span></h2>
+        <p class="shock-name"><span class="sw elev" aria-hidden="true"></span>Hamangaba</p>
+        <p class="shock-line">drought trigger · insurance payout SIMULATED</p>
+        <ul class="evidence">
+          <li>Rain over 30 days: 31 mm, below the 60 mm rule (demo rainfall series)</li>
+          <li>Camp median NDVI fell from 0.58 to 0.41 · 34 of 40 fields falling</li>
+          <li>Two independent sources agree: flag raised 14 Mar</li>
+          <li>40 contracts: shortfalls marked uncontrollable, advances paused</li>
+          <li>Claim pack ready for an insurer: camp, contracts, verified records, trigger data</li>
+        </ul>
+        <p class="variance"><svg aria-hidden="true"><use href="#i-sun"/></svg><span>A shortfall with no shock flag and no verified problem is marked unexplained: a possible side-sale for the credit team.</span></p>
+      </section>
+    </div>
+    <div class="pager"><a class="btn-quiet" href="#farmer">Next: Farmer channel <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ farmer channel ============ -->
+  <section class="moment page" data-page="farmer" aria-labelledby="m5">
+    <p class="kicker" id="m5">Farmer channel · <b>in production</b>, not built for the demo</p>
+  <aside class="island channel" aria-label="Farmer channel, in production">
+    <div class="phone" aria-hidden="true">
+      <div class="screen">
+        <b>*384*7625#</b>
+        1. My season<br>
+        2. Request advance<br>
+        3. My statement<br>
+        4. Report a problem
+      </div>
+      <div class="keys"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div>
+      <p class="kicker" style="margin:0">Farmer channel, in production</p>
+      <h2 class="serif" style="margin:.25rem 0 0;font-weight:600">Any phone, no app</h2>
+      <p>In production the farmer checks the season, requests the advance and reads the statement on a feature phone. Not built for the demo: tomorrow the officer requests on the farmer's behalf from this dashboard, and the farmer's SMS code confirms it.</p>
+    </div>
+  </aside>
+    <div class="pager"><a class="btn-quiet" href="#overview">Back to the overview <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+</div>
+</main>
+<script>
+// One page at a time: the overview, then C, E, I and H, then the farmer channel. Older links still land.
+(function () {
+  var NAMES = { overview: 'Overview', c: 'C · Crop verification', e: 'E · Eligibility', i: 'I · Instant disbursement', h: 'H · Harvest reconciliation', farmer: 'Farmer channel' };
+  var OLD = { m1: 'overview', m2: 'c', m3: 'i', m4: 'h', m5: 'farmer', a: 'overview', b: 'c', d: 'h' };
+  function show() {
+    var key = location.hash.replace('#', '').toLowerCase();
+    key = OLD[key] || key;
+    if (!NAMES[key]) key = 'overview';
+    document.querySelectorAll('.page').forEach(function (el) { el.hidden = el.getAttribute('data-page') !== key; });
+    document.querySelectorAll('.toggle a').forEach(function (el) {
+      if (el.getAttribute('href') === '#' + key) el.setAttribute('aria-current', 'page');
+      else el.removeAttribute('aria-current');
+    });
+    document.title = 'Phytos · ' + NAMES[key];
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', show);
+  show();
+})();
+</script>
+</body>
+</html>

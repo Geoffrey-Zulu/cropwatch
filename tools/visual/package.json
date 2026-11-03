@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "shots": "tsx shots.ts",
+    "record-ceih": "tsx record-ceih.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
-    "sheet": "tsx sheet.ts",
-    "record-demo": "tsx record-demo.ts"
+    "sheet": "tsx sheet.ts"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",

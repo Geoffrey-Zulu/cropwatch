@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
-// A case card: the report's facts in ruled rows, its status tag top right.
+// A case card: a white island on the haze, the report's facts in ruled rows, its status tag top
+// right. The emphasised card (the report slip) sits a little higher off the ground.
 export function CaseCard({
   eyebrow,
   tag,
@@ -14,7 +15,7 @@ export function CaseCard({
 }) {
   return (
     <section
-      className={`rounded-card border bg-panel px-4 pb-4 pt-3 ${emphasis ? 'border-fg border-t-[3px]' : 'border-hairline'}`}
+      className={`rounded-card bg-panel px-5 pb-5 pt-4 ${emphasis ? 'shadow-island' : 'shadow-island-sm'}`}
     >
       {(eyebrow || tag) && (
         <div className="mb-2 flex min-h-8 items-start justify-between gap-3">
@@ -30,7 +31,7 @@ export function CaseCard({
 // One ruled row on a case card: a quiet label and its value.
 export function CaseField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline gap-3 border-b border-hairline py-2 last:border-b-0">
+    <div className="flex items-baseline gap-3 border-b border-hairline py-2.5 last:border-b-0">
       <dt className="w-24 shrink-0 text-label text-fg-2">{label}</dt>
       <dd className="min-w-0 flex-1 text-body font-semibold">{children}</dd>
     </div>

@@ -8,6 +8,7 @@ node_modules
 # =============================================================================
 dist
 dist-ssr
+dist-farmer
 .turbo
 .next
 out
@@ -107,3 +108,20 @@ apps/capture/ios/App/**/xcuserstate
 
 # Dashboard preview fixtures (generated from the seed, dev only)
 apps/web/src/dev/fixtures.local.json
+
+# Personal working files (CVs, notes), never committed
+Claude outputs/
+
+# Working debris: kept on disk, never in the repository
+# Screenshot passes (pnpm --filter @repo/visual shots) and their default output
+docs/ui-review/
+visual-out/
+# Demo recordings
+ceih-recording/
+*.webm
+*.mp4
+# Browser-automation and scratch files
+.playwright-mcp/
+tools/visual/tmp-*
+# Personal documents dropped into tools/
+/tools/*.pdf

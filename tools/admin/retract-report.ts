@@ -1,5 +1,5 @@
-// Undo one real test report end to end, as outbreak-e2e's cleanup does, for a report sent by
-// hand or by the backup recording run (tools/visual/record-demo.ts): its recommendations, the
+// Undo one real test report end to end (the old outbreak check did this on cleanup; tag
+// pre-ceih-only), for a report sent by hand or from the capture app: its recommendations, the
 // observation and its internal records (diagnosis, recommendation, verification), its photos,
 // then retracted in BigQuery and taken out of any cluster it joined (a cluster left under five
 // reports goes, with its alert). Dry run unless --commit. Simulated reports are refused.

@@ -1,4 +1,5 @@
 import { z } from '../zod'
+import { ObservationSourceSchema } from '../constants/ceih'
 import { CropSchema } from '../constants/crops'
 import { DISTRICTS, districtSlug } from '../constants/districts'
 import { IssueSchema } from '../constants/issues'
@@ -160,6 +161,16 @@ export const ObservationViewSchema = z
     recommendation: RecommendationViewSchema.nullable(),
     intervention: InterventionSchema.nullable(),
     outcome: OutcomeSchema.nullable(),
+    // CEIH, added 31 Oct (optional): the farmer record this report landed on, if any.
+    farmer_id: z.string().nullish().openapi({
+      description:
+        'The contracted farmer whose field this report fell inside (geofence check), or absent.',
+    }),
+    geofence_ok: z.boolean().nullish().openapi({
+      description:
+        'true when the report fell inside the farmer field polygon plus a 150 m margin; only then can it count toward an advance.',
+    }),
+    source: ObservationSourceSchema.nullish(),
     sim: z.boolean().openapi({
       description: 'true for simulated demo data: show the DEMO DATA · SIMULATED badge.',
     }),

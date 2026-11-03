@@ -20,7 +20,7 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
     <div className="flex flex-col gap-3">
       <div>
         <p className="eyebrow">{verified ? 'Confirmed by an officer' : 'What we see'}</p>
-        <h2 className="font-display text-display font-bold text-fg">
+        <h2 className="mt-0.5 font-display text-display font-semibold text-fg">
           {unknown ? 'Not sure yet' : label}
         </h2>
       </div>
@@ -34,7 +34,7 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
             {CONFIDENCE_BANDS.map((band, i) => (
               <span
                 key={band}
-                className={`h-2.5 w-8 rounded-tag border-1.5 border-fg ${i < level ? 'bg-fg' : 'bg-transparent'}`}
+                className={`h-2 w-9 rounded-tag transition-colors duration-300 ease-out ${i < level ? 'bg-signal' : 'bg-well'}`}
               />
             ))}
           </span>
@@ -46,10 +46,10 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
       )}
 
       {diagnosis.visible_symptoms.length > 0 && (
-        <ul className="flex flex-col gap-1 border-t border-hairline pt-2">
+        <ul className="flex flex-col gap-1 border-t border-hairline pt-3">
           {diagnosis.visible_symptoms.map(symptom => (
             <li key={symptom} className="flex gap-2 text-body">
-              <span aria-hidden className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-fg" />
+              <span aria-hidden className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-leaf" />
               {withoutEmDash(symptom)}
             </li>
           ))}
@@ -57,7 +57,7 @@ export function DiagnosisSection({ view }: { view: ObservationView }) {
       )}
 
       {view.status === 'awaiting_expert_review' && (
-        <div className="flex gap-3 rounded-card border border-attention-text border-l-4 bg-attention-tint p-3 text-fg">
+        <div className="flex gap-3 rounded-inner bg-attention-tint p-4 text-fg">
           <UserCheck
             size={24}
             strokeWidth={2}

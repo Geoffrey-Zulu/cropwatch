@@ -10,6 +10,9 @@ const schemas = document.components!.schemas! as Record<string, Record<string, u
 // Field names that would put a confidence number or percentage in front of a user
 // (CLAUDE.md invariants 2 and 3, buildplan §4.2).
 const FORBIDDEN_FIELD = /^model_confidence$|probab|percent|_pct$/i
+// Measurements, not likelihoods (CLAUDE.md, the invariant 2 note): a delivery's moisture and a
+// satellite pass's cloud cover.
+const MEASUREMENTS = new Set(['moisture_pct', 'cloud_pct'])
 
 function propertyNames(node: unknown, names: string[] = []): string[] {
   if (Array.isArray(node)) node.forEach(n => propertyNames(n, names))
@@ -55,6 +58,21 @@ describe('openapi.json', () => {
         'POST /observations/{id}/intervention',
         'POST /observations/{id}/outcome',
         'GET /alerts',
+        // CEIH, 31 Oct (additive).
+        'POST /farmers',
+        'POST /contracts/import',
+        'POST /contracts/{id}/inputs',
+        'GET /farmers/{id}/eligibility',
+        'POST /advances',
+        'POST /advances/{id}/confirm',
+        'POST /advances/{id}/approve',
+        'POST /advances/{id}/disburse',
+        'POST /deliveries',
+        'GET /contracts/{id}/statement',
+        'GET /contracts/{id}/satellite',
+        'POST /satellite/ingest',
+        'POST /triggers/evaluate',
+        'GET /org/{id}/portfolio',
       ].sort()
     )
   })
@@ -68,7 +86,9 @@ describe('openapi.json', () => {
   })
 
   it('has no confidence number, probability or percentage in any field', () => {
-    expect(propertyNames(document).filter(name => FORBIDDEN_FIELD.test(name))).toEqual([])
+    expect(
+      propertyNames(document).filter(name => FORBIDDEN_FIELD.test(name) && !MEASUREMENTS.has(name))
+    ).toEqual([])
   })
 
   it('never marks a shared component itself as nullable', () => {

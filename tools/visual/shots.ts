@@ -62,44 +62,87 @@ const VIEWS: View[] = [
   { name: 'capture-4-result-advice', app: 'capture', route: 'result' },
   { name: 'capture-5-result-officer', app: 'capture', route: 'officer' },
   { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
-  { name: 'dashboard-map', app: 'dashboard', route: 'map', extra: PROJECTOR },
+  // CEIH (1 Nov): the agribusiness's three screens, from tools/seed/ceih-fixtures.ts. The farmer
+  // app has its own player: farmer-shot.ts.
   {
-    name: 'dashboard-map-legend',
+    name: 'dashboard-fields-map',
     app: 'dashboard',
-    route: 'map',
-    // The legend sits behind the (i) button on the map (polish 30 Oct).
+    route: 'fields',
+    extra: PROJECTOR,
+    // Imagery from Esri: wait for the fly into Chikuni and the tiles.
     prepare: async page => {
-      await page.getByRole('button', { name: 'Map legend' }).click({ force: true })
-      await page.waitForTimeout(300)
+      await page.locator('.fm-lit').waitFor({ timeout: 20_000 })
+      await page.waitForTimeout(6000)
     },
   },
-  { name: 'dashboard-alerts', app: 'dashboard', route: 'alerts' },
-  { name: 'dashboard-outbreak', app: 'dashboard', route: 'outbreak' },
-  { name: 'dashboard-observation', app: 'dashboard', route: 'observation' },
-  { name: 'dashboard-queue', app: 'dashboard', route: 'queue' },
-  // First paint: the camps and one line a field officer, before anyone presses anything.
-  { name: 'dashboard-outgrower', app: 'dashboard', route: 'outgrower' },
   {
-    name: 'dashboard-outgrower-prioritised',
+    name: 'dashboard-fields-map-field',
     app: 'dashboard',
-    route: 'outgrower',
-    // As in the demo: the full visit lists appear on "Prioritise field officers".
+    route: 'fields',
+    extra: PROJECTOR,
+    // Given's field pressed: his field card in the drawer.
     prepare: async page => {
-      // No wait for the button to settle: a slow machine timed out on it (29 Oct).
-      await page.getByRole('button', { name: /prioritise field officers/i }).click({ force: true })
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(3000)
+      await page.locator('.fm-hero').dispatchEvent('click')
+      await page.getByText('Greenness from space').waitFor()
+      await page.waitForTimeout(1500)
     },
   },
-  { name: 'dashboard-visit', app: 'dashboard', route: 'visit' },
-  { name: 'dashboard-sources', app: 'dashboard', route: 'sources' },
-  { name: 'dashboard-scenario', app: 'dashboard', route: 'scenario' },
   {
-    name: 'dashboard-scenario-dry',
+    name: 'dashboard-fields-map-shock',
     app: 'dashboard',
-    route: 'scenario',
+    route: 'fields?june',
+    extra: PROJECTOR,
+    // After the drought rule: Hamangaba's fields in brick.
     prepare: async page => {
-      await page.getByRole('switch').click()
-      await page.waitForTimeout(600)
+      await page.waitForTimeout(3000)
+      await page.getByRole('button', { name: 'Hamangaba', exact: true }).click()
+      // Not networkidle: the tile prefetch keeps the network busy.
+      await page.waitForTimeout(5000)
+    },
+  },
+  { name: 'dashboard-season-ledger', app: 'dashboard', route: 'season', extra: PROJECTOR },
+  {
+    name: 'dashboard-loan-check',
+    app: 'dashboard',
+    route: 'season',
+    extra: PROJECTOR,
+    // The hunger-month loan check, skipped to its verdict (every stage on screen).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Run check' }).first().click()
+      await page.getByRole('button', { name: 'Skip' }).click()
+      await page.waitForTimeout(2600)
+    },
+  },
+  {
+    name: 'dashboard-season-reconciliation',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+  },
+  {
+    name: 'dashboard-reconciliation-run',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The batch run to its end: every ready farmer resolved, the summary and the payout button.
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Start reconciliation' }).click()
+      await page.waitForTimeout(11_000)
+    },
+  },
+  {
+    name: 'dashboard-reconciliation-sent',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The payout request confirmed and sent (simulated).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Start reconciliation' }).click()
+      await page.getByRole('button', { name: 'Skip' }).click()
+      await page.getByRole('button', { name: 'Request bulk payment' }).click()
+      await page.getByRole('button', { name: 'Send bulk payment' }).click()
+      await page.waitForTimeout(1500)
     },
   },
 ]
@@ -200,7 +243,8 @@ async function check(page: Page, width: number, budget: boolean) {
         for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke]) {
           const c = v && v !== 'none' ? rgb(v) : null
           const h = c ? hue(c) : null
-          if (h !== null) hues.add(h)
+          // Mockup A's field greens (accent, land, coastline) span 60 to 150 degrees: one family.
+          if (h !== null) hues.add(h >= 2 && h <= 4 ? 2 : h)
         }
       }
       if (measure && boxes > 8) issues.push(`${boxes} bordered boxes in view (decision 3 allows 8)`)
@@ -235,6 +279,9 @@ for (const view of VIEWS.filter(v => !only || only.includes(v.name) || only.incl
     page.on('pageerror', e => errors.push(`page error: ${e.message}`))
     page.on('console', async m => {
       if (m.type() !== 'error') return
+      // The previews have no sign-in, so Storage refuses report photos (the drawer then shows
+      // its "could not be loaded" frame): expected here, never in the signed-in app.
+      if (m.location().url.includes('firebasestorage.googleapis.com')) return
       const details = await Promise.all(m.args().map(a => a.jsonValue().catch(() => '')))
       errors.push(`console: ${details.map(String).join(' ').replace(/\s+/g, ' ').slice(0, 600)}`)
     })

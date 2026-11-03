@@ -20,15 +20,18 @@ export function CropChips({
   return (
     <fieldset>
       <legend className="mb-2 text-label font-semibold text-fg">Crop</legend>
-      <div className="grid grid-cols-2 gap-3">
+      {/* A's toggle: a white pill group, the chosen crop filled field green. */}
+      <div className="flex flex-wrap gap-1 rounded-[1.75rem] bg-panel p-1.5 shadow-island-sm">
         {CROPS.map(crop => {
           const Glyph = GLYPHS[crop]
           const selected = value === crop
           return (
             <label
               key={crop}
-              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-card border-1.5 px-3 text-body font-extrabold transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-attention ${
-                selected ? 'border-fg bg-fg text-ground' : 'border-hairline-strong bg-panel text-fg'
+              className={`flex min-h-14 flex-auto cursor-pointer items-center justify-center gap-2 rounded-full px-3 text-[16px] font-semibold leading-5 transition-colors duration-300 ease-out has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-1 has-[:focus-visible]:outline-signal ${
+                selected
+                  ? 'bg-signal text-signal-ink'
+                  : 'text-fg hover:bg-[var(--hover)] active:bg-well'
               }`}
             >
               <input
@@ -39,7 +42,7 @@ export function CropChips({
                 onChange={() => onChange(crop)}
                 className="sr-only"
               />
-              <Glyph size={26} strokeWidth={2} aria-hidden />
+              <Glyph size={22} strokeWidth={2} aria-hidden />
               {CROP_LABELS[crop]}
             </label>
           )

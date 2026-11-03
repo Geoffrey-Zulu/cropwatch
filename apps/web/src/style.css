@@ -1,22 +1,92 @@
 @import '@repo/ui/theme/phytos.css';
-@import '@fontsource-variable/bricolage-grotesque/wght.css';
-@import '@fontsource-variable/instrument-sans/wght.css';
+@import '@fontsource-variable/figtree/wght.css';
+@import '@fontsource-variable/fraunces/full.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
+
+/* Field-airy (mockup A, chosen 30 Oct; apps/web/public/mockups/a-field-airy.html is the
+   contract): a calm cream canvas, white islands with soft layered shadows, field green as the
+   one accent, brick for High and hatched maize for Elevated, Figtree for UI text and Fraunces
+   for titles and figures. Every token the components use is defined here. */
+.theme-field {
+  --canvas-1: #f4f3ec;
+  --canvas-2: #e6e5da;
+  --ground: #f4f3ec;
+  --panel: #ffffff;
+  --well: #f4f6f1;
+
+  --fg: #1b2920;
+  --fg-2: #55645a;
+  --fg-3: #7c887f;
+
+  --signal: #2d5b39;
+  --signal-ink: #ffffff;
+  --signal-text: #2d5b39;
+  --signal-tint: #eaf1e3;
+  --leaf: #2d5b39;
+
+  --attention: #eec14a;
+  --attention-stripe: #b98516;
+  --attention-text: #7f5605;
+  --attention-tint: #fbf3dc;
+  --high: #a23b21;
+  --high-ink: #ffffff;
+  --high-text: #9a3720;
+
+  --land: #d6e2c4;
+  --land-hover: #cad8b5;
+  --coast: #93a784;
+
+  --hairline: #e8ece4;
+  --hairline-strong: #8e998f;
+  --chip: #1b2920;
+  --chip-fg: #ffffff;
+  --skeleton: #edefe8;
+
+  --raise:
+    0 0 0 1px rgb(27 41 32 / 0.035), 0 1px 2px rgb(27 41 32 / 0.05),
+    0 8px 18px -6px rgb(27 41 32 / 0.08), 0 26px 52px -14px rgb(27 41 32 / 0.16);
+  --raise-sm:
+    0 0 0 1px rgb(27 41 32 / 0.04), 0 1px 2px rgb(27 41 32 / 0.06),
+    0 8px 18px -8px rgb(27 41 32 / 0.18);
+  --hatch: repeating-linear-gradient(135deg, rgb(27 41 32 / 0.075) 0 3px, transparent 3px 7px);
+  --hatch-elevated: repeating-linear-gradient(
+    135deg,
+    var(--attention-stripe) 0 2px,
+    var(--attention) 2px 5px
+  );
+
+  color-scheme: light;
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* A's scale: 15 px, and larger on wide screens so a projector reads from the back. */
+  html {
+    font-size: 15px;
+  }
+  @media (min-width: 1600px) {
+    html {
+      font-size: 17px;
+    }
+  }
+  @media (min-width: 1880px) {
+    html {
+      font-size: 19px;
+    }
+  }
   body {
-    @apply bg-ground font-body text-body text-fg antialiased;
+    @apply font-body text-body text-fg antialiased;
     min-height: 100dvh;
+    background: var(--canvas-2);
     font-variant-numeric: tabular-nums;
   }
   :focus-visible {
-    outline: 2px solid var(--signal);
+    outline: 2.5px solid var(--signal);
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -30,50 +100,107 @@
   }
 }
 
-/* Command Center components (design-system/phytos/patterns-v2.md): sentence case everywhere,
-   one accent for the action, borders only on controls. */
+/* Command Center components in A's language: pills for every control, white islands for every
+   grouping, sentence case, one accent for the action. */
 @layer components {
+  .island {
+    @apply rounded-island bg-panel shadow-island;
+  }
+  /* The canvas the pages sit on: dry-season haze, lighter in the middle. */
+  .canvas {
+    background: radial-gradient(
+      115% 100% at 55% 48%,
+      var(--canvas-1) 0%,
+      var(--canvas-1) 35%,
+      var(--canvas-2) 100%
+    );
+  }
+  .serif {
+    font-family: 'Fraunces Variable', Georgia, serif;
+    font-variation-settings:
+      'SOFT' 100,
+      'WONK' 0,
+      'opsz' 72;
+  }
+  /* Text set straight on the map (the title, the credit) sits on a soft patch of canvas, so a
+     zoomed map's dots and labels never run through the letters. Unseen on the national view. */
+  .on-map {
+    isolation: isolate;
+  }
+  .on-map::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem -0.9rem;
+    z-index: -1;
+    border-radius: 9999px;
+    background: var(--canvas-1);
+    filter: blur(10px);
+    opacity: 0.94;
+  }
   .btn-primary {
-    @apply inline-flex h-9 items-center justify-center gap-2 rounded-card bg-signal px-4 font-body text-label font-medium text-signal-ink transition-[filter] duration-150 ease-snap hover:brightness-110 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-pill bg-signal px-5 font-body text-label font-semibold text-signal-ink transition-[filter] duration-200 ease-out hover:brightness-110 disabled:cursor-not-allowed disabled:bg-well disabled:text-fg-2;
   }
   .btn-quiet {
-    @apply inline-flex h-9 items-center justify-center gap-2 rounded-card border border-hairline-strong bg-panel px-3 font-body text-label font-medium text-fg transition-colors duration-150 ease-snap hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-pill bg-panel px-4 font-body text-label font-medium text-fg shadow-island-sm transition-colors duration-200 ease-out hover:bg-well disabled:cursor-not-allowed disabled:opacity-60;
   }
   /* A quiet line above a title: secondary, sentence case. */
   .eyebrow {
-    @apply text-caption font-medium text-fg-2;
+    @apply text-caption font-semibold text-fg-2;
   }
-  /* A chip: at most one a row (patterns-v2.md decision 3). */
+  /* A chip: at most one a row. */
   .chip {
-    @apply inline-flex shrink-0 items-center gap-1 rounded border px-1.5 text-caption font-medium;
+    @apply inline-flex shrink-0 items-center gap-1 rounded-pill border px-2 text-caption font-semibold;
   }
   .meta {
     @apply text-caption text-fg-2;
   }
   .th {
-    @apply text-caption font-medium text-fg-2;
+    @apply text-caption font-semibold text-fg-2;
   }
-  /* Segmented filters: the selected one sits on the rail grey; no borders. */
+  /* A's region toggle: a white pill group, the selected one filled field green. Used for every
+     segmented choice (tabs, filters). Wrap the buttons in .toggle-group. */
+  /* One line always; on a narrow screen the group scrolls sideways rather than wrapping. */
+  .toggle-group {
+    @apply inline-flex max-w-full gap-0.5 overflow-x-auto rounded-pill bg-panel p-1 shadow-island-sm;
+    scrollbar-width: none;
+  }
   .toggle {
-    @apply rounded-card px-3 py-1.5 font-body text-label font-medium text-fg-2 transition-colors hover:text-fg;
+    @apply cursor-pointer whitespace-nowrap rounded-pill px-4 py-2 font-body text-label font-medium text-fg-2 transition-colors duration-200 ease-out hover:bg-well hover:text-fg;
   }
   .toggle[aria-pressed='true'],
   .toggle[aria-selected='true'] {
-    @apply bg-well text-fg;
+    @apply bg-signal font-semibold text-signal-ink hover:bg-signal hover:text-signal-ink;
+  }
+  /* Page tabs: the nav's tint (A's .nav a[aria-current]), so a page has one filled toggle. */
+  .toggle-group-page .toggle[aria-selected='true'] {
+    @apply bg-signal-tint text-signal-text hover:bg-signal-tint hover:text-signal-text;
   }
   .field {
-    @apply h-9 w-full rounded-card border border-hairline-strong bg-panel px-3 font-body text-label text-fg placeholder:text-fg-2;
+    @apply h-10 w-full rounded-card border border-[rgb(27_41_32/0.2)] bg-panel px-3 font-body text-label text-fg placeholder:text-fg-2;
   }
-  /* The one loading state (polish 30 Oct): blocks shaped like what will land, with a slow
-     shimmer; never "…" text, and a spinner only inside a button mid-action. Blocks appear only
-     after 250 ms, so fast loads never flash (patterns-v2.md §5). */
+  /* Level swatches (A): High solid brick, Elevated hatched maize, Low fallow field. */
+  .swatch {
+    @apply inline-block h-[0.9rem] w-[0.9rem] shrink-0 rounded-[0.28rem];
+  }
+  .swatch-high {
+    background: var(--high);
+  }
+  .swatch-elevated {
+    background: var(--hatch-elevated);
+  }
+  .swatch-low {
+    background: var(--land);
+    box-shadow: inset 0 0 0 1px rgb(27 41 32 / 0.12);
+  }
+  /* The one loading state: blocks shaped like what will land, with a slow shimmer; never "…"
+     text, and a spinner only inside a button mid-action. Blocks appear only after 250 ms. */
   .skeleton-bar {
-    @apply block rounded;
+    @apply block rounded-md;
     background-image: linear-gradient(
       90deg,
       var(--skeleton) 0%,
       var(--skeleton) 35%,
-      #f8f9fa 50%,
+      #f7f8f4 50%,
       var(--skeleton) 65%,
       var(--skeleton) 100%
     );
@@ -96,4 +223,274 @@
       background-position: 0 0;
     }
   }
+  /* Cluster rings breathe: a soft pulse on the halo (reduced motion: still). */
+  @keyframes ring-pulse {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
+  .ring-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ring-pulse 2.6s ease-out infinite;
+  }
+  /* Drawers and district panels slide in from the right. */
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(1.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .slide-in {
+    animation: slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+/* Outside the layers: these class names are built at runtime (fm-${state}), so Tailwind must not
+   purge them. */
+/* The Fields map (Outgrower View): fields over Esri imagery, a light halo under each
+   state-coloured outline so they hold on any ground and on a projector. Fills fade in once the
+   map lands. The map is its own stacking context, so Leaflet's panes never cover a drawer. */
+.fm {
+  isolation: isolate;
+}
+.fm .leaflet-container {
+  /* A tile still on its way reads as loading: neither a hole nor a field. */
+  background: var(--canvas-2);
+  font-family: inherit;
+}
+.fm .fm-halo {
+  stroke: #fff;
+  stroke-opacity: 0.92;
+  stroke-width: 4.5px;
+}
+.fm .fm-halo-hero {
+  stroke-width: 8px;
+  stroke-opacity: 1;
+}
+.fm .fm-field {
+  stroke-width: 1.7px;
+  fill-opacity: 0;
+  transition: fill-opacity 400ms ease-out;
+}
+.fm.fm-lit .fm-field {
+  fill-opacity: 0.5;
+}
+.fm.fm-lit .fm-field:hover {
+  fill-opacity: 0.72;
+}
+.fm .fm-established {
+  fill: var(--signal);
+  stroke: var(--signal);
+}
+.fm .fm-not_planted {
+  fill: var(--hairline-strong);
+  stroke: var(--fg-2);
+}
+.fm.fm-lit .fm-not_planted {
+  fill-opacity: 0.85;
+}
+.fm .fm-stress {
+  fill: url(#fm-hatch);
+  stroke: var(--attention-stripe);
+}
+.fm.fm-lit .fm-stress {
+  fill-opacity: 0.85;
+}
+.fm .fm-shock {
+  fill: var(--high);
+  stroke: var(--high);
+}
+.fm.fm-lit .fm-shock {
+  fill-opacity: 0.75;
+}
+/* Not seen yet: ink dashes on the white halo, quieter than any state that has been seen. */
+.fm .fm-cloud_gap {
+  fill: #fff;
+  stroke: var(--fg);
+  stroke-width: 1.5px;
+  stroke-dasharray: 5 4;
+}
+.fm.fm-lit .fm-cloud_gap {
+  fill-opacity: 0.06;
+}
+/* The storyline field: a solid ink outline and its farmer's name, whatever its state. */
+.fm .fm-hero {
+  stroke: var(--fg);
+  stroke-width: 3px;
+  stroke-dasharray: none;
+}
+.fm-tip.fm-tip-hero {
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+}
+.fm .fm-draft {
+  stroke: #fff;
+  stroke-width: 2.5px;
+  stroke-dasharray: 6 4;
+  fill: var(--signal);
+  fill-opacity: 0.3;
+}
+.fm .fm-vertex {
+  stroke: var(--signal);
+  stroke-width: 2px;
+  fill: #fff;
+  fill-opacity: 1;
+}
+.fm .fm-camp {
+  stroke: #fff;
+  stroke-width: 2px;
+  fill: var(--signal);
+  fill-opacity: 0.6;
+}
+.fm .leaflet-bar {
+  border: 0;
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: var(--raise-sm);
+}
+.fm .leaflet-bar a {
+  width: 2.3rem;
+  height: 2.3rem;
+  line-height: 2.3rem;
+  color: var(--fg);
+  border-bottom-color: var(--hairline);
+}
+.fm .leaflet-control-attribution {
+  font-size: 0.72rem;
+  color: var(--fg-2);
+  background: rgb(255 255 255 / 0.88);
+  border-top-left-radius: 0.6rem;
+  padding: 0.1rem 0.5rem;
+}
+.fm-tip {
+  font-family: inherit;
+  font-size: 0.84rem;
+  color: var(--fg);
+  border: 0;
+  border-radius: 0.7rem;
+  box-shadow: var(--raise-sm);
+}
+.fm-key {
+  display: inline-block;
+  width: 1rem;
+  height: 0.8rem;
+  border-radius: 0.22rem;
+  flex: none;
+}
+.fm-key-established {
+  background: var(--signal);
+}
+.fm-key-not_planted {
+  background: var(--hairline-strong);
+}
+.fm-key-stress {
+  background: var(--hatch-elevated);
+}
+.fm-key-shock {
+  background: var(--high);
+}
+.fm-key-cloud_gap {
+  border: 1.5px dashed var(--fg);
+}
+
+/* The loan check (sections/season/LoanCheck.tsx): the farm's outline draws itself over real
+   imagery, and each rule arrives with its mark. Off under reduced motion. */
+.lc-map .leaflet-container,
+.lc-map.leaflet-container {
+  background: var(--canvas-2);
+  font-family: inherit;
+}
+.lc-map .lc-halo {
+  stroke: #fff;
+  stroke-opacity: 0.95;
+  stroke-width: 6px;
+}
+.lc-map .lc-field {
+  stroke: var(--fg);
+  stroke-width: 2.6px;
+  fill: var(--signal);
+  fill-opacity: 0.28;
+}
+.lc-map .leaflet-control-attribution {
+  font-size: 0.68rem;
+  color: var(--fg-2);
+  background: rgb(255 255 255 / 0.88);
+  border-top-left-radius: 0.6rem;
+  padding: 0.05rem 0.45rem;
+}
+.lc-row {
+  animation: lc-in 320ms ease-out both;
+}
+/* The farmer app's send (sections/farmer/SendMoneySection.tsx): the bar fills as the money goes. */
+.fm-send {
+  animation: fm-send 2600ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+@keyframes fm-send {
+  from {
+    width: 4%;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes lc-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-row {
+    animation: none;
+  }
+}
+
+/* Tracing on the Fields map: corners you can drag, the first one grows when a click would close
+   the field, and a pasted spot is pinned. */
+.fm-vertex-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 2px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow:
+    0 0 0 2px var(--signal),
+    0 1px 4px rgb(27 41 32 / 0.35);
+  cursor: grab;
+}
+.fm-vertex-first {
+  width: 14px;
+  height: 14px;
+  margin: 1px;
+  box-shadow:
+    0 0 0 3px var(--signal),
+    0 1px 4px rgb(27 41 32 / 0.35);
+}
+.fm-vertex-snap .fm-vertex-first {
+  background: var(--signal);
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 6px var(--signal);
+}
+.fm .fm-spot {
+  stroke: #fff;
+  stroke-width: 3px;
+  fill: var(--fg);
+  fill-opacity: 1;
 }
