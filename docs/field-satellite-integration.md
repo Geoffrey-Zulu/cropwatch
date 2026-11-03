@@ -46,6 +46,8 @@ The mobile workspace opens to Zambia with no preselected district. **Explore sat
 
 On 3 November 2026, this branch merged upstream `ceih` at `f0f8838c4debdf1e5a8557c995ac605bcfa83044`; upstream `main` was unchanged at `88ee00d`. The merge keeps the iOS Firebase persistence fix, native camera support and this field-evidence service alongside the newer agribusiness and farmer web apps. The mobile layout removes the duplicated live-field account header, uses smaller headings and amount readouts, and keeps form controls at 16 px without automatically focusing a text input. Pinch zoom remains enabled.
 
+The updated deployment was checked live on 3 November: Kabwe and Chipata each returned 12 scenes with distinct Sentinel-2 tile IDs. A disposable 4.8 ha Kabwe polygon returned 15 qualified NDVI intervals, and its stored report could be read back. The temporary field and account for this successful probe were deleted. Earlier requests encountered intermittent connection timeouts; the successful check used persistent HTTPS connections and bounded connection retries.
+
 **Financing example** opens Given's separate simulated C/E/I/H walkthrough. Real field evidence is not automatically turned into a lending approval or a payment. Agronomic validation, attestation, contract and yield inputs, human underwriting, payment execution, insurance and depot reconciliation remain separate integration work.
 
 ## References
