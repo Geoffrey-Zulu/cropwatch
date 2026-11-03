@@ -42,6 +42,10 @@ Configure fresh credentials at **Dokploy → Phytos field evidence → productio
 
 Open **Crop check → My field**. Register an actual field using ordered GPS corners or an imported Polygon/Feature. Save the claimed boundary, select it, then request satellite evidence. This sends the polygon to Earth Search and, when configured, Copernicus. Satellite imagery needs internet; GPS-corner drafts can be recorded offline and saved later.
 
+The mobile workspace opens to Zambia with no preselected district. **Explore satellite coverage by district** offers town-level context across all ten provinces; the list is not a complete district register and does not restrict where a field can be saved. Each district has its own cached report. The original no-parameter context endpoint keeps its Monze default for older installed clients. Monze is the location in Given's financing example, not a confirmed pilot boundary. The pitch's proposed Central Province cohort remains a business planning decision.
+
+On 3 November 2026, this branch merged upstream `ceih` at `f0f8838c4debdf1e5a8557c995ac605bcfa83044`; upstream `main` was unchanged at `88ee00d`. The merge keeps the iOS Firebase persistence fix, native camera support and this field-evidence service alongside the newer agribusiness and farmer web apps. The mobile layout removes the duplicated live-field account header, uses smaller headings and amount readouts, and keeps form controls at 16 px without automatically focusing a text input. Pinch zoom remains enabled.
+
 **Financing example** opens Given's separate simulated C/E/I/H walkthrough. Real field evidence is not automatically turned into a lending approval or a payment. Agronomic validation, attestation, contract and yield inputs, human underwriting, payment execution, insurance and depot reconciliation remain separate integration work.
 
 ## References

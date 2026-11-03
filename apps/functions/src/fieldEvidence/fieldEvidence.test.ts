@@ -156,6 +156,56 @@ describe('field ownership', () => {
   })
 })
 
+describe('Zambia coverage', () => {
+  it('saves fields outside Monze and keeps district context caches separate', async () => {
+    const db = new DatabaseSync(':memory:')
+    try {
+      const collector = vi.fn<typeof collectEvidence>(async () => ({
+        ...evidence,
+        retrieved_at: new Date().toISOString(),
+      }))
+      const app = fieldApp(db, async token => token, collector, [])
+      const headers = { authorization: 'Bearer test', 'content-type': 'application/json' }
+      const ring: FieldInput['geometry'] = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [28.45, -14.44],
+            [28.452, -14.44],
+            [28.452, -14.438],
+            [28.45, -14.438],
+            [28.45, -14.44],
+          ],
+        ],
+      }
+      expect(
+        (
+          await app.request('/v1/fields', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ ...input, name: 'Kabwe field', geometry: ring }),
+          })
+        ).status
+      ).toBe(201)
+      expect((await app.request('/v1/satellite/context?district=kabwe', { headers })).status).toBe(
+        200
+      )
+      expect(collector.mock.calls[0][0].coordinates[0][0]).toEqual([28.45 - 0.01, -14.44 - 0.01])
+      expect(
+        (await app.request('/v1/satellite/context?district=chipata', { headers })).status
+      ).toBe(200)
+      expect(collector.mock.calls[1][0].coordinates[0][0]).toEqual([32.65 - 0.01, -13.63 - 0.01])
+      await app.request('/v1/satellite/context?district=kabwe', { headers })
+      expect(collector).toHaveBeenCalledTimes(2)
+      expect(
+        (await app.request('/v1/satellite/context?district=unknown', { headers })).status
+      ).toBe(400)
+    } finally {
+      db.close()
+    }
+  })
+})
+
 describe('satellite provenance and coverage', () => {
   const catalog = () =>
     Response.json({

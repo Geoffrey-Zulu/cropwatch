@@ -9,7 +9,14 @@ import {
   ShieldAlert,
   X,
 } from 'lucide-react'
-import type { FieldEvidence as Evidence, FieldInput, FieldRecord } from '@repo/shared'
+import {
+  DISTRICTS,
+  PROVINCES,
+  findDistrict,
+  type FieldEvidence as Evidence,
+  type FieldInput,
+  type FieldRecord,
+} from '@repo/shared'
 import { fieldApi } from '../lib/fieldApi'
 import { currentPosition } from '../lib/location'
 import { TownMap } from './TownMap'
@@ -29,7 +36,9 @@ function readDraft(uid: string): Draft {
   try {
     const d = JSON.parse(localStorage.getItem(`phytos:field-draft:${uid}`) ?? 'null')
     if (d && Array.isArray(d.points) && typeof d.name === 'string') return d
-  } catch {}
+  } catch {
+    // A new draft remains available when storage is unavailable or invalid.
+  }
   return { name: '', crop: 'soybean', season: '2026/27', planting: '', points: [], geojson: '' }
 }
 const unavailable = {
@@ -45,6 +54,8 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
   const [fields, setFields] = useState<FieldRecord[]>([])
   const [selected, setSelected] = useState('')
   const [regional, setRegional] = useState<Evidence | null>(null)
+  const [districtSlug, setDistrictSlug] = useState('')
+  const [contextLoading, setContextLoading] = useState(false)
   const [report, setReport] = useState<Evidence | null>(null)
   const [draft, setDraft] = useState(() => readDraft(uid))
   const [editing, setEditing] = useState(false)
@@ -52,29 +63,62 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
   const [busy, setBusy] = useState<'saving' | 'refreshing' | 'gps' | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
   useEffect(() => {
     let active = true
-    Promise.allSettled([fieldApi.list(), fieldApi.context()]).then(([f, r]) => {
-      if (!active) return
-      if (f.status === 'fulfilled') {
-        setFields(f.value)
-        setSelected(f.value[0]?.id ?? '')
-      } else
-        setError(
-          f.reason instanceof Error
-            ? f.reason.message
-            : 'Could not load your fields. Your draft stays on this device.'
-        )
-      if (r.status === 'fulfilled') setRegional(r.value)
-      setLoading(false)
-    })
+    fieldApi
+      .list()
+      .then(value => {
+        if (!active) return
+        setFields(current => [
+          ...current,
+          ...value.filter(record => !current.some(f => f.id === record.id)),
+        ])
+        setSelected(current => current || value[0]?.id || '')
+      })
+      .catch(reason => {
+        if (active)
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : 'Could not load your fields. Your draft stays on this device.'
+          )
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
     return () => {
       active = false
     }
   }, [uid])
   useEffect(() => {
     let active = true
-    setReport(null)
+    if (districtSlug) {
+      fieldApi
+        .context(districtSlug)
+        .then(value => {
+          if (active) setRegional(value)
+        })
+        .catch(() => {
+          if (active)
+            setError(
+              'Could not load regional observations. Your field records are still available.'
+            )
+        })
+        .finally(() => {
+          if (active) setContextLoading(false)
+        })
+    }
+    return () => {
+      active = false
+    }
+  }, [districtSlug])
+  useEffect(() => {
+    let active = true
     if (selected)
       fieldApi
         .report(selected)
@@ -89,19 +133,22 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
   useEffect(() => {
     try {
       localStorage.setItem(`phytos:field-draft:${uid}`, JSON.stringify(draft))
-    } catch {}
+    } catch {
+      // The in-memory draft remains usable without persistent storage.
+    }
   }, [draft, uid])
   useEffect(() => {
     if (editing) {
       form.current?.scrollIntoView?.({ block: 'start' })
-      form.current?.querySelector('input')?.focus({ preventScroll: true })
+      form.current?.focus({ preventScroll: true })
     }
   }, [editing])
   const field = fields.find(f => f.id === selected)
+  const district = findDistrict(districtSlug)
   const evidence = field ? report : regional
   const readings = evidence?.readings ?? []
   const latest = readings[readings.length - 1]
-  const fresh = latest ? Date.now() - Date.parse(latest.to) < 21 * 86400000 : false
+  const fresh = latest ? now - Date.parse(latest.to) < 21 * 86400000 : false
   const afterPlanting = Boolean(
     latest && field?.planting_date && Date.parse(latest.from) >= Date.parse(field.planting_date)
   )
@@ -122,7 +169,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
           field.geometry.coordinates[0].slice(0, -1).reduce((s, p) => s + p[0], 0) /
           (field.geometry.coordinates[0].length - 1),
       }
-    : { latitude: -16.28, longitude: 27.48 }
+    : (district?.center ?? { latitude: -13.2, longitude: 27.8 })
   const capture = async () => {
     setBusy('gps')
     setError('')
@@ -163,6 +210,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
         geometry,
       })
       setFields(f => [record, ...f])
+      setReport(null)
       setSelected(record.id)
       setEditing(false)
     } catch (e) {
@@ -194,7 +242,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
       )}
       {loading && (
         <p className="field-loading" role="status">
-          Connecting to your fields and Sentinel-2 observations
+          Loading your fields
         </p>
       )}
       <div className="field-picker">
@@ -204,7 +252,10 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
             <select
               value={selected}
               disabled={busy === 'refreshing' || busy === 'saving'}
-              onChange={e => setSelected(e.target.value)}
+              onChange={e => {
+                setReport(null)
+                setSelected(e.target.value)
+              }}
             >
               {fields.map(f => (
                 <option key={f.id} value={f.id}>
@@ -216,7 +267,7 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
         ) : (
           <div>
             <strong>No field registered yet</strong>
-            <span>Add a boundary to request field-specific evidence.</span>
+            <span>Register a field anywhere in Zambia.</span>
           </div>
         )}
         <button
@@ -232,7 +283,12 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
         </button>
       </div>
       {editing && (
-        <section ref={form} className="field-registration" aria-label="Register a field boundary">
+        <section
+          ref={form}
+          tabIndex={-1}
+          className="field-registration"
+          aria-label="Register a field boundary"
+        >
           <h2>Record the field</h2>
           <p>
             Walk around the actual field and capture corners in order, or import its GeoJSON
@@ -337,10 +393,15 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
             center={center}
             online={navigator.onLine}
             boundary={field?.geometry.coordinates[0]}
-            label={field?.name ?? 'Monze regional context'}
+            zoom={district ? 12 : 4}
+            label={field?.name ?? (district ? `${district.name} town context` : 'Zambia overview')}
           />
           <span className="field-map-label">
-            {field ? 'Claimed field boundary' : 'Monze town overview'}
+            {field
+              ? 'Claimed field boundary'
+              : district
+                ? `${district.name} town overview`
+                : 'Zambia'}
           </span>
         </div>
         <div className="field-panel-body">
@@ -348,9 +409,12 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
             <p className="season-overline">
               {field ? 'YOUR RECORDED FIELD' : 'REGIONAL SATELLITE CONTEXT'}
             </p>
-            <h2>{field?.name ?? 'Monze, Zambia'}</h2>
+            <h2>
+              {field?.name ??
+                (district ? `${district.name}, Zambia` : 'Your fields, across Zambia')}
+            </h2>
           </div>
-          <span className="season-tag">{field ? 'Unattested' : 'Not a farm'}</span>
+          {field && <span className="season-tag">Unattested</span>}
         </div>
         {field && (
           <div className="field-measures">
@@ -372,56 +436,102 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
           </p>
         )}
       </section>
-      <section className="satellite-evidence">
-        <div className="season-section-title">
-          <h2>
-            <Satellite size={17} aria-hidden /> Satellite observations
-          </h2>
-          <span className="season-tag season-tag--green">
-            {evidence?.catalogue_status === 'ok' ? 'Live catalogue' : 'Awaiting data'}
-          </span>
+      {!field && !editing && (
+        <div className="field-start">
+          <p>Save your actual boundary to check satellite observations for your field.</p>
+          <button className="season-primary" onClick={() => setEditing(true)}>
+            Register your field <Plus size={17} />
+          </button>
         </div>
-        <p className="field-explainer">
-          {field
-            ? 'Sentinel-2 scenes intersecting the recorded polygon. Scene cloud cover describes the full image tile, not clear pixels over your field.'
-            : 'Real Sentinel-2 passes over Monze. These are regional context until you register a field boundary.'}
-        </p>
-        {(evidence?.scenes ?? []).slice(0, 3).map((scene, i) => (
-          <article key={scene.id} className="satellite-pass">
-            <div>
-              <strong>{date(scene.acquired_at)}</strong>
-              <span>
-                {scene.scene_cloud_pct === null
-                  ? 'Cloud cover unavailable'
-                  : `${scene.scene_cloud_pct.toFixed(1)}% scene cloud cover`}
-              </span>
-            </div>
-            <small>Sentinel-2 L2A</small>
-            {i === 0 && scene.preview_url && (
-              <details>
-                <summary>View actual scene preview</summary>
-                <img
-                  src={scene.preview_url}
-                  alt={`Full Sentinel-2 tile acquired ${date(scene.acquired_at)}`}
-                  loading="lazy"
-                />
-                <p>Full satellite tile, not a field-scale crop-health image.</p>
-                <code>{scene.id}</code>
-              </details>
-            )}
-          </article>
-        ))}
-        {evidence?.catalogue_status === 'ok' && !evidence.scenes.length && (
-          <p>No intersecting scenes were returned for the last 90 days.</p>
-        )}
-        {evidence?.retrieved_at && (
-          <p className="evidence-source">
-            Source: {evidence.catalogue_source}
-            <br />
-            Checked {date(evidence.retrieved_at)}
+      )}
+      {!field && (
+        <details className="field-region-explorer">
+          <summary>Explore satellite coverage by district</summary>
+          <label>
+            District town context
+            <select
+              value={districtSlug}
+              onChange={e => {
+                setRegional(null)
+                setContextLoading(Boolean(e.target.value))
+                setDistrictSlug(e.target.value)
+              }}
+            >
+              <option value="">Choose a district</option>
+              {PROVINCES.map(province => (
+                <optgroup key={province} label={province}>
+                  {DISTRICTS.filter(d => d.province === province).map(d => (
+                    <option key={d.slug} value={d.slug}>
+                      {d.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <p>
+            Town-level context, not a farm assessment. Field registration also works outside the
+            districts listed here.
           </p>
-        )}
-      </section>
+        </details>
+      )}
+      {(field || district) && (
+        <section className="satellite-evidence">
+          <div className="season-section-title">
+            <h2>
+              <Satellite size={17} aria-hidden /> Satellite observations
+            </h2>
+            <span className="season-tag season-tag--green">
+              {evidence?.catalogue_status === 'ok' ? 'Live catalogue' : 'Awaiting data'}
+            </span>
+          </div>
+          <p className="field-explainer">
+            {field
+              ? 'Sentinel-2 scenes intersecting the recorded polygon. Scene cloud cover describes the full image tile, not clear pixels over your field.'
+              : `Sentinel-2 scenes near ${district?.name} town. Regional context does not verify a farm.`}
+          </p>
+          {contextLoading && (
+            <p className="field-loading" role="status">
+              Loading satellite observations
+            </p>
+          )}
+          {(evidence?.scenes ?? []).slice(0, 3).map((scene, i) => (
+            <article key={scene.id} className="satellite-pass">
+              <div>
+                <strong>{date(scene.acquired_at)}</strong>
+                <span>
+                  {scene.scene_cloud_pct === null
+                    ? 'Cloud cover unavailable'
+                    : `${scene.scene_cloud_pct.toFixed(1)}% scene cloud cover`}
+                </span>
+              </div>
+              <small>Sentinel-2 L2A</small>
+              {i === 0 && scene.preview_url && (
+                <details>
+                  <summary>View actual scene preview</summary>
+                  <img
+                    src={scene.preview_url}
+                    alt={`Full Sentinel-2 tile acquired ${date(scene.acquired_at)}`}
+                    loading="lazy"
+                  />
+                  <p>Full satellite tile, not a field-scale crop-health image.</p>
+                  <code>{scene.id}</code>
+                </details>
+              )}
+            </article>
+          ))}
+          {evidence?.catalogue_status === 'ok' && !evidence.scenes.length && (
+            <p>No intersecting scenes were returned for the last 90 days.</p>
+          )}
+          {evidence?.retrieved_at && (
+            <p className="evidence-source">
+              Source: {evidence.catalogue_source}
+              <br />
+              Checked {date(evidence.retrieved_at)}
+            </p>
+          )}
+        </section>
+      )}
       {field && (
         <>
           <section className="vegetation-panel">
@@ -468,9 +578,9 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
               </p>
             )}
             <p className="evidence-source">
-              Cloud-masked red/NIR statistics sampled at about 10 m. Minimum 50% usable sampling-grid
-              pixels and 10 valid pixels. Irregular boundaries can lower this coverage. No crop yield
-              or weeding conclusion is inferred.
+              Cloud-masked red/NIR statistics sampled at about 10 m. Minimum 50% usable
+              sampling-grid pixels and 10 valid pixels. Irregular boundaries can lower this
+              coverage. No crop yield or weeding conclusion is inferred.
             </p>
           </section>
           <div className="field-review-note">
@@ -489,11 +599,6 @@ export function FieldEvidence({ uid, onExample }: { uid: string; onExample: () =
             processing.
           </p>
         </>
-      )}
-      {!field && !editing && (
-        <button className="season-primary" onClick={() => setEditing(true)}>
-          Register your field <Plus size={17} />
-        </button>
       )}
       <button className="field-example-link" onClick={onExample}>
         <span>

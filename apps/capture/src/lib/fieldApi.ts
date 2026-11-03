@@ -41,7 +41,10 @@ export const fieldApi = {
   },
   create: async (input: FieldInput) =>
     FieldRecordSchema.parse(await request('/v1/fields', 'POST', input)),
-  context: async () => FieldEvidenceSchema.parse(await request('/v1/satellite/context')),
+  context: async (district: string) =>
+    FieldEvidenceSchema.parse(
+      await request(`/v1/satellite/context?district=${encodeURIComponent(district)}`)
+    ),
   report: async (id: string) => {
     const data = await request(`/v1/fields/${id}/evidence`)
     return data.report ? FieldEvidenceSchema.parse(data.report) : null

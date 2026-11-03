@@ -59,11 +59,17 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.resetAllMocks()
 })
-it('shows actual regional acquisition dates and keeps scene cloud cover separate from field verification', async () => {
+it('starts with Zambia and only requests regional observations after a district is chosen', async () => {
   render(<FieldEvidence uid="user" onExample={vi.fn()} />)
+  expect(screen.getByText('Your fields, across Zambia')).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Monze, Zambia' })).not.toBeInTheDocument()
+  expect(fieldApi.context).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByText('Explore satellite coverage by district'))
+  fireEvent.change(screen.getByLabelText('District town context'), { target: { value: 'kabwe' } })
   expect(await screen.findByText('30 Oct 2026')).toBeInTheDocument()
+  expect(fieldApi.context).toHaveBeenCalledWith('kabwe')
+  expect(screen.getByText('Kabwe, Zambia')).toBeInTheDocument()
   expect(screen.getByText('35.0% scene cloud cover')).toBeInTheDocument()
-  expect(screen.getByText('Not a farm')).toBeInTheDocument()
   expect(screen.queryByText('Field vegetation index')).not.toBeInTheDocument()
 })
 it('shows missing NDVI processing honestly and keeps officer review required', async () => {
@@ -79,8 +85,10 @@ it('shows missing NDVI processing honestly and keeps officer review required', a
 it('saves an explicitly imported polygon as a claimed field, not a town-centre pin', async () => {
   vi.mocked(fieldApi.create).mockResolvedValue(field)
   render(<FieldEvidence uid="user" onExample={vi.fn()} />)
-  await screen.findByText('30 Oct 2026')
+  await waitFor(() => expect(screen.queryByText('Loading your fields')).not.toBeInTheDocument())
   fireEvent.click(screen.getByRole('button', { name: 'Register your field' }))
+  expect(screen.getByRole('region', { name: 'Register a field boundary' })).toHaveFocus()
+  expect(screen.getByLabelText('Field name')).not.toHaveFocus()
   fireEvent.change(screen.getByLabelText('Field name'), { target: { value: 'North plot' } })
   fireEvent.click(screen.getByText('Import a GeoJSON boundary instead'))
   fireEvent.change(

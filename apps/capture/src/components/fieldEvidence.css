@@ -4,7 +4,7 @@
   padding: 4px;
   background: #e4eadf;
   border-radius: 11px;
-  margin-bottom: 19px;
+  margin-bottom: 14px;
 }
 .field-mode button {
   flex: 1;
@@ -51,7 +51,7 @@
   min-height: 44px;
   background: transparent;
   border: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   padding-right: 12px;
   color: #2d4834;
@@ -75,7 +75,7 @@
   margin: 10px 0 18px;
 }
 .field-registration {
-  padding: 17px;
+  padding: 14px;
   background: #fff;
   border: 1px solid #dfe7d6;
   border-radius: 16px;
@@ -110,12 +110,12 @@
   background: #fbfcf8;
   color: #30492e;
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
   margin-top: 5px;
 }
 .field-registration textarea {
   font-family: monospace;
-  font-size: 11px;
+  font-size: 16px;
 }
 .field-form-pair {
   display: flex;
@@ -197,7 +197,7 @@
   z-index: 1;
 }
 .satellite-evidence {
-  margin-top: 25px;
+  margin-top: 18px;
 }
 .satellite-evidence h2 {
   display: flex;
@@ -215,11 +215,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 13px 14px;
-  background: #fff;
-  border: 1px solid #e0e7d8;
-  border-radius: 11px;
-  margin-bottom: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--season-line);
 }
 .satellite-pass > div {
   flex: 1;
@@ -330,7 +327,7 @@
   width: 100%;
   text-align: left;
   padding: 16px 0;
-  margin-top: 20px;
+  margin-top: 14px;
   border-top: 1px solid #dbe4d1;
 }
 .field-example-link > span {
@@ -346,4 +343,44 @@
   font-size: 10px;
   color: #6f805f;
   margin-top: 4px;
+}
+.field-start > p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--season-muted);
+  margin: 12px 0;
+}
+.field-region-explorer {
+  border-top: 1px solid var(--season-line);
+  margin-top: 18px;
+}
+.field-region-explorer summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 13px 0;
+  font-size: 13px;
+  font-weight: 550;
+}
+.field-region-explorer label {
+  display: block;
+  font-size: 12px;
+  color: var(--season-muted);
+}
+.field-region-explorer select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  border: 1px solid #b9c6b3;
+  border-radius: 8px;
+  padding: 8px 36px 8px 10px;
+  background-color: #fff;
+  font-size: 16px;
+  color: var(--season-ink);
+}
+.field-region-explorer > p {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--season-muted);
 }

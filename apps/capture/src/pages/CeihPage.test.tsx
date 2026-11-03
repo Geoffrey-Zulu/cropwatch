@@ -44,3 +44,22 @@ it('keeps demo data scoped to the signed-in user and gates approval on crop chec
   fireEvent.click(nav.querySelectorAll('button')[3])
   expect(navigate).toHaveBeenCalledWith({ page: 'ceih', step: 'harvest' })
 })
+
+it('preserves an advance cap saved by an earlier installed app', () => {
+  localStorage.setItem(
+    'phytos:ceih-demo:v1:legacy-user',
+    JSON.stringify({
+      checks: [true, true, true],
+      ['percent']: 15,
+      amount: 5000,
+      approved: true,
+      sent: false,
+      reconciled: false,
+      provider: 'Airtel',
+    })
+  )
+  render(<CeihPage uid="legacy-user" step="eligibility" navigate={vi.fn()} />)
+  expect(screen.getAllByText('K 7,200.00').length).toBeGreaterThan(0)
+  expect(screen.getByRole('button', { name: 'Continue to wallet' })).toBeEnabled()
+  expect(screen.queryByText(/NaN/)).not.toBeInTheDocument()
+})

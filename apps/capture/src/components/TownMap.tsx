@@ -10,20 +10,24 @@ export function TownMap({
   center,
   online,
   boundary,
-  label = 'Monze, Zambia',
+  zoom = 12,
+  label = 'Regional overview',
 }: {
   center: Point
   online: boolean
   boundary?: [number, number][]
+  zoom?: number
   label?: string
 }) {
   const viewport = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
-  const [failed, setFailed] = useState(false)
+  const [failedView, setFailedView] = useState<string | null>(null)
+  const viewKey = `${center.latitude}:${center.longitude}`
+  const failed = failedView === viewKey
   const view =
     boundary && boundary.length >= 4
       ? fieldMapView(boundary, width || 350, 182)
-      : { center, zoom: 12, points: null }
+      : { center, zoom, points: null }
   useEffect(() => {
     if (!viewport.current || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(entries =>
@@ -33,8 +37,10 @@ export function TownMap({
     return () => observer.disconnect()
   }, [])
   useEffect(() => {
-    if (online) setFailed(false)
-  }, [online])
+    const retry = () => setFailedView(null)
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [])
   return (
     <div
       ref={viewport}
@@ -64,7 +70,7 @@ export function TownMap({
               width={256}
               height={256}
               style={{ left: tile.left, top: tile.top }}
-              onError={() => setFailed(true)}
+              onError={() => setFailedView(viewKey)}
             />
           ))}
         </div>

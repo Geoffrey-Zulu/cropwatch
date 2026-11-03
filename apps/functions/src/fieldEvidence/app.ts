@@ -5,6 +5,7 @@ import { cors } from 'hono/cors'
 import { bodyLimit } from 'hono/body-limit'
 import {
   FieldInputSchema,
+  findDistrict,
   type FieldRecord,
   type FieldEvidence,
   type FieldInput,
@@ -64,28 +65,40 @@ export function fieldApp(
     recent.set(key, now)
     return false
   }
-  let context: FieldEvidence | null = null
-  let contextPending: Promise<FieldEvidence> | null = null
+  const contexts = new Map<string, FieldEvidence>()
+  const pendingContexts = new Map<string, Promise<FieldEvidence>>()
   app.get('/v1/satellite/context', async c => {
+    // Keep the old default for installed clients. New clients explicitly choose a district.
+    const district = findDistrict(c.req.query('district') ?? 'Monze')
+    if (!district)
+      return c.json({ message: 'Choose a supported district for regional context.' }, 400)
+    const context = contexts.get(district.slug)
     if (context && Date.now() - Date.parse(context.retrieved_at) < 6 * 3600000)
       return c.json(context)
+    const { longitude: lon, latitude: lat } = district.center
     const region: FieldInput['geometry'] = {
       type: 'Polygon',
       coordinates: [
         [
-          [27.47, -16.29],
-          [27.49, -16.29],
-          [27.49, -16.27],
-          [27.47, -16.27],
-          [27.47, -16.29],
+          [lon - 0.01, lat - 0.01],
+          [lon + 0.01, lat - 0.01],
+          [lon + 0.01, lat + 0.01],
+          [lon - 0.01, lat + 0.01],
+          [lon - 0.01, lat - 0.01],
         ],
       ],
     }
-    contextPending ??= collect(region, null).finally(() => {
-      contextPending = null
-    })
-    context = await contextPending
-    return c.json(context)
+    let pending = pendingContexts.get(district.slug)
+    if (!pending) {
+      pending = collect(region, null)
+        .then(report => {
+          contexts.set(district.slug, report)
+          return report
+        })
+        .finally(() => pendingContexts.delete(district.slug))
+      pendingContexts.set(district.slug, pending)
+    }
+    return c.json(await pending)
   })
   app.get('/v1/fields', c => {
     const rows = db

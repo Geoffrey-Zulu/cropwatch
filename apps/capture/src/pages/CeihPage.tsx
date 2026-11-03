@@ -23,7 +23,6 @@ import { findDistrict } from '@repo/shared'
 import { CEIH_STEPS, type CeihStep, type Route } from '../hooks/useRoute'
 import { currentPosition, type Point } from '../lib/location'
 import { CEIH_EXAMPLE, ceihLedger, kwacha } from '../lib/ceih'
-import { DemoBadge } from '../components/DemoBadge'
 import { TownMap } from '../components/TownMap'
 import { FieldEvidence } from '../components/FieldEvidence'
 import './ceih.css'
@@ -43,7 +42,7 @@ const steps = [
 
 type Season = {
   checks: boolean[]
-  percent: number
+  capRate: number
   amount: number
   approved: boolean
   sent: boolean
@@ -52,7 +51,7 @@ type Season = {
 }
 const initial: Season = {
   checks: [false, false, false],
-  percent: 15,
+  capRate: 15,
   amount: 5000,
   approved: false,
   sent: false,
@@ -67,14 +66,14 @@ function readSeason(uid: string): Season {
       Array.isArray(saved.checks) &&
       saved.checks.length === 3 &&
       saved.checks.every((v: unknown) => typeof v === 'boolean') &&
-      [10, 15, 20].includes(saved.percent) &&
+      [10, 15, 20].includes(saved.capRate ?? saved['percent']) &&
       Number.isFinite(saved.amount) &&
       saved.amount >= 100 &&
       saved.amount <= 9600 &&
       ['Airtel', 'MTN'].includes(saved.provider) &&
       ['approved', 'sent', 'reconciled'].every(k => typeof saved[k] === 'boolean')
     )
-      return saved
+      return { ...saved, capRate: saved.capRate ?? saved['percent'] }
   } catch {
     /* The walkthrough can run without local storage. */
   }
@@ -141,10 +140,13 @@ export function CeihPage({
 }) {
   const [season, setSeason] = useState(() => readSeason(uid))
   const [cropMode, setCropMode] = useState<'field' | 'example'>('field')
+  const liveField = step === 'crop' && cropMode === 'field'
   const [point, setPoint] = useState(() => readPoint(uid))
   const [gps, setGps] = useState<'idle' | 'locating' | 'error'>('idle')
   const [gpsError, setGpsError] = useState('')
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewFor, setReviewFor] = useState<CeihStep | null>(null)
+  const reviewOpen = reviewFor === step
+  const setReviewOpen = (open: boolean) => setReviewFor(open ? step : null)
   const [input, setInput] = useState<'pointer' | 'keyboard'>('pointer')
   const [online, setOnline] = useState(() => navigator.onLine)
   const sheet = useRef<HTMLDialogElement>(null)
@@ -153,13 +155,16 @@ export function CeihPage({
   const checkedCount = season.checks.filter(Boolean).length
   const checked = checkedCount === 3
   const gross = CEIH_EXAMPLE.projectedKg * CEIH_EXAMPLE.pricePerKg
-  const cap = (gross * season.percent) / 100
+  const cap = (gross * season.capRate) / 100
   const amount = Math.min(season.amount, cap)
   const preview = ceihLedger(gross, CEIH_EXAMPLE.inputLoan, amount)
   const ledger = ceihLedger(gross, CEIH_EXAMPLE.inputLoan, season.sent ? amount : 0)
   const completed = [checked, season.approved, season.sent, season.reconciled]
   const monze = findDistrict('Monze')!.center
-  const go = (next: CeihStep) => navigate({ page: 'ceih', step: next })
+  const go = (next: CeihStep) => {
+    setReviewFor(null)
+    navigate({ page: 'ceih', step: next })
+  }
   const update = (patch: Partial<Season>) => {
     const next = { ...season, ...patch }
     setSeason(next)
@@ -181,9 +186,6 @@ export function CeihPage({
       document.body.style.overflow = previous
     }
   }, [reviewOpen])
-  useEffect(() => {
-    setReviewOpen(false)
-  }, [step])
   useEffect(() => {
     const refresh = () => setOnline(navigator.onLine)
     window.addEventListener('online', refresh)
@@ -237,33 +239,43 @@ export function CeihPage({
         </div>
       </header>
       <main className="season-main">
-        <div className="season-account">
-          <div className="season-avatar" aria-hidden>
-            {step === 'crop' && cropMode === 'field' ? <Leaf size={18} aria-hidden /> : 'G'}
-          </div>
-          <div>
-            <strong>
-              {step === 'crop' && cropMode === 'field' ? 'My field evidence' : 'Given’s season'}
-            </strong>
-            <span>
-              {step === 'crop' && cropMode === 'field'
-                ? 'Boundaries · Sentinel-2 · field review'
-                : 'Soybeans · Monze · 2026/27'}
-            </span>
-          </div>
-          {!(step === 'crop' && cropMode === 'field') && (
-            <div className="season-demo-mode">
-              <DemoBadge rows={[{ sim: true }]} />
+        {!liveField && (
+          <div className="season-account">
+            <div className="season-avatar" aria-hidden>
+              {step === 'crop' && cropMode === 'field' ? <Leaf size={18} aria-hidden /> : 'G'}
             </div>
-          )}
-        </div>
+            <div>
+              <strong>
+                {step === 'crop' && cropMode === 'field' ? 'My field evidence' : 'Given’s season'}
+              </strong>
+              <span>
+                {step === 'crop' && cropMode === 'field'
+                  ? 'Boundaries · Sentinel-2 · field review'
+                  : 'Soybeans · Monze · 2026/27'}
+              </span>
+            </div>
+            {!(step === 'crop' && cropMode === 'field') && (
+              <div className="season-demo-mode">
+                <p>Simulated season</p>
+              </div>
+            )}
+          </div>
+        )}
         <div className="season-stage-heading">
           <div>
             <p>
-              {meta.letter} <span>/</span> {meta.month}
+              {liveField ? (
+                'Crop health · Zambia'
+              ) : (
+                <>
+                  {meta.letter} <span>/</span> {meta.month}
+                </>
+              )}
             </p>
             <h1>
-              {['Crop check', 'Eligible advance', 'Your advance', 'Harvest statement'][index]}
+              {liveField
+                ? 'My fields'
+                : ['Crop check', 'Eligible advance', 'Your advance', 'Harvest statement'][index]}
             </h1>
           </div>
           <span className="season-stage-count">
@@ -289,7 +301,7 @@ export function CeihPage({
           <>
             <section className="field-panel" aria-label="Example soybean field">
               <div className="field-map">
-                <TownMap center={monze} online={online} />
+                <TownMap center={monze} online={online} label="Monze, Zambia" />
                 <span className="field-map-label">
                   <MapPin size={13} aria-hidden /> Monze town overview
                 </span>
@@ -438,17 +450,17 @@ export function CeihPage({
               <p className="balance-caption">Available in this example</p>
               <Money amount={cap} large />
               <p className="balance-description">
-                {season.percent}% of your projected harvest value
+                {season.capRate}% of your projected harvest value
               </p>
               <div className="capital-allocation">
-                <span style={{ transform: `scaleX(${season.percent / 100})` }} />
+                <span style={{ transform: `scaleX(${season.capRate / 100})` }} />
               </div>
               <div className="capital-legend">
                 <span>
                   <i />
                   Advance limit
                 </span>
-                <span>{100 - season.percent}% reserved for harvest</span>
+                <span>{100 - season.capRate}% reserved for harvest</span>
               </div>
             </section>
             <section className="season-section">
@@ -491,27 +503,27 @@ export function CeihPage({
               <summary>
                 <SlidersHorizontal size={17} aria-hidden />
                 <span>Example cap policy</span>
-                <strong>{season.percent}%</strong>
+                <strong>{season.capRate}%</strong>
                 <ChevronRight size={15} aria-hidden />
               </summary>
               <p>
                 Explore the proposed 10–20% advance range. A live limit would be set by the lender.
               </p>
               <div className="policy-options" role="group" aria-label="Example advance cap">
-                {[10, 15, 20].map(percent => (
+                {[10, 15, 20].map(capRate => (
                   <button
-                    key={percent}
-                    aria-pressed={season.percent === percent}
+                    key={capRate}
+                    aria-pressed={season.capRate === capRate}
                     disabled={season.sent}
                     onClick={() =>
                       update({
-                        percent,
-                        amount: Math.min(amount, (gross * percent) / 100),
+                        capRate,
+                        amount: Math.min(amount, (gross * capRate) / 100),
                         approved: false,
                       })
                     }
                   >
-                    {percent}%
+                    {capRate}%
                   </button>
                 ))}
               </div>
