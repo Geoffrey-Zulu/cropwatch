@@ -1,7 +1,10 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono'
 import type { ZodError } from 'zod'
 import {
+  AlertsQuerySchema,
   CreateObservationRequestSchema,
+  districtSlug,
+  findDistrict,
   ObservationIdSchema,
   parsePhotoPath,
   VerifyRequestSchema,
@@ -9,16 +12,23 @@ import {
 } from '@repo/shared'
 import { bearerToken, type VerifyIdToken } from '../auth'
 import { errorFields, log } from '../lib/log'
+import type { ListAlerts } from '../services/alerts/alertReader'
 import type { ObservationStore } from '../services/firestoreObservations'
 import type { ProcessObservation } from '../services/pipeline'
 import { canReadObservation, type Caller } from '../services/observationModel'
+import { mountCeih, type CeihRestServices } from './ceih'
 
 export interface RestServices {
   version: string
   verifyIdToken: VerifyIdToken
   observations: ObservationStore
   process: ProcessObservation
+  alerts: ListAlerts
   now?: () => Date
+  // CEIH (31 Oct): the geofence link for new reports, and the season routes. Optional, so the
+  // outbreak path runs without them.
+  linkObservation?: (obsId: string) => Promise<void>
+  ceih?: CeihRestServices
 }
 
 type Env = { Variables: { caller: Caller } }
@@ -80,6 +90,9 @@ export function restV1(services: RestServices) {
     if (result.status === 'diagnosing' || result.status === 'recommending') {
       void startProcessing(request.obs_id)
     }
+    // A report inside a contracted field lands on that farmer's record; never holds the reply up.
+    if (result.kind === 'created' && services.linkObservation)
+      void services.linkObservation(request.obs_id)
     return c.json(
       { obs_id: request.obs_id, status: result.status },
       result.kind === 'created' ? 201 : 200
@@ -114,14 +127,26 @@ export function restV1(services: RestServices) {
         ? fail(c, 404, { error: 'not_found' })
         : fail(c, 403, { error: 'forbidden' })
     }
-    if (result.recommend) void startProcessing(id.data)
+    // Every verify re-runs the pipeline, not only when the advice must change: its outbreak step
+    // re-counts the cluster's verified reports, so the cluster's alert becomes a verified cluster
+    // alert when an officer confirms the AI's own issue (found 30 Oct: it never upgraded).
+    // Diagnosis and recommendation act only in their own status, so otherwise they do nothing.
+    void startProcessing(id.data)
     return c.json(result.record.view)
   })
 
-  // Frozen in the contract; built on later days (intervention/outcome D7, alerts D6).
+  // Frozen in the contract; built on D7 (intervention, outcome).
   app.post('/observations/:id/intervention', requireCaller, notImplemented)
   app.post('/observations/:id/outcome', requireCaller, notImplemented)
-  app.get('/alerts', requireCaller, notImplemented)
+  // District-level alerts, newest first. Any signed-in caller: alerts carry no farm locations.
+  app.get('/alerts', requireCaller, async c => {
+    const parsed = AlertsQuerySchema.safeParse({ district: c.req.query('district') })
+    if (!parsed.success) return validationFailed(c, parsed.error)
+    const slug = findDistrict(parsed.data.district)?.slug ?? districtSlug(parsed.data.district)
+    return c.json({ alerts: await services.alerts(slug) })
+  })
+
+  if (services.ceih) mountCeih(app, services.ceih, requireCaller)
 
   return app
 }

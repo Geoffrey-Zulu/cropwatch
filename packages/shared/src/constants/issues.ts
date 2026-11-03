@@ -30,7 +30,7 @@ export const ISSUE_LABELS: Record<(typeof ISSUES)[number], string> = {
   cassava_mosaic: 'Cassava mosaic disease',
   cassava_brown_streak: 'Cassava brown streak disease',
   maize_lethal_necrosis: 'Maize lethal necrosis',
-  unknown: 'Unknown — needs expert review',
+  unknown: 'Unknown: needs expert review',
 }
 
 export const KnownIssueSchema = z.enum(KNOWN_ISSUES).openapi('KnownIssue', {

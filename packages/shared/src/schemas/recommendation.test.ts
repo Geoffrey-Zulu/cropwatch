@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { RecommendationSchema } from './recommendation'
-import { RegisteredProductSchema, registeredProductDocId } from './registeredProduct'
+import { ChemicalOptionSchema, RecommendationSchema } from './recommendation'
+import {
+  PRODUCT_SOURCE_LABELS,
+  RegisteredProductSchema,
+  registeredProductDocId,
+} from './registeredProduct'
 
 const product = {
   registration_no: 'TEST-0001',
@@ -67,6 +71,7 @@ describe('RecommendationSchema', () => {
       'label_dose',
       'phi_days',
       'registration_no',
+      'source',
       'source_doc',
       'trade_name',
     ])
@@ -100,5 +105,25 @@ describe('product source', () => {
     expect(RegisteredProductSchema.safeParse({ ...product, source: 'placeholder' }).success).toBe(
       true
     )
+  })
+
+  it('accepts Plantwise PMDG rows, names the source and carries it into the chemical option', () => {
+    const pmdg = { ...product, source: 'plantwise_pmdg', registration_no: 'PMDG-TUTA-SPINOSAD' }
+    expect(RegisteredProductSchema.parse(pmdg).source).toBe('plantwise_pmdg')
+    expect(PRODUCT_SOURCE_LABELS.plantwise_pmdg).toBe('Plantwise Zambia PMDG')
+    expect(ChemicalOptionSchema.parse(pmdg).source).toBe('plantwise_pmdg')
+    // Options stored before the source field existed still parse.
+    const legacy: Record<string, unknown> = { ...ChemicalOptionSchema.parse(pmdg) }
+    delete legacy.source
+    expect(ChemicalOptionSchema.safeParse(legacy).success).toBe(true)
+  })
+
+  it('records who spot-checked a row, optionally', () => {
+    expect(RegisteredProductSchema.parse(product).verified_by).toBeUndefined()
+    expect(RegisteredProductSchema.parse({ ...product, verified_by: null }).verified_by).toBeNull()
+    expect(RegisteredProductSchema.parse({ ...product, verified_by: 'geoffrey' }).verified_by).toBe(
+      'geoffrey'
+    )
+    expect(RegisteredProductSchema.safeParse({ ...product, verified_by: '' }).success).toBe(false)
   })
 })

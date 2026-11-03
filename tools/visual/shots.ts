@@ -1,0 +1,316 @@
+// The visual pass (docs/demo-ops.md, "Quality gate"): screenshots every Command Center and
+// capture view at laptop and phone widths from the dev previews, and runs the checks a person
+// would otherwise have to catch by eye. Every shot is still looked at before a tag.
+//
+//   pnpm --filter web dev        (VITE_FEATURE_SCENARIO=true, port 5173)
+//   pnpm --filter capture dev    (port 5174)
+//   pnpm --filter @repo/visual shots --out docs/ui-review/<name> [--photo leaf.jpg] [--only map,queue]
+//
+// Uses the installed Chrome (no browser download). The previews render from seed fixtures with
+// the API mocked, so a pass needs no sign-in and touches no live data.
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { chromium, type Page } from 'playwright'
+
+const args = process.argv.slice(2).filter(arg => arg !== '--')
+const flag = (name: string) => {
+  const i = args.indexOf(`--${name}`)
+  return i >= 0 ? args[i + 1] : undefined
+}
+const root = process.env.INIT_CWD ?? process.cwd()
+const out = resolve(root, flag('out') ?? 'visual-out')
+const dashboard = flag('dashboard') ?? 'http://localhost:5173'
+const capture = flag('capture') ?? 'http://localhost:5174'
+const photo = flag('photo') ? resolve(root, flag('photo')!) : null
+const only = flag('only')?.split(',')
+
+interface Size {
+  label: string
+  width: number
+  height: number
+}
+
+interface View {
+  name: string
+  app: 'dashboard' | 'capture'
+  route: string
+  prepare?: (page: Page) => Promise<void>
+  // Shot at these sizes as well as laptop and phone.
+  extra?: Size[]
+}
+
+// The national map is the projector view: a mirrored laptop at 1280 x 800 and a 1080p screen.
+const PROJECTOR: Size[] = [
+  { label: 'projector-1280', width: 1280, height: 800 },
+  { label: 'projector-1920', width: 1920, height: 1080 },
+]
+
+const VIEWS: View[] = [
+  { name: 'capture-1-camera', app: 'capture', route: 'diagnose' },
+  {
+    name: 'capture-2-diagnose-ready',
+    app: 'capture',
+    route: 'diagnose',
+    prepare: async page => {
+      if (photo) await page.locator('input[type=file]:not([capture])').setInputFiles(photo)
+      await page.locator('input[value="tomato"]').check({ force: true })
+      await page.locator('#district').selectOption('Chongwe')
+      await page.waitForTimeout(800)
+    },
+  },
+  { name: 'capture-3-report-sent', app: 'capture', route: 'sent' },
+  { name: 'capture-4-result-advice', app: 'capture', route: 'result' },
+  { name: 'capture-5-result-officer', app: 'capture', route: 'officer' },
+  { name: 'capture-6-home-alerts', app: 'capture', route: 'home' },
+  // CEIH (1 Nov): the agribusiness's three screens, from tools/seed/ceih-fixtures.ts. The farmer
+  // app has its own player: farmer-shot.ts.
+  {
+    name: 'dashboard-fields-map',
+    app: 'dashboard',
+    route: 'fields',
+    extra: PROJECTOR,
+    // Imagery from Esri: wait for the fly into Chikuni and the tiles.
+    prepare: async page => {
+      await page.locator('.fm-lit').waitFor({ timeout: 20_000 })
+      await page.waitForTimeout(6000)
+    },
+  },
+  {
+    name: 'dashboard-fields-map-field',
+    app: 'dashboard',
+    route: 'fields',
+    extra: PROJECTOR,
+    // Given's field pressed: his field card in the drawer.
+    prepare: async page => {
+      await page.waitForTimeout(3000)
+      await page.locator('.fm-hero').dispatchEvent('click')
+      await page.getByText('Greenness from space').waitFor()
+      await page.waitForTimeout(1500)
+    },
+  },
+  {
+    name: 'dashboard-fields-map-shock',
+    app: 'dashboard',
+    route: 'fields?june',
+    extra: PROJECTOR,
+    // After the drought rule: Hamangaba's fields in brick.
+    prepare: async page => {
+      await page.waitForTimeout(3000)
+      await page.getByRole('button', { name: 'Hamangaba', exact: true }).click()
+      // Not networkidle: the tile prefetch keeps the network busy.
+      await page.waitForTimeout(5000)
+    },
+  },
+  { name: 'dashboard-season-ledger', app: 'dashboard', route: 'season', extra: PROJECTOR },
+  {
+    name: 'dashboard-loan-check',
+    app: 'dashboard',
+    route: 'season',
+    extra: PROJECTOR,
+    // The hunger-month loan check, skipped to its verdict (every stage on screen).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Run check' }).first().click()
+      await page.getByRole('button', { name: 'Skip' }).click()
+      await page.waitForTimeout(2600)
+    },
+  },
+  {
+    name: 'dashboard-season-reconciliation',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+  },
+  {
+    name: 'dashboard-reconciliation-run',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The batch run to its end: every ready farmer resolved, the summary and the payout button.
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Start reconciliation' }).click()
+      await page.waitForTimeout(11_000)
+    },
+  },
+  {
+    name: 'dashboard-reconciliation-sent',
+    app: 'dashboard',
+    route: 'reconciliation',
+    extra: PROJECTOR,
+    // The payout request confirmed and sent (simulated).
+    prepare: async page => {
+      await page.getByRole('button', { name: 'Start reconciliation' }).click()
+      await page.getByRole('button', { name: 'Skip' }).click()
+      await page.getByRole('button', { name: 'Request bulk payment' }).click()
+      await page.getByRole('button', { name: 'Send bulk payment' }).click()
+      await page.waitForTimeout(1500)
+    },
+  },
+]
+
+const WIDTHS: Size[] = [
+  { label: 'laptop', width: 1440, height: 900 },
+  { label: 'phone', width: 390, height: 844 },
+]
+
+// What a person would catch by eye, measured: page overflow, clipped text, and parts of a
+// control drawn outside the control (the scenario toggle's knob on 29 Oct).
+// The box and colour budget is the Command Center's (patterns-v2.md); the capture app keeps
+// its own design system (MASTER.md), so it is measured only for dashboard views.
+async function check(page: Page, width: number, budget: boolean) {
+  return page.evaluate(
+    ([w, measure]) => {
+      const issues: string[] = []
+      const scrollWidth = document.documentElement.scrollWidth
+      if (scrollWidth > w + 1) issues.push(`page scrolls sideways: ${scrollWidth} px wide`)
+      const describe = (el: Element) =>
+        `${el.tagName.toLowerCase()}${el.getAttribute('role') ? `[role=${el.getAttribute('role')}]` : ''} "${(el.textContent ?? '').trim().slice(0, 40)}"`
+      for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+        const style = getComputedStyle(el)
+        if (style.visibility === 'hidden' || style.display === 'none') continue
+        if (el.closest('svg') || el.closest('[data-visual-scroll]')) continue
+        // Screen-reader-only text is clipped on purpose.
+        if (el.getBoundingClientRect().width <= 1 || style.clip === 'rect(0px, 0px, 0px, 0px)')
+          continue
+        const text = (el.textContent ?? '').trim()
+        if (
+          text &&
+          el.children.length === 0 &&
+          (style.textOverflow === 'ellipsis' || style.overflowX === 'hidden') &&
+          el.scrollWidth > el.clientWidth + 1
+        )
+          issues.push(`clipped text: ${describe(el)}`)
+      }
+      for (const control of document.querySelectorAll<HTMLElement>(
+        'button, [role=switch], [role=tab], a.btn-primary, a.btn-quiet'
+      )) {
+        const box = control.getBoundingClientRect()
+        if (box.width === 0 && box.height === 0) continue
+        for (const part of control.querySelectorAll<HTMLElement>('*')) {
+          const r = part.getBoundingClientRect()
+          if (r.width === 0 && r.height === 0) continue
+          if (
+            r.left < box.left - 1 ||
+            r.right > box.right + 1 ||
+            r.top < box.top - 1 ||
+            r.bottom > box.bottom + 1
+          ) {
+            issues.push(`part outside its control: ${describe(control)}`)
+            break
+          }
+        }
+      }
+      // patterns-v2.md decision 3, measured in the viewport: bordered boxes (3 or 4 sides) and
+      // non-neutral hue families (30-degree buckets) across text, fills, borders and SVG.
+      const rgb = (v: string) => {
+        const m = /rgba?\(([^)]+)\)/.exec(v)
+        if (!m) return null
+        const [r, g, b, a = 1] = m[1]
+          .split(/[\s,/]+/)
+          .filter(Boolean)
+          .map(Number)
+        return a === 0 ? null : { r: r / 255, g: g / 255, b: b / 255 }
+      }
+      const hue = (c: { r: number; g: number; b: number }) => {
+        const max = Math.max(c.r, c.g, c.b)
+        const min = Math.min(c.r, c.g, c.b)
+        const l = (max + min) / 2
+        const d = max - min
+        const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
+        if (sat < 0.25 || l < 0.12 || l > 0.94) return null
+        const h =
+          max === c.r
+            ? ((c.g - c.b) / d) % 6
+            : max === c.g
+              ? (c.b - c.r) / d + 2
+              : (c.r - c.g) / d + 4
+        return Math.floor(((((h * 60) % 360) + 360) % 360) / 30)
+      }
+      let boxes = 0
+      const hues = new Set<number>()
+      for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+        const r = el.getBoundingClientRect()
+        if (r.width < 1 || r.height < 1 || r.bottom <= 0 || r.top >= innerHeight) continue
+        const cs = getComputedStyle(el)
+        if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0)
+          continue
+        let sides = 0
+        for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
+          const w = parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`))
+          const c = rgb(cs.getPropertyValue(`border-${side.toLowerCase()}-color`))
+          if (w > 0 && c) sides++
+        }
+        if (sides >= 3) boxes++
+        for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke]) {
+          const c = v && v !== 'none' ? rgb(v) : null
+          const h = c ? hue(c) : null
+          // Mockup A's field greens (accent, land, coastline) span 60 to 150 degrees: one family.
+          if (h !== null) hues.add(h >= 2 && h <= 4 ? 2 : h)
+        }
+      }
+      if (measure && boxes > 8) issues.push(`${boxes} bordered boxes in view (decision 3 allows 8)`)
+      if (measure && hues.size > 3)
+        issues.push(`${hues.size} hue families in view (decision 3 allows 3)`)
+      return issues
+    },
+    [width, budget] as const
+  )
+}
+
+const browser = await chromium.launch({
+  channel: 'chrome',
+  args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+})
+mkdirSync(out, { recursive: true })
+const report: string[] = [`# Visual pass`, '', `${new Date().toISOString()}`, '']
+let problems = 0
+for (const view of VIEWS.filter(v => !only || only.includes(v.name) || only.includes(v.route))) {
+  for (const size of [...WIDTHS, ...(view.extra ?? [])]) {
+    const context = await browser.newContext({
+      viewport: { width: size.width, height: size.height },
+      deviceScaleFactor: size.label === 'phone' ? 2 : 1,
+      isMobile: size.label === 'phone',
+      hasTouch: size.label === 'phone',
+      permissions: ['camera'],
+    })
+    // tsx names functions with a __name helper that does not exist inside the page.
+    await context.addInitScript({ content: 'globalThis.__name = f => f' })
+    const page = await context.newPage()
+    const errors: string[] = []
+    page.on('pageerror', e => errors.push(`page error: ${e.message}`))
+    page.on('console', async m => {
+      if (m.type() !== 'error') return
+      // The previews have no sign-in, so Storage refuses report photos (the drawer then shows
+      // its "could not be loaded" frame): expected here, never in the signed-in app.
+      if (m.location().url.includes('firebasestorage.googleapis.com')) return
+      const details = await Promise.all(m.args().map(a => a.jsonValue().catch(() => '')))
+      errors.push(`console: ${details.map(String).join(' ').replace(/\s+/g, ' ').slice(0, 600)}`)
+    })
+    const base = view.app === 'dashboard' ? dashboard : capture
+    await page.goto(`${base}/?shot=${view.name}#/preview/${view.route}`)
+    await page.waitForFunction(() => document.body.innerText.length > 40, null, { timeout: 30_000 })
+    await page.waitForTimeout(2500)
+    if (view.prepare) await view.prepare(page)
+    const issues = [...(await check(page, size.width, view.app === 'dashboard')), ...errors]
+    const file = `${view.name}-${size.label}.png`
+    // Stretch the viewport to the page so fixed bars sit at the bottom, as on a device, instead
+    // of floating mid-page in a full-page capture.
+    const height = await page.evaluate(() => document.documentElement.scrollHeight)
+    await page.setViewportSize({
+      width: size.width,
+      height: Math.min(Math.max(height, size.height), 8000),
+    })
+    await page.waitForTimeout(400)
+    await page.screenshot({ path: resolve(out, file) })
+    problems += issues.length
+    report.push(`- **${file}**: ${issues.length ? issues.join('; ') : 'ok'}`)
+    console.log(
+      `${file}  ${issues.length ? `${issues.length} issue(s)\n    ${issues.join('\n    ')}` : 'ok'}`
+    )
+    await context.close()
+  }
+}
+await browser.close()
+writeFileSync(resolve(out, 'visual-pass.md'), `${report.join('\n')}\n`)
+console.log(
+  `\n${problems ? `${problems} issue(s)` : 'no issues'}; screenshots and visual-pass.md in ${out}`
+)

@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "seed": "tsx seed.ts",
+    "tables": "tsx tables.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "upload-photos": "tsx upload-photos.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

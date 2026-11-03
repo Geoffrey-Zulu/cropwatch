@@ -1,6 +1,6 @@
-# CLAUDE.md — CropWatch repo instructions
+# CLAUDE.md — Phytos repo instructions
 
-CropWatch: early-warning and crop-health intelligence platform for Zambia. GreenCode Hackathon (Lusaka, 30 Oct – 1 Nov 2026). Read `docs/buildplan.md` (schedule, work packages, acceptance criteria) and `docs/technicaldoc.md` (data model, contracts, corpus, demo runbook) before building anything. Where they conflict, buildplan.md wins.
+Phytos (Team Phytos; formerly CropWatch): the verification and ledger layer for outgrower agribusinesses in Zambia (CEIH, four screens; it grew from a crop-health early-warning prototype). GreenCode Hackathon (Lusaka, 30 Oct – 1 Nov 2026). Read `docs/buildplan.md` (schedule, work packages, acceptance criteria) and `docs/technicaldoc.md` (data model, contracts, corpus, demo runbook) before building anything. Where they conflict, buildplan.md wins.
 
 ## Invariants — never violate, even under time pressure
 
@@ -8,10 +8,21 @@ CropWatch: early-warning and crop-health intelligence platform for Zambia. Green
 2. No numeric outbreak probabilities anywhere. Risk is a qualitative prototype signal (LOW / ELEVATED / HIGH) with contributing factors always displayed.
 3. `model_confidence` is internal. UI shows qualitative bands ("AI assessment: high confidence"), never percentages, never the word "probability".
 4. Low confidence (< 0.6) or `suspected_issue == "unknown"` → `needs_expert_review: true` and the officer queue. Never guess.
-5. Every synthetic row carries `sim: true`; any view displaying a sim row renders the `DemoBadge` ("DEMO DATA — SIMULATED").
-6. Farmer-level data: consented, access-controlled; precise locations never appear in Outgrower/commercial views — aggregates and camp/district level only.
+5. **(Amended 1 Nov, Geoffrey's decision.)** Every synthetic row carries `sim: true`. The screens mark a simulated season quietly and honestly: the word "simulated" on disbursement, payout and insurance-payout lines (the farmer app: on its money lines), and the data source lines ("Greenness: Sentinel-2 (simulated season)"). The season line next to the season day reads "Season 2026/27" without "Simulated" (Geoffrey, 1 Nov afternoon), on the Season ledger and Reconciliation; the Fields map, the first page, carries the org name alone. No hatched DEMO pills, and no "demo", "DEMO DATA" or "prototype" in rendered copy. Exports keep their `simulated` column.
+6. **(Amended 31 Oct, CEIH.)** Farmer-level data is visible to the farmer's own contracting agribusiness under recorded contract consent (`consent.scope == "org_contract"`). Precise locations remain hidden from any other organisation, from insurers and from exports; those receive camp/district aggregates only.
 7. Use the Google Gen AI SDK (`google-genai`). Never `vertexai.generative_models` (deprecated).
 8. "Where to buy" lists ALL registered options for the issue, renders only after the recommendation, never sponsor-filtered.
+9. Never imply auto-learning. Officer-verified observations are evaluation data: "every correction becomes a test case". Never claim the model learns or improves from corrections.
+10. Every alert shows its class (weather advisory / verified cluster alert / model risk signal) with its uncertainty wording (`alertUncertainty` in `packages/shared`). "Verified" means at least one report in it was verified by an officer, nothing less.
+11. **(New 31 Oct, CEIH; numbered 9 in the spec. Amended 1 Nov, Geoffrey's decision.)** Phytos never moves money without (a) passed rule checks, against the season rules and caps the agribusiness pre-set, (b) a ledger entry, and (c) the provider, the SimulatedProvider while simulated. The farmer asks for an advance himself and sees the amount and the fee before the send completes. The human approval step is replaced by those pre-approved season rules: within the cap, disbursement is automatic, and no queue waits for a second person. No exceptions for the demo.
+12. **(New 31 Oct, CEIH; numbered 10 in the spec.)** Eligibility and shock decisions are rule-based with stored, displayed factors. No model decides who gets money. Satellite signals are thresholds on NDVI against calendar and camp median, with every pass stored; no "AI crop health score".
+
+**The product is two apps (1 Nov afternoon, Geoffrey's decision).** The agribusiness app has three screens: Fields map, Season ledger (informational: no request or approval actions; the loan check still runs on any farmer) and Reconciliation (a batch: start, the roster ready or not yet, the run, one payout request). Sign-in lands on the Fields map. The Approvals screen was deleted. The farmer app (`apps/web/farmer.html`, its own Hosting site) has no login: it boots into one simulated farmer, Given, from a snapshot baked into the bundle, keeps all state in memory (a refresh resets it) and never reads or writes the live season. Before that, the product was four screens (Fields map, Season ledger, Approvals, Reconciliation): tag `ceih-final-2`. The National map, Officer queue, Dry-spell scenario and Knowledge sources were deleted, with their demo check: they live at tag `pre-ceih-only` and in branch history only. The season engine's inputs stay (the observation model, the diagnose and verify endpoints, the ground-check path, the seed, the SMS log); the capture app stays deployed, unlinked. Invariants 1, 3, 4, 8 and 10 govern those retained paths.
+
+**CEIH pivot (31 Oct, mentor decision; `docs/ceih-workflows-mvp.md`, sequenced by `docs/ceih-overnight-plan.md`, which wins where they disagree).**
+
+- Technicaldoc §3 ("Earth Engine is architecture, not MVP critical path") is superseded for the demo fields by the CEIH spec §3.6, and technicaldoc §11 item 4 ("no loan-exposure figures") by spec §3.4: exposure figures are now the point, marked as a simulated season while simulated (invariant 5).
+- Invariant 2 (no numeric probabilities) is untouched. NDVI values, ZMW amounts, hectares and dates are measurements and amounts, not probabilities; they display as figures. No scores, no percentages of confidence, anywhere.
 
 ## Environment
 
@@ -30,14 +41,36 @@ CropWatch: early-warning and crop-health intelligence platform for Zambia. Green
 ## This repo's template (identified 2026-10-21 — do not re-derive)
 
 - This is the **React/Vite + Firebase Hytel template** (`hytel-react-boilerplate`): Vite + React 18 in `apps/web`, tRPC 11 library in `apps/functions`, imports scoped `@repo/*`, pnpm 12, Node ≥ 24, Tailwind 3, Vitest. Judge structure against THIS template only.
-- **Known template gaps — resolve as Day 1 work, they are not breakage:** no `firebase.json`, no Firestore/Storage rules, `apps/web/src` has no `pages/` or `sections/` yet (create them), `.env.example` carries placeholder entries (replace with CropWatch vars), and `apps/functions` has no server/deploy entrypoint.
+- **Known template gaps — resolve as Day 1 work, they are not breakage:** no `firebase.json`, no Firestore/Storage rules, `apps/web/src` has no `pages/` or `sections/` yet (create them), `.env.example` carries placeholder entries (replace with Phytos vars), and `apps/functions` has no server/deploy entrypoint.
 - **Backend deploy decision:** `apps/functions` stays a tRPC router library; add a server entrypoint (Hono) that serves tRPC at `/trpc` and the mobile REST adapter at `/api/v1`, containerize it, deploy to **Cloud Run** via an idempotent `infra/deploy.sh`. Do NOT use the template's Firebase-Functions bundling path, and ignore the `deploy-dev/stage/main` WIF workflows for the hackathon (leave the files; keep `ci.yml` running lint/typecheck/build/test).
 - buildplan.md D1's "scaffold repo from Hytel template" is DONE (this repo). D1 now means: the gap-resolution above + `infra/setup.sh` + schemas v0.
 
+## Brand and copy (rebrand 28 Oct 2026)
+
+- The product is **Phytos** (Team Phytos), formerly CropWatch. Every user-facing surface says Phytos: apps, manifests, page titles, push and SMS templates ("Phytos DEMO alert"), docs.
+- **Infrastructure keeps its names**: GCP project `crop-watch01`, Cloud Run `cropwatch-api`, topic `cropwatch.alerts`, BigQuery dataset `cropwatch`, buckets, secrets, the repo. Never rename infrastructure for the brand.
+- Versioned prompts (`prompts/*-v1.md`) still say CropWatch: they are model-facing and stamped by version; rename only in a new prompt version.
+- **No em dashes in any UI copy** (rendered strings, notifications, SMS). Use a colon, a full stop or a middle dot. Model-written text goes through `withoutEmDash` for display (never a label dose).
+- **Design (rebuild, 31 Oct).** Both apps follow **mockup A "Field-airy"**: the contract is `apps/web/public/mockups/a-field-airy.html`, and its tokens live in `apps/web/src/style.css` (`theme-field`) and `apps/capture/src/style.css` (see `design-system/phytos/MASTER.md`, "Field-airy reskin").
+  - **The look:** a cream canvas, white islands with layered shadows, one field-green accent (`#2D5B39`), brick for High and hatched maize for Elevated, Figtree for UI text, Fraunces for titles and figures.
+  - **The national map is the page:** the islands float over it.
+  - **Motion comes from mockup B:** fly-to on the region toggle and on a pressed district, rings breathing, fills fading, figures counting up. 250 to 400 ms, ease-out, no bounce, and honouring prefers-reduced-motion.
+  - **Kept from the polish:** no question line under titles; the simulated-season marker on the data, never in the chrome (invariant 5); shimmer skeletons, with a spinner only inside a busy button; Lucide icons.
+  - Every deploy runs `pnpm --filter @repo/visual shots` (laptop and phone, all views), and every shot is looked at before a tag.
+- **UI window (changed 30 Oct evening, Geoffrey's call: full UI rebuild, mockup first).** In this order:
+  1. The backup recordings are made on the stable version: tag `stable-2026-10-30c` (`Desktop/Phytos backup recordings 2026-10-30/`).
+  2. Seed realism pass: real photos on reports, Zambian names, varied descriptions; demo check after the reseed.
+  3. Three static National Map mockups at `/mockups` (A field-airy, B ops console, C modern product).
+  4. Geoffrey picks one on Saturday morning. Every dashboard view is then rebuilt to it **exactly**: the mockup is the contract, with no interpretation. The capture app is reskinned to the chosen direction with its flow unchanged. Demo-path logic stays untouched; the demo check runs after every deploy.
+  5. **Absolute freeze Sunday 1 Nov 09:00.** If the rebuild is not complete, redeploy `stable-2026-10-30c` and present that, with the recordings as backup.
+- **Register rows from a Plantwise PMDG** (`source: plantwise_pmdg`) show "Source: Plantwise Zambia PMDG" and "Dose (from the guide)"; their `PMDG-…` id is never shown as a registration number.
+- **Grounded language**: a prototype, not a platform. Since 30 Oct the word "prototype" is not in UI copy; signals are "risk signals from reports, not a forecast"; models "assess", officers "verify". No "predicts", "revolutionary", "AI-powered platform".
+
 ## Conventions
 
-- Hytel Way monorepo: pnpm + Turborepo. Reusable UI → `packages/ui`; app-specific → `apps/web/src/components`; pages `*Page.tsx`; sections `*Section.tsx`; hooks `use*`; tRPC routers in `apps/functions/src/trpc/routers/`; every schema/type shared by FE+BE lives in `packages/shared` as Zod + `z.infer`; import scope is `@repo/*` (matches this repo), e.g. `import { ObservationSchema } from '@repo/shared'`.
-- `apps/mobile` (Flutter) is in the repo but OUTSIDE the pnpm workspace. Never import from it; it consumes only `packages/shared/src/contracts/openapi.json`.
+- Hytel Way monorepo: pnpm + Turborepo. Reusable UI → `packages/ui`; app-specific → `apps/<app>/src/components`; pages `*Page.tsx`; sections `*Section.tsx`; hooks `use*`; tRPC routers in `apps/functions/src/trpc/routers/`; every schema/type shared by FE+BE lives in `packages/shared` as Zod + `z.infer`; import scope is `@repo/*` (matches this repo), e.g. `import { ObservationSchema } from '@repo/shared'`.
+- `apps/capture` (Vite + React PWA) is the **primary demo client** and is IN the pnpm workspace. It consumes the frozen `/api/v1` contract and Firestore listeners exactly as the mobile app would (no new endpoints, no contract changes) and follows the Phytos "Field Signal" design system (`design-system/phytos/MASTER.md` and `philosophy.md`, tokens in `packages/ui/theme/phytos.css`) in its day exposure. The app opens straight to the camera. Deployed to its own Hosting site by `infra/deploy.sh`.
+- `apps/mobile` (Flutter) is unchanged: in the repo but OUTSIDE the pnpm workspace, no longer schedule-critical. Never import from it; it consumes only `packages/shared/src/contracts/openapi.json`.
 - **Contract freeze:** after Day 2, `packages/shared/src/contracts/openapi.json` and the `/api/v1` REST surface only gain optional fields — no renames, no removals, no type changes. Regenerate the file from Zod on any additive change and commit it.
 - Controlled vocabulary for crops/issues lives in `packages/shared/src/constants/` — the Gemini response schema, the regulatory DB and the dashboard all reference it; never free-string an issue name.
 - Versioned prompts in `prompts/`; stamp `prompt_version` and `model_id` on every diagnosis written.

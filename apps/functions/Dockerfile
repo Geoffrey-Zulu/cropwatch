@@ -1,4 +1,4 @@
-# CropWatch API (Hono: /trpc, /api/v1, /internal/events) for Cloud Run.
+# Phytos API (Hono: /trpc, /api/v1, /internal/events) for Cloud Run.
 # Build from the repo root, since the server bundles workspace packages:
 #   docker build -f apps/functions/Dockerfile -t cropwatch-api .
 # infra/deploy.sh builds it with Cloud Build.

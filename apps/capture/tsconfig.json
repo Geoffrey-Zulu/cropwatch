@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/config/tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vitest/globals", "vite-plugin-pwa/client"]
+  },
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["src/sw.ts"]
+}

@@ -80,12 +80,21 @@ export function decodeFields(fields: Record<string, Encoded>) {
 
 export const documentName = (path: string) => `${ROOT}/${path}`
 
-export type Write = { set: string; data: { [key: string]: FsValue } } | { delete: string }
+// set replaces the document; patch changes only the fields given.
+export type Write =
+  | { set: string; data: { [key: string]: FsValue } }
+  | { patch: string; data: { [key: string]: FsValue } }
+  | { delete: string }
 
 export function toRestWrite(write: Write) {
-  return 'set' in write
-    ? { update: { name: documentName(write.set), fields: encodeFields(write.data) } }
-    : { delete: documentName(write.delete) }
+  if ('set' in write)
+    return { update: { name: documentName(write.set), fields: encodeFields(write.data) } }
+  if ('patch' in write)
+    return {
+      update: { name: documentName(write.patch), fields: encodeFields(write.data) },
+      updateMask: { fieldPaths: Object.keys(write.data) },
+    }
+  return { delete: documentName(write.delete) }
 }
 
 // Commits in batches of 500. Each batch is atomic; the whole run is not.
@@ -114,6 +123,40 @@ export async function queryPaths(collection: string, field: string, value: FsVal
   })
   const rows = (await response.json()) as { document?: { name: string } }[]
   return rows.flatMap(row => (row.document ? [row.document.name.slice(ROOT.length + 1)] : []))
+}
+
+// Documents in a collection where the array `field` holds any of `values` (at most 30, a
+// Firestore limit), decoded.
+export async function queryArrayContainsAny(collection: string, field: string, values: string[]) {
+  const documents: { path: string; data: Record<string, unknown> }[] = []
+  for (let i = 0; i < values.length; i += 30) {
+    const response = await gcpFetch(`${API}:runQuery`, {
+      method: 'POST',
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: collection }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: field },
+              op: 'ARRAY_CONTAINS_ANY',
+              value: encodeValue(values.slice(i, i + 30)),
+            },
+          },
+        },
+      }),
+    })
+    const rows = (await response.json()) as {
+      document?: { name: string; fields?: Record<string, Encoded> }
+    }[]
+    for (const { document } of rows) {
+      if (document && !documents.some(d => d.path === document.name.slice(ROOT.length + 1)))
+        documents.push({
+          path: document.name.slice(ROOT.length + 1),
+          data: decodeFields(document.fields ?? {}),
+        })
+    }
+  }
+  return documents
 }
 
 // Every document in a collection, decoded.

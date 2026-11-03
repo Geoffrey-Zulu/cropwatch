@@ -6,3 +6,16 @@ export * from './constants'
 
 // Geography helpers
 export * from './geo'
+
+// Risk Model v0: cluster rule and district risk signal (prototype, qualitative)
+export * from './risk'
+
+// Display text helpers (no em dashes in UI copy)
+export * from './text'
+
+// Weather context (Open-Meteo) for Risk Model v0 and weather advisories
+export * from './weather'
+export * from './fieldEvidence'
+
+// CEIH: eligibility, advances, ledger, satellite curves and the shock rule (pure)
+export * from './ceih'

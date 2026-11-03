@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "load-products": "tsx load-products.ts",
+    "mark-verified": "tsx mark-verified.ts",
     "lint": "eslint \"*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

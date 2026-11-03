@@ -1,8 +1,9 @@
 import { RegisteredProductSchema, type RegisteredProduct } from '@repo/shared'
 import { parseCsv } from './csv'
 
-// The register CSV: one row per registered product, columns in this order. List columns
-// (approved_crops, approved_issues) are semicolon-separated slugs; an empty expiry means none.
+// The register CSV: one row per registered product, columns in this order, optionally followed
+// by verified_by. List columns (approved_crops, approved_issues) are semicolon-separated slugs;
+// an empty expiry means none; an empty verified_by means not yet spot-checked.
 export const COLUMNS = [
   'registration_no',
   'trade_name',
@@ -17,6 +18,7 @@ export const COLUMNS = [
   'source_doc',
   'expiry',
 ] as const
+export const VERIFIED_BY = 'verified_by'
 
 export interface ParsedProducts {
   products: RegisteredProduct[]
@@ -33,8 +35,12 @@ const list = (cell: string) =>
 // (the header is row 1).
 export function parseProductsCsv(text: string): ParsedProducts {
   const [header, ...rows] = parseCsv(text).filter(row => row.some(cell => cell !== ''))
-  if (!header || header.join(',') !== COLUMNS.join(',')) {
-    return { products: [], errors: [`Header must be exactly: ${COLUMNS.join(',')}`] }
+  const withVerifiedBy = header?.join(',') === [...COLUMNS, VERIFIED_BY].join(',')
+  if (!header || (header.join(',') !== COLUMNS.join(',') && !withVerifiedBy)) {
+    return {
+      products: [],
+      errors: [`Header must be exactly: ${COLUMNS.join(',')} (optionally then ,${VERIFIED_BY})`],
+    }
   }
 
   const products: RegisteredProduct[] = []
@@ -43,8 +49,8 @@ export function parseProductsCsv(text: string): ParsedProducts {
 
   rows.forEach((cells, index) => {
     const line = index + 2
-    if (cells.length !== COLUMNS.length) {
-      errors.push(`Row ${line}: expected ${COLUMNS.length} columns, found ${cells.length}`)
+    if (cells.length !== header.length) {
+      errors.push(`Row ${line}: expected ${header.length} columns, found ${cells.length}`)
       return
     }
     const cell = Object.fromEntries(COLUMNS.map((name, i) => [name, cells[i]])) as Record<
@@ -66,6 +72,7 @@ export function parseProductsCsv(text: string): ParsedProducts {
       source: cell.source.trim(),
       source_doc: cell.source_doc.trim(),
       expiry: cell.expiry.trim() || null,
+      verified_by: withVerifiedBy ? cells[COLUMNS.length].trim() || null : null,
     })
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -85,4 +92,29 @@ export function parseProductsCsv(text: string): ParsedProducts {
   })
 
   return { products, errors }
+}
+
+// Sets verified_by on the rows whose registration_no is in `ids`, touching nothing else in the
+// file (label_dose stays byte-identical). The CSV must carry the verified_by column.
+export function markVerified(text: string, ids: string[], by: string) {
+  if (!/^[a-z][a-z0-9_.-]*$/i.test(by)) throw new Error(`verified_by must be a plain name: ${by}`)
+  const lines = text.split(/(?<=\n)/)
+  if (!parseCsv(lines[0] ?? '')[0]?.includes(VERIFIED_BY)) {
+    throw new Error(`The CSV has no ${VERIFIED_BY} column`)
+  }
+  const found = new Set<string>()
+  let changed = 0
+  const out = lines.map((line, i) => {
+    const id = i === 0 ? undefined : ids.find(candidate => line.startsWith(`${candidate},`))
+    if (!id) return line
+    found.add(id)
+    return line.replace(/,([^,"\r\n]*)(\r?\n)?$/, (_, current: string, end = '') => {
+      if (current !== by) changed++
+      return `,${by}${end}`
+    })
+  })
+  const result = out.join('')
+  const { errors } = parseProductsCsv(result)
+  if (errors.length) throw new Error(errors.join('\n'))
+  return { text: result, changed, missing: ids.filter(id => !found.has(id)) }
 }

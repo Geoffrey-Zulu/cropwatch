@@ -4,8 +4,9 @@
 //   pnpm --filter @repo/regulatory-tools load-products <file.csv>            (dry run: plan only)
 //   pnpm --filter @repo/regulatory-tools load-products <file.csv> --commit
 //
-// Start from placeholder-products.csv; Geoffrey's rows from the MoA FAW-manual annex / ZEMA
-// replace it (source: zema | label | moa_faw_manual).
+// The live register is pmdg-products.csv (source: plantwise_pmdg, from the Zambian Plantwise
+// PMDGs); label, ZEMA or MoA-manual rows join it in the same file. placeholder-products.csv is
+// test data only: loading the PMDG file removes its rows. Spot-checks: mark-verified.ts.
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
@@ -45,6 +46,8 @@ const coverage = [
 console.log(`${file}: ${products.length} valid product(s)`)
 console.log(`  sources: ${bySource.map(([s, n]) => `${s} ${n}`).join(', ')}`)
 console.log(`  crop/issue pairs: ${coverage.join(', ')}`)
+const verified = products.filter(p => p.verified_by)
+console.log(`  spot-checked: ${verified.length} of ${products.length}`)
 const expired = products.filter(
   p => p.expiry !== null && p.expiry < new Date().toISOString().slice(0, 10)
 )

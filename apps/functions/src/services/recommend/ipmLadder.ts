@@ -10,9 +10,10 @@ import { IPM_RUNGS, type KnowledgeLayer, type KnowledgeResult } from './knowledg
 import { filterChemicalCandidates, type FilterResult, type Rejection } from './regulatoryFilter'
 
 // The chemical rung is always written here, never taken from retrieved text, so no model or
-// document ever supplies a dose: doses appear only as label_dose on the listed products.
+// document ever supplies a dose: doses appear only as label_dose on the listed products. It never
+// calls the products "registered": guide-derived (Plantwise PMDG) rows are on the list too.
 export const CHEMICAL_LAST_RESORT =
-  'Chemical control, as a last resort: use one of the registered products listed below at its label dose, and keep to its pre-harvest interval.'
+  'Chemical control, as a last resort: use one of the products from our checked list, at the label dose shown, and keep to its pre-harvest interval.'
 export { OFFICER_REFERRAL }
 
 export type RecommendationOutcome =

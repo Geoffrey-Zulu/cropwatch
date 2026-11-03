@@ -1,4 +1,4 @@
-# CropWatch mobile (Flutter)
+# Phytos mobile (Flutter)
 
 The farmer and field-officer app. It lives in the repo but **outside the pnpm workspace**: it never imports TypeScript. Its only contract with the backend is the frozen REST v1 spec, [`packages/shared/src/contracts/openapi.json`](../../packages/shared/src/contracts/openapi.json) (version 1.0.0). Code against that file, not against server behaviour.
 
@@ -17,8 +17,8 @@ The Android app is already registered on Firebase project **`crop-watch01`**:
      `flutterfire configure --project=crop-watch01 --platforms=android --android-package-name=zm.cropwatch.app`
    - **Firebase CLI**:
      `firebase apps:sdkconfig ANDROID 1:24960589333:android:f2aa18f3d3659d29c4f81c --project crop-watch01 -o android/app/google-services.json`
-   - **Console**: Firebase console → Project settings → Your apps → CropWatch Android → download `google-services.json`.
-3. Google sign-in (officers only) needs your debug SHA-1 on the app: `cd android && ./gradlew signingReport`, then add it in Project settings → CropWatch Android → Add fingerprint. Anonymous sign-in for farmers needs nothing.
+   - **Console**: Firebase console → Project settings → Your apps → the Android app registered as "CropWatch Android" → download `google-services.json`.
+3. Google sign-in (officers only) needs your debug SHA-1 on the app: `cd android && ./gradlew signingReport`, then add it in Project settings → the Android app registered as "CropWatch Android" → Add fingerprint. Anonymous sign-in for farmers needs nothing.
 
 `google-services.json` and `firebase_options.dart` are public client config, like the web config: commit them with the Flutter project so every checkout builds.
 
@@ -45,5 +45,5 @@ The Android app is already registered on Firebase project **`crop-watch01`**:
 - **Never show a number for confidence or severity.** Show bands as words: "AI assessment: high confidence", "Severity: moderate". The contract has no numeric confidence anywhere, by design.
 - **Unknown values are not errors.** Treat an unrecognised `status` as in-progress, an unrecognised issue as "unknown", and any other unrecognised enum value as generic. Ignore unknown fields. The contract only ever adds optional fields.
 - **`label_dose` is verbatim label text.** Show it exactly as received. When `officer_referral` is true, show "Consult an extension officer for chemical options".
-- **`sim: true` means demo data.** Show the "DEMO DATA — SIMULATED" badge on anything with it.
+- **`sim: true` means demo data.** Show the "DEMO DATA · SIMULATED" badge on anything with it.
 - **Alerts:** subscribe to FCM topic `alerts-{district_slug}` (take `district_slug` from the API, e.g. `alerts-chongwe`). The push data payload is `AlertPushData`. Always show an alert's level together with its contributing factors.

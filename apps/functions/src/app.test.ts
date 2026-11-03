@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CreateObservationRequestSchema, type Issue, type Observation } from '@repo/shared'
+import {
+  AlertListSchema,
+  ErrorResponseSchema,
+  CreateObservationRequestSchema,
+  type Issue,
+  type Observation,
+} from '@repo/shared'
 import { createApp, type AppServices } from './app'
 import type { Caller } from './services/observationModel'
 import {
@@ -9,6 +15,7 @@ import {
   toObservationView,
 } from './services/observationModel'
 import type { ObservationStore } from './services/firestoreObservations'
+import type { DashboardServices } from './services/dashboard/types'
 
 const FARMER: Caller = { uid: 'farmerUid0001', role: 'farmer', orgId: 'org1' }
 const OTHER_FARMER: Caller = { uid: 'farmerUid0002', role: 'farmer', orgId: null }
@@ -20,6 +27,46 @@ const CALLERS: Record<string, Caller> = Object.fromEntries(
 )
 
 const OBS_ID = 'k3J9xQ2mW8pL5vR1tY7u'
+
+const EVIDENCE = {
+  obs_id: OBS_ID,
+  status: 'complete' as const,
+  verification_state: 'AI_ASSESSED' as const,
+  verified_issue: null,
+  diagnosis: null,
+  retrieval: null,
+  regulatory: null,
+  sim: false,
+}
+
+const OVERVIEW = {
+  org_id: 'org1',
+  name: 'Outgrower Co.',
+  enrolled_farmers: 1240,
+  sim: true,
+  window_days: 14,
+  reports: 0,
+  verified_reports: 0,
+  top_issue: null,
+  camps: [],
+  officers: [],
+  unassigned: [],
+}
+
+const ALERT = {
+  alert_id: 'alert1',
+  type: 'cluster' as const,
+  issue: 'tuta_absoluta' as const,
+  issue_label: 'Tuta absoluta (tomato leafminer)',
+  district: 'Chongwe',
+  district_slug: 'chongwe',
+  level: 'HIGH' as const,
+  contributing_factors: ['Cluster of 5 Tuta absoluta reports within 10 km'],
+  geo_center: { latitude: -15.33, longitude: 28.68 },
+  radius_km: 10,
+  created_at: '2026-10-26T09:00:00.000Z',
+  sim: false,
+}
 
 const createBody = (uid = FARMER.uid, obsId = OBS_ID) => ({
   obs_id: obsId,
@@ -59,7 +106,13 @@ function memoryStore(): ObservationStore & { docs: Map<string, Observation> } {
     async verify(caller, obsId, request) {
       const observation = docs.get(obsId)
       if (!observation) return { kind: 'not_found' }
-      if (!canVerifyObservation(caller, { orgId: observation.org_id })) return { kind: 'forbidden' }
+      if (
+        !canVerifyObservation(caller, {
+          orgId: observation.org_id,
+          verificationState: observation.verification_state,
+        })
+      )
+        return { kind: 'forbidden' }
       const verified = applyVerification(caller, observation, request)
       docs.set(obsId, verified.observation)
       return {
@@ -94,7 +147,15 @@ beforeEach(() => {
       diagnosis: 'diagnosed' as const,
       recommendation: 'complete' as const,
     })),
+    alerts: vi.fn(async () => [ALERT]),
+    dispatch: vi.fn(async () => 'sent' as const),
     now: () => new Date('2026-10-22T09:30:00.000Z'),
+    dashboard: {
+      evidence: vi.fn(async () => EVIDENCE),
+      outgrower: vi.fn(async () => OVERVIEW),
+      weather: vi.fn(async () => null),
+      season: {} as DashboardServices['season'],
+    },
   }
   app = createApp({ corsOrigins: ['http://localhost:5173'], services })
 })
@@ -111,10 +172,51 @@ const post = (path: string, caller: Caller | null, body: unknown) =>
 const get = (path: string, caller: Caller | null) => app.request(path, as(caller))
 
 describe('health', () => {
+  it('rejects oversized JSON before validation or paid processing', async () => {
+    const res = await post('/api/v1/observations', FARMER, {
+      ...createBody(),
+      farmer_description: 'x'.repeat(70 * 1024),
+    })
+    expect(res.status).toBe(413)
+    expect(ErrorResponseSchema.parse(await res.json()).error).toBe('validation_failed')
+    expect(services.process).not.toHaveBeenCalled()
+    expect(store.docs.size).toBe(0)
+  })
   it('answers at the root and in the contract', async () => {
     expect((await app.request('/health')).status).toBe(200)
     const res = await app.request('/api/v1/health')
     expect(await res.json()).toEqual({ status: 'ok', version: 'test-rev' })
+  })
+})
+
+describe('tRPC dashboard procedures', () => {
+  const query = (path: string, input: unknown, caller: Caller | null) =>
+    get(`/trpc/${path}?input=${encodeURIComponent(JSON.stringify(input))}`, caller)
+
+  it('refuses callers without a valid token', async () => {
+    expect((await query('evidence.observation', { obsId: OBS_ID }, null)).status).toBe(401)
+    expect((await query('outgrower.overview', { orgId: 'org1' }, null)).status).toBe(401)
+  })
+
+  it('shows evidence to Command Center roles only', async () => {
+    expect((await query('evidence.observation', { obsId: OBS_ID }, FARMER)).status).toBe(403)
+    expect((await query('evidence.observation', { obsId: OBS_ID }, OFFICER_SAME_ORG)).status).toBe(
+      403
+    )
+    const res = await query('evidence.observation', { obsId: OBS_ID }, AGRONOMIST)
+    expect(res.status).toBe(200)
+    expect(JSON.stringify(await res.json())).not.toMatch(/model_confidence|latitude/)
+  })
+
+  it('shows an org overview to its own field officers and the Command Center, no one else', async () => {
+    expect((await query('outgrower.overview', { orgId: 'org1' }, OFFICER_SAME_ORG)).status).toBe(
+      200
+    )
+    expect((await query('outgrower.overview', { orgId: 'org1' }, AGRONOMIST)).status).toBe(200)
+    expect((await query('outgrower.overview', { orgId: 'org1' }, OFFICER_OTHER_ORG)).status).toBe(
+      403
+    )
+    expect((await query('outgrower.overview', { orgId: 'org1' }, FARMER)).status).toBe(403)
   })
 })
 
@@ -131,6 +233,27 @@ describe('tRPC', () => {
     const res = await app.request('/trpc/user.list', {
       headers: { Origin: 'https://evil.example' },
     })
+    expect(res.headers.get('access-control-allow-origin')).toBeNull()
+  })
+})
+
+describe('CORS on /api/v1 (capture PWA)', () => {
+  it('answers the browser preflight for an allowed origin with the auth header allowed', async () => {
+    const res = await app.request('/api/v1/observations', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type',
+      },
+    })
+    expect(res.status).toBe(204)
+    expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:5173')
+    expect(res.headers.get('access-control-allow-headers')).toMatch(/authorization/i)
+  })
+
+  it('gives other origins nothing', async () => {
+    const res = await app.request('/api/v1/health', { headers: { Origin: 'https://evil.example' } })
     expect(res.headers.get('access-control-allow-origin')).toBeNull()
   })
 })
@@ -277,7 +400,7 @@ describe('POST /api/v1/observations/{id}/verify', () => {
     ).toBe(404)
   })
 
-  it('confirming the same issue keeps the recommendation and moves up the ladder', async () => {
+  it('confirming the same issue keeps the recommendation, moves up the ladder and re-runs the outbreak check', async () => {
     store.docs.set(OBS_ID, diagnosed('complete', 'fall_armyworm', { recommendation_id: 'rec1' }))
     const res = await verify(OFFICER_SAME_ORG, {
       verified_issue: 'fall_armyworm',
@@ -290,7 +413,9 @@ describe('POST /api/v1/observations/{id}/verify', () => {
       verified_issue: 'fall_armyworm',
     })
     expect(store.docs.get(OBS_ID)!.recommendation_id).toBe('rec1')
-    expect(services.process).not.toHaveBeenCalled()
+    // The pipeline runs so the cluster counts this report as verified (its alert upgrades);
+    // the recommendation step leaves a complete report alone.
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 
   it('a correction re-triggers the recommendation (complete → recommending)', async () => {
@@ -318,19 +443,34 @@ describe('POST /api/v1/observations/{id}/verify', () => {
     const res = await verify(AGRONOMIST, { verified_issue: 'unknown' })
     expect(await res.json()).toMatchObject({ status: 'awaiting_expert_review' })
     expect(store.docs.get(OBS_ID)!.recommendation_id).toBeNull()
-    expect(services.process).not.toHaveBeenCalled()
+    // Re-run like every verify; no step writes advice for a report awaiting review.
+    expect(services.process).toHaveBeenCalledWith(OBS_ID)
   })
 
-  it('never moves down the ladder', async () => {
+  it('refuses field officer changes to expert-confirmed reports', async () => {
     store.docs.set(
       OBS_ID,
       diagnosed('complete', 'fall_armyworm', {
         recommendation_id: 'rec1',
         verification_state: 'EXPERT_CONFIRMED',
+        verified_issue: 'fall_armyworm',
+        verified_by: AGRONOMIST.uid,
       })
     )
-    const res = await verify(OFFICER_SAME_ORG, { verified_issue: 'fall_armyworm' })
-    expect((await res.json()).verification_state).toBe('EXPERT_CONFIRMED')
+    for (const issue of ['fall_armyworm', 'early_blight', 'unknown']) {
+      const res = await verify(OFFICER_SAME_ORG, { verified_issue: issue })
+      expect(res.status).toBe(403)
+    }
+    expect(store.docs.get(OBS_ID)).toMatchObject({
+      verification_state: 'EXPERT_CONFIRMED',
+      verified_issue: 'fall_armyworm',
+      verified_by: AGRONOMIST.uid,
+      recommendation_id: 'rec1',
+    })
+    expect(services.process).not.toHaveBeenCalled()
+    const correction = await verify(AGRONOMIST, { verified_issue: 'early_blight' })
+    expect(correction.status).toBe(200)
+    expect((await correction.json()).verified_issue).toBe('early_blight')
   })
 })
 
@@ -338,12 +478,56 @@ describe('frozen routes built on later days', () => {
   it.each([
     ['POST', `/api/v1/observations/${OBS_ID}/intervention`],
     ['POST', `/api/v1/observations/${OBS_ID}/outcome`],
-    ['GET', '/api/v1/alerts?district=Chongwe'],
   ])('%s %s needs auth, then answers 501', async (method, path) => {
     expect((await app.request(path, { method })).status).toBe(401)
     const res = await app.request(path, as(FARMER, { method }))
     expect(res.status).toBe(501)
     expect((await res.json()).error).toBe('not_implemented')
+  })
+})
+
+describe('GET /api/v1/alerts', () => {
+  it('needs a signed-in caller and a district', async () => {
+    expect((await get('/api/v1/alerts?district=Chongwe', null)).status).toBe(401)
+    expect((await get('/api/v1/alerts', FARMER)).status).toBe(400)
+  })
+
+  it('returns the district alerts, looked up by slug, in the contract shape', async () => {
+    const res = await get('/api/v1/alerts?district=Kapiri%20Mposhi', FARMER)
+    expect(res.status).toBe(200)
+    expect(services.alerts).toHaveBeenCalledWith('kapiri-mposhi')
+    const body = await res.json()
+    expect(AlertListSchema.parse(body).alerts).toHaveLength(1)
+  })
+})
+
+describe('POST /internal/events/alerts (Pub/Sub push)', () => {
+  const push = (data: unknown, token = 'eventarc-ok') =>
+    app.request('/internal/events/alerts', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message: { data: Buffer.from(JSON.stringify(data)).toString('base64') },
+      }),
+    })
+
+  it('dispatches the alert named in the message', async () => {
+    const res = await push({ alert_id: 'alert1' })
+    expect(await res.json()).toEqual({ alert_id: 'alert1', outcome: 'sent' })
+    expect(services.dispatch).toHaveBeenCalledWith('alert1')
+  })
+
+  it('refuses unsigned pushes and acknowledges malformed ones', async () => {
+    expect((await push({ alert_id: 'alert1' }, 'forged')).status).toBe(401)
+    expect(await (await push({ nope: true })).json()).toEqual({ ignored: true })
+    expect(services.dispatch).not.toHaveBeenCalled()
+  })
+
+  it('asks Pub/Sub to retry a delivery that finds another one mid-dispatch', async () => {
+    vi.mocked(services.dispatch).mockResolvedValueOnce('in_progress')
+    expect((await push({ alert_id: 'alert1' })).status).toBe(503)
+    vi.mocked(services.dispatch).mockResolvedValueOnce('already')
+    expect((await push({ alert_id: 'alert1' })).status).toBe(200)
   })
 })
 

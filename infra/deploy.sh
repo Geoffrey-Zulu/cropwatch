@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Builds and deploys the CropWatch API (apps/functions) to Cloud Run, and wires Eventarc on
-# Storage finalize. Idempotent: re-run to ship a new revision. Run infra/setup.sh first.
+# Builds and deploys the CropWatch API (apps/functions) to Cloud Run and wires Eventarc on
+# Storage finalize, then deploys the security rules and the capture PWA (apps/capture) to its
+# own Firebase Hosting site. Idempotent: re-run to ship a new revision. Run infra/setup.sh first.
 #
 #   bash infra/deploy.sh
 #
 # MIN_INSTANCES=1 bash infra/deploy.sh keeps one warm instance (demo days; ~US$2/day).
+# HOSTING=0 bash infra/deploy.sh ships the API and the rules only: neither production site is
+# rebuilt or redeployed (31 Oct: production stays on the stable UI while the rebuild runs on
+# the "rebuild" preview channels).
+# The PWA's web-push (VAPID) public key lives in apps/capture/src/lib/firebaseConfig.ts.
 # Account and project pinning, and the helpers, live in infra/lib.sh.
 set -euo pipefail
 # shellcheck source=infra/lib.sh
@@ -22,8 +27,26 @@ GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
 # in the EU (apps/functions/src/env.ts).
 GEMINI_LOCATION="${GEMINI_LOCATION:-eu}"
 MIN_INSTANCES="${MIN_INSTANCES:-0}"
-# The dashboard's origins (Firebase Hosting) plus local Vite.
-CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,http://localhost:5173"
+CAPTURE_SITE="${PROJECT_ID}-capture"
+# The farmer app (apps/web/farmer.html): no API calls, no sign-in; its own Hosting site.
+FARMER_SITE="${PROJECT_ID}-farmer"
+BQ_DATASET="cropwatch"
+ALERTS_TOPIC="cropwatch.alerts"
+ALERTS_SUB="cropwatch-alerts-dispatch"
+# Africa's Talking (SMS alerts). The username and API key live in Secret Manager; until both
+# secrets exist the API logs what it would have sent. Username "sandbox" uses the AT sandbox.
+#   printf '%s' "<username>" | gcloud secrets create africastalking-username --data-file=- \
+#     --replication-policy=user-managed --locations=europe-west1
+#   printf '%s' "<api key>" | gcloud secrets create africastalking-api-key --data-file=- \
+#     --replication-policy=user-managed --locations=europe-west1
+# A new key: gcloud secrets versions add africastalking-api-key --data-file=-, then re-deploy.
+# AT_SENDER_ID (optional): an approved alphanumeric sender ID; empty uses AT's default sender.
+AT_SENDER_ID="${AT_SENDER_ID:-}"
+HOSTING="${HOSTING:-1}"
+# Browser origins: the dashboard and the capture PWA (Firebase Hosting), plus local Vite for each,
+# plus the "rebuild" preview channels (their URLs are fixed for the channel's life, to 6 Nov).
+PREVIEW_ORIGINS="https://${PROJECT_ID}--rebuild-we2jq4zo.web.app,https://${CAPTURE_SITE}--rebuild-dmzdlrt4.web.app"
+CORS_ORIGINS="https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com,https://${CAPTURE_SITE}.web.app,https://${CAPTURE_SITE}.firebaseapp.com,http://localhost:5173,http://localhost:5174,${PREVIEW_ORIGINS}"
 
 # -----------------------------------------------------------------------------
 step "Preflight"
@@ -34,6 +57,14 @@ IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/api:${TAG}"
 # Deterministic Cloud Run URL: https://SERVICE-PROJECT_NUMBER.REGION.run.app
 URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
 ok "image ${IMAGE}"
+SECRETS_FLAG=()
+if gcloud secrets describe africastalking-username --format=none 2>/dev/null &&
+  gcloud secrets describe africastalking-api-key --format=none 2>/dev/null; then
+  SECRETS_FLAG=(--set-secrets="AT_USERNAME=africastalking-username:latest,AT_API_KEY=africastalking-api-key:latest")
+  ok "SMS: Africa's Talking secrets found"
+else
+  ok "SMS: no Africa's Talking secrets yet; alerts will log SMS instead of sending"
+fi
 
 # -----------------------------------------------------------------------------
 step "Artifact Registry repository ${AR_REPO} (${REGION})"
@@ -94,9 +125,13 @@ gcloud run deploy "$SERVICE" \
   --cpu=1 --memory=1Gi \
   --concurrency=40 --timeout=120 \
   --min-instances="$MIN_INSTANCES" --max-instances=3 \
-  --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS}" \
+  --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${PROJECT_ID};GOOGLE_CLOUD_LOCATION=${REGION};GOOGLE_GENAI_USE_VERTEXAI=true;GEMINI_MODEL=${GEMINI_MODEL};GEMINI_LOCATION=${GEMINI_LOCATION};STORAGE_BUCKET=${BUCKET};KNOWLEDGE_INDEX_URI=gs://${PROJECT_ID}-knowledge/index.json;EVENTARC_SERVICE_ACCOUNT=${RUN_SA};CORS_ORIGINS=${CORS_ORIGINS};BQ_DATASET=${BQ_DATASET};ALERTS_TOPIC=${ALERTS_TOPIC};AT_SENDER_ID=${AT_SENDER_ID}" \
+  "${SECRETS_FLAG[@]}" \
   --format=none
-ok "deployed ${URL}"
+# A preview tag (deploy-preview.sh) pins the traffic split, and a new revision then gets none:
+# send all traffic to this revision explicitly. The preview tags stay.
+gcloud run services update-traffic "$SERVICE" --region="$REGION" --to-latest --format=none
+ok "deployed ${URL} (all traffic on the new revision)"
 
 # -----------------------------------------------------------------------------
 step "Eventarc: ${TRIGGER} (Storage finalize on gs://${BUCKET} → ${SERVICE})"
@@ -121,9 +156,92 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+step "Pub/Sub: ${ALERTS_SUB} (${ALERTS_TOPIC} → ${SERVICE} /internal/events/alerts)"
+# Alert dispatch (push + SMS) runs off a push subscription, so a slow SMS gateway never holds
+# up the report that raised the alert, and a failed delivery is retried. The service checks the
+# OIDC token (same account as Eventarc); dispatch is idempotent, so a retry never re-sends.
+PUSH_FLAGS=(
+  --push-endpoint="${URL}/internal/events/alerts"
+  --push-auth-service-account="$RUN_SA"
+  --push-auth-token-audience="$URL"
+  --ack-deadline=60
+  --min-retry-delay=10s --max-retry-delay=300s
+)
+if gcloud pubsub subscriptions describe "$ALERTS_SUB" --format=none 2>/dev/null; then
+  MSYS2_ARG_CONV_EXCL='--push-endpoint=' retry gcloud pubsub subscriptions update "$ALERTS_SUB" \
+    "${PUSH_FLAGS[@]}" --format=none
+  ok "exists (push config refreshed)"
+else
+  MSYS2_ARG_CONV_EXCL='--push-endpoint=' RETRIES=12 retry gcloud pubsub subscriptions create \
+    "$ALERTS_SUB" --topic="$ALERTS_TOPIC" \
+    --message-retention-duration=1d --expiration-period=never \
+    "${PUSH_FLAGS[@]}" --format=none
+  ok "created"
+fi
+
+# -----------------------------------------------------------------------------
 step "Smoke test"
 health="$(curl -sS --fail-with-body "${URL}/api/v1/health")" || die "health check failed: ${health}"
 ok "${URL}/api/v1/health → ${health}"
+
+# -----------------------------------------------------------------------------
+if [[ "$HOSTING" == "0" ]]; then
+  step "Rules only (HOSTING=0: the production sites are left as they are)"
+  firebase deploy --only firestore,storage \
+    --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
+  ok "rules and indexes deployed"
+  echo
+  echo "Deployed ${SERVICE} (${TAG}) to ${REGION}: ${URL}/api/v1 (hosting skipped)"
+  exit 0
+fi
+
+# -----------------------------------------------------------------------------
+step "Capture PWA → Firebase Hosting site ${CAPTURE_SITE}"
+if firebase hosting:sites:get "$CAPTURE_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+  --non-interactive >/dev/null 2>&1; then
+  ok "site exists"
+else
+  firebase hosting:sites:create "$CAPTURE_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+    --non-interactive >/dev/null
+  ok "site created"
+fi
+VITE_API_URL="${URL}/api/v1" pnpm --filter capture build >/dev/null ||
+  die "capture build failed (run: pnpm --filter capture build)"
+ok "built apps/capture"
+# Rules and indexes ship with the clients and API that depend on them (the PWA writes
+# users/{uid}/push_tokens; the alert dispatcher queries them across users).
+firebase deploy --only firestore,storage,hosting:capture \
+  --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
+CAPTURE_URL="https://${CAPTURE_SITE}.web.app"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "${CAPTURE_URL}/manifest.webmanifest")"
+[[ "$code" == "200" ]] || die "capture manifest answered HTTP ${code}"
+ok "${CAPTURE_URL} (manifest 200)"
+
+# -----------------------------------------------------------------------------
+step "Dashboard → ${PROJECT_ID}, farmer app → ${FARMER_SITE}"
+if firebase hosting:sites:get "$FARMER_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+  --non-interactive >/dev/null 2>&1; then
+  ok "farmer site exists"
+else
+  firebase hosting:sites:create "$FARMER_SITE" --project "$PROJECT_ID" --account "$ACCOUNT" \
+    --non-interactive >/dev/null
+  ok "farmer site created"
+fi
+# The dry-spell scenario (prototype) is behind a build-time flag: FEATURE_SCENARIO=false hides it.
+FEATURE_SCENARIO="${FEATURE_SCENARIO:-true}"
+VITE_API_BASE="${URL}" VITE_FEATURE_SCENARIO="${FEATURE_SCENARIO}" pnpm --filter web build >/dev/null ||
+  die "dashboard build failed (run: pnpm --filter web build)"
+ok "built apps/web: the dashboard and the farmer app"
+firebase deploy --only hosting:dashboard,hosting:farmer \
+  --project "$PROJECT_ID" --account "$ACCOUNT" --non-interactive >/dev/null
+DASHBOARD_URL="https://${PROJECT_ID}.web.app"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "${DASHBOARD_URL}/geo/zambia-districts.json")"
+[[ "$code" == "200" ]] || die "dashboard district boundaries answered HTTP ${code}"
+ok "${DASHBOARD_URL} (boundaries 200)"
+FARMER_URL="https://${FARMER_SITE}.web.app"
+code="$(curl -sS -o /dev/null -w '%{http_code}' "${FARMER_URL}/")"
+[[ "$code" == "200" ]] || die "farmer app answered HTTP ${code}"
+ok "${FARMER_URL} (200)"
 
 cat <<EOF
 
@@ -131,4 +249,8 @@ Deployed ${SERVICE} (${TAG}) to ${REGION}:
   API        ${URL}/api/v1
   tRPC       ${URL}/trpc
   Eventarc   ${TRIGGER} → /internal/events/storage
+  Pub/Sub    ${ALERTS_SUB} → /internal/events/alerts
+  Capture    ${CAPTURE_URL}
+  Dashboard  ${DASHBOARD_URL}
+  Farmer     ${FARMER_URL}
 EOF

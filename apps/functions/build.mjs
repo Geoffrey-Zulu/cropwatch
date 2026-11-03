@@ -8,8 +8,8 @@ import { build } from 'esbuild'
 const { dependencies } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 await build({
-  entryPoints: ['src/server.ts'],
-  outfile: 'dist/server.js',
+  entryPoints: ['src/server.ts', 'src/fieldServer.ts'],
+  outdir: 'dist',
   bundle: true,
   platform: 'node',
   target: 'node24',

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { appRouter } from '../router'
+import type { DashboardServices } from '../../services/dashboard/types'
 import { createCallerFactory } from '../trpc'
 
 const createCaller = createCallerFactory(appRouter)
-const caller = createCaller({})
+const caller = createCaller({ caller: null, services: {} as DashboardServices })
 
 describe('userRouter', () => {
   describe('create', () => {

@@ -29,7 +29,7 @@ export const react = defineConfig([
     extends: [reactHooks.configs.flat.recommended],
   },
   {
-    // CropWatch invariants 2 and 3: UI code never touches a model confidence number, a
+    // Phytos invariants 2 and 3: UI code never touches a model confidence number, a
     // severity percentage or a probability. Render the qualitative bands instead.
     name: 'repo/ui-no-numeric-confidence',
     files: SOURCE_FILES,
@@ -43,7 +43,7 @@ export const react = defineConfig([
         },
         {
           selector: 'Identifier[name=/probab|percent/i]',
-          message: 'No probabilities or percentages in UI code (CropWatch invariant 2).',
+          message: 'No probabilities or percentages in UI code (Phytos invariant 2).',
         },
         {
           selector: 'Literal[value=/^(model_confidence|severity_pct)$/]',

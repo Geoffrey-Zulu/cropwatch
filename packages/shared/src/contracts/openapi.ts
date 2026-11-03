@@ -8,6 +8,7 @@ import {
 } from '@asteasolutions/zod-to-openapi'
 import type { ZodTypeAny } from 'zod'
 import { z } from '../zod'
+import { ObservationSourceSchema } from '../constants/ceih'
 import { CropSchema } from '../constants/crops'
 import { IssueSchema } from '../constants/issues'
 import { ProvinceSchema } from '../constants/provinces'
@@ -43,6 +44,25 @@ import {
   SourceSchema,
   VerifyRequestSchema,
 } from '../schemas/api'
+import { DeliveryInputSchema, EligibilitySchema, StatementSchema } from '../schemas/ceih'
+import {
+  AdvanceConfirmSchema,
+  AdvanceRequestedSchema,
+  AdvanceRequestSchema,
+  CampPortfolioSchema,
+  CeihOrgQuerySchema,
+  CreateFarmerRequestSchema,
+  DisbursementResultSchema,
+  FarmerCreatedSchema,
+  ImportResultSchema,
+  IngestResultSchema,
+  InputsRequestSchema,
+  InputsResultSchema,
+  OkSchema,
+  SatelliteCurveSchema,
+  SatelliteIngestRequestSchema,
+  TriggerResultsSchema,
+} from '../schemas/ceihApi'
 
 // Every named schema, registered in its non-null form before any path. The generator builds
 // a component from the first usage it meets; if that usage is .nullable(), the shared
@@ -69,6 +89,7 @@ const COMPONENTS: Record<string, ZodTypeAny> = {
   InterventionType: InterventionTypeSchema,
   Intervention: InterventionSchema,
   Outcome: OutcomeSchema,
+  ObservationSource: ObservationSourceSchema,
   RiskLevel: RiskLevelSchema,
   AlertType: AlertTypeSchema,
   Alert: AlertViewSchema,
@@ -76,13 +97,15 @@ const COMPONENTS: Record<string, ZodTypeAny> = {
   AlertPushData: AlertPushDataSchema,
 }
 
-export const API_VERSION = '1.0.0'
+// 1.1.0 (31 Oct): the CEIH season paths, additive.
+export const API_VERSION = '1.1.0'
 
 const ERRORS = {
   400: 'validation_failed: the request did not match the schema (see issues).',
   401: 'unauthorized: missing or invalid Firebase ID token.',
   403: 'forbidden: signed in, but not allowed to act on this resource.',
   404: 'not_found',
+  409: 'conflict: a season rule refused the action (the message says which).',
 } as const
 
 const json = (schema: ZodTypeAny, description: string) => ({
@@ -251,13 +274,195 @@ export function buildOpenApiDocument() {
     },
   })
 
+  // CEIH, added 31 Oct (additive): the agribusiness's season. Every call names the org
+  // (?org_id, defaulting to the caller's own); a refused rule answers 409 with the reason.
+  const season = (
+    method: 'get' | 'post',
+    path: string,
+    operationId: string,
+    summary: string,
+    response: ZodTypeAny,
+    extra: {
+      description?: string
+      params?: ZodTypeAny
+      body?: ZodRequestBody
+      codes?: (keyof typeof ERRORS)[]
+    } = {}
+  ) =>
+    registry.registerPath({
+      method,
+      path,
+      operationId,
+      tags: ['season'],
+      summary,
+      description: extra.description,
+      security,
+      request: {
+        query: CeihOrgQuerySchema,
+        ...(extra.params ? { params: extra.params as never } : {}),
+        ...(extra.body ? { body: extra.body } : {}),
+      },
+      responses: {
+        200: json(response, 'OK.'),
+        ...errors(...(extra.codes ?? [400, 401, 403, 404, 409])),
+      },
+    })
+  const idParam = z.object({ id: z.string().min(1).max(128) })
+  season(
+    'post',
+    '/farmers',
+    'createFarmer',
+    'Enrol a farmer with consent and a field pin (field officers)',
+    FarmerCreatedSchema,
+    {
+      body: body(CreateFarmerRequestSchema),
+    }
+  )
+  season(
+    'post',
+    '/contracts/import',
+    'importContracts',
+    'Import the season roster as CSV (credit team)',
+    ImportResultSchema,
+    {
+      description:
+        'Columns: farmer_name, phone_msisdn, momo_provider, camp, district, province, latitude, longitude, crop, contracted_ha, projected_yield_t_ha, contract_price_zmw_t, input_loan_zmw, planting_date. Consent is recorded by the officer at the first visit, not by the import.',
+      body: { required: true, content: { 'text/csv': { schema: z.string() } } },
+    }
+  )
+  season(
+    'post',
+    '/contracts/{id}/inputs',
+    'recordInputs',
+    'Input handover, acknowledged with the farmer’s code',
+    InputsResultSchema,
+    {
+      params: idParam,
+      body: body(InputsRequestSchema),
+    }
+  )
+  season(
+    'get',
+    '/farmers/{id}/eligibility',
+    'getEligibility',
+    'Eligibility and cap, with every factor',
+    EligibilitySchema,
+    {
+      description:
+        'Rules, never a score: each factor says whether it holds and why, and which source established the crop.',
+      params: idParam,
+      codes: [401, 403, 404],
+    }
+  )
+  season(
+    'post',
+    '/advances',
+    'requestAdvance',
+    'Request an advance on the farmer’s behalf',
+    AdvanceRequestedSchema,
+    {
+      description:
+        'The farmer gets an SMS with the amount, the fee and a code before anything can be confirmed.',
+      body: body(AdvanceRequestSchema),
+    }
+  )
+  season('post', '/advances/{id}/confirm', 'confirmAdvance', 'The farmer’s code', OkSchema, {
+    params: idParam,
+    body: body(AdvanceConfirmSchema),
+  })
+  season(
+    'post',
+    '/advances/{id}/approve',
+    'approveAdvance',
+    'Approve and send (credit team; never the verifying officer)',
+    DisbursementResultSchema,
+    {
+      description:
+        'Maker-checker: refused when the caller verified the field. Sends on the mobile-money provider (simulated in the demo) and writes the ledger rows.',
+      params: idParam,
+    }
+  )
+  season(
+    'post',
+    '/advances/{id}/disburse',
+    'disburseAdvance',
+    'Send an approved advance (internal; idempotent)',
+    DisbursementResultSchema,
+    {
+      params: idParam,
+    }
+  )
+  season(
+    'post',
+    '/deliveries',
+    'recordDelivery',
+    'Record a delivery; the statement follows',
+    StatementSchema,
+    {
+      body: body(DeliveryInputSchema),
+    }
+  )
+  season(
+    'get',
+    '/contracts/{id}/statement',
+    'getStatement',
+    'The statement: every ledger line and the balance',
+    StatementSchema,
+    {
+      params: idParam,
+      codes: [401, 403, 404],
+    }
+  )
+  season(
+    'get',
+    '/contracts/{id}/satellite',
+    'getSatellite',
+    'The field’s NDVI curve against its camp median',
+    SatelliteCurveSchema,
+    {
+      params: idParam,
+      codes: [401, 403, 404],
+    }
+  )
+  season(
+    'post',
+    '/satellite/ingest',
+    'ingestSatellite',
+    'Store a field’s passes from a Sentinel-2 pull (internal)',
+    IngestResultSchema,
+    {
+      body: body(SatelliteIngestRequestSchema),
+    }
+  )
+  season(
+    'post',
+    '/triggers/evaluate',
+    'evaluateTriggers',
+    'Run the drought rule on every camp (internal)',
+    TriggerResultsSchema,
+    {
+      codes: [401, 403, 404],
+    }
+  )
+  season(
+    'get',
+    '/org/{id}/portfolio',
+    'getPortfolio',
+    'The season at camp level: no farmer rows, no locations',
+    CampPortfolioSchema,
+    {
+      params: idParam,
+      codes: [401, 403, 404],
+    }
+  )
+
   const doc = new OpenApiGeneratorV3(registry.definitions).generateDocument({
     openapi: '3.0.3',
     info: {
-      title: 'CropWatch API',
+      title: 'Phytos API',
       version: API_VERSION,
       description:
-        'REST v1 for the CropWatch mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as "unknown", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers.',
+        'REST v1 for the Phytos mobile app. Generated from packages/shared Zod schemas; do not edit by hand. FROZEN: changes only add optional fields (no renames, removals or type changes), so clients MUST ignore unknown fields and MUST treat an unrecognised enum value as generic: an unknown status as in-progress, an unknown issue as "unknown", anything else as unknown, never as an error. Confidence and severity appear only as qualitative bands, never as numbers.',
     },
     servers: [{ url: '/api/v1', description: 'Relative to the Cloud Run service URL.' }],
     tags: [
@@ -268,6 +473,11 @@ export function buildOpenApiDocument() {
           'Report a crop-health problem and follow its diagnosis, recommendation and outcome.',
       },
       { name: 'alerts', description: 'Area alerts from clusters and the prototype risk signal.' },
+      {
+        name: 'season',
+        description:
+          "CEIH: an agribusiness's contracted season. Crop verification from space and the ground, eligibility as displayed rules, advances with the farmer's code and a second person, and the ledger.",
+      },
     ],
   })
   return fixNullableRefs(doc)

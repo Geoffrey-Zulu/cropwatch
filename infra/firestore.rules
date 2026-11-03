@@ -47,10 +47,24 @@ service cloud.firestore {
         || isOwner(get(/databases/$(database)/documents/observations/$(resource.data.obs_id)).data.reporter_id);
     }
 
-    // District-level cluster alerts; no farm locations.
+    // District-level cluster alerts; no farm locations. alerts/{id}/internal/dispatch (who was
+    // sent what) has no match, so no client reads it.
     match /alerts/{alertId} {
       allow read: if signedIn();
     }
+
+    // Clusters list their member report ids: Command Center only. Outgrower views get
+    // district aggregates through the API (CLAUDE.md invariant 6).
+    match /clusters/{clusterId} {
+      allow read: if isCommandCenter();
+    }
+
+    // District risk: a qualitative level with its contributing factors.
+    match /risk/{districtSlug} {
+      allow read: if signedIn();
+    }
+
+    // sms_subscribers (phone numbers, consent records) has no match: API and operator tools only.
 
     // Public regulatory information.
     match /registered_products/{registrationNo} {
@@ -77,6 +91,20 @@ service cloud.firestore {
         && request.resource.data.role == resource.data.role
         && request.resource.data.org_id == resource.data.org_id
         && request.resource.data.sim == resource.data.sim;
+
+      // FCM web push tokens from the capture PWA (web clients cannot subscribe themselves to
+      // topics; the alert dispatcher reads these with the Admin SDK). Owner only.
+      match /push_tokens/{tokenId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && request.resource.data.keys().hasOnly(['token', 'district_slug', 'platform', 'updated_at'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0 && request.resource.data.token.size() < 4096
+          && (request.resource.data.district_slug == null
+            || (request.resource.data.district_slug is string && request.resource.data.district_slug.size() < 64))
+          && request.resource.data.platform == 'web'
+          && request.resource.data.updated_at == request.time;
+      }
     }
   }
 }

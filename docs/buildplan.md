@@ -1,4 +1,4 @@
-# CropWatch — 10-Day Build Plan (21 → 30 October 2026)
+# Phytos — 10-Day Build Plan (21 → 30 October 2026)
 
 > **Who does what:** Geoffrey + Claude Code build web, API and infrastructure (Hytel Way conventions). Geoffrey's friend builds the Flutter mobile app against a frozen REST contract. Geoffrey runs the non-code track (validation, corpus, logistics). This file and `technicaldoc.md` travel together; where they conflict, this file wins (two decisions below supersede technicaldoc v1.1).
 >
@@ -36,7 +36,8 @@ cropwatch/
 │   │       ├── rest/             #   /api/v1 adapter for MOBILE + Eventarc webhook (Hono or Express)
 │   │       ├── services/         #   gemini.ts (Gen AI SDK), rag.ts, regulatory.ts, cluster.ts, alerts.ts
 │   │       └── jobs/             #   scheduled cluster/risk runs
-│   └── mobile/                   # Flutter app (friend's track; in repo, OUTSIDE pnpm workspace)
+│   ├── capture/                  # Capture PWA, the PRIMARY demo client (in the pnpm workspace; same contract as mobile)
+│   └── mobile/                   # Flutter app (friend's track; in repo, OUTSIDE pnpm workspace; not schedule-critical)
 ├── packages/
 │   ├── shared/                   # SINGLE SOURCE OF TRUTH
 │   │   └── src/
@@ -64,6 +65,8 @@ Scaffold from the Hytel monorepo template; run the template-identification check
 
 > **FROZEN 2026-10-21 — REST v1, contract version 1.0.0** (`packages/shared/src/contracts/openapi.json`, generated from the Zod schemas; a test fails if the committed file drifts from them). Approved with four pre-freeze conditions, all in place: uid-bound photo paths with first-writer-wins `obs_id`; `district_slug` as the aggregation key; clients treat unrecognised enum values as generic; BigQuery streams the internal diagnosis numbers (technicaldoc §4.1–4.2 updated). Mobile setup: `apps/mobile/README.md`.
 
+> **Clients (scope change 2026-10-23).** The primary demo client is the **capture PWA** (`apps/capture`), not the Flutter app. Both consume this contract unchanged: REST v1 plus Firestore listeners, no new endpoints. Two things are browser-specific and change no contract: the API sends CORS headers on `/api/v1` for the PWA's origin, and because web clients cannot subscribe themselves to FCM topics, the PWA keeps its push token in `users/{uid}/push_tokens` (owner-only rules) for the alert dispatcher to subscribe to `alerts-{district_slug}`.
+
 Mobile ↔ backend touch in exactly four places. Freeze these by **end of Day 2** and the friend never waits on us:
 
 | Surface                                                             | Contract                                                                                                                                                                                                                                                                                                     |
@@ -79,18 +82,18 @@ Rule: after Day 2 the contract only ADDS optional fields, never changes or remov
 
 **Hackathon: Fri 30 Oct (evening) – Sun 1 Nov.** Build window: Tue 21 – Wed 29. Thu 30 = travel/setup buffer, nothing scheduled.
 
-| Day              | Claude Code track (web + API + infra)                                                                                                                                                           | Mobile track (friend)                                                                                  | Geoffrey non-code track                                                                                                                |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **D1 · Tue 21**  | Scaffold repo from Hytel template; CLAUDE.md + docs in; `infra/setup.sh` (APIs, Firebase, Firestore rules, budget alert); CI (lint/typecheck/build); Zod schemas v0 in `packages/shared`        | Flutter project init in `apps/mobile`; Firebase SDK wired; screen skeletons (Home / Diagnose / Result) | Email organisers re: existing code. Confirm both pitchers were selected. Create/choose GCP project, share credentials with Claude Code |
-| **D2 · Wed 22**  | **CONTRACT FREEZE**: REST v1 generated from Zod + committed; `/diagnose` service (Gen AI SDK, structured output, confidence bands, `needs_expert_review` routing); Eventarc on Storage finalize | Capture flow: camera, GPS, crop + planting-date form; direct-to-Storage upload                         | Start corpus collection: MoA FAW manual 2nd ed., CABI Zambia factsheets, FAO IPM guides, ZARI material                                 |
-| **D3 · Thu 23**  | Regulatory Product DB (`registered_products` + filter service, label-dose rendering); seed generator v0 (`tools/seed`, deterministic, `sim:true`, DEMO OUTGROWER CO.)                           | Result screen: diagnosis card (confidence band, severity), Firestore doc listener                      | ZEMA register request; fallback = FAW-manual annex → send product rows to Claude Code as CSV                                           |
-| **D4 · Fri 24**  | Corpus ingestion into RAG Engine (metadata: tier/crop/issue/year); `/recommend` — context-shaped retrieval, IPM ladder, citations, regulatory filter in line                                    | Report flow: submit observation, confirmation screen                                                   | Validation interviews round 1 (2 outgrowers if reachable; agro-dealers)                                                                |
-| **D5 · Sat 25**  | Dashboard shell: NationalMapPage with live Firestore markers + DemoBadge; seeded data rendering; ObservationDetailPage                                                                          | **END-TO-END #1**: real phone photo → diagnose → recommend → appears on map                            | Take 100+ field photos (Lusaka West / Chongwe); note which crops are standing (demo-crop decision)                                     |
-| **D6 · Sun 26**  | BigQuery streaming + cluster rule; Risk Model v0 (LOW/ELEVATED/HIGH + contributing factors); alerts: Pub/Sub → FCM + Africa's Talking SMS (sandbox)                                             | FCM alerts receive + display; offline photo queue (store & forward)                                    | Score Gemini zero-shot against the 100 photos → tune prompt with Claude Code; church/rest as needed                                    |
-| **D7 · Mon 27**  | OutbreakDetailPage + OutgrowerViewPage (priority visit lists, per-officer grouping); OfficerQueuePage + verify flow (verified counter)                                                          | Officer mode: review queue, confirm/correct diagnosis                                                  | Validation interviews round 2; collect one quotable loss story                                                                         |
-| **D8 · Tue 28**  | **FULL DEMO REHEARSAL** end-to-end on real devices; `--live-demo` seed sequence (presenter's report completes the cluster); bug burn-down                                                       | Rehearsal participant; polish capture UX; error states                                                 | Draft Friday-night 90-second pitch + final pitch skeleton with pitchers                                                                |
-| **D9 · Wed 29**  | **FREEZE.** Backup screen-recordings of every demo step; deploy stability check; tag release                                                                                                    | Freeze; build signed APK + backup phone                                                                | Pitch rehearsal ×2 with both presenters; pack kit (phones, cables, hotspot, printed one-pager)                                         |
-| **D10 · Thu 30** | Buffer only — no planned work                                                                                                                                                                   | Buffer                                                                                                 | Arrive, settle, arrange the judge-SMS moment when judges are known                                                                     |
+| Day              | Claude Code track (web + API + infra)                                                                                                                                                                                                                                      | Mobile track (friend)                                                                                  | Geoffrey non-code track                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **D1 · Tue 21**  | Scaffold repo from Hytel template; CLAUDE.md + docs in; `infra/setup.sh` (APIs, Firebase, Firestore rules, budget alert); CI (lint/typecheck/build); Zod schemas v0 in `packages/shared`                                                                                   | Flutter project init in `apps/mobile`; Firebase SDK wired; screen skeletons (Home / Diagnose / Result) | Email organisers re: existing code. Confirm both pitchers were selected. Create/choose GCP project, share credentials with Claude Code |
+| **D2 · Wed 22**  | **CONTRACT FREEZE**: REST v1 generated from Zod + committed; `/diagnose` service (Gen AI SDK, structured output, confidence bands, `needs_expert_review` routing); Eventarc on Storage finalize                                                                            | Capture flow: camera, GPS, crop + planting-date form; direct-to-Storage upload                         | Start corpus collection: MoA FAW manual 2nd ed., CABI Zambia factsheets, FAO IPM guides, ZARI material                                 |
+| **D3 · Thu 23**  | Regulatory Product DB (`registered_products` + filter service, label-dose rendering); seed generator v0 (`tools/seed`, deterministic, `sim:true`, DEMO OUTGROWER CO.)                                                                                                      | Result screen: diagnosis card (confidence band, severity), Firestore doc listener                      | ZEMA register request; fallback = FAW-manual annex → send product rows to Claude Code as CSV                                           |
+| **D4 · Fri 24**  | Corpus ingestion into RAG Engine (metadata: tier/crop/issue/year); `/recommend` — context-shaped retrieval, IPM ladder, citations, regulatory filter in line                                                                                                               | Report flow: submit observation, confirmation screen                                                   | Validation interviews round 1 (2 outgrowers if reachable; agro-dealers)                                                                |
+| **D5 · Sat 25**  | **Capture PWA** (`apps/capture`, primary demo client); dashboard shell: NationalMapPage with live Firestore markers + DemoBadge; seeded data rendering; ObservationDetailPage. **END-TO-END #1** = PWA on a real Android phone over 4G → diagnose → recommend → on the map | Flutter continues against the frozen contract (no longer schedule-critical)                            | Take 100+ field photos (Lusaka West / Chongwe); note which crops are standing (demo-crop decision)                                     |
+| **D6 · Sun 26**  | BigQuery streaming + cluster rule; Risk Model v0 (LOW/ELEVATED/HIGH + contributing factors); alerts: Pub/Sub → FCM + Africa's Talking SMS (sandbox)                                                                                                                        | FCM alerts receive + display; offline photo queue (store & forward)                                    | Score Gemini zero-shot against the 100 photos → tune prompt with Claude Code; church/rest as needed                                    |
+| **D7 · Mon 27**  | OutbreakDetailPage + OutgrowerViewPage (priority visit lists, per-officer grouping); OfficerQueuePage + verify flow (verified counter)                                                                                                                                     | Officer mode: review queue, confirm/correct diagnosis                                                  | Validation interviews round 2; collect one quotable loss story                                                                         |
+| **D8 · Tue 28**  | **FULL DEMO REHEARSAL** end-to-end on real devices; `--live-demo` seed sequence (presenter's report completes the cluster); bug burn-down                                                                                                                                  | Rehearsal participant; polish capture UX; error states                                                 | Draft Friday-night 90-second pitch + final pitch skeleton with pitchers                                                                |
+| **D9 · Wed 29**  | **FREEZE.** Backup screen-recordings of every demo step; deploy stability check; tag release                                                                                                                                                                               | Freeze; build signed APK + backup phone                                                                | Pitch rehearsal ×2 with both presenters; pack kit (phones, cables, hotspot, printed one-pager)                                         |
+| **D10 · Thu 30** | Buffer only — no planned work                                                                                                                                                                                                                                              | Buffer                                                                                                 | Arrive, settle, arrange the judge-SMS moment when judges are known                                                                     |
 
 **Cut lines if behind schedule** (drop top-first): WhatsApp channel → Earth Engine layer (static weather) → officer mobile mode (officers use dashboard on phone browser) → on-device triage (already a stretch; it is NOT in this plan's critical path) → Nyanja alert templates (English only).
 
@@ -105,6 +108,8 @@ Rule: after Day 2 the contract only ADDS optional fields, never changes or remov
 7. **Demo:** full sequence passes twice consecutively on the actual demo hardware before D9 freeze.
 
 ## 5. Mobile plan (hand this section to the friend)
+
+> Since 2026-10-23 the capture PWA (`apps/capture`) is the primary demo client, so this track is no longer on the critical path: the Flutter app is a bonus if it is ready, built against the same frozen contract.
 
 - **Stack:** Flutter, Firebase Auth (anonymous) + Storage + Firestore + FCM. State: whatever he ships fastest (Riverpod/Bloc/setState — his call). Contract: `packages/shared/src/contracts/openapi.json` ONLY.
 - **Screens (priority order):** 1) Diagnose (camera/gallery, GPS auto, crop picker, planting date) · 2) Result (confidence band — never a raw percentage; severity; IPM steps; registered product + label dose; "where to buy" list; sources) · 3) Home (my reports + area alerts) · 4) Report confirmation · 5) [stretch] Officer mode · 6) [stretch] offline queue.
@@ -121,7 +126,7 @@ Rule: after Day 2 the contract only ADDS optional fields, never changes or remov
 | ZEMA data not obtainable                     | Fallback already decided: FAW-manual annex + labels, ~20–40 rows, demo scope                                                             |
 | Africa's Talking sandbox/sender-ID delays    | Register account D1; test real SMS by D6, not D8                                                                                         |
 | Venue wifi fails during demo                 | Hotspot in kit; Firestore offline persistence on dashboard laptop; backup recordings of every step                                       |
-| Friend slips on mobile                       | Dashboard-only demo variant rehearsed as plan B: Presenter 1 uses the web capture page on a phone browser                                |
+| Capture PWA fails on the demo phone          | Plan B: the same PWA in a phone browser tab without installing (push off), on the backup phone; Flutter app if it is ready               |
 | Geoffrey single point of failure on GCP      | All infra as scripts in `infra/`, secrets in Secret Manager, README covers redeploy from zero                                            |
 
 ## 7. What done looks like on 29 October
@@ -143,7 +148,7 @@ A deployed system where: a photo from a phone becomes a diagnosed, regulatory-fi
 - **`packages/shared`.** Constants for crops, issues (`KNOWN_ISSUES` + `unknown`), verification states + v0 weights, confidence bands, the 0.6 review threshold, and roles. Schemas v0: observation, diagnosis (stored) + diagnosis model output (§6 contract), recommendation, registeredProduct, alert, org + user profile, plus shared wire primitives.
 - **`apps/functions`.** Hono server (`src/server.ts`) serving tRPC at `/trpc` and the `/api/v1` REST stub (all six buildplan §2 routes answer 501), with `/health`, CORS for the dashboard origin, and JSON 404/500. esbuild bundles it to `dist/server.js`; `Dockerfile` (build from repo root) → `node:24-slim`, non-root, port 8080. `pnpm dev` now runs the API (tsx watch) next to Vite.
 - **`apps/web`.** Created `src/pages/` and `src/sections/`. The tRPC client defaults to `http://localhost:3001/trpc`.
-- **`.env.example`** replaced with CropWatch variables (names only, no secrets).
+- **`.env.example`** replaced with Phytos variables (names only, no secrets).
 
 **Decisions and deviations from technicaldoc.md (flag any you disagree with)**
 
@@ -250,7 +255,7 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
   - The filter **excludes placeholders unless a caller explicitly allows them**, so they never reach a farmer as advice.
 - **Regulatory filter and IPM ladder** (`apps/functions/src/services/recommend/`):
   - Candidates match a register row by exact registration number, or by trade name or active ingredient ignoring case and spacing. A match is accepted only if it's approved for this crop and issue and unexpired on the Lusaka calendar date. Every rejection is logged with a reason.
-  - The ladder keeps only cited steps, ordered scout → cultural → biological → chemical. The chemical line is always written by CropWatch, so doses come only from `label_dose`. If no chemical survives, the output is IPM-only plus the officer referral; with no cited evidence there is no recommendation at all.
+  - The ladder keeps only cited steps, ordered scout → cultural → biological → chemical. The chemical line is always written by Phytos, so doses come only from `label_dose`. If no chemical survives, the output is IPM-only plus the officer referral; with no cited evidence there is no recommendation at all.
   - The knowledge layer is an interface whose stub refuses until D4. Nothing is wired into the live pipeline yet.
 - **Seed (`tools/seed`):**
   - Deterministic: a seeded PRNG plus an anchor time; the same anchor gives byte-identical data.
@@ -363,3 +368,366 @@ The test images are public Wikimedia Commons photos, held outside the repo. The 
 - **apps/capture (PWA)** is now the primary demo client (scope change); the Flutter app continues against the frozen contract.
 - **D6:** score Gemini on the 100 field photos, and revisit `gemini-3.8-flash` once its capacity allows (supported until at least September 2027).
 - **Retrieval quality:** the CBSD recommendation is thin (two steps) because the corpus has little CBSD guidance. Plantwise CBSD guides are in `sources.yaml` for hand download.
+
+### D5 (part) · Thu 23 Oct — capture PWA, the primary demo client
+
+**Status:** built and deployed at **https://crop-watch01-capture.web.app** (branch `d5-capture-pwa`). Acceptance waits on the real-hardware run: an Android phone over 4G, by Geoffrey. Merges to `main` after that run passes.
+
+**Landed**
+
+- **"Field Slip" design system** (was `design-system/cropwatch/MASTER.md`; replaced on 28 Oct by the Phytos "Field Brief" system in `design-system/phytos/MASTER.md`), shared with the dashboard. A report is a specimen slip, stamped as it moves; advice is a ladder with chemicals last. It draws on Lusaka's hand-painted shop signs, stencilled grain sacks and herbarium labels, with a miombo-woodland palette in place of agritech green. It is built for sunlight: body text ≥ 7:1 and actions ≥ 5:1 (computed), Atkinson Hyperlegible Next for reading.
+- **`apps/capture`** (Vite + React PWA in the workspace) runs on the frozen REST v1 contract plus Firestore listeners, with no new endpoints. Screens:
+  - **Diagnose:** camera through the capture input, photo resized to 1600 px before upload, GPS with a district picker as fallback.
+  - **Report confirmation.**
+  - **Result:** progressive (diagnosis, then the ladder), confidence in words only, routed reports with no advice.
+  - **Home:** my reports and area alerts, with the DEMO badge on simulated rows.
+- **Push:** FCM web push is wired in. Tokens go to `users/{uid}/push_tokens` under owner-only rules, because web clients cannot subscribe to topics.
+- **Service worker:** precaches the app shell and the Latin fonts. The upload retry queue was cut (nice-to-have); a failed send keeps the photo and offers "Try again" with the same report id.
+- **API and hosting:** the API sends CORS headers on `/api/v1` for the capture origins. A second Hosting site is deployed by `infra/deploy.sh` together with the rules it depends on.
+
+**Acceptance so far**
+
+| Check                                                                                                               | Result                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Installable PWA                                                                                                     | Manifest live (standalone, 192/512 and maskable icons, theme colour); service worker activated; `sw.js`, `index.html` and the manifest served no-cache |
+| Full flow on the deployed PWA, in real headless Chrome as a 390 px Android phone with GPS at Chongwe                | Photo → upload → report accepted **2.9 s** · diagnosis on screen **6.9 s** · advice ready **7.7 s**; no console errors; test data removed afterwards   |
+| CORS                                                                                                                | Capture origin allowed (preflight 204 with `authorization`); other origins get nothing                                                                 |
+| `pnpm` gate                                                                                                         | typecheck, lint, build, test (13 capture tests, 101 API tests): all green                                                                              |
+| **Real Android phone over 4G: install → photo → report → diagnosis + recommendation; the same report in Firestore** | **Pending: Geoffrey**                                                                                                                                  |
+
+**Needs Geoffrey**
+
+- **The phone run** (above). Send the 4-character report number so it can be checked in Firestore and the timing logged here.
+- ~~A web-push key~~ — received 26 Oct; it lives in `apps/capture/src/lib/firebaseConfig.ts` and is deployed. Registration was verified on the deployed PWA: the token landed in `users/{uid}/push_tokens` (test data removed). Alerts reach it through the D6 dispatcher.
+
+### D6 · Sun 26 Oct — clusters, Risk Model v0, alerts and SMS (logic only; dashboard screens wait for UI feedback)
+
+**Status:** logic built and deployed (branch `d6-clusters-alerts`). §4.5 passes on the deployed API. §4.6 is measured as far as the SMS gateway: real SMS waits on Geoffrey's Africa's Talking account. Dashboard visuals are on hold until Geoffrey's UI feedback, as instructed.
+
+**Landed**
+
+- **Risk Model v0 and the cluster rule** live in `packages/shared/src/risk.ts`, one implementation for the seed and the API.
+  - Cluster: ≥ 5 same-issue reports, weight ≥ 0.5, within 10 km, within 72 h. The spatial pass is BigQuery `ST_DWITHIN`; anchors merge in `mergeAnchors`.
+  - Risk: LOW / ELEVATED / HIGH, always with contributing factors and never a number (technicaldoc §9).
+- **Per-report tracking** runs beside the recommendation (`apps/functions/src/services/outbreaks/`) and never holds up the farmer's result:
+  - a snapshot is streamed to `observation_events`;
+  - clusters are detected over the `observations_latest` view;
+  - `clusters/{id}` is upserted in one transaction per issue, with created / grown / unchanged / closed states;
+  - `risk/{district}` and `risk_scores` are refreshed;
+  - an alert is raised for a **new** cluster, or for a district that has just turned HIGH.
+- **Dispatch** goes through Pub/Sub `cropwatch.alerts` and the push subscription `cropwatch-alerts-dispatch` to `/internal/events/alerts` (OIDC-checked):
+  - FCM topic `alerts-{district}` for the mobile app;
+  - FCM web push to the capture PWA's tokens;
+  - SMS through Africa's Talking, which only logs until the account's secrets exist.
+
+  A transactional claim means a redelivery never re-sends. Each channel fails on its own. Simulated alerts say DEMO on every channel.
+
+- **`GET /api/v1/alerts`** is live (frozen contract shape).
+- **BigQuery:** `observation_events`, `retracted_observations`, `risk_scores` and the `observations_latest` view all come from the shared schemas (`pnpm --filter @repo/seed tables`, run by `setup.sh`). `observations` gained `recorded_at`.
+- **Seed:**
+  - writes the outbreak state it implies: 6 sim clusters, risk for 33 districts, and their alerts with dispatch `skipped`;
+  - clears a previous rehearsal's state;
+  - refuses to arm the live demo unless the presenter's report would form a **new** cluster, because a grown cluster would not alert.
+- **Tools:**
+  - `outbreak-e2e`: the D6 acceptance run against the deployed API, undone afterwards;
+  - `sms-subscribe`: E.164 numbers per district or all, with consent recorded; numbers are masked in output; no client can read them;
+  - E2E cleanups now retract their test reports, so test traffic in Chongwe can never pre-empt the demo cluster.
+- **Infra:** push subscription, Firestore rules for `clusters` (Command Center only) and `risk` (signed-in), the `push_tokens` collection-group index, `roles/firebasecloudmessaging.admin` for the API's service account, and the AT secrets mounted when present.
+
+**Found by the first live run and fixed:** dispatch threw after claiming the alert, because the new `push_tokens` index was still building. Pub/Sub's retry was then acknowledged as "in progress" and the alert was never sent. Channel lookups now fail inside their channel. A delivery that finds another one mid-dispatch now answers 503, so Pub/Sub retries.
+
+**Acceptance (deployed revision `cropwatch-api-00007-t4x`, `outbreak-e2e` playing the presenter ~1 km from the venue after `seed --commit --live-demo`)**
+
+| Check                                                              | Result                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §4.5 cluster within 60 s of the qualifying report                  | **Pass, twice in a row.** New 5-report cluster and its alert written **3.6 s** and **2.3 s** after the report was sent (alert `created_at`; the cluster is written just before it). The tool sees them later (9–12 s) because each of its Firestore reads fetches a gcloud token |
+| Risk panel shows contributing factors, never a bare level          | Pass: Lusaka ELEVATED → **HIGH**, "Cluster of 5 Tuta absoluta (tomato leafminer) reports within 10 km (5 new in 24 h) · 22 reports this week (+175% on last week)"; no numbers that read as odds                                                                                 |
+| §4.6 report → dispatched (FCM topic + web push + SMS gateway call) | Pass to the gateway: **7.4 s** and **5.8 s**, report sent → dispatch finished (alert → dispatched 3.7 s / 3.5 s). FCM topic `alerts-lusaka` accepted. One Pub/Sub delivery each, HTTP 200                                                                                        |
+| §4.6 SMS on a registered phone in < 30 s                           | **Pending: Africa's Talking account.** Dispatch ran the log-only sender (0 subscribers). The remaining step is AT's own delivery time                                                                                                                                            |
+| GET /alerts, sim flag, cleanup                                     | Pass: listed in the contract shape, `sim: true` (four seeded members), DEMO on every channel; test report retracted, cluster + alert removed, demo still armed                                                                                                                   |
+| Rules (emulator)                                                   | Pass: clusters Command Center only; risk signed-in read; `sms_subscribers` and `alerts/*/internal/dispatch` closed to every client; earlier 19 rules tests still pass                                                                                                            |
+| `pnpm` gate                                                        | typecheck, lint, build, test: green (126 API, 115 shared, 25 seed tests)                                                                                                                                                                                                         |
+
+**Demo risk found:** `tuta-fruit.jpg` (a Wikimedia photo of Tuta damage on fruit) came back **early blight, high confidence**: a confident miss, so it correctly formed no cluster. The leaf photo is reliable (3/3). The presenter should photograph **leaf mines**, not fruit. Prompt tuning with the field photos is still open from D2.
+
+**Needs Geoffrey**
+
+- **Africa's Talking account** (only you can register; it needs your identity and payment):
+  1. Sign up at africastalking.com and create a live app (username of your choice).
+  2. Generate an API key (Settings → API Key) in the live app, and one in the sandbox app for testing.
+  3. Store them: `printf '%s' "<username>" | gcloud secrets create africastalking-username --data-file=- --replication-policy=user-managed --locations=europe-west1 --project=crop-watch01`, and the same for `africastalking-api-key`. Then `bash infra/deploy.sh`. To test first without real texts, store username `sandbox` with the sandbox key; messages then show in AT's simulator.
+  4. Top up a little airtime credit (Zambian SMS is billed per message).
+  5. Request an alphanumeric sender ID ("Phytos") now for after the hackathon. It goes through ZICTA per carrier, MTN only displays pre-registered IDs, and it takes weeks, so the demo uses AT's default sender.
+- **Subscribe the demo phones** (with consent): `pnpm --filter @repo/admin-tools sms-subscribe add --phone +260… --district Lusaka --consent "…"`; use `--district all` for the presenter's phone.
+
+### D7 · Tue 28 to Wed 29 Oct — Phytos rebrand, "Field Brief" restyle, Command Center dashboard
+
+**Status:** built, tested and deployed (branch `d7-phytos`). Acceptance against live data waits on the officer accounts, which only Geoffrey can create (they grant roles): see `docs/demo-ops.md`, "Officer accounts". Category 2 (landing page, dry-forecast scenario) has not started: the brief allows it only once D7 passes acceptance.
+
+**Landed**
+
+- **Rebrand to Phytos** on every user-facing surface. Infrastructure keeps its names. Versioned prompts are untouched: they are model-facing.
+- **"Field Brief" design system** (`design-system/phytos/MASTER.md`): paper, navy, copper, and muted green for guidance only. Derived shades exist only where the given colours could not carry text.
+- **Capture restyle**: same layouts; the app opens on a live camera viewfinder. No em dashes in UI copy.
+- **Alert classes**: weather advisory / verified cluster alert / model risk signal, each with uncertainty wording, shared by the app, the dashboard, push and SMS. A cluster alert becomes "verified" when an officer verifies any report in it, and follows later verifications.
+- **Weather context** from Open-Meteo. Guide notes come from the corpus; the thresholds are Phytos prototype thresholds and are labelled as such. Weather counts as a factor, never sets a level, and raises weather advisories (never sent by SMS).
+- **Dashboard** (`apps/web`):
+  - national map;
+  - outbreak detail;
+  - observation detail with the Evidence panel;
+  - officer queue with verify and the live verified counter;
+  - Outgrower View with per-officer visit lists;
+  - Knowledge sources page.
+- **tRPC procedures** with role guards: evidence, outgrower, weather.
+- **Architecture**: `docs/architecture.md` and `.svg`.
+- **Runbook**: `docs/demo-ops.md` retimed to the 3-minute final.
+
+**Checks**
+
+| Check                                         | Result                                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate                                   | Green. Typecheck, lint, build, and tests: 369 across 10 packages (138 API, 120 shared, 25 seed, 13 capture, 8 dashboard)                                                                                                                                                                                      |
+| Invariants in tests                           | Outgrower output has no coordinate (schema plus string check). Evidence carries no `model_confidence`. No copy string has an em dash or reads as odds. Verification copy says "test case", never learning                                                                                                     |
+| tRPC guards                                   | Unsigned calls get 401. Evidence is for Command Center roles only. Outgrower is for the Command Center or the org's own field officers                                                                                                                                                                        |
+| Every page rendered with seed fixtures        | Desktop 1440 px and phone 390 px with no horizontal scroll (`docs/ui-review/2026-10-29/`)                                                                                                                                                                                                                     |
+| Live, revision `cropwatch-api-00008-2b7`      | `outbreak-e2e` passes: report → dispatched in 9.2 s. The new cluster's alert is stored as a **model risk signal** (0 of 5 verified). Lusaka's factors include the live Open-Meteo line. A **weather advisory** (Tuta, late dry season) was raised and not dispatched. Rehearsal removed and the demo re-armed |
+| Deployed                                      | Dashboard https://crop-watch01.web.app ("Phytos Command Center"); capture https://crop-watch01-capture.web.app (manifest "Phytos"); unsigned tRPC calls get 401                                                                                                                                               |
+| **Live: sign in, map, verify, counter ticks** | **Pending: officer account (Geoffrey)**                                                                                                                                                                                                                                                                       |
+
+### D8 · Wed 29 Oct — "Field Signal" UI pass, PMDG register live, dry-spell scenario, freeze
+
+**Landed**
+
+- **"Field Signal" design system** (`design-system/phytos/MASTER.md`, `philosophy.md`) replaces the navy/copper "Field Brief": one identity in two exposures. The Command Center is the night console (dark ground, glowing risk districts, chartreuse cluster rings); the capture app is the day exposure (wordmark on its dark chip, smaller headline, chartreuse sticky Send report). Bricolage Grotesque, IBM Plex Mono for every label, Instrument Sans. Same layouts, same wording.
+- **Density**: alerts are one-line signal rows; districts to watch are one line each; visit lists are one line per farm with reason chips (`reason_codes`, an additive tRPC field); one emphasised figure per view.
+- **PMDG register live**: 13 rows from the Tuta absoluta, early blight and diamondback moth PMDGs (`source: plantwise_pmdg`), doses verbatim from the guides; the seven placeholders retired. The UI shows "Plantwise Zambia PMDG" and "Dose (from the guide)", never the `PMDG-…` id as a registration number. Spot-check list for Geoffrey: `docs/pmdg-spot-check.md`. Excluded: the four mancozeb brands for late blight (no PHI in that guide; the borrowed 14 days was removed on 29 Oct, so late blight is IPM-only), cassava mosaic cypermethrin (the guide advises against it for smallholders); copper and mancozeb + metalaxyl (no PHI in the guides).
+- **Dry-spell scenario** (prototype, behind `VITE_FEATURE_SCENARIO`, on in `infra/deploy.sh`): "If the next 14 days turn dry, which camps need closer monitoring?" Open-Meteo forecast or the canned dry spell × crop-stage table (each row quotes its guide or says it is a Phytos assumption) × verified reports; camps ranked with reasons; no free text, no yields. Browser-only: it never calls the Phytos API.
+- **Landing page cut** from hackathon scope (post-event).
+- **Freeze**: tag `freeze-2026-10-29`; printed morning checklist (`docs/morning-checklist.pdf`); Saturday test plan (`docs/hackathon-backlog.md`).
+
+**Checks**
+
+| Check                                              | Result                                                                                                                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate                                        | Green: typecheck, lint, build; tests 387 (139 API, 122 shared, 25 seed, 18 regulatory, 16 dashboard, 14 capture, …)                                                                        |
+| UI review                                          | The same 12 views before and after, plus the scenario: `docs/ui-review/2026-10-29-field-signal/`                                                                                           |
+| Contrast                                           | Every text token ≥ 4.5:1 on its ground in both exposures; input borders ≥ 3:1 (MASTER.md §3)                                                                                               |
+| Deployed                                           | API `cropwatch-api-00009-lh7`; capture and dashboard on Hosting; dashboard redeployed with the scenario on                                                                                 |
+| Register                                           | `load-products --commit`: 17 added, 7 placeholders removed; then the 4 mancozeb rows removed (13 live); a live row parses; spot-check by Geoffrey pending (`verified_by`)                  |
+| Live smoke (Tuta leaf)                             | Diagnosed Tuta absoluta, high confidence, in 2.6 to 3.1 s; advice complete. The model proposed no chemical, so the advice was IPM-only with the officer referral (PMDG rows not exercised) |
+| Live demo armed at the venue                       | `-15.388311, 28.346069`: 4 qualifying reports; armed until 31 Oct 20:46 UTC. Re-arm on the pitch morning                                                                                   |
+| Two automated demo runs at the venue               | `outbreak-e2e` ×2: all checks passed; report → dispatched in 8.0 s and 7.6 s; SMS log-only (no Africa's Talking secrets yet); cleaned up                                                   |
+| **Human runs, backup recordings, officer sign-in** | **Pending: the team, on the real devices, with officer accounts**                                                                                                                          |
+
+### D8b · Wed 29 Oct (afternoon) — final UI pass, then the UI freeze
+
+**Landed**
+
+- **Research** (60-minute cap): `design-system/phytos/patterns.md`. It covers how OneSoil, John Deere Operations Center, Climate FieldView, xarvio, Linear and Stripe handle the header and account menu, navigation, the map with a side panel, and list density, all from public material with sources. It ends with 12 rules for Phytos and a table of which rules were applied.
+- **Command Center on the light day exposure.**
+  - Header: wordmark, a small prototype badge, the verified-observations chip, and an initials avatar menu. No email in the chrome.
+  - Nav: sentence case with icons and a chartreuse active bar.
+  - Mono caps only on kickers, chips and stat labels.
+  - Lists: at most two chips and two lines per row; status as a dot and a word; no truncation in presented panels.
+  - Pitch-PDF stat row; 8 px grid; 1320 px maximum width.
+  - Light map: paper basemap, gold and amber risk fills, deep-leaf rings, two-way district selection.
+- **Capture:** sentence-case field and form labels; layouts unchanged.
+- **Product rows:** the four mancozeb rows were held back, because the late-blight PHI was borrowed from the early-blight guide. 13 rows are live, and late blight is IPM-only with the officer referral.
+- **UI freeze:** tag `freeze-2026-10-29b`. After it, UI feedback goes to `docs/ui-feedback-log.md`, not into code, until after the final pitch.
+
+**Checks**
+
+| Check         | Result                                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate   | Green (typecheck, lint, build, all tests); 3 new header tests (no email in the chrome, current page, initials) |
+| UI review     | The same 12 views and the scenario, before and after: `docs/ui-review/2026-10-29b/`                            |
+| No truncation | No `truncate` left in `apps/web/src`                                                                           |
+| Deployed      | Capture and dashboard Hosting only; the API is unchanged (`cropwatch-api-00009-lh7`)                           |
+
+### D9 · 29 to 30 Oct — dashboard v2 and v2.1, the final script, the freeze
+
+**Landed**
+
+- **Dashboard v2** (three increments on 29 Oct), after the research in `design-system/phytos/patterns-v2.md`:
+  - each page answers one question;
+  - detail opens in right-side drawers, with alerts behind the header bell;
+  - a white console with one blue accent, and amber and red-gold for risk only;
+  - skeleton loading.
+- **v2.1**, Geoffrey's review of v2, accepted 30 Oct as the keeper structure:
+  - the Outgrower View has its answer on first paint;
+  - the map is the projector view;
+  - navigation is a slim icon rail;
+  - the routed queue reads "AI could not identify, or was unsure".
+  - On phones, Knowledge sources titles keep their width again. v2.1 broke this; it was found by eye before the tag.
+  - Reviews: `docs/ui-review/2026-10-29-v2/`.
+- **Visual pass** (`tools/visual`): Playwright screenshots of every view at laptop, phone and projector sizes, with automated checks, run on every deploy.
+- **The Sunday 3-minute final script** in `docs/demo-ops.md`, with stage notes from the build. The printed checklist and the Saturday test plan follow it.
+- **Freeze:** tag `freeze-2026-10-30`.
+  - Saturday at the venue is point-and-fix polish on this structure until 18:00 (test plan, rule 3), then the hard freeze.
+  - The map as a full canvas is post-event.
+
+**Checks**
+
+| Check                   | Result                                                                                                                                                                                                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate             | Green (typecheck, lint, build, 392 tests)                                                                                                                                                                                                                                              |
+| Demo check at the venue | `outbreak-e2e` passed after every deploy. 30 Oct: report → dispatched in 13.3 s and 8.9 s. Lusaka ended Elevated, not High: 17 reports this week, +31% on last week, is under the +50% surge that makes a 5-report cluster High. Re-arm on the pitch morning (stage notes in demo-ops) |
+| Visual pass             | All views at laptop and phone, the map at 1280 and 1920: `docs/ui-review/2026-10-30-freeze/`                                                                                                                                                                                           |
+| Deployed                | Dashboard Hosting; the API is unchanged since increment 2 (`cropwatch-api-00010-f44`)                                                                                                                                                                                                  |
+| **Still with the team** | **Officer accounts; the human runs and backup recordings; Africa's Talking secrets (SMS is log-only); Geoffrey's spot-check of the 13 PMDG rows**                                                                                                                                      |
+
+**Polish batch, 30 Oct (on the v2.1 structure; no view, section or navigation moved)**
+
+- The final script's wording now matches the build (six lines revised). The pre-stage gains "queue pre-opened on _In a cluster, not verified_": the queue now remembers its tab in the browser.
+- **Batch 1, the chrome:**
+  - shimmer skeletons, with a spinner only in a busy button;
+  - Lucide icons at 20 px and 1.5 px;
+  - the rail folds open, remembered per user;
+  - the header has the logo lockup, the verified count, the bell and the avatar;
+  - the DEMO pill sits on the data, not the chrome;
+  - "Prototype" is out of the UI copy (the API's alert push text too, `cropwatch-api-00011-c8d`);
+  - no question lines under titles.
+  - Review: `docs/ui-review/2026-10-30-polish/batch-1/`.
+- **Batch 2, the content:**
+  - stat cards with week-on-week change lines;
+  - the map legend behind (i);
+  - Districts to watch as an aligned list with level pills and one compact factor line;
+  - the report detail as a facts grid plus labelled blocks, with every citation a chip that opens the original;
+  - tables on the Outgrower, scenario and sources pages.
+  - Review: `docs/ui-review/2026-10-30-polish/batch-2/`.
+
+| Check       | Result                                                                                                                                                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate | Green (398 tests)                                                                                                                                                                                                                               |
+| Demo check  | Passed after each deploy (8.4 s, 11.4 s report → dispatched). One run lost its network mid-cleanup. Its test report was retracted by hand, and the venue cluster it had completed was removed, so the arming stays clean (4 qualifying reports) |
+| Visual pass | Every view at laptop and phone, plus the map at projector sizes and the open legend; every shot looked at                                                                                                                                       |
+
+**30 Oct evening: Geoffrey's call, a full UI rebuild, mockup first (CLAUDE.md, UI window)**
+
+1. **Backup recordings** on the stable version: one genuine live run recorded automatically (`tools/visual/record-demo.ts`), then retracted. Two sets are on the desktop: before and after the seed pass. Recording them found a demo-path bug: confirming the AI's own issue never re-ran the outbreak check, so the 1:30 "verified cluster alert" upgrade could not happen. Fixed (every verify re-runs the idempotent pipeline; API `cropwatch-api-00012-7ph`) and checked live: the venue alert upgraded about 6 s after Verify.
+2. **Seed realism pass:**
+   - Zambian camp names (real localities), officer and farmer names (the Outgrower View shows them; API `cropwatch-api-00013-khk`);
+   - 5 to 10 farmer descriptions per issue;
+   - 26 openly licensed library photos on simulated reports, each captioned on the dashboard as not from the farm, with its credit.
+   - Demo check passed after each reseed; the venue was re-armed.
+3. **Three static National map mockups** at https://crop-watch01.web.app/mockups/ (A field-airy, B ops console, C modern product): `docs/ui-review/2026-10-30-mockups/`.
+4. **Fallback for Sunday 09:00:** tag `stable-2026-10-30c`.
+
+| Check       | Result                                                                        |
+| ----------- | ----------------------------------------------------------------------------- |
+| `pnpm` gate | Green (399 tests)                                                             |
+| Demo check  | Passed after every deploy and reseed (9.4 s to 15.8 s report → dispatched)    |
+| Live verify | The venue alert reads "Verified cluster alert · 1 of 5 verified" after Verify |
+
+### D10 · Sat 31 Oct evening to Sun 1 Nov: the CEIH pivot
+
+Mentor decision, Saturday evening: Phytos becomes the verification and ledger layer for an agribusiness's season (Crop verification, Eligibility, Instant disbursement, Harvest reconciliation). The spec is `docs/ceih-workflows-mvp.md`; `docs/ceih-overnight-plan.md` sequences it and wins where they disagree. The demo is the dashboard only, composed from the field-airy kit. Work is on branch `ceih`.
+
+**Step 0: safety, branch, CLAUDE.md**
+
+- The `tools/regulatory` spot-check files were already committed in `bf521b0`; git saw only OneDrive timestamp noise. `Claude outputs/` (personal PDFs) is gitignored.
+- **Fallback tag `stable-2026-10-31`** (pushed) is the field-airy rebuild, `fc64f26`, which passed the gate, the demo check and the visual pass on the `rebuild` preview channel. **Production is not cut over:** the production deploy needs Geoffrey's permission, so crop-watch01.web.app still serves the `stable-2026-10-30c` UI. The API is shared, so the demo check covers both.
+- Branch `ceih` from `fc64f26`.
+- CLAUDE.md: invariant 6 amended as written; the two new invariants are **11 and 12** (the spec numbers them 9 and 10, which would have overwritten the live "no auto-learning" and "alert class" rules); the technicaldoc supersessions and the invariant 2 note.
+
+| Check                 | Result                                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Demo check (live API) | Passed: Lusaka HIGH, report → dispatched 8.1 s, cleaned up                                                  |
+| Production cutover    | **Waiting on Geoffrey's permission** (`bash infra/deploy.sh` from `stable-2026-10-31`, then the demo check) |
+
+**Checkpoint (mentors, Saturday evening):** a static, lettered preview of the CEIH dashboard (`apps/web/public/mockups/d-ceih.html`: Overview, C, E, I, H, farmer channel) on the `ceih-preview` channel only. Shots in `docs/ui-review/2026-10-31-ceih-preview/`.
+
+**Phase 1: data model, constants, seed**
+
+- `packages/shared`:
+  - Zod schemas for farmers, contracts, satellite passes, advances (frozen eligibility snapshot), ledger entries, deliveries, weather triggers, the rainfall series, the SMS log, the demo state and the dashboard views (`schemas/ceih.ts`). The views have no field for a pin, a polygon, a full phone number or an OTP.
+  - Observations gain optional `farmer_id`, `geofence_ok`, `source` and `season_at`. The contract change is additive: `openapi.json` regenerated, `ObservationSource` registered as a component.
+  - `constants/ceih.ts`: every threshold and amount a named PLACEHOLDER constant (NDVI 0.35 for soya, camp tolerance 0.08, 21-day window, 2 clear passes, severity 40, cap 15% (10 to 20%), ceiling ZMW 2,500, fee 5%). Role `credit` appended.
+  - Pure rules in `src/ceih/`: geofence (circle of the claimed hectares around the pin, point-in-polygon plus 150 m), NDVI status, the eligibility engine with displayed factors, the advance state machine, the ledger, the shock rule, and the demo's season calendar.
+- **Season calendar:** whole days added to the real date, so January's demo day lands on 12 Jan 2027 while times of day stay real. March and June are jumps of the same offset; every record carries its season date and nothing after "today" is shown.
+- **Satellite passes** are stored as the `passes` array of `satellite_metrics/{contractId}`, not one document a pass: one read a field, every pass kept.
+- **Seed:** `--ceih` (with `--given-pin`, `--demo-phone`) writes 120 soya contracts in Chikuni, Keemba and Hamangaba, with:
+  - 39 weekly passes each;
+  - 21 ground observations on farmer records;
+  - 12 advances (10 sent, 2 waiting for approval);
+  - inputs ledgered;
+  - 113 June deliveries, hidden until June;
+  - a demo rainfall series.
+- **Contract price:** ZMW 8,000 a tonne (PLACEHOLDER), so Given's 0.5 ha at 1.4 t/ha is ZMW 5,600 and his cap ZMW 840.
+- **Ground observations** never go to BigQuery, so the outbreak rules never see them.
+
+| Check        | Result                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm` gate  | Green (typecheck, lint, build, 429 tests; 29 new CEIH tests in shared)                                                                                                                                                                                                                                                                                                     |
+| Seed dry run | Given: "Not eligible: cloud gap, ground check required" (1 clear pass in 21 days, 2 clouded out), cap ZMW 840; with one ground check: eligible at ZMW 840. A satellite-verified farmer: eligible, "Cap 15% of ZMW 15,000 = ZMW 2,250". Joseph: not planted. 42 eligible. Shock rule at 16 Mar: Hamangaba fires (8.7 mm, 37 of 40 fields falling), Chikuni and Keemba quiet |
+| Seed commit  | Collections in Firestore; a second run removed 0 stale documents (idempotent). The venue was re-armed in the same run (armed until 3 Nov 03:05 UTC)                                                                                                                                                                                                                        |
+
+**Phase 2: eligibility engine and API**
+
+- **Season service** (`apps/functions/src/services/ceih/`). Reads build every view from one load of the org's season (`views.ts`, pure). Actions re-check their rule on fresh data:
+  - request (eligible and within the cap; the OTP SMS carries amount and fee);
+  - confirm (SHA-256 of the code, 30-minute expiry);
+  - approve (the credit team, or a Command Center account standing in for it; never an officer in the eligibility snapshot's `verifier_ids`);
+  - disburse (`checkDisburse` again, then `SimulatedProvider`, the advance and its ledger rows in one transaction, then the SMS);
+  - decline, delivery (priced at the grade, the statement SMS), and the shock rule on every camp.
+- **Advances:** every state change is compare-and-set in a transaction, so a double click cannot send money twice.
+- **Payouts:** a harvest payout moves money, so it waits for approval (invariant 11, "no exceptions"). Statements show the net due; the seed no longer writes payout rows.
+- **SMS:** every message goes to `sms_log`. A real SMS goes only through a configured gateway, and for a simulated farmer only to the demo number on the allow-list.
+- **Geofence link:** a new report that falls inside an active contract's polygon for the same crop lands on that farmer's record (`farmer_id`, `geofence_ok`, `source`, `season_at`). It runs as a field update after the report is saved, never holding up the reply.
+- **tRPC `season` router:** portfolio, field card, approvals, statement, reconciliation, SMS log, the actions, and demo controls (set phase, ground check; Command Center accounts on simulated seasons only).
+- **REST `/api/v1` additions:** `POST /farmers`, `/contracts/import` (CSV), `/contracts/{id}/inputs` (two calls: code, then acknowledgement), `/advances`, `/advances/{id}/confirm|approve|disburse`, `/deliveries`, `/satellite/ingest`, `/triggers/evaluate`; `GET /farmers/{id}/eligibility`, `/contracts/{id}/statement|satellite`, `/org/{id}/portfolio` (camp-level only). A refused rule answers 409 `conflict`; no new error codes.
+- **Contract:** the 14 CEIH REST paths are documented in `openapi.json` (API 1.1.0, added after Phase 4: additive, no existing path or schema changed). The request and response shapes live in `packages/shared/src/schemas/ceihApi.ts`, shared by the handlers. `moisture_pct` and `cloud_pct` are allowed by name in the contract test as measurements, not likelihoods.
+
+| Check                   | Result                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate             | Green (typecheck, lint, build, 435 tests)                                                                                                                                                                                                                                                                                                                                      |
+| §6 acceptance in Vitest | Factors on every call; no advance reaches disbursement without `otp_ok` and an approver outside `verifier_ids` (including a tampered "approved" record); every movement a ledger row and the statement summed from rows; the SMS before confirmation carries amount and fee; geofence-false and unusable passes never count; views carry no pin, polygon, full number or score |
+
+**Phase 3: the dashboard**
+
+- **The Outgrower View** grows Season ledger, Approvals and Reconciliation under a portfolio header (Fraunces figures counting up from 0 on open). Field visits keeps its old content, and its "loan and credit views: roadmap only" line is gone.
+  - **Season ledger:** the roster, with camp filter and CSV export (farmer level for the org, no locations). Each row opens into the field card:
+    - the NDVI chart (field against the camp median, cloud gaps as breaks over hatched bands, the 0.35 line, planting and today);
+    - the Verified Season Record by source;
+    - the eligibility factors;
+    - the neighbour who never planted;
+    - request an advance on the farmer's behalf: amount and fee first, then the farmer's code, with "use the code from the SMS log" as a demo-only button.
+  - **Approvals:** cards with the photo, stage, geofence and verifier, the factors frozen at request, amount and fee, and the SMS the farmer saw. Approve is disabled for the verifying officer, with the reason in words. The approve dialog restates amount, fee, the code and the simulated provider. Decline asks for a reason, which goes to the farmer.
+  - **Reconciliation:**
+    - the delivery form, priced at the grade;
+    - the statement from ledger rows, with the net due waiting for approval;
+    - shortfalls, unexplained first, with shock-explained and verified problems;
+    - the claim pack, marked "insurance payout SIMULATED".
+  - **Kit:** composed from the field-airy kit. New components are the NDVI chart (drawn in pixels from its width) and a light-scrim dialog; no new colours. Demo controls fold away under a DEMO pill: ground check, March, June, back to January.
+- **Shared view builders:** moved to `packages/shared/src/ceih/views.ts`, so the API and the preview fixtures (`tools/seed/ceih-fixtures.ts`) build the same views.
+- **Demo check:** `pnpm --filter @repo/admin-tools ceih-e2e [--api …]` walks beats 1 to 6 through the dashboard's tRPC routes as a Command Center account, then deletes what it made.
+- **Found live and fixed:** the drought rule fired on every camp at harvest, because a dry June with maturing fields satisfies both sources. It now watches the growing season only: 30 to 125 days after the camp's median planting (PLACEHOLDER).
+
+| Check                                    | Result                                                                                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm` gate                              | Green                                                                                                                                      |
+| Visual pass                              | The three tabs and the approval dialog at laptop, phone, 1280 and 1920: no issues, every shot looked at. `docs/ui-review/2026-10-31-ceih/` |
+| `ceih-e2e`, local API on the live season | 24 checks, all passed; cleaned up                                                                                                          |
+| The storyline live in the dashboard      | Beats 1 to 8 played signed in as David on live data (local API); shots in the review folder; re-armed after                                |
+
+**Phase 4: arming and deploy**
+
+- **Arming:** `seed --ceih --live-demo …` arms both paths in one run:
+  - Given is one ground check short;
+  - 2 advances wait for approval;
+  - Hamangaba is armed, not fired;
+  - the venue cluster is armed for the fallback.
+- **Deploy:** the production deploy (`infra/deploy.sh`) needs Geoffrey's go, so the build went out on a preview instead with `infra/deploy-preview.sh` (new, idempotent):
+  - the API as a tagged Cloud Run revision with no traffic (`cropwatch-api-00015-xop`, tag `ceih`, MIN_INSTANCES 1);
+  - the dashboard and the capture app on the `ceih-preview` channel, built against that revision.
+  - Production traffic stayed on `cropwatch-api-00014-88d` at 100%, and the production sites are unchanged.
+- **Warm-up:** `ceih-e2e --warm` (REST eligibility and satellite, Given armed).
+- **Recording:** the backup is `record-ceih` (a clean profile at 1280×800, all eight beats, a frame a beat), saved to `Desktop/Phytos CEIH recording 2026-10-31/`.
+- **Runbook:** CEIH section in `docs/demo-ops.md`.
+
+| Check                                                          | Result                                                                 |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `ceih-e2e` on the deployed revision                            | 24 checks, all passed; beats 1 to 6 in 9.6 s; cleaned up               |
+| Old path on the same revision (`outbreak-e2e`)                 | All passed: report → dispatched 8.0 s, Lusaka HIGH                     |
+| The storyline on the deployed preview, clean profile, 1280×800 | Beats 1 to 8, no page errors, each beat 0.1 to 4.5 s; frames looked at |
+| Production                                                     | Untouched; cutover waits for Geoffrey                                  |

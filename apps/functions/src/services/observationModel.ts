@@ -44,7 +44,12 @@ export function canReadObservation(
 
 // Officers verify (contract: POST /observations/{id}/verify): field officers only within their
 // own org, Command Center roles anywhere. Farmers never.
-export function canVerifyObservation(caller: Caller, record: Pick<ObservationRecord, 'orgId'>) {
+export function canVerifyObservation(
+  caller: Caller,
+  record: Pick<ObservationRecord, 'orgId'> & { verificationState?: VerificationState }
+) {
+  if (record.verificationState === 'EXPERT_CONFIRMED' && !EXPERT_ROLES.includes(caller.role))
+    return false
   if (COMMAND_CENTER.includes(caller.role)) return true
   return caller.role === 'field_officer' && caller.orgId !== null && caller.orgId === record.orgId
 }

@@ -1,0 +1,310 @@
+{
+  "org": "Outgrower Co.",
+  "today": "2027-01-12T12:58:00.000Z",
+  "wallet": "Airtel Money",
+  "phone": "097 ••• 0000",
+  "credit": {
+    "cap_pct": 0.15,
+    "hard_ceiling_zmw": 2500,
+    "advance_fee_pct": 0.05
+  },
+  "card": {
+    "contract_id": "sim-ceih-contract-001",
+    "farmer_id": "sim-ceih-farmer-001",
+    "farmer_name": "Given Mweemba",
+    "camp": "Chikuni",
+    "district": "Monze",
+    "crop": "soybean",
+    "planting_date": "2026-11-18",
+    "today": "2027-01-12T12:58:00.000Z",
+    "contracted_ha": 0.5,
+    "projected_yield_t_ha": 1.4,
+    "contract_price_zmw_t": 8000,
+    "projected_value_zmw": 5600,
+    "ring": [
+      [27.3693952, -16.1664143],
+      [27.3697077, -16.1663354],
+      [27.3699674, -16.1673588],
+      [27.3695592, -16.1674845],
+      [27.3693952, -16.1664143]
+    ],
+    "input_loan_zmw": 1950,
+    "status": "established",
+    "status_label": "Established, on track",
+    "curve": [
+      {
+        "date": "2026-10-03",
+        "ndvi": 0.15,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 7,
+        "status": "established"
+      },
+      {
+        "date": "2026-10-10",
+        "ndvi": 0.16,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 14,
+        "status": "established"
+      },
+      {
+        "date": "2026-10-17",
+        "ndvi": 0.15,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 12,
+        "status": "established"
+      },
+      {
+        "date": "2026-10-24",
+        "ndvi": 0.15,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 12,
+        "status": "established"
+      },
+      {
+        "date": "2026-10-31",
+        "ndvi": 0.15,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 9,
+        "status": "established"
+      },
+      {
+        "date": "2026-11-07",
+        "ndvi": 0.15,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 6,
+        "status": "established"
+      },
+      {
+        "date": "2026-11-14",
+        "ndvi": 0.16,
+        "camp_median": 0.15,
+        "usable": true,
+        "cloud_pct": 10,
+        "status": "established"
+      },
+      {
+        "date": "2026-11-21",
+        "ndvi": 0.14,
+        "camp_median": 0.16,
+        "usable": true,
+        "cloud_pct": 1,
+        "status": "established"
+      },
+      {
+        "date": "2026-11-28",
+        "ndvi": 0.16,
+        "camp_median": 0.16,
+        "usable": true,
+        "cloud_pct": 12,
+        "status": "established"
+      },
+      {
+        "date": "2026-12-05",
+        "ndvi": 0.16,
+        "camp_median": 0.175,
+        "usable": true,
+        "cloud_pct": 6,
+        "status": "established"
+      },
+      {
+        "date": "2026-12-12",
+        "ndvi": 0.2,
+        "camp_median": 0.21,
+        "usable": true,
+        "cloud_pct": 12,
+        "status": "established"
+      },
+      {
+        "date": "2026-12-19",
+        "ndvi": 0.23,
+        "camp_median": 0.24,
+        "usable": true,
+        "cloud_pct": 6,
+        "status": "established"
+      },
+      {
+        "date": "2026-12-26",
+        "ndvi": null,
+        "camp_median": 0.4,
+        "usable": false,
+        "cloud_pct": 89,
+        "status": "no_data"
+      },
+      {
+        "date": "2027-01-02",
+        "ndvi": null,
+        "camp_median": 0.52,
+        "usable": false,
+        "cloud_pct": 77,
+        "status": "no_data"
+      },
+      {
+        "date": "2027-01-09",
+        "ndvi": 0.55,
+        "camp_median": 0.61,
+        "usable": true,
+        "cloud_pct": 7,
+        "status": "established"
+      }
+    ],
+    "curve_source": "seeded",
+    "timeline": [
+      {
+        "at": "2026-10-22T12:53:00.000Z",
+        "kind": "inputs",
+        "source": "officer",
+        "text": "Inputs handed over (ZMW 1,950 on loan) and acknowledged with the farmer's SMS code · Officer M. Banda"
+      },
+      {
+        "at": "2026-11-18T00:00:00.000Z",
+        "kind": "planted",
+        "source": "farmer",
+        "text": "Planted, the contract date reported by the farmer"
+      },
+      {
+        "at": "2027-01-02T06:00:00.000Z",
+        "kind": "satellite",
+        "source": "satellite",
+        "text": "No clear pass on 26 Dec, 2 Jan: clouded out"
+      },
+      {
+        "at": "2027-01-09T06:00:00.000Z",
+        "kind": "satellite",
+        "source": "satellite",
+        "text": "On track from space · NDVI 0.55 vs camp 0.61"
+      },
+      {
+        "at": "2027-01-12T12:52:00.000Z",
+        "kind": "ground_check",
+        "source": "officer",
+        "text": "Field verified by Officer M. Banda · stage R1 · within 150 m of the field"
+      }
+    ],
+    "eligibility": {
+      "eligible": true,
+      "cap_zmw": 840,
+      "factors": [
+        {
+          "code": "established",
+          "met": true,
+          "text": "Satellite: 1 clear pass in 21 days (2 clouded out), 2 needed; the ground check covers it",
+          "source": "satellite"
+        },
+        {
+          "code": "established",
+          "met": true,
+          "text": "Field verified 12 Jan by Officer M. Banda, stage R1",
+          "source": "officer"
+        },
+        {
+          "code": "open_issue",
+          "met": true,
+          "text": "No open severe issues",
+          "source": null
+        },
+        {
+          "code": "cap",
+          "met": true,
+          "text": "Cap 15% of the projected crop value ZMW 5,600 (0.5 ha × 1.4 t/ha × ZMW 8,000/t) = ZMW 840, under the ZMW 2,500 ceiling",
+          "source": null
+        },
+        {
+          "code": "contract",
+          "met": true,
+          "text": "Contract active, season 2026/27",
+          "source": null
+        },
+        {
+          "code": "consent",
+          "met": true,
+          "text": "Consent recorded 14 Oct by Officer M. Banda",
+          "source": "officer"
+        },
+        {
+          "code": "momo",
+          "met": true,
+          "text": "Airtel Money number verified",
+          "source": null
+        },
+        {
+          "code": "history",
+          "met": true,
+          "text": "No default in 2 earlier seasons",
+          "source": null
+        },
+        {
+          "code": "shock",
+          "met": true,
+          "text": "No shock flag on the camp",
+          "source": null
+        },
+        {
+          "code": "one_advance",
+          "met": true,
+          "text": "No advance yet this season",
+          "source": null
+        }
+      ],
+      "established_by": "officer",
+      "verifier_ids": ["sim-officer-ceih-banda"],
+      "evaluated_at": "2027-01-12T12:58:00.000Z"
+    },
+    "ground_checks": [
+      {
+        "obs_id": "sim-ceih-ground-farmer-app",
+        "at": "2027-01-12T12:52:00.000Z",
+        "stage": "R1",
+        "verification": "FIELD_VERIFIED",
+        "verified_by": "sim-officer-ceih-banda",
+        "verified_by_label": "Officer M. Banda",
+        "geofence_ok": true,
+        "issue_label": null,
+        "photo_paths": ["observations/sim-library/library-unknown-03/0.jpg"],
+        "sim": true
+      }
+    ],
+    "advance": null,
+    "momo_label": "Airtel Money",
+    "phone_masked": "097 ••• 0000",
+    "credit": {
+      "cap_pct": 0.15,
+      "hard_ceiling_zmw": 2500,
+      "advance_fee_pct": 0.05
+    },
+    "shock": null,
+    "neighbour": null,
+    "sim": true
+  },
+  "statement": {
+    "contract_id": "sim-ceih-contract-001",
+    "farmer_name": "Given Mweemba",
+    "camp": "Chikuni",
+    "lines": [
+      {
+        "at": "2026-10-22T12:53:00.000Z",
+        "type": "input_loan",
+        "label": "Inputs on loan",
+        "amount_zmw": 1950,
+        "ref": "INP-001",
+        "note": "Seed, inoculant and fertiliser, acknowledged with the farmer's SMS code",
+        "simulated": false
+      }
+    ],
+    "balance_zmw": 1950,
+    "delivered_t": null,
+    "projected_t": 0.7,
+    "contract_price_zmw_t": 8000,
+    "variance": {
+      "kind": "none",
+      "text": "Nothing delivered yet, 0.7 t projected"
+    },
+    "settled": false,
+    "sim": true
+  }
+}

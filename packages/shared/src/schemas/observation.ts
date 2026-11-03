@@ -1,4 +1,5 @@
 import { z } from '../zod'
+import { ObservationSourceSchema } from '../constants/ceih'
 import { CropSchema } from '../constants/crops'
 import { IssueSchema } from '../constants/issues'
 import { ProvinceSchema } from '../constants/provinces'
@@ -105,6 +106,15 @@ export const ObservationBaseSchema = z.object({
   recommendation_id: z.string().min(1).nullable(),
   intervention: InterventionSchema.nullable(),
   outcome: OutcomeSchema.nullable(),
+  // CEIH (docs/ceih-workflows-mvp.md §3.1): the contracted farmer whose field polygon holds this
+  // observation, whether it fell inside that polygon (plus the grace margin), and why it exists.
+  // Optional, so every earlier document still parses; only a geofence_ok observation can count
+  // toward eligibility.
+  farmer_id: z.string().min(1).nullish(),
+  geofence_ok: z.boolean().nullish(),
+  source: ObservationSourceSchema.nullish(),
+  // Its date on the demo's season calendar, fixed when it was linked to the farmer.
+  season_at: TimestampSchema.nullish(),
   // TRUE for every seeded/synthetic row; drives the DemoBadge (CLAUDE.md invariant 5).
   sim: z.boolean(),
 })

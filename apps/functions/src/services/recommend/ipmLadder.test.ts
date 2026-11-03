@@ -59,6 +59,7 @@ const option = {
   label_dose: '10 ml / 15 L knapsack',
   phi_days: 14,
   source_doc: 'gs://labels/alpha.pdf',
+  source: 'label' as const,
 }
 
 const build = (filtered: FilterResult = { options: [option], rejected: [] }, result = knowledge) =>
@@ -74,6 +75,11 @@ describe('buildRecommendation', () => {
       'Encourage natural enemies.',
       CHEMICAL_LAST_RESORT,
     ])
+  })
+
+  it('never calls the listed products "registered" (guide-derived rows are on the list too)', () => {
+    expect(CHEMICAL_LAST_RESORT).not.toMatch(/registered/i)
+    expect(CHEMICAL_LAST_RESORT).toMatch(/products from our checked list, at the label dose shown/)
   })
 
   it('drops uncited steps and never uses retrieved chemical text (doses come from labels)', () => {

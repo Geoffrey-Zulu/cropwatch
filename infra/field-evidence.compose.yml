@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: https://github.com/germansniper3/cropwatch.git#${PHYTOS_GIT_REF}
+      dockerfile: infra/field-evidence.Dockerfile
+    environment:
+      PORT: '8080'
+      FIREBASE_PROJECT_ID: crop-watch01
+      FIELD_DATABASE: /data/fields.sqlite
+      CORS_ORIGINS: capacitor://localhost,http://localhost:5184,http://127.0.0.1:5184,https://crop-watch01-capture.web.app
+      CDSE_CLIENT_ID: ${CDSE_CLIENT_ID:-}
+      CDSE_CLIENT_SECRET: ${CDSE_CLIENT_SECRET:-}
+    volumes:
+      - field_records:/data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:8080/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+volumes:
+  field_records:

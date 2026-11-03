@@ -48,6 +48,10 @@ export const ObservationRowSchema = z.object({
   verification_weight: z.number(),
   verified_issue: IssueSchema.nullable(),
   sim: z.boolean(),
+  // When this snapshot was taken. Live observations are appended to observation_events at each
+  // change (diagnosed, verified…), so readers take the latest snapshot per obs_id. Null on rows
+  // loaded in bulk (the seed): one row per observation.
+  recorded_at: TimestampSchema.nullable().default(null),
 })
 export type ObservationRow = z.infer<typeof ObservationRowSchema>
 
@@ -93,12 +97,55 @@ export const OBSERVATION_ROW_BIGQUERY_SCHEMA: BigQueryField[] = [
   required('verification_weight', 'FLOAT'),
   nullable('verified_issue', 'STRING'),
   required('sim', 'BOOLEAN'),
+  nullable('recorded_at', 'TIMESTAMP'),
+]
+
+// cropwatch.observation_events: the same row, streamed by the API each time a report changes
+// (diagnosed, verified), stamped with recorded_at. Seed rows load into cropwatch.observations
+// with recorded_at null. The view reads the latest state of each report across both, leaving
+// out retracted ones (test reports cleaned up by the E2E tools).
+export const OBSERVATIONS_LATEST_VIEW = 'observations_latest'
+
+export function observationsLatestSql(project: string, dataset: string) {
+  const columns = OBSERVATION_ROW_BIGQUERY_SCHEMA.map(field => field.name).join(', ')
+  const table = (name: string) => '`' + `${project}.${dataset}.${name}` + '`'
+  return `SELECT * EXCEPT (rn) FROM (
+  SELECT *, ROW_NUMBER() OVER (
+    PARTITION BY obs_id ORDER BY COALESCE(recorded_at, created_at) DESC) AS rn
+  FROM (
+    SELECT ${columns} FROM ${table('observations')}
+    UNION ALL
+    SELECT ${columns} FROM ${table('observation_events')}
+  )
+)
+WHERE rn = 1
+  AND obs_id NOT IN (SELECT obs_id FROM ${table('retracted_observations')})`
+}
+
+// cropwatch.retracted_observations: reports deleted after the fact (E2E test runs). Rows are
+// never removed from the history tables; the view drops these.
+export const RETRACTED_OBSERVATION_BIGQUERY_SCHEMA = [
+  { name: 'obs_id', type: 'STRING', mode: 'REQUIRED' },
+  { name: 'retracted_at', type: 'TIMESTAMP', mode: 'REQUIRED' },
+  { name: 'reason', type: 'STRING', mode: 'NULLABLE' },
+]
+
+// cropwatch.risk_scores: one row per district risk computation (Risk Model v0), for trends and
+// later calibration. The qualitative level and its factors only (CLAUDE.md invariant 2).
+export const RISK_SCORE_BIGQUERY_SCHEMA = [
+  { name: 'district_slug', type: 'STRING', mode: 'REQUIRED' },
+  { name: 'district', type: 'STRING', mode: 'REQUIRED' },
+  { name: 'level', type: 'STRING', mode: 'REQUIRED' },
+  { name: 'contributing_factors', type: 'STRING', mode: 'REPEATED' },
+  { name: 'computed_at', type: 'TIMESTAMP', mode: 'REQUIRED' },
+  { name: 'sim', type: 'BOOLEAN', mode: 'REQUIRED' },
 ]
 
 export function toObservationRow(
   obsId: string,
   observation: Observation,
-  internal: DiagnosisInternal | null
+  internal: DiagnosisInternal | null,
+  recordedAt: string | null = null
 ): ObservationRow {
   const { diagnosis, location } = observation
   return ObservationRowSchema.parse({
@@ -130,5 +177,6 @@ export function toObservationRow(
     verification_weight: VERIFICATION_WEIGHTS[observation.verification_state],
     verified_issue: observation.verified_issue,
     sim: observation.sim,
+    recorded_at: recordedAt,
   })
 }

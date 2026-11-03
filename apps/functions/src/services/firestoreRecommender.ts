@@ -29,7 +29,14 @@ export function registeredProducts(db: Firestore, now: () => number = Date.now) 
   return async () => {
     if (cached && now() - cached.at < PRODUCTS_TTL_MS) return cached.products
     const snap = await db.collection('registered_products').get()
-    const products = snap.docs.map(doc => RegisteredProductSchema.parse(fromFirestore(doc.data())))
+    // Fail closed per row: a row this build cannot read (e.g. a newer source) is left out, never
+    // guessed at, and never takes the whole register down with it.
+    const products = snap.docs.flatMap(doc => {
+      const parsed = RegisteredProductSchema.safeParse(fromFirestore(doc.data()))
+      if (parsed.success) return [parsed.data]
+      console.warn(`registered_products/${doc.id} skipped: ${parsed.error.issues[0]?.message}`)
+      return []
+    })
     cached = { products, at: now() }
     return products
   }

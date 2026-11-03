@@ -1,16 +1,20 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { bodyLimit } from 'hono/body-limit'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 import { appRouter } from './trpc/router'
+import { bearerToken } from './auth'
 import { eventRoutes, type EventServices } from './rest/events'
 import { restV1, type RestServices } from './rest/v1'
 import { errorFields, log } from './lib/log'
+import type { DashboardServices } from './services/dashboard/types'
 
-export type AppServices = RestServices & EventServices
+export type AppServices = RestServices & EventServices & { dashboard: DashboardServices }
 
 export interface AppOptions {
-  // Browser origins allowed to call /trpc (the dashboard). Mobile and Eventarc are not browsers.
+  // Browser origins: the dashboard (/trpc) and the capture PWA (/api/v1). Mobile and Eventarc
+  // are not browsers and need none.
   corsOrigins: string[]
   services: AppServices
   logRequests?: boolean
@@ -19,18 +23,44 @@ export interface AppOptions {
 export function createApp({ corsOrigins, services, logRequests = false }: AppOptions) {
   const app = new Hono()
 
+  // Photos upload to Storage, never to this JSON API. Bound memory before parsing or Zod.
+  app.use(
+    '*',
+    bodyLimit({
+      maxSize: 64 * 1024,
+      onError: c =>
+        c.json({ error: 'validation_failed', message: 'Request body exceeds 64 KiB' }, 413),
+    })
+  )
+
   if (logRequests) app.use(logger())
 
   // Not /healthz: Cloud Run reserves paths ending in "z".
   app.get('/health', c => c.json({ status: 'ok' }))
 
   app.use('/trpc/*', cors({ origin: corsOrigins }))
+  // The capture PWA is a browser client of the same REST contract as the mobile app.
+  app.use(
+    '/api/v1/*',
+    cors({
+      origin: corsOrigins,
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['authorization', 'content-type'],
+      maxAge: 600,
+    })
+  )
   app.all('/trpc/*', c =>
     fetchRequestHandler({
       endpoint: '/trpc',
       req: c.req.raw,
       router: appRouter,
-      createContext: () => ({}),
+      // The dashboard signs in with Firebase; a missing or invalid token is an anonymous caller,
+      // which every dashboard procedure refuses.
+      createContext: async ({ req }) => {
+        const token = bearerToken(req.headers.get('authorization') ?? undefined)
+        const caller = token ? await services.verifyIdToken(token).catch(() => null) : null
+        return { caller, services: services.dashboard }
+      },
     })
   )
 

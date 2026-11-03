@@ -1,0 +1,386 @@
+.field-mode {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #e4eadf;
+  border-radius: 11px;
+  margin-bottom: 14px;
+}
+.field-mode button {
+  flex: 1;
+  min-height: 42px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  color: #65755b;
+}
+.field-mode button[aria-pressed='true'] {
+  background: #fff;
+  color: #315d3b;
+  box-shadow: 0 1px 3px #2733220a;
+}
+.field-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.field-planting {
+  padding: 0 17px 15px;
+  font-size: 10px;
+  color: #66785d;
+}
+.field-picker > div,
+.field-picker > label {
+  flex: 1;
+  min-width: 0;
+}
+.field-picker strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.field-picker span {
+  display: block;
+  font-size: 11px;
+  color: #697760;
+  margin-top: 3px;
+}
+.field-picker select {
+  width: 100%;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  font-size: 16px;
+  font-weight: 600;
+  padding-right: 12px;
+  color: #2d4834;
+}
+.field-picker .season-small-button {
+  margin: 0;
+}
+.field-api-error {
+  padding: 12px;
+  border: 1px solid #dfc8b8;
+  border-radius: 10px;
+  background: #faf3eb;
+  color: #88543a;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+.field-loading {
+  font-size: 12px;
+  color: #687a5e;
+  margin: 10px 0 18px;
+}
+.field-registration {
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #dfe7d6;
+  border-radius: 16px;
+  margin: 15px 0 20px;
+}
+.field-registration h2 {
+  font-size: 16px;
+  font-weight: 650;
+}
+.field-registration > p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #63775b;
+  margin: 7px 0 15px;
+}
+.field-registration label {
+  display: block;
+  font-size: 11px;
+  font-weight: 550;
+  color: #52634b;
+  margin-top: 13px;
+}
+.field-registration input,
+.field-registration select,
+.field-registration textarea {
+  display: block;
+  width: 100%;
+  border: 1px solid #d3ddca;
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 44px;
+  background: #fbfcf8;
+  color: #30492e;
+  font: inherit;
+  font-size: 16px;
+  margin-top: 5px;
+}
+.field-registration textarea {
+  font-family: monospace;
+  font-size: 16px;
+}
+.field-form-pair {
+  display: flex;
+  gap: 10px;
+}
+.field-form-pair label {
+  flex: 1;
+  min-width: 0;
+}
+.field-registration details {
+  margin-top: 15px;
+}
+.field-registration summary {
+  min-height: 44px;
+  font-size: 11px;
+  color: #526d49;
+  cursor: pointer;
+  padding: 12px 0;
+}
+.season-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #becdb2;
+  border-radius: 10px;
+  background: #eff4e7;
+  font-size: 12px;
+  font-weight: 600;
+  color: #466439;
+  margin-top: 18px;
+}
+.season-secondary > span {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 400;
+}
+.field-corners {
+  margin-top: 10px;
+  max-height: 180px;
+  overflow: auto;
+}
+.field-corners li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  border-bottom: 1px solid #e6eddf;
+  font-size: 10px;
+  color: #738167;
+}
+.field-corners code {
+  font-size: 11px;
+}
+.field-corners button {
+  margin-left: auto;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.field-consent {
+  font-size: 10px !important;
+  line-height: 1.6;
+  color: #6b7c60;
+  margin-top: 10px !important;
+}
+.field-boundary-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.town-map-credit {
+  z-index: 1;
+}
+.satellite-evidence {
+  margin-top: 18px;
+}
+.satellite-evidence h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-explainer {
+  font-size: 11px;
+  line-height: 1.65;
+  color: #6b7b61;
+  margin-bottom: 13px;
+}
+.satellite-pass {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--season-line);
+}
+.satellite-pass > div {
+  flex: 1;
+}
+.satellite-pass strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.satellite-pass span {
+  display: block;
+  font-size: 10px;
+  color: #6a7e60;
+  margin-top: 4px;
+}
+.satellite-pass > small {
+  font-size: 9px;
+  color: #6e8063;
+}
+.satellite-pass details {
+  width: 100%;
+}
+.satellite-pass summary {
+  padding: 9px 0 1px;
+  min-height: 38px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #3e6b42;
+}
+.satellite-pass img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  background: #eaf0e4;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+.satellite-pass details p,
+.satellite-pass code {
+  font-size: 9px;
+  color: #6c7d60;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.evidence-source {
+  font-size: 9px;
+  color: #6b7d60;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+.vegetation-panel {
+  background: #fff;
+  border: 1px solid #dce5d3;
+  border-radius: 15px;
+  padding: 16px;
+  margin-top: 23px;
+}
+.vegetation-panel > p {
+  font-size: 11px;
+  line-height: 1.65;
+  color: #677c5c;
+}
+.vegetation-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 600;
+  color: #385f36;
+  margin: 13px 0 5px;
+}
+.vegetation-panel svg {
+  width: 100%;
+  height: 85px;
+  margin: 15px 0 5px;
+}
+.vegetation-panel > span {
+  font-size: 10px;
+  color: #678258;
+}
+.vegetation-panel .evidence-source {
+  font-size: 9px;
+}
+.field-review-note {
+  display: flex;
+  gap: 9px;
+  margin-top: 20px;
+  color: #6c805e;
+}
+.field-review-note > svg {
+  flex: none;
+}
+.field-review-note strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #48613b;
+}
+.field-review-note p {
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 5px;
+}
+.field-example-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 0;
+  margin-top: 14px;
+  border-top: 1px solid #dbe4d1;
+}
+.field-example-link > span {
+  flex: 1;
+}
+.field-example-link strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.field-example-link small {
+  display: block;
+  font-size: 10px;
+  color: #6f805f;
+  margin-top: 4px;
+}
+.field-start > p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--season-muted);
+  margin: 12px 0;
+}
+.field-region-explorer {
+  border-top: 1px solid var(--season-line);
+  margin-top: 18px;
+}
+.field-region-explorer summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 13px 0;
+  font-size: 13px;
+  font-weight: 550;
+}
+.field-region-explorer label {
+  display: block;
+  font-size: 12px;
+  color: var(--season-muted);
+}
+.field-region-explorer select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  border: 1px solid #b9c6b3;
+  border-radius: 8px;
+  padding: 8px 36px 8px 10px;
+  background-color: #fff;
+  font-size: 16px;
+  color: var(--season-ink);
+}
+.field-region-explorer > p {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--season-muted);
+}

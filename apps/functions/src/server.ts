@@ -12,6 +12,22 @@ import { firestoreDiagnoser } from './services/firestoreDiagnoser'
 import { firestoreObservations } from './services/firestoreObservations'
 import { firestoreRecommender, registeredProducts } from './services/firestoreRecommender'
 import { geminiDiagnosisModel, geminiJsonModel } from './services/gemini'
+import { firestoreAlerts } from './services/alerts/alertReader'
+import { firestoreDashboard } from './services/dashboard/firestoreDashboard'
+import { firestoreLinker } from './services/ceih/link'
+import { simulatedProvider } from './services/ceih/mobileMoney'
+import { firestoreEnrol } from './services/ceih/enrol'
+import { seasonService } from './services/ceih/season'
+import { firestoreSeasonStore } from './services/ceih/store'
+import { openMeteo } from './services/weather/openMeteo'
+import { fcmPush, firestoreDispatcher } from './services/alerts/dispatch'
+import { pubsubPublisher } from './services/alerts/pubsub'
+import { africasTalking, smsLogOnly } from './services/alerts/sms'
+import { bigQueryRest } from './services/analytics/bigquery'
+import { observationRecorder } from './services/analytics/observationEvents'
+import { clusterDetector } from './services/outbreaks/detect'
+import { firestoreOutbreaks } from './services/outbreaks/outbreakStore'
+import { tracker } from './services/outbreaks/track'
 import { pipeline } from './services/pipeline'
 import { loadPrompt } from './services/prompt'
 import { COMPOSITION_RESPONSE_SCHEMA, ragKnowledge } from './services/recommend/ragKnowledge'
@@ -23,17 +39,18 @@ import {
 } from './services/recommend/vertexRag'
 
 const env = readEnv()
-const { auth, db, bucket, storage } = firebase(env)
+const { auth, db, bucket, storage, messaging } = firebase(env)
 // Loaded at startup so a missing prompt fails the deploy, not the first farmer.
 const prompt = loadPrompt('diagnose-v1')
 const recommendPrompt = loadPrompt('recommend-v1')
 
 const index = parseGcsUri(env.knowledgeIndexUri)
+const loadIndex = cachedIndex(async () => {
+  const [bytes] = await storage.bucket(index.bucket).file(index.object).download()
+  return bytes
+})
 const knowledge = ragKnowledge({
-  loadIndex: cachedIndex(async () => {
-    const [bytes] = await storage.bucket(index.bucket).file(index.object).download()
-    return bytes
-  }),
+  loadIndex,
   retrieve: withRetrieveRetry(vertexRetrieve()),
   compose: withTransientRetry(
     geminiJsonModel(env, {
@@ -47,6 +64,39 @@ const knowledge = ragKnowledge({
   prompt: recommendPrompt,
   modelId: env.geminiModel,
 })
+
+// Outbreaks (technicaldoc §9–10): BigQuery snapshots and the cluster rule, Firestore clusters,
+// risk and alerts, Pub/Sub to dispatch, FCM and Africa's Talking to deliver.
+// Open-Meteo forecasts: weather context for risk and advisories, and the dashboard.
+const weather = openMeteo()
+const bigquery = bigQueryRest({
+  projectId: env.projectId,
+  location: env.location,
+  dataset: env.bigQueryDataset,
+})
+const track = tracker({
+  record: observationRecorder({ db, bigquery }),
+  detect: clusterDetector(bigquery, env.bigQueryDataset),
+  store: firestoreOutbreaks({
+    db,
+    bigquery,
+    dataset: env.bigQueryDataset,
+    publish: pubsubPublisher({ projectId: env.projectId, topic: env.alertsTopic }),
+    weather,
+  }),
+})
+const sms = env.sms
+  ? africasTalking({
+      username: env.sms.username,
+      apiKey: env.sms.apiKey,
+      from: env.sms.senderId ?? undefined,
+      sandbox: env.sms.sandbox,
+    })
+  : smsLogOnly
+
+// CEIH: the agribusiness's own money funds the advance; the demo moves it on the simulated
+// provider (spec §3.5).
+const season = seasonService({ store: firestoreSeasonStore(db), sms, money: simulatedProvider })
 
 const app = createApp({
   corsOrigins: env.corsOrigins,
@@ -69,8 +119,14 @@ const app = createApp({
         knowledge,
         products: registeredProducts(db),
         allowPlaceholders: env.allowPlaceholderProducts,
-      })
+      }),
+      track
     ),
+    alerts: firestoreAlerts(db),
+    dispatch: firestoreDispatcher({ db, push: fcmPush(messaging), sms }),
+    dashboard: { ...firestoreDashboard({ db, index: loadIndex, weather }), season },
+    linkObservation: firestoreLinker(db),
+    ceih: { season, enrol: firestoreEnrol(db, sms) },
   },
 })
 
@@ -82,6 +138,7 @@ const server = serve({ fetch: app.fetch, port: env.port }, info => {
     recommend_prompt: recommendPrompt.version,
     knowledge_index: env.knowledgeIndexUri,
     placeholders: env.allowPlaceholderProducts,
+    sms_gateway: sms.name,
     version: env.version,
   })
 })

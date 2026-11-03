@@ -78,6 +78,11 @@ describe('filterChemicalCandidates', () => {
     expect(options.map(o => o.registration_no)).toEqual(['ZM-001'])
   })
 
+  it('treats hyphens and spaces alike in names (labels write "lambda-cyhalothrin", guides "Lambda Cyhalothrin")', () => {
+    const { options } = run([{ active_ingredient: 'emamectin-benzoate', source_ids: [] }])
+    expect(options.map(o => o.trade_name)).toEqual(['Alpha 5 EC', 'Beta 19 SC'])
+  })
+
   it('lists every registered brand of an active ingredient', () => {
     const { options } = run([{ active_ingredient: 'Emamectin Benzoate', source_ids: [] }])
     expect(options.map(o => o.trade_name)).toEqual(['Alpha 5 EC', 'Beta 19 SC'])
@@ -139,16 +144,47 @@ describe('filterChemicalCandidates', () => {
     expect(option.label_dose).toBe(dose)
   })
 
-  it('shows only the label fields, nothing a model could add', () => {
+  it('shows only the register row fields, nothing a model could add', () => {
     const [option] = run([{ registration_no: 'ZM-001', source_ids: [] }]).options
     expect(Object.keys(option).sort()).toEqual([
       'active_ingredient',
       'label_dose',
       'phi_days',
       'registration_no',
+      'source',
       'source_doc',
       'trade_name',
     ])
+  })
+
+  it('passes a Plantwise PMDG row like any other, with its source and the guide text byte-identical', () => {
+    const dose = 'Often applied at 20-30ml per 20 litres, but double-check with product labels.'
+    const products = [
+      row({
+        registration_no: 'PMDG-DBM-SENTINEL-15EC',
+        trade_name: 'SENTINEL 15%EC',
+        active_ingredient: 'cypermethrin',
+        registrant: 'Not stated in the guide',
+        approved_crops: ['cabbage'],
+        approved_issues: ['diamondback_moth'],
+        label_dose: dose,
+        phi_days: 7,
+        source: 'plantwise_pmdg',
+        source_doc: 'pw-pmdg-diamondback-moth-zambia-2014 p1',
+        verified_by: null,
+      }),
+    ]
+    const input = { products, crop: 'cabbage', issue: 'diamondback_moth' } as const
+    const { options, rejected } = run(
+      [{ active_ingredient: 'Cypermethrin', source_ids: [] }],
+      input
+    )
+    expect(rejected).toEqual([])
+    expect(options).toHaveLength(1)
+    expect(options[0].label_dose).toBe(dose)
+    expect(options[0].source).toBe('plantwise_pmdg')
+    // verified_by records the spot-check only; it never reaches the farmer-facing option.
+    expect(options[0]).not.toHaveProperty('verified_by')
   })
 
   it('lists a product once even if several candidates point at it', () => {

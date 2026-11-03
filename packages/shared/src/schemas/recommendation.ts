@@ -1,6 +1,6 @@
 import { z } from '../zod'
 import { TimestampSchema } from './common'
-import { RegisteredProductSchema } from './registeredProduct'
+import { ProductSourceSchema, RegisteredProductSchema } from './registeredProduct'
 
 // Source authority ranking, 1 (MoA) → 6 (research). Local authoritative sources override
 // generic ones on conflict (technicaldoc.md §7).
@@ -25,10 +25,12 @@ export const ChemicalOptionSchema = RegisteredProductSchema.pick({
   label_dose: true,
   phi_days: true,
   source_doc: true,
-}).openapi('ChemicalOption', {
-  description:
-    'A registered product that passed the regulatory filter for this crop and issue. Render label_dose exactly as given (verbatim label text). phi_days is the pre-harvest interval.',
 })
+  .extend({ source: ProductSourceSchema.optional() })
+  .openapi('ChemicalOption', {
+    description:
+      'A product that passed the regulatory filter for this crop and issue. Render label_dose exactly as given (verbatim source text). phi_days is the pre-harvest interval. When source is plantwise_pmdg, registration_no is an internal id, not a registration number: show the source ("Plantwise Zambia PMDG") instead, and label_dose is the guide text.',
+  })
 export type ChemicalOption = z.infer<typeof ChemicalOptionSchema>
 
 // The last IPM step when no registered product passed the filter (the contract's
